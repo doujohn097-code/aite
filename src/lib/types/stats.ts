@@ -3,6 +3,8 @@ import type { Timestamp, FirestoreDataConverter } from 'firebase/firestore';
 export type Stats = {
   likes: string[];
   tweets: string[];
+  /** Reel ids this user has reposted (reel retweets). */
+  reels?: string[] | null;
   updatedAt: Timestamp | null;
 };
 

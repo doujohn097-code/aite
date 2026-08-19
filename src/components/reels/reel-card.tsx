@@ -2,12 +2,16 @@ import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { query, where } from 'firebase/firestore';
+import { query, where, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { useCollection } from '@lib/hooks/useCollection';
-import { tweetsCollection } from '@lib/firebase/collections';
+import { useDocument } from '@lib/hooks/useDocument';
+import {
+  tweetsCollection,
+  userStatsCollection
+} from '@lib/firebase/collections';
 import { likeReel, viewReel, deleteReel } from '@lib/firebase/utils';
 import { formatNumber } from '@lib/date';
 import { preventBubbling } from '@lib/utils';
@@ -182,6 +186,40 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
     setIsMuted(nextMuted);
     setShowMuteIcon(true);
     setTimeout(() => setShowMuteIcon(false), 700);
+  };
+
+  // Reel retweets are tracked on the viewer's own stats doc — the Firestore
+  // rules only permit likes/views edits on story docs.
+  const ownStatsRef = authUser
+    ? doc(userStatsCollection(authUser.id), 'stats')
+    : null;
+  const { data: ownStats } = useDocument(ownStatsRef, {
+    allowNull: true,
+    disabled: !authUser
+  });
+
+  const isRetweeted = ownStats?.reels?.includes(reel.id) ?? false;
+  const [optimisticRetweet, setOptimisticRetweet] = useState<boolean | null>(
+    null
+  );
+  const retweeted = optimisticRetweet ?? isRetweeted;
+
+  useEffect(() => {
+    if (optimisticRetweet !== null && isRetweeted === optimisticRetweet)
+      setOptimisticRetweet(null);
+  }, [isRetweeted, optimisticRetweet]);
+
+  const handleRetweet = (e?: React.MouseEvent): void => {
+    if (e) e.stopPropagation();
+    if (!authUser) return;
+    const next = !retweeted;
+    setOptimisticRetweet(next);
+    void updateDoc(doc(userStatsCollection(authUser.id), 'stats'), {
+      reels: next ? arrayUnion(reel.id) : arrayRemove(reel.id)
+    }).catch(() => {
+      setOptimisticRetweet(null);
+      toast.error('تعذر تنفيذ العملية، حاول مجدداً');
+    });
   };
 
   // Handles clicks anywhere across the entire reel card frame
@@ -455,7 +493,7 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
       {/* Strictly pinned to the PHYSICAL LEFT                                      */}
       {/* ========================================================================= */}
       <div
-        className='absolute left-4 bottom-20 xs:bottom-16 sm:bottom-14 z-20 flex flex-col items-center gap-6 text-white'
+        className='absolute left-4 bottom-20 xs:bottom-16 sm:bottom-14 z-20 flex flex-col items-center gap-5 text-white'
       >
         {/* Like Button */}
         <div className='flex flex-col items-center gap-1.5'>
@@ -506,6 +544,33 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
           </span>
         </div>
 
+        {/* Retweet Button */}
+        <div className='flex flex-col items-center gap-1.5'>
+          <button
+            type='button'
+            onClick={handleRetweet}
+            className='flex h-10 w-10 items-center justify-center text-white transition active:scale-75 hover:scale-110 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent]'
+            aria-label={retweeted ? 'تراجع عن إعادة النشر' : 'إعادة نشر'}
+          >
+            <motion.div
+              key={retweeted ? 'retweeted' : 'idle'}
+              initial={{ scale: 0.6 }}
+              animate={{ scale: [0.6, 1.3, 1] }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+            >
+              <HeroIcon
+                className={cn(
+                  'h-8 w-8 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-colors',
+                  retweeted
+                    ? 'fill-accent-green text-accent-green'
+                    : 'text-white hover:text-accent-green'
+                )}
+                iconName='ArrowPathRoundedSquareIcon'
+              />
+            </motion.div>
+          </button>
+        </div>
+
         {/* Share Button */}
         <div className='flex flex-col items-center gap-1.5'>
           <button
@@ -515,8 +580,8 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
             aria-label='مشاركة'
           >
             <HeroIcon
-              className='h-8 w-8 text-white filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-colors hover:text-main-accent -rotate-45'
-              iconName='PaperAirplaneIcon'
+              className='h-8 w-8 text-white filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-colors hover:text-main-accent'
+              iconName='ArrowUpTrayIcon'
             />
           </button>
           <span className='text-xs font-bold drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>مشاركة</span>

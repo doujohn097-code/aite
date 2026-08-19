@@ -12,6 +12,7 @@ export type Story = {
   duration?: number | null;
   music?: { src: string; name: string } | null;
   likes: string[];
+  userRetweets?: string[] | null;
   views: string[];
   kind?: StoryKind | null;
   createdAt: Timestamp;

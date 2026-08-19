@@ -661,7 +661,7 @@ export function PostComments({
           )}
         </div>
         {/* Composer */}
-        <div className='sticky bottom-0 z-10 flex flex-col border-t border-light-border bg-main-background dark:border-dark-border'>
+        <div className='flex flex-col border-t border-light-border bg-main-background dark:border-dark-border'>
           <AnimatePresence>
             {replyingTo && (
               <motion.div
