@@ -440,7 +440,8 @@ function MessageBubble({
       <UserAvatar
         src={avatarSrc}
         alt={avatarAlt}
-        username={isMe ? currentUserId : message.senderId}
+        username={undefined}
+        showPresence={false}
         className='h-8 w-8 shrink-0'
       />
       <div className={`flex max-w-[75%] flex-col ${isMe ? 'items-end' : 'items-start'}`}>

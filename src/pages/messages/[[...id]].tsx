@@ -256,7 +256,7 @@ function ConversationRoom({
   const other = conversation?.participantData?.[otherId] ?? null;
 
   return (
-    <MainContainer className='h-full min-h-0 overflow-hidden'>
+    <MainContainer className='flex h-full min-h-0 flex-col overflow-hidden'>
       <SEO title={`المحادثة / Aite`} />
       <div
         className='sticky top-0 z-10 flex items-center gap-3 border-b border-light-line-reply
@@ -287,6 +287,7 @@ function ConversationRoom({
       {conversationLoading || messagesLoading ? (
         <Loading className='mt-5' />
       ) : (
+        <div className='flex-1 min-h-0 overflow-y-auto'>
         <MessageList
           messages={(messages ?? []) as Message[]}
           currentUserId={userId ?? ''}
@@ -300,6 +301,7 @@ function ConversationRoom({
             })
           }
         />
+        </div>
       )}
 
       <MessageInput

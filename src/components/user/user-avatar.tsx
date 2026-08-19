@@ -9,6 +9,8 @@ type UserAvatarProps = {
   size?: number;
   username?: string;
   className?: string;
+  /** Set false to hide the green presence dot (e.g. inside chat bubbles). */
+  showPresence?: boolean;
 };
 
 export function UserAvatar({
@@ -16,9 +18,10 @@ export function UserAvatar({
   alt,
   size,
   username,
-  className
+  className,
+  showPresence = true
 }: UserAvatarProps): JSX.Element {
-  const online = useOnlineStatus(username);
+  const online = useOnlineStatus(showPresence ? username : undefined);
 
   const pictureSize = size ?? 48;
   const normalizedSrc =

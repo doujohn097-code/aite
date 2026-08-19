@@ -15,6 +15,7 @@ import { getRandomId } from '@lib/random';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
+import { AudioPlayer } from './audio-player';
 import type { ReplyTo } from '@lib/types/message';
 
 type MessageInputProps = {
@@ -75,6 +76,23 @@ export function MessageInput({
   onClearReply
 }: MessageInputProps): JSX.Element {
   const { user } = useAuth();
+  const [keyboardInset, setKeyboardInset] = useState(0);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const update = (): void => {
+      const inset = Math.max(
+        0,
+        window.innerHeight - viewport.height - viewport.offsetTop
+      );
+      setKeyboardInset(inset);
+    };
+    viewport.addEventListener('resize', update);
+    update();
+    return () => viewport.removeEventListener('resize', update);
+  }, []);
+
 
   const [text, setText] = useState('');
   const [selectedImages, setSelectedImages] = useState<FilesWithId>([]);
@@ -85,6 +103,7 @@ export function MessageInput({
 
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [audioPreview, setAudioPreview] = useState<{ file: FilesWithId[number]; src: string; duration: number } | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -124,6 +143,43 @@ export function MessageInput({
     cancelledRef.current = false;
     setRecording(false);
     setRecordingSeconds(0);
+  };
+
+  const cancelVoicePreview = (): void => {
+    if (audioPreview) {
+      URL.revokeObjectURL(audioPreview.src);
+      setAudioPreview(null);
+    }
+  };
+
+  const sendVoicePreview = async (): Promise<void> => {
+    if (!user?.id || !audioPreview) return;
+    setLoading(true);
+    try {
+      const uploaded = await uploadImages(user.id, [audioPreview.file]);
+      const audioUrl = uploaded?.[0]?.src;
+      if (!audioUrl) throw new Error('no audio url');
+
+      await sendMessage(
+        conversationId,
+        user.id,
+        receiverId,
+        null,
+        null,
+        replyTo ?? null,
+        {
+          src: audioUrl,
+          duration: audioPreview.duration
+        }
+      );
+      onClearReply?.();
+      URL.revokeObjectURL(audioPreview.src);
+      setAudioPreview(null);
+    } catch {
+      toast.error('فشل إرسال التسجيل الصوتي');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const startRecording = async (): Promise<void> => {
@@ -194,27 +250,11 @@ export function MessageInput({
         }) as FilesWithId[number];
         (file as { id: string }).id = getRandomId();
 
-        setLoading(true);
-        try {
-          const uploaded = await uploadImages(user.id, [file]);
-          const audioUrl = uploaded?.[0]?.src;
-          if (!audioUrl) throw new Error('no audio url');
-
-          await sendMessage(
-            conversationId,
-            user.id,
-            receiverId,
-            null,
-            null,
-            replyTo ?? null,
-            { src: audioUrl, duration: durationSec }
-          );
-          onClearReply?.();
-        } catch {
-          toast.error('فشل إرسال التسجيل الصوتي');
-        } finally {
-          setLoading(false);
-        }
+        setAudioPreview({
+          file,
+          src: URL.createObjectURL(blob),
+          duration: durationSec
+        });
       };
 
       recorder.start();
@@ -255,7 +295,7 @@ export function MessageInput({
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>): void => {
     const imagesData = getImagesData(e.target.files, {
       currentFiles: imagesPreview.length,
-      allowUploadingVideos: false
+      allowUploadingVideos: true
     });
 
     if (!imagesData) {
@@ -321,8 +361,33 @@ export function MessageInput({
     <form
       onSubmit={handleSubmit}
       className='relative border-t border-light-border px-4 py-3 dark:border-dark-border'
+      style={keyboardInset ? { paddingBottom: keyboardInset + 12 } : undefined}
     >
       {recording && <VoiceRecorder recording={recording} seconds={recordingSeconds} />}
+
+      {audioPreview && (
+        <div className='mb-2 flex items-center gap-2 rounded-xl border border-main-accent/40 bg-white/5 p-2 backdrop-blur-md'>
+          <div className='min-w-0 flex-1'>
+            <AudioPlayer src={audioPreview.src} />
+          </div>
+          <button
+            type='button'
+            onClick={cancelVoicePreview}
+            className='rounded-full p-1.5 text-white/70 transition hover:text-white'
+            aria-label='إلغاء'
+          >
+            <HeroIcon iconName='XMarkIcon' className='h-4 w-4' />
+          </button>
+          <Button
+            type='button'
+            onClick={(e): void => { void sendVoicePreview(); }}
+            loading={loading}
+            className='bg-main-accent px-3 py-1.5 text-sm font-bold text-black'
+          >
+            إرسال
+          </Button>
+        </div>
+      )}
 
       {replyTo && replySnippet && (
         <div
@@ -390,7 +455,7 @@ export function MessageInput({
           <HeroIcon iconName='PhotoIcon' className='h-5 w-5 text-main-accent' />
           <input
             type='file'
-            accept='image/*'
+            accept='image/*,video/*'
             multiple
             className='hidden'
             onChange={handleImageUpload}
@@ -399,13 +464,10 @@ export function MessageInput({
         <button
           type='button'
           disabled={loading}
-          onPointerDown={(e: PointerEvent<HTMLButtonElement>): void => {
-            e.preventDefault();
-            startHandler();
+          onClick={(): void => {
+            if (recording) stopRecording();
+            else startHandler();
           }}
-          onPointerUp={stopRecording}
-          onPointerLeave={cancelRecording}
-          onPointerCancel={cancelRecording}
           className={`touch-none rounded-full p-2 transition ${micButtonClasses}`}
         >
           <HeroIcon iconName='MicrophoneIcon' className='h-5 w-5' />
