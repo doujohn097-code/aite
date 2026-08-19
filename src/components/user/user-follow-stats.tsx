@@ -50,35 +50,26 @@ export function UserFollowStats({
   ];
 
   return (
-    <div className='flex gap-4 text-light-secondary dark:text-dark-secondary'>
+    <div className='flex items-center gap-3 text-light-secondary dark:text-dark-secondary'>
       {allStats.map(([title, link, move, stats], index) => {
         const label = index === 1 && stats > 1 ? 'متابعون' : title;
         const statSpan = (
-          <span className='inline-block font-bold text-light-primary dark:text-dark-primary'>
+          <span className='inline-block text-lg font-bold leading-none text-light-primary dark:text-dark-primary'>
             <NumberStats move={move} stats={stats} alwaysShowStats />
           </span>
         );
-        const textSpan = <span className='inline-block'>{label}</span>;
         return (
           <Link href={link} key={title}>
             <a
-              className='hover-animation flex items-center gap-1 whitespace-nowrap border-b border-b-transparent
-                         py-1 outline-none hover:border-b-light-primary focus-visible:border-b-light-primary
-                         dark:hover:border-b-dark-primary dark:focus-visible:border-b-dark-primary'
+              className='group flex flex-col items-center gap-0.5 rounded-xl bg-light-sidebar-background/50 px-4 py-1.5
+                         transition hover:bg-light-primary/10 dark:bg-dark-sidebar-background/50
+                         dark:hover:bg-dark-primary/10'
             >
-              {index === 0 ? (
-                <>
-                  {textSpan}
-                  <span className='inline-block w-1' />
-                  {statSpan}
-                </>
-              ) : (
-                <>
-                  {statSpan}
-                  <span className='inline-block w-1' />
-                  {textSpan}
-                </>
-              )}
+              {statSpan}
+              <span className='text-xs font-semibold text-light-secondary transition group-hover:text-light-primary
+                               dark:text-dark-secondary dark:group-hover:text-dark-primary'>
+                {label}
+              </span>
             </a>
           </Link>
         );
