@@ -1,0 +1,72 @@
+import type { SyntheticEvent } from 'react';
+import type { MotionProps } from 'framer-motion';
+
+export function preventBubbling(
+  callback?: ((...args: never[]) => unknown) | null,
+  noPreventDefault?: boolean
+) {
+  return (e: SyntheticEvent): unknown => {
+    e.stopPropagation();
+
+    if (!noPreventDefault) e.preventDefault();
+    if (callback) return callback();
+    return undefined;
+  };
+}
+
+export function delayScroll(ms: number) {
+  return (): NodeJS.Timeout => setTimeout(() => window.scrollTo(0, 0), ms);
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function getStatsMove(movePixels: number): MotionProps {
+  return {
+    initial: {
+      opacity: 0,
+      y: -movePixels
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    exit: {
+      opacity: 0,
+      y: movePixels
+    },
+    transition: {
+      type: 'tween',
+      duration: 0.15
+    }
+  };
+}
+
+export function isPlural(count: number): string {
+  return count > 1 ? 's' : '';
+}
+
+export function withoutId<T extends { id: string }>(obj: T): Omit<T, 'id'> {
+  const copy = { ...obj };
+  delete (copy as Record<string, unknown>).id;
+  return copy as Omit<T, 'id'>;
+}
+
+function base64UrlEncode(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+export function usernameToInternalEmail(username: string): string {
+  const normalized = username.trim().toLowerCase();
+  const local = base64UrlEncode(normalized).slice(0, 60);
+  return `${local}@aite.local`;
+}

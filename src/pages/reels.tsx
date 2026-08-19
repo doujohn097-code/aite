@@ -1,0 +1,248 @@
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { query, where } from 'firebase/firestore';
+import { AnimatePresence } from 'framer-motion';
+import { storiesCollection, usersCollection } from '@lib/firebase/collections';
+import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
+import { useCollection } from '@lib/hooks/useCollection';
+import { ProtectedLayout } from '@components/layout/common-layout';
+import { MainLayout } from '@components/layout/main-layout';
+import { SEO } from '@components/common/seo';
+import { Loading } from '@components/ui/loading';
+import { Button } from '@components/ui/button';
+import { HeroIcon } from '@components/ui/hero-icon';
+import { ReelCard } from '@components/reels/reel-card';
+import { CreateReelModal } from '@components/reels/create-reel-modal';
+import type { ReactElement, ReactNode } from 'react';
+import type { User } from '@lib/types/user';
+
+function fallbackUser(userId: string): User {
+  return {
+    id: userId,
+    name: 'مستخدم',
+    username: 'unknown',
+    photoURL: '/assets/default-avatar.png',
+    verified: false,
+    bio: null,
+    theme: null,
+    accent: null,
+    website: null,
+    location: null,
+    following: [],
+    followers: [],
+    createdAt: undefined as unknown as User['createdAt'],
+    updatedAt: null,
+    totalTweets: 0,
+    totalPhotos: 0,
+    pinnedTweet: null,
+    coverPhotoURL: null,
+    storyColor: null,
+    lastStoryAt: null,
+    storyViews: null
+  };
+}
+
+export default function Reels(): JSX.Element {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [createOpen, setCreateOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const reelsConstraints = useMemo(
+    () => [],
+    []
+  );
+
+  const { data: rawReels, loading: reelsLoading, LoadMore } = useInfiniteScroll(
+    storiesCollection,
+    reelsConstraints,
+    { allowNull: true },
+    { initialSize: 50, stepSize: 25 }
+  );
+
+  const reels = useMemo(() => {
+    if (!rawReels) return [];
+    const nowMs = Date.now();
+    return rawReels
+      .filter((s) => {
+        const isReelOrVideo =
+          s.kind === 'reel' ||
+          s.images?.some((img) => img.type?.startsWith('video/')) ||
+          s.images?.some((img) => img.src?.includes('.mp4') || img.src?.includes('.mov') || img.src?.includes('.webm'));
+
+        if (!isReelOrVideo) return false;
+
+        if (!s.expiresAt) return true;
+        const exp = typeof s.expiresAt.toMillis === 'function'
+          ? s.expiresAt.toMillis()
+          : (s.expiresAt as unknown as { seconds?: number })?.seconds
+          ? (s.expiresAt as unknown as { seconds: number }).seconds * 1000
+          : Infinity;
+        return exp > nowMs;
+      })
+      .sort((a, b) => {
+        const aTime = typeof a.createdAt?.toMillis === 'function'
+          ? a.createdAt.toMillis()
+          : (a.createdAt as unknown as { seconds?: number })?.seconds
+          ? (a.createdAt as unknown as { seconds: number }).seconds * 1000
+          : 0;
+        const bTime = typeof b.createdAt?.toMillis === 'function'
+          ? b.createdAt.toMillis()
+          : (b.createdAt as unknown as { seconds?: number })?.seconds
+          ? (b.createdAt as unknown as { seconds: number }).seconds * 1000
+          : 0;
+        return bTime - aTime;
+      });
+  }, [rawReels]);
+
+  // resolve owners for visible reels
+  const ownerIds = useMemo(
+    () => Array.from(new Set(reels.map((r) => r.userId))),
+    [reels]
+  );
+
+  const ownersQuery = useMemo(
+    () => (ownerIds.length ? query(usersCollection, where('__name__', 'in', ownerIds)) : null),
+    [ownerIds]
+  );
+  const { data: owners } = useCollection(ownersQuery, { allowNull: true });
+
+  const userById = useMemo(() => {
+    const map = new Map<string, User>();
+    owners?.forEach((u) => map.set(u.id, u));
+    return map;
+  }, [owners]);
+
+  useEffect(() => {
+    if (activeIndex > reels.length - 1 && reels.length > 0) {
+      setActiveIndex(0);
+    }
+  }, [reels.length, activeIndex]);
+
+  // Keyboard navigation up / down
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (createOpen) return;
+      const container = containerRef.current;
+      if (!container) return;
+
+      if (e.key === 'ArrowDown' || e.key === 'j') {
+        e.preventDefault();
+        const nextIdx = Math.min(activeIndex + 1, reels.length - 1);
+        container.scrollTo({
+          top: nextIdx * container.clientHeight,
+          behavior: 'smooth'
+        });
+        setActiveIndex(nextIdx);
+      } else if (e.key === 'ArrowUp' || e.key === 'k') {
+        e.preventDefault();
+        const prevIdx = Math.max(activeIndex - 1, 0);
+        container.scrollTo({
+          top: prevIdx * container.clientHeight,
+          behavior: 'smooth'
+        });
+        setActiveIndex(prevIdx);
+      }
+    },
+    [activeIndex, reels.length, createOpen]
+  );
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>): void => {
+    const el = e.currentTarget;
+    if (!el.clientHeight) return;
+    const idx = Math.round(el.scrollTop / el.clientHeight);
+    if (idx !== activeIndex && idx >= 0 && idx < reels.length) {
+      setActiveIndex(idx);
+    }
+  };
+
+  return (
+    <MainLayout>
+      <SEO title='الريلز / Aite' />
+      <div className='relative flex h-[calc(100dvh-3.5rem)] xs:h-[100dvh] w-full items-center justify-center overflow-hidden bg-black'>
+        {/* Top Floating Header & Create Button */}
+        <div
+          className='absolute left-4 top-4 z-40 flex items-center gap-3 pointer-events-auto'
+          style={{ marginTop: 'env(safe-area-inset-top)' }}
+        >
+          <Button
+            className='flex items-center gap-2 rounded-full bg-main-accent/95 px-4 py-2 text-sm font-bold text-black shadow-xl backdrop-blur-md transition hover:brightness-105 active:scale-95'
+            onClick={() => setCreateOpen(true)}
+          >
+            <HeroIcon className='h-5 w-5' iconName='PlusIcon' />
+            <span>إنشاء ريل</span>
+          </Button>
+        </div>
+
+        {reelsLoading ? (
+          <div className='flex flex-col items-center gap-3 text-white'>
+            <Loading className='text-main-accent' />
+            <p className='text-sm text-light-secondary dark:text-dark-secondary'>
+              جاري تحميل الريلز...
+            </p>
+          </div>
+        ) : !reels.length ? (
+          <div className='flex flex-col items-center gap-5 px-6 text-center text-white max-w-sm'>
+            <div className='flex h-20 w-20 items-center justify-center rounded-3xl bg-white/10 backdrop-blur-md text-main-accent shadow-2xl'>
+              <HeroIcon className='h-10 w-10' iconName='FilmIcon' />
+            </div>
+            <div>
+              <p className='text-2xl font-bold'>لا توجد ريلز بعد</p>
+              <p className='mt-2 text-sm text-light-secondary dark:text-dark-secondary leading-relaxed'>
+                كن أول من يشارك لحظاته المميزة بمقطع فيديو ريل ووصف مميز!
+              </p>
+            </div>
+            <Button
+              className='flex items-center gap-2 rounded-full bg-main-accent px-6 py-3 font-bold text-black shadow-lg transition hover:brightness-105 active:scale-95'
+              onClick={() => setCreateOpen(true)}
+            >
+              <HeroIcon className='h-5 w-5' iconName='PlusIcon' />
+              <span>إنشاء أول ريل الآن</span>
+            </Button>
+          </div>
+        ) : (
+          <div
+            ref={containerRef}
+            className='h-full w-full snap-y snap-mandatory overflow-y-auto overflow-x-hidden scroll-smooth overscroll-contain select-none outline-none focus:outline-none [-webkit-tap-highlight-color:transparent]'
+            onScroll={handleScroll}
+          >
+            <AnimatePresence mode='popLayout'>
+              {reels.map((reel, index) => {
+                const owner = userById.get(reel.userId) ?? fallbackUser(reel.userId);
+                const isActive = index === activeIndex;
+
+                return (
+                  <div
+                    key={reel.id}
+                    className='relative flex h-[calc(100dvh-3.5rem)] xs:h-[100dvh] w-full snap-start snap-always items-center justify-center overflow-hidden select-none outline-none focus:outline-none'
+                  >
+                    <div className='relative mx-auto h-full w-full max-w-md select-none outline-none focus:outline-none'>
+                      <ReelCard
+                        reel={reel}
+                        user={owner}
+                        isActive={isActive}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </AnimatePresence>
+            <LoadMore />
+          </div>
+        )}
+
+        <CreateReelModal
+          open={createOpen}
+          closeModal={() => setCreateOpen(false)}
+        />
+      </div>
+    </MainLayout>
+  );
+}
+
+Reels.getLayout = (page: ReactElement): ReactNode => (
+  <ProtectedLayout>{page}</ProtectedLayout>
+);
