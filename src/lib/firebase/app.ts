@@ -1,5 +1,10 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import {
+  getAuth,
+  connectAuthEmulator,
+  setPersistence,
+  browserLocalPersistence
+} from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
@@ -23,6 +28,9 @@ function initialize(): Firebase {
   const firebaseApp = initializeApp(getFirebaseConfig());
 
   const auth = getAuth(firebaseApp);
+  // جلسة دائمة — يبقى المستخدم مسجلاً بعد إعادة التحميل (توكن محفوظ محليًا)
+  void setPersistence(auth, browserLocalPersistence);
+
   const storage = getStorage(firebaseApp);
   const firestore = getFirestore(firebaseApp);
   const functions = getFunctions(firebaseApp);

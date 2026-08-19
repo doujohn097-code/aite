@@ -4,10 +4,7 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
-import {
-  getSavedAccounts,
-  removeSavedAccount
-} from '@lib/accounts';
+import { getSavedAccounts, removeSavedAccount } from '@lib/accounts';
 import { SEO } from '@components/common/seo';
 import { AiteLogo } from '@components/ui/aite-logo';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -21,8 +18,7 @@ export default function Accounts(): JSX.Element {
     user,
     loading: authLoading,
     signInWithUsername,
-    signInWithGoogle,
-    signOut
+    signInWithGoogle
   } = useAuth();
   const router = useRouter();
 
@@ -46,18 +42,20 @@ export default function Accounts(): JSX.Element {
     if (signingIn) return;
     setSigningIn(account.username);
     try {
-      if (user) await signOut();
+      // دخول مباشر — Firebase يبدل الجلسة بهدوء دون الخروج المُسبَق (يمنع الغليتش)
       if (account.provider === 'google') {
         await signInWithGoogle(false);
       } else {
         await signInWithUsername(account.username, account.password);
       }
+      if (typeof window !== 'undefined')
+        window.sessionStorage.removeItem('aite:post-logout');
       await router.push(getRedirectTarget());
     } catch {
       toast.error(
         account.provider === 'google'
           ? 'تعذر تسجيل الدخول عبر Google، يرجى المحاولة مرة أخرى.'
-          : 'تعذر تسجيل الدخول بهذا الحساب، ربما تغيرت كلمة المرور. سجل الدخول يدوياً.'
+          : 'تعذر تسجيل الدخول بهذا الحساب — تحقق من كلمة المرور.'
       );
     } finally {
       setSigningIn(null);

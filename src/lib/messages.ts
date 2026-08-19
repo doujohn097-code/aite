@@ -161,7 +161,8 @@ export async function sendMessage(
   });
 }
 
-/** إضافة/إزالة تفاعل المستخدم مع رسالة — تمرير نفس الإيموجي يحذفه */
+/** تبديل تفاعل إيموجي — تمرير نفس الإيموجي يحذفه.
+ *  عند إضافة تفاعل نحدّث آخر رسالة وعداد غير المقروء كإشعار (أسلوب إنستغرام) */
 export async function toggleMessageReaction(
   conversationId: string,
   messageId: string,
@@ -169,12 +170,35 @@ export async function toggleMessageReaction(
   currentEmoji: string | null,
   emoji: string
 ): Promise<void> {
+  const removing = currentEmoji === emoji;
+
   await updateDoc(
     doc(conversationMessagesCollection(conversationId), messageId),
-    {
-      [`reactions.${userId}`]: currentEmoji === emoji ? deleteField() : emoji
-    }
+    removing
+      ? { [`reactions.${userId}`]: deleteField() }
+      : { [`reactions.${userId}`]: emoji }
   );
+
+  if (removing) return;
+
+  const conversationDoc = await getDoc(
+    doc(conversationsCollection, conversationId)
+  );
+  if (!conversationDoc.exists()) return;
+
+  const peer = (conversationDoc.data() as Conversation).participants.find(
+    (id) => id !== userId
+  );
+
+  await updateDoc(doc(conversationsCollection, conversationId), {
+    ...(peer ? { [`unread.${peer}`]: increment(1) } : {}),
+    lastMessage: {
+      senderId: userId,
+      type: 'text',
+      text: `تفاعل بـ ${emoji} على رسالتك`,
+      createdAt: serverTimestamp()
+    }
+  });
 }
 
 export async function markConversationRead(

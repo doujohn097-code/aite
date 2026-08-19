@@ -226,27 +226,59 @@ export function MessageBubble({
         />
       </motion.div>
 
-      {/* انفجار القلب عند النقر المزدوج */}
+      {/* انفجار القلب عند النقر المزدوج — قلب نابض مع بارتكلات حلقية */}
       <AnimatePresence>
-        <motion.span
-          key={heartBurst}
-          aria-hidden
-          className='pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-4xl'
-        >
-          {!!heartBurst && (
+        {!!heartBurst && (
+          <motion.span
+            key={heartBurst}
+            aria-hidden
+            className='pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2'
+          >
             <motion.span
-              className='block'
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: [0, 1.3, 1], opacity: [0, 1, 0], y: -10 }}
-              transition={{ duration: 0.9, ease: 'easeOut' }}
+              className='block text-4xl'
+              initial={{ scale: 0, opacity: 0, rotate: -15 }}
+              animate={{
+                scale: [0, 1.45, 1.15],
+                opacity: [0, 1, 1],
+                rotate: [-15, 5, 0]
+              }}
+              exit={{ opacity: 0, y: -24, scale: 0.4 }}
+              transition={{
+                scale: { type: 'spring', stiffness: 400, damping: 15 },
+                duration: 0.9
+              }}
             >
               ❤️
             </motion.span>
-          )}
-        </motion.span>
+            {[-2, -1.2, -0.4, 0.4, 1.2, 2].map((turn, index) => (
+              <motion.span
+                key={index}
+                className='absolute text-xs'
+                initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
+                animate={{
+                  scale: 1.1,
+                  opacity: 0,
+                  x: Math.cos(turn * Math.PI * 0.5) * 44,
+                  y: Math.sin(turn * Math.PI * 0.5) * 44
+                }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+              >
+                💛
+              </motion.span>
+            ))}
+          </motion.span>
+        )}
       </AnimatePresence>
 
-      {/* منتقي التفاعلات بالضغطة المطوّلة */}
+      {/* منتقي التفاعلات بالضغطة المطوّلة + إغلاب بخلفية عند اللمس خارج المنتقي */}
+      {pickerOpen && (
+        <button
+          className='fixed inset-0 z-20 cursor-default'
+          aria-label='إغلاق المنتقي'
+          onClick={() => setPickerOpen(false)}
+          type='button'
+        />
+      )}
       <AnimatePresence>
         {pickerOpen && (
           <motion.div
@@ -254,7 +286,7 @@ export function MessageBubble({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.7, y: 8 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className='absolute -top-11 z-30 flex items-center gap-1 rounded-full border
+            className='absolute -top-12 z-30 flex items-center gap-1 rounded-full border
                        border-light-border bg-main-background/95 px-2 py-1 shadow-xl backdrop-blur-md
                        dark:border-dark-border'
           >
@@ -271,6 +303,22 @@ export function MessageBubble({
                 {emoji}
               </button>
             ))}
+            {onReply && (
+              <button
+                className='rounded-full p-1.5 text-main-accent transition hover:scale-125'
+                onClick={() => {
+                  setPickerOpen(false);
+                  onReply(message);
+                }}
+                type='button'
+                aria-label='رد'
+              >
+                <HeroIcon
+                  className='h-5 w-5 rotate-180'
+                  iconName='ArrowUturnLeftIcon'
+                />
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -316,7 +316,23 @@ export function AuthContextProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const signInWithGoogle = async (accountChooser = true): Promise<void> => {
+  const toArabicAuthError = (error: unknown): Error => {
+    const code = (error as { code?: string })?.code ?? '';
+    const map: Record<string, string> = {
+      'auth/invalid-credential': 'اسم المستخدم أو كلمة المرور غير صحيحة',
+      'auth/wrong-password': 'اسم المستخدم أو كلمة المرور غير صحيحة',
+      'auth/user-not-found': 'لا يوجد حساب بهذا الاسم',
+      'auth/too-many-requests': 'محاولات كثيرة — انتظر قليلًا ثم حاول مجددًا',
+      'auth/network-request-failed': 'تحقق من اتصالك بالإنترنت',
+      'auth/email-already-in-use': 'اسم المستخدم مسجل مسبقًا',
+      'auth/weak-password': 'كلمة المرور ضعيفة (6 أحرف على الأقل)',
+      'auth/popup-closed-by-user': 'أُلغي تسجيل الدخول عبر Google'
+    };
+    return new Error(map[code] ?? 'تعذر تسجيل الدخول — حاول مرة أخرى');
+  };
+
+  // غوغل بلا اختيار حساب افتراضيًا — دخول مباشر بالحساب المستخدم آخر مرة
+  const signInWithGoogle = async (accountChooser = false): Promise<void> => {
     try {
       const provider = new GoogleAuthProvider();
       if (accountChooser)
@@ -331,10 +347,10 @@ export function AuthContextProvider({
             provider.setCustomParameters({ prompt: 'select_account' });
           await signInWithRedirect(auth, provider);
         } catch (redirectError) {
-          setError(redirectError as Error);
+          setError(toArabicAuthError(redirectError));
         }
-      } else {
-        setError(error as Error);
+      } else if (code !== 'auth/popup-closed-by-user') {
+        setError(toArabicAuthError(error));
       }
     }
   };
@@ -347,8 +363,8 @@ export function AuthContextProvider({
       const email = usernameToInternalEmail(username);
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      setError(error as Error);
-      throw error;
+      setError(toArabicAuthError(error));
+      throw toArabicAuthError(error);
     }
   };
 
