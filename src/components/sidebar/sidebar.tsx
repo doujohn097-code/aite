@@ -23,12 +23,12 @@ const navLinks: Readonly<NavLink[]> = [
   {
     href: '/home',
     linkName: 'الرئيسية',
-    iconName: 'HomeIcon'
+    iconName: 'HouseIcon'
   },
   {
     href: '/reels',
     linkName: 'الريلز',
-    iconName: 'FilmIcon'
+    iconName: 'ClapperboardIcon'
   },
   {
     href: '/messages',

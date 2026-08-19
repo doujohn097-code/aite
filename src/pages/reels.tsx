@@ -46,12 +46,13 @@ export default function Reels(): JSX.Element {
   const [createOpen, setCreateOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const reelsConstraints = useMemo(
-    () => [],
-    []
-  );
+  const reelsConstraints = useMemo(() => [], []);
 
-  const { data: rawReels, loading: reelsLoading, LoadMore } = useInfiniteScroll(
+  const {
+    data: rawReels,
+    loading: reelsLoading,
+    LoadMore
+  } = useInfiniteScroll(
     storiesCollection,
     reelsConstraints,
     { allowNull: true },
@@ -66,29 +67,37 @@ export default function Reels(): JSX.Element {
         const isReelOrVideo =
           s.kind === 'reel' ||
           s.images?.some((img) => img.type?.startsWith('video/')) ||
-          s.images?.some((img) => img.src?.includes('.mp4') || img.src?.includes('.mov') || img.src?.includes('.webm'));
+          s.images?.some(
+            (img) =>
+              img.src?.includes('.mp4') ||
+              img.src?.includes('.mov') ||
+              img.src?.includes('.webm')
+          );
 
         if (!isReelOrVideo) return false;
 
         if (!s.expiresAt) return true;
-        const exp = typeof s.expiresAt.toMillis === 'function'
-          ? s.expiresAt.toMillis()
-          : (s.expiresAt as unknown as { seconds?: number })?.seconds
-          ? (s.expiresAt as unknown as { seconds: number }).seconds * 1000
-          : Infinity;
+        const exp =
+          typeof s.expiresAt.toMillis === 'function'
+            ? s.expiresAt.toMillis()
+            : (s.expiresAt as unknown as { seconds?: number })?.seconds
+            ? (s.expiresAt as unknown as { seconds: number }).seconds * 1000
+            : Infinity;
         return exp > nowMs;
       })
       .sort((a, b) => {
-        const aTime = typeof a.createdAt?.toMillis === 'function'
-          ? a.createdAt.toMillis()
-          : (a.createdAt as unknown as { seconds?: number })?.seconds
-          ? (a.createdAt as unknown as { seconds: number }).seconds * 1000
-          : 0;
-        const bTime = typeof b.createdAt?.toMillis === 'function'
-          ? b.createdAt.toMillis()
-          : (b.createdAt as unknown as { seconds?: number })?.seconds
-          ? (b.createdAt as unknown as { seconds: number }).seconds * 1000
-          : 0;
+        const aTime =
+          typeof a.createdAt?.toMillis === 'function'
+            ? a.createdAt.toMillis()
+            : (a.createdAt as unknown as { seconds?: number })?.seconds
+            ? (a.createdAt as unknown as { seconds: number }).seconds * 1000
+            : 0;
+        const bTime =
+          typeof b.createdAt?.toMillis === 'function'
+            ? b.createdAt.toMillis()
+            : (b.createdAt as unknown as { seconds?: number })?.seconds
+            ? (b.createdAt as unknown as { seconds: number }).seconds * 1000
+            : 0;
         return bTime - aTime;
       });
   }, [rawReels]);
@@ -100,7 +109,10 @@ export default function Reels(): JSX.Element {
   );
 
   const ownersQuery = useMemo(
-    () => (ownerIds.length ? query(usersCollection, where('__name__', 'in', ownerIds)) : null),
+    () =>
+      ownerIds.length
+        ? query(usersCollection, where('__name__', 'in', ownerIds))
+        : null,
     [ownerIds]
   );
   const { data: owners } = useCollection(ownersQuery, { allowNull: true });
@@ -162,10 +174,10 @@ export default function Reels(): JSX.Element {
   return (
     <MainLayout>
       <SEO title='الريلز / Aite' />
-      <div className='relative flex h-[calc(100dvh-3.5rem)] xs:h-[100dvh] w-full items-center justify-center overflow-hidden bg-black'>
+      <div className='relative flex h-[calc(100dvh-3.5rem)] w-full items-center justify-center overflow-hidden bg-black xs:h-[100dvh]'>
         {/* Top Floating Header & Create Button */}
         <div
-          className='absolute left-4 top-4 z-40 flex items-center gap-3 pointer-events-auto'
+          className='pointer-events-auto absolute left-4 top-4 z-40 flex items-center gap-3'
           style={{ marginTop: 'env(safe-area-inset-top)' }}
         >
           <Button
@@ -185,13 +197,13 @@ export default function Reels(): JSX.Element {
             </p>
           </div>
         ) : !reels.length ? (
-          <div className='flex flex-col items-center gap-5 px-6 text-center text-white max-w-sm'>
-            <div className='flex h-20 w-20 items-center justify-center rounded-3xl bg-white/10 backdrop-blur-md text-main-accent shadow-2xl'>
-              <HeroIcon className='h-10 w-10' iconName='FilmIcon' />
+          <div className='flex max-w-sm flex-col items-center gap-5 px-6 text-center text-white'>
+            <div className='flex h-20 w-20 items-center justify-center rounded-3xl bg-white/10 text-main-accent shadow-2xl backdrop-blur-md'>
+              <HeroIcon className='h-10 w-10' iconName='ClapperboardIcon' />
             </div>
             <div>
               <p className='text-2xl font-bold'>لا توجد ريلز بعد</p>
-              <p className='mt-2 text-sm text-light-secondary dark:text-dark-secondary leading-relaxed'>
+              <p className='mt-2 text-sm leading-relaxed text-light-secondary dark:text-dark-secondary'>
                 كن أول من يشارك لحظاته المميزة بمقطع فيديو ريل ووصف مميز!
               </p>
             </div>
@@ -206,25 +218,22 @@ export default function Reels(): JSX.Element {
         ) : (
           <div
             ref={containerRef}
-            className='h-full w-full snap-y snap-mandatory overflow-y-auto overflow-x-hidden scroll-smooth overscroll-contain select-none outline-none focus:outline-none [-webkit-tap-highlight-color:transparent]'
+            className='h-full w-full select-none snap-y snap-mandatory overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth outline-none [-webkit-tap-highlight-color:transparent] focus:outline-none'
             onScroll={handleScroll}
           >
             <AnimatePresence mode='popLayout'>
               {reels.map((reel, index) => {
-                const owner = userById.get(reel.userId) ?? fallbackUser(reel.userId);
+                const owner =
+                  userById.get(reel.userId) ?? fallbackUser(reel.userId);
                 const isActive = index === activeIndex;
 
                 return (
                   <div
                     key={reel.id}
-                    className='relative flex h-[calc(100dvh-3.5rem)] xs:h-[100dvh] w-full snap-start snap-always items-center justify-center overflow-hidden select-none outline-none focus:outline-none'
+                    className='relative flex h-[calc(100dvh-3.5rem)] w-full select-none snap-start snap-always items-center justify-center overflow-hidden outline-none focus:outline-none xs:h-[100dvh]'
                   >
                     <div className='relative mx-auto h-full w-full max-w-md select-none outline-none focus:outline-none'>
-                      <ReelCard
-                        reel={reel}
-                        user={owner}
-                        isActive={isActive}
-                      />
+                      <ReelCard reel={reel} user={owner} isActive={isActive} />
                     </div>
                   </div>
                 );
