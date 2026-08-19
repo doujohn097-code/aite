@@ -369,6 +369,12 @@ export function MessageInput({
         <textarea
           ref={inputRef}
           value={text}
+          onKeyDown={(e): void => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
           onChange={({
             target: { value }
           }: ChangeEvent<HTMLTextAreaElement>): void => setText(value)}
