@@ -41,7 +41,8 @@ export function UserAvatar({
       />
       {online && username && (
         <span
-          className='absolute -bottom-0.5 -right-0.5 rounded-full bg-emerald-500 ring-2 ring-main-background'
+          className='absolute -bottom-0.5 -left-0.5 rounded-full bg-emerald-400 ring-2 ring-main-background
+                     shadow-[0_0_8px_2px_rgba(52,211,153,0.9)]'
           style={{ width: dotSize, height: dotSize }}
           title='نشط الآن'
         />

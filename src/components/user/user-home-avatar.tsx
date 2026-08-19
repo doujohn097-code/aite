@@ -2,6 +2,7 @@ import cn from 'clsx';
 import { useRouter } from 'next/router';
 import { useModal } from '@lib/hooks/useModal';
 import { useStoryRing } from '@lib/hooks/useStoryRing';
+import { useOnlineStatus } from '@lib/presence-store';
 import { NextImage } from '@components/ui/next-image';
 import { Modal } from '@components/modal/modal';
 import { ImageModal } from '@components/modal/image-modal';
@@ -23,6 +24,7 @@ export function UserHomeAvatar({
   const { push } = useRouter();
   const { hasStory, color } = useStoryRing(user);
   const ringColor = color ?? '#3b82f6';
+  const online = useOnlineStatus(user?.username);
 
   const imageSrc = user?.photoURL ?? profileData?.src ?? null;
   const imageAlt = user?.name ?? profileData?.alt ?? '';
@@ -78,6 +80,13 @@ export function UserHomeAvatar({
             <div className='h-full w-full rounded-full bg-main-sidebar-background' />
           )}
         </div>
+        {online && (
+          <span
+            className='absolute -bottom-1 -left-1 h-7 w-7 rounded-full bg-emerald-400
+                       ring-2 ring-main-background shadow-[0_0_8px_2px_rgba(52,211,153,0.9)]'
+            title='نشط الآن'
+          />
+        )}
       </button>
     </div>
   );
