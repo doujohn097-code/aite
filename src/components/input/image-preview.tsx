@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
 import { useModal } from '@lib/hooks/useModal';
 import { preventBubbling } from '@lib/utils';
 import { ImageModal } from '@components/modal/image-modal';
 import { Modal } from '@components/modal/modal';
+import { CustomVideoPlayer } from '@components/ui/custom-video-player';
 import { NextImage } from '@components/ui/next-image';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -50,8 +51,6 @@ export function ImagePreview({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-
   const { open, openModal, closeModal } = useModal();
 
   useEffect(() => {
@@ -60,13 +59,7 @@ export function ImagePreview({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIndex]);
 
-  const handleVideoStop = (): void => {
-    if (videoRef.current) videoRef.current.pause();
-  };
-
-  const handleSelectedImage = (index: number, isVideo?: boolean) => () => {
-    if (isVideo) handleVideoStop();
-
+  const handleSelectedImage = (index: number, _isVideo?: boolean) => () => {
     setSelectedIndex(index);
     openModal();
   };
@@ -145,18 +138,19 @@ export function ImagePreview({
                   >
                     <HeroIcon className='h-5 w-5' iconName='ArrowUpRightIcon' />
                   </Button>
-                  <video
-                    ref={videoRef}
+                  <CustomVideoPlayer
+                    src={src}
                     className={cn(
-                      `relative h-full w-full cursor-pointer transition 
-                       hover:brightness-75 hover:duration-200`,
+                      'h-full w-full cursor-pointer',
                       isTweet
                         ? postImageBorderRadius[previewCount][index]
                         : 'rounded-2xl'
                     )}
-                    src={src}
-                    controls
-                    muted
+                    videoClassName={cn(
+                      isTweet
+                        ? postImageBorderRadius[previewCount][index]
+                        : 'rounded-2xl'
+                    )}
                   />
                 </>
               ) : (

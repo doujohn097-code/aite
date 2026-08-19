@@ -64,6 +64,7 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
+  const userMutedRef = useRef(false);
   const [showPlayIcon, setShowPlayIcon] = useState(false);
   const [showMuteIcon, setShowMuteIcon] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -152,6 +153,12 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
     if (!video) return;
 
     if (video.paused) {
+      // A real user gesture — sound is allowed now, honor it unless the
+      // user explicitly muted via the speaker button.
+      if (!userMutedRef.current) {
+        video.muted = false;
+        setIsMuted(false);
+      }
       void video.play().then(() => {
         setIsPlaying(true);
         setShowPlayIcon(true);
@@ -170,6 +177,7 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
     const video = videoRef.current;
     if (!video) return;
     const nextMuted = !video.muted;
+    userMutedRef.current = nextMuted;
     video.muted = nextMuted;
     setIsMuted(nextMuted);
     setShowMuteIcon(true);

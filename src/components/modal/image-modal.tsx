@@ -7,6 +7,7 @@ import { preventBubbling } from '@lib/utils';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { Loading } from '@components/ui/loading';
+import { CustomVideoPlayer } from '@components/ui/custom-video-player';
 import { backdrop, modal } from './modal';
 import type { VariantLabels } from 'framer-motion';
 import type { ImageData } from '@lib/types/file';
@@ -112,18 +113,14 @@ export function ImageModal({
           <motion.div className='relative mx-auto' {...modal} key={src}>
             {isVideo ? (
               <div className='group relative flex max-w-3xl'>
-                <video
+                <CustomVideoPlayer
                   className={cn(
-                    'max-h-[75vh] rounded-md object-contain md:max-h-[80vh]',
+                    'max-h-[75vh] rounded-md md:max-h-[80vh]',
                     loading ? 'hidden' : 'block'
                   )}
+                  videoClassName='max-h-[75vh] object-contain md:max-h-[80vh]'
                   src={src}
-                  autoPlay
-                  controls
-                  onClick={preventBubbling()}
-                >
-                  <source srcSet={src} type='video/*' />
-                </video>
+                />
               </div>
             ) : (
               <picture className='group relative flex max-w-3xl'>

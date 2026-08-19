@@ -37,7 +37,7 @@ export function CreateReelModal({
   const [computingDuration, setComputingDuration] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isPlayingPreview, setIsPlayingPreview] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);

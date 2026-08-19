@@ -24,7 +24,7 @@ const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_STORY_DURATION_MS = 15000;
 
 export function StoryViewer({ userId }: { userId: string }): JSX.Element {
-  const { back, push } = useRouter();
+  const { push, replace } = useRouter();
   const { user: authUser, markStoryViewed } = useAuth();
   const { open: confirmOpen, openModal: openConfirm, closeModal: closeConfirm } =
     useModal();
@@ -140,8 +140,8 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
       setIndex((i) => i + 1);
     } else if (nextUserId) {
       void push(`/stories/${nextUserId}`);
-    } else void back();
-  }, [index, stories.length, nextUserId, push, back]);
+    } else void replace('/home');
+  }, [index, stories.length, nextUserId, push, replace]);
 
   const prevStory = useCallback((): void => {
     if (index > 0) {
@@ -149,8 +149,8 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
       setIndex((i) => i - 1);
     } else if (prevUserId) {
       void push(`/stories/${prevUserId}`);
-    } else void back();
-  }, [index, prevUserId, push, back]);
+    } else void replace('/home');
+  }, [index, prevUserId, push, replace]);
 
   useEffect(() => {
     const story = stories.find((s) => s.id === currentStoryId);
@@ -339,7 +339,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
             )}
             <Button
               className='bg-white/10 px-5 py-2.5 font-medium text-white hover:bg-white/20'
-              onClick={(): void => void back()}
+              onClick={(): void => void replace('/home')}
             >
               العودة للرئيسية
             </Button>
@@ -422,7 +422,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
           )}
           <Button
             type='button'
-            onClick={(): void => void back()}
+            onClick={(): void => void replace('/home')}
             className='bg-white/10 p-2 text-white hover:bg-white/20'
           >
             <HeroIcon className='h-5 w-5' iconName='XMarkIcon' />
