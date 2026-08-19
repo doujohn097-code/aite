@@ -28,19 +28,21 @@ export function StoryAvatar({
       onClick={onClick}
       className={cn(
         'relative transition',
-        hasStory ? 'story-ring-blob p-0.5' : 'rounded-full p-0',
+        hasStory ? 'overflow-hidden rounded-full p-0.5' : 'rounded-full p-0',
         onClick && 'cursor-pointer',
         className
       )}
-      style={
-        hasStory
-          ? {
-              background: `linear-gradient(135deg, ${ringColor}, ${ringColor}80 60%, ${ringColor}40)`
-            }
-          : undefined
-      }
     >
-      <div className={cn('rounded-full bg-main-background', hasStory ? 'p-0.5' : 'p-0')}>
+      {hasStory && (
+        <span
+          aria-hidden
+          className='story-ring-spin absolute left-1/2 top-1/2 aspect-square w-[220%] -translate-x-1/2 -translate-y-1/2'
+          style={{
+            background: `conic-gradient(from 0deg, ${ringColor}10, ${ringColor}, ${ringColor}70, ${ringColor}20, ${ringColor}, ${ringColor}10)`
+          }}
+        />
+      )}
+      <div className={cn('relative rounded-full bg-main-background', hasStory ? 'p-0.5' : 'p-0')}>
         <UserAvatar
           src={user.photoURL}
           alt={user.name}

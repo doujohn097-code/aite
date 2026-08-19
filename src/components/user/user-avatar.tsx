@@ -26,7 +26,7 @@ export function UserAvatar({
       ? '/assets/default-avatar.png'
       : src;
 
-  const dotSize = Math.max(10, Math.round(pictureSize / 3));
+  const dotSize = Math.max(8, Math.round(pictureSize / 4));
 
   const image = (
     <span className='relative inline-flex shrink-0'>
