@@ -4,7 +4,8 @@ import { UserAvatar } from '@components/user/user-avatar';
 import type { User } from '@lib/types/user';
 
 type StoryAvatarProps = {
-  user: User;
+  user: Partial<User> &
+    Pick<User, 'id' | 'name' | 'username' | 'photoURL'>;
   size?: number;
   className?: string;
   onClick?: () => void;

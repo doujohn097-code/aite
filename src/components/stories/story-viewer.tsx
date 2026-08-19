@@ -25,7 +25,7 @@ const DEFAULT_STORY_DURATION_MS = 15000;
 
 export function StoryViewer({ userId }: { userId: string }): JSX.Element {
   const { back, push } = useRouter();
-  const { user: authUser } = useAuth();
+  const { user: authUser, markStoryViewed } = useAuth();
   const { open: confirmOpen, openModal: openConfirm, closeModal: closeConfirm } =
     useModal();
 
@@ -154,9 +154,11 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
 
   useEffect(() => {
     const story = stories.find((s) => s.id === currentStoryId);
-    if (story && authUser && authUser.id !== userId)
+    if (story && authUser && authUser.id !== userId) {
+      markStoryViewed(userId);
       void viewStory(story.id, authUser.id, userId);
-  }, [currentStoryId, authUser, userId, stories]);
+    }
+  }, [currentStoryId, authUser, userId, stories, markStoryViewed]);
 
   useEffect(() => {
     elapsedRef.current = 0;

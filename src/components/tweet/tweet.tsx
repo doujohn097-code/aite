@@ -7,7 +7,7 @@ import { delayScroll } from '@lib/utils';
 import { Modal } from '@components/modal/modal';
 import { TweetReplyModal } from '@components/modal/tweet-reply-modal';
 import { ImagePreview } from '@components/input/image-preview';
-import { UserAvatar } from '@components/user/user-avatar';
+import { StoryAvatar } from '@components/stories/story-avatar';
 import { UserTooltip } from '@components/user/user-tooltip';
 import { UserName } from '@components/user/user-name';
 import { TweetActions } from './tweet-actions';
@@ -133,7 +133,15 @@ export function Tweet(tweet: TweetProps): JSX.Element {
             </AnimatePresence>
             <div className='flex flex-col items-center gap-2'>
               <UserTooltip avatar modal={modal} {...tweetUserData}>
-                <UserAvatar src={photoURL} alt={name} username={username} />
+                <StoryAvatar
+                  user={{
+                    id: ownerId,
+                    name,
+                    username,
+                    photoURL
+                  }}
+                  size={48}
+                />
               </UserTooltip>
               {parentTweet && (
                 <i className='hover-animation h-full w-0.5 bg-light-line-reply dark:bg-dark-line-reply' />

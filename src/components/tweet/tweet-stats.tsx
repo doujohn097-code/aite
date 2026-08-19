@@ -127,10 +127,26 @@ export function TweetStats({
         )}
       >
         <TweetOption
+          className={cn(
+            'hover:text-red-600 focus-visible:text-red-600',
+            liked && 'text-red-600'
+          )}
+          iconClassName='group-hover:bg-red-500/10 group-active:bg-red-500/20
+                         group-focus-visible:bg-red-500/10 group-focus-visible:ring-red-500/80'
+          tip={liked ? 'إلغاء الإعجاب' : 'إعجاب'}
+          move={likeDelta ? (likeDelta > 0 ? -25 : 25) : likeMove}
+          stats={currentLikes + likeDelta}
+          iconName='HeartIcon'
+          viewTweet={viewTweet}
+          solid={liked}
+          pop
+          onClick={handleLike}
+        />
+        <TweetOption
           className='hover:text-accent-blue focus-visible:text-accent-blue'
           iconClassName='group-hover:bg-accent-blue/10 group-active:bg-accent-blue/20 
                          group-focus-visible:bg-accent-blue/10 group-focus-visible:ring-accent-blue/80'
-          tip='رد'
+          tip='تعليق'
           move={replyMove}
           stats={currentReplies}
           iconName='ChatBubbleOvalLeftIcon'
@@ -153,22 +169,6 @@ export function TweetStats({
           solid={retweeted}
           pop
           onClick={handleRetweet}
-        />
-        <TweetOption
-          className={cn(
-            'hover:text-red-600 focus-visible:text-red-600',
-            liked && 'text-red-600'
-          )}
-          iconClassName='group-hover:bg-red-500/10 group-active:bg-red-500/20
-                         group-focus-visible:bg-red-500/10 group-focus-visible:ring-red-500/80'
-          tip={liked ? 'إلغاء الإعجاب' : 'إعجاب'}
-          move={likeDelta ? (likeDelta > 0 ? -25 : 25) : likeMove}
-          stats={currentLikes + likeDelta}
-          iconName='HeartIcon'
-          viewTweet={viewTweet}
-          solid={liked}
-          pop
-          onClick={handleLike}
         />
         <TweetShare userId={userId} tweetId={tweetId} viewTweet={viewTweet} />
       </div>

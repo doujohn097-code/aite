@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, createContext, useMemo, useRef } from 'react';
+import { useState, useEffect, useContext, createContext, useMemo, useRef, useCallback } from 'react';
 import {
   signInWithPopup,
   signInWithRedirect,
@@ -56,6 +56,8 @@ type AuthContext = {
   signInWithGoogle: () => Promise<void>;
   signInWithUsername: (username: string, password: string) => Promise<void>;
   signUpWithUsername: (data: SignUpData) => Promise<void>;
+  /** Locally mark a user's story as seen so the ring disappears instantly. */
+  markStoryViewed: (storyUserId: string) => void;
 };
 
 export const AuthContext = createContext<AuthContext | null>(null);
@@ -407,6 +409,20 @@ export function AuthContextProvider({
   const isAdmin = false;
   const randomSeed = useMemo(getRandomId, [user?.id]);
 
+  const markStoryViewed = useCallback((storyUserId: string): void => {
+    setUser((prevUser) =>
+      prevUser
+        ? {
+            ...prevUser,
+            storyViews: {
+              ...(prevUser.storyViews ?? {}),
+              [storyUserId]: Timestamp.now()
+            }
+          }
+        : prevUser
+    );
+  }, []);
+
   const value: AuthContext = {
     user,
     error,
@@ -418,7 +434,8 @@ export function AuthContextProvider({
     signOut,
     signInWithGoogle,
     signInWithUsername,
-    signUpWithUsername
+    signUpWithUsername,
+    markStoryViewed
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

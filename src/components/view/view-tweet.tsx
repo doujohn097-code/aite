@@ -6,7 +6,7 @@ import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
 import { TweetReplyModal } from '@components/modal/tweet-reply-modal';
 import { ImagePreview } from '@components/input/image-preview';
-import { UserAvatar } from '@components/user/user-avatar';
+import { StoryAvatar } from '@components/stories/story-avatar';
 import { UserTooltip } from '@components/user/user-tooltip';
 import { UserName } from '@components/user/user-name';
 import { variants } from '@components/tweet/tweet';
@@ -79,7 +79,10 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
             <i className='hover-animation h-2 w-0.5 bg-light-line-reply dark:bg-dark-line-reply' />
           )}
           <UserTooltip avatar {...tweetUserData}>
-            <UserAvatar src={photoURL} alt={name} username={username} />
+            <StoryAvatar
+              user={{ id: ownerId, name, username, photoURL }}
+              size={48}
+            />
           </UserTooltip>
         </div>
         <div className='flex min-w-0 flex-col gap-3'>
