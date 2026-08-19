@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
 import { checkUsernameAvailability, updateUsername } from '@lib/firebase/utils';
 import { useAuth } from '@lib/context/auth-context';
@@ -25,6 +26,16 @@ export function UpdateUsername(): JSX.Element {
 
   const { user } = useAuth();
   const { open, openModal, closeModal } = useModal();
+  const router = useRouter();
+
+  // إن كان المستخدم واقفًا على صفحة ملفه باسمه القديم يجب نقله إلى الاسم الجديد
+  const redirectIfOnOwnProfile = (nextUsername?: string): void => {
+    const id = Array.isArray(router.query.id)
+      ? router.query.id[0]
+      : router.query.id;
+    if (id && id === user?.username && nextUsername)
+      void router.replace(`/user/${nextUsername}`);
+  };
 
   useEffect(() => {
     const checkAvailability = async (value: string): Promise<void> => {
@@ -75,6 +86,8 @@ export function UpdateUsername(): JSX.Element {
       await updateUsername(user?.id as string, inputValue);
 
       closeModal();
+
+      redirectIfOnOwnProfile(inputValue);
 
       setInputValue('');
       setVisited(false);

@@ -97,6 +97,7 @@ export function CustomVideoPlayer({
     <button
       type='button'
       onClick={(e) => {
+        e.preventDefault();
         e.stopPropagation();
         onClick();
       }}
@@ -156,7 +157,10 @@ export function CustomVideoPlayer({
             className='pointer-events-none absolute inset-0 flex items-center justify-center'
           >
             <div className='flex h-14 w-14 items-center justify-center rounded-full bg-black/55 text-white shadow-2xl backdrop-blur-md'>
-              <HeroIcon className='h-7 w-7 translate-x-0.5' iconName='PlayIcon' />
+              <HeroIcon
+                className='h-7 w-7 translate-x-0.5'
+                iconName='PlayIcon'
+              />
             </div>
           </motion.div>
         )}
@@ -171,7 +175,10 @@ export function CustomVideoPlayer({
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.18 }}
             className='absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-6'
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
           >
             <div className='flex items-center gap-2'>
               {controlButton(
@@ -186,7 +193,10 @@ export function CustomVideoPlayer({
                 step={0.1}
                 value={progress}
                 onChange={(e) => handleSeek(Number(e.target.value))}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
                 aria-label='التقدم'
                 className='h-1 flex-1 cursor-pointer appearance-none rounded-full bg-white/30
                            accent-main-accent [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3
@@ -201,7 +211,11 @@ export function CustomVideoPlayer({
                 muted ? 'تشغيل الصوت' : 'كتم الصوت',
                 toggleMute
               )}
-              {controlButton('ArrowsPointingOutIcon', 'ملء الشاشة', handleFullscreen)}
+              {controlButton(
+                'ArrowsPointingOutIcon',
+                'ملء الشاشة',
+                handleFullscreen
+              )}
             </div>
           </motion.div>
         )}

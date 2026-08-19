@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import cn from 'clsx';
 import { useRouter } from 'next/router';
 import { useAuth } from '@lib/context/auth-context';
 import { useWindow } from '@lib/context/window-context';
@@ -50,8 +51,10 @@ export function Sidebar(): JSX.Element {
   const { open, openModal, closeModal } = useModal();
 
   const username = user?.username as string;
-  const isReels = asPath.split('?')[0].startsWith('/reels');
-  const isMessages = asPath.split('?')[0].startsWith('/messages');
+  const path = asPath.split('?')[0];
+  const isReels = path.startsWith('/reels');
+  const isMessages = path.startsWith('/messages');
+  const isChat = path.startsWith('/messages/');
 
   return (
     <header
@@ -68,10 +71,13 @@ export function Sidebar(): JSX.Element {
         <Input modal closeModal={closeModal} />
       </Modal>
       <div
-        className='fixed inset-x-0 bottom-0 z-50 flex w-full flex-col justify-between border-t border-light-border
-                   bg-main-background/95 py-0 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:border-dark-border dark:bg-black/95
-                   xs:inset-x-auto xs:top-0 xs:h-[100dvh] xs:w-auto xs:overflow-y-auto xs:overscroll-contain xs:border-0 xs:bg-transparent xs:px-2 xs:py-2
-                   xs:[scrollbar-width:thin] md:px-4 xl:w-72'
+        className={cn(
+          'fixed inset-x-0 bottom-0 z-50 flex w-full flex-col justify-between border-t border-light-border',
+          'bg-main-background/95 py-0 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:border-dark-border dark:bg-black/95',
+          'xs:inset-x-auto xs:top-0 xs:h-[100dvh] xs:w-auto xs:overflow-y-auto xs:overscroll-contain xs:border-0 xs:bg-transparent xs:px-2 xs:py-2',
+          'xs:[scrollbar-width:thin] md:px-4 xl:w-72',
+          isChat && 'hidden xs:flex'
+        )}
       >
         <section className='flex flex-col justify-center gap-1 xs:items-center xl:items-stretch'>
           <h1 className='hidden xs:flex'>

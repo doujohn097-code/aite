@@ -26,8 +26,11 @@ const DEFAULT_STORY_DURATION_MS = 15000;
 export function StoryViewer({ userId }: { userId: string }): JSX.Element {
   const { push, replace } = useRouter();
   const { user: authUser, markStoryViewed } = useAuth();
-  const { open: confirmOpen, openModal: openConfirm, closeModal: closeConfirm } =
-    useModal();
+  const {
+    open: confirmOpen,
+    openModal: openConfirm,
+    closeModal: closeConfirm
+  } = useModal();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -87,12 +90,25 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
 
   // Clean up ghost lastStoryAt if all stories expired or deleted
   useEffect(() => {
-    if (!storiesLoading && rawStories && stories.length === 0 && userData?.lastStoryAt) {
+    if (
+      !storiesLoading &&
+      rawStories &&
+      stories.length === 0 &&
+      userData?.lastStoryAt
+    ) {
       if (authUser?.id === userId) {
         void updateDoc(userRef, { lastStoryAt: null });
       }
     }
-  }, [storiesLoading, rawStories, stories.length, userData?.lastStoryAt, authUser?.id, userId, userRef]);
+  }, [
+    storiesLoading,
+    rawStories,
+    stories.length,
+    userData?.lastStoryAt,
+    authUser?.id,
+    userId,
+    userRef
+  ]);
 
   const activeUsersQuery = useMemo(() => {
     const oneDayAgo = Timestamp.fromMillis(Date.now() - STORY_LIFETIME_MS);
@@ -130,9 +146,10 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
   const currentStoryId = currentStory?.id;
   const isCurrentVideo = currentStory?.images?.[0]?.type?.startsWith('video/');
 
-  const storyDuration = isCurrentVideo && currentStory?.duration
-    ? currentStory.duration
-    : Math.max(15000, currentStory?.duration ?? DEFAULT_STORY_DURATION_MS);
+  const storyDuration =
+    isCurrentVideo && currentStory?.duration
+      ? currentStory.duration
+      : Math.max(15000, currentStory?.duration ?? DEFAULT_STORY_DURATION_MS);
 
   const nextStory = useCallback((): void => {
     if (index < stories.length - 1) {
@@ -154,7 +171,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
 
   useEffect(() => {
     const story = stories.find((s) => s.id === currentStoryId);
-    if (story && authUser && authUser.id !== userId) {
+    if (story && authUser) {
       markStoryViewed(userId);
       void viewStory(story.id, authUser.id, userId);
     }
@@ -260,7 +277,9 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
 
   const liked = optimisticLiked ?? isLiked;
   const likeDelta =
-    optimisticLiked === null ? 0 : (optimisticLiked ? 1 : 0) - (isLiked ? 1 : 0);
+    optimisticLiked === null
+      ? 0
+      : (optimisticLiked ? 1 : 0) - (isLiked ? 1 : 0);
 
   const toggleLike = (): void => {
     if (!currentStory || !authUser) return;
@@ -316,7 +335,10 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
         />
         <div className='fixed inset-0 z-50 flex flex-col items-center justify-center bg-black px-6 text-center text-white'>
           <div className='mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/10'>
-            <HeroIcon className='h-10 w-10 text-main-accent' iconName='PhotoIcon' />
+            <HeroIcon
+              className='h-10 w-10 text-main-accent'
+              iconName='PhotoIcon'
+            />
           </div>
           <h2 className='text-2xl font-bold'>
             {authUser?.id === userId
@@ -379,7 +401,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
 
       <audio ref={audioRef} />
 
-      <div className='absolute top-0 left-0 right-0 z-20 flex gap-1 px-2 pt-4'>
+      <div className='absolute left-0 right-0 top-0 z-20 flex gap-1 px-2 pt-4'>
         {stories.map((_, i) => (
           <div key={i} className='h-0.5 flex-1 rounded-full bg-white/30'>
             <div
@@ -389,15 +411,13 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
                 i === index && 'transition-none',
                 i > index && 'w-0'
               )}
-              style={
-                i === index ? { width: `${progress}%` } : undefined
-              }
+              style={i === index ? { width: `${progress}%` } : undefined}
             />
           </div>
         ))}
       </div>
 
-      <header className='z-20 flex items-center justify-between px-4 pt-8 pb-2'>
+      <header className='z-20 flex items-center justify-between px-4 pb-2 pt-8'>
         <div className='flex items-center gap-3'>
           <UserAvatar
             src={user.photoURL}

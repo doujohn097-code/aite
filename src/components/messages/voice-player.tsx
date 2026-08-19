@@ -95,7 +95,7 @@ export function VoicePlayer({
   return (
     <div
       className={cn(
-        'flex min-w-0 items-center gap-2 overflow-visible',
+        'flex min-w-0 items-center gap-3 overflow-visible',
         compact ? 'w-full' : 'w-52 xs:w-56'
       )}
       dir='ltr'

@@ -19,6 +19,13 @@ export function NewMessageModal({
   const { user } = useAuth();
   const [people, setPeople] = useState<User[] | null>(null);
   const [search, setSearch] = useState('');
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const handleSelect = async (person: User): Promise<void> => {
+    if (busyId) return;
+    setBusyId(person.id);
+    await onSelect(person);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -90,9 +97,11 @@ export function NewMessageModal({
             <button
               key={person.id}
               type='button'
-              onClick={() => onSelect(person)}
+              onClick={() => void handleSelect(person)}
+              disabled={!!busyId}
               className='hover-animation flex w-full items-center gap-3 px-4 py-3 text-right
-                         hover:bg-light-primary/5 dark:hover:bg-dark-primary/5'
+                         hover:bg-light-primary/5 disabled:opacity-60
+                         dark:hover:bg-dark-primary/5'
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -111,6 +120,7 @@ export function NewMessageModal({
                   @{person.username}
                 </span>
               </div>
+              {busyId === person.id && <Loading className='ms-auto h-4 w-4' />}
             </button>
           ))
         ) : (

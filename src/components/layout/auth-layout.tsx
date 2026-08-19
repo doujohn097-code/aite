@@ -24,7 +24,8 @@ export function AuthLayout({ children }: LayoutProps): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading, isReady, query.redirect, replace]);
 
-  if (loading) return <Placeholder />;
+  // أثناء تحميل الجلسة أو وجود مستخدم (سنوجّهه فورًا) لا نعرض صفحات الدخول إطلاقًا
+  if (loading || user) return <Placeholder />;
 
   return <>{children}</>;
 }
