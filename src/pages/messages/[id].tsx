@@ -216,9 +216,7 @@ export default function Chat(): JSX.Element {
       {/* الرسائل */}
       <div
         ref={scrollRef}
-        className='flex flex-1 flex-col gap-2 overflow-y-auto overscroll-contain bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.06),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(255,255,255,0.05),transparent_55%)] px-3
-                   py-4
-                   dark:bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.06),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(255,255,255,0.05),transparent_55%)]'
+        className='flex flex-1 flex-col gap-2 overflow-y-auto overscroll-contain bg-main-background px-3 py-4'
       >
         {!messages ? (
           <Loading className='mt-5' />
