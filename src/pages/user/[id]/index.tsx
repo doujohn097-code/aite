@@ -18,15 +18,17 @@ import { UserHomeLayout } from '@components/layout/user-home-layout';
 import { StatsEmpty } from '@components/tweet/stats-empty';
 import { Loading } from '@components/ui/loading';
 import { Tweet } from '@components/tweet/tweet';
+import { HeroIcon } from '@components/ui/hero-icon';
+import type { IconName } from '@components/ui/hero-icon';
 import type { ReactElement, ReactNode } from 'react';
 import type { Story } from '@lib/types/story';
 
 type ProfileTab = 'posts' | 'retweets' | 'reels';
 
-const TABS: { id: ProfileTab; label: string }[] = [
-  { id: 'posts', label: 'المنشورات' },
-  { id: 'retweets', label: 'المُعاد نشرها' },
-  { id: 'reels', label: 'الريلز المعاد نشرها' }
+const TABS: { id: ProfileTab; label: string; icon: IconName }[] = [
+  { id: 'posts', label: 'المنشورات', icon: 'DocumentTextIcon' },
+  { id: 'retweets', label: 'المُعاد نشرها', icon: 'ArrowPathRoundedSquareIcon' },
+  { id: 'reels', label: 'الريلز المعاد نشرها', icon: 'PlayIcon' }
 ];
 
 export default function UserTweets(): JSX.Element {
@@ -101,33 +103,23 @@ export default function UserTweets(): JSX.Element {
     <section>
       {/* Profile tabs */}
       <div
-        className='sticky top-0 z-10 grid grid-cols-3 border-b border-light-border
-                   bg-main-background dark:border-dark-border'
+        className='sticky top-0 z-10 mx-3 mt-3 flex gap-1 rounded-full bg-light-sidebar-background/60
+                   p-1.5 dark:bg-dark-sidebar-background/60'
       >
-        {TABS.map(({ id: tabId, label }) => (
+        {TABS.map(({ id: tabId, label, icon }) => (
           <button
             key={tabId}
             type='button'
             onClick={(): void => setTab(tabId)}
-            className='hover-animation main-tab dark-bg-tab flex justify-center
-                       hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-bold transition-all',
+              tab === tabId
+                ? 'bg-main-accent text-black shadow-sm'
+                : 'text-light-secondary hover:bg-light-line-reply/50 dark:text-dark-secondary dark:hover:bg-dark-line-reply/50'
+            )}
           >
-            <p
-              className={cn(
-                'flex flex-col gap-2 whitespace-nowrap px-2 py-3 text-sm font-bold transition-colors',
-                tab === tabId
-                  ? 'text-light-primary dark:text-dark-primary'
-                  : 'text-light-secondary dark:text-dark-secondary'
-              )}
-            >
-              {label}
-              <i
-                className={cn(
-                  'h-1 rounded-full bg-main-accent transition',
-                  tab === tabId ? 'opacity-100' : 'opacity-0'
-                )}
-              />
-            </p>
+            <HeroIcon className='h-4 w-4' iconName={icon} />
+            <span className='leading-tight'>{label}</span>
           </button>
         ))}
       </div>
@@ -135,7 +127,7 @@ export default function UserTweets(): JSX.Element {
       {loading ? (
         <Loading className='mt-5' />
       ) : tab === 'posts' ? (
-        !ownerOnlyTweets ? (
+        !ownerOnlyTweets?.length ? (
           <StatsEmpty
             title={`@${username as string} لم ينشر`}
             description='عندما ينشر، ستظهر منشوراته هنا.'
@@ -151,7 +143,7 @@ export default function UserTweets(): JSX.Element {
           </AnimatePresence>
         )
       ) : tab === 'retweets' ? (
-        !filteredPeopleTweets ? (
+        !filteredPeopleTweets?.length ? (
           <StatsEmpty
             title='لا توجد منشورات معاد نشرها'
             description='عندما يعيد النشر، ستظهر هنا.'
@@ -163,7 +155,7 @@ export default function UserTweets(): JSX.Element {
             ))}
           </AnimatePresence>
         )
-      ) : !reels ? (
+      ) : !reels?.length ? (
         <StatsEmpty
           title='لا توجد ريلز معاد نشرها'
           description='عندما يعيد نشر ريلاً، ستظهر هنا.'

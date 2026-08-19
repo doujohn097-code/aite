@@ -48,7 +48,7 @@ export default function TweetId(): JSX.Element {
     : null;
 
   return (
-    <MainContainer className='!pb-[1280px]'>
+    <MainContainer>
       <MainHeader
         useActionButton
         iconName='ArrowRightIcon'

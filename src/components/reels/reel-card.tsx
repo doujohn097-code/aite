@@ -552,22 +552,16 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
             className='flex h-10 w-10 items-center justify-center text-white transition active:scale-75 hover:scale-110 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent]'
             aria-label={retweeted ? 'تراجع عن إعادة النشر' : 'إعادة نشر'}
           >
-            <motion.div
-              key={retweeted ? 'retweeted' : 'idle'}
-              initial={{ scale: 0.6 }}
-              animate={{ scale: [0.6, 1.3, 1] }}
-              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-            >
-              <HeroIcon
-                className={cn(
-                  'h-8 w-8 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-colors',
-                  retweeted
-                    ? 'fill-accent-green text-accent-green'
-                    : 'text-white hover:text-accent-green'
-                )}
-                iconName='ArrowPathRoundedSquareIcon'
-              />
-            </motion.div>
+            <HeroIcon
+              className={cn(
+                'h-8 w-8 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-colors',
+                retweeted
+                  ? 'text-accent-green'
+                  : 'text-white hover:text-accent-green'
+              )}
+              solid={retweeted}
+              iconName='ArrowPathRoundedSquareIcon'
+            />
           </button>
         </div>
 
