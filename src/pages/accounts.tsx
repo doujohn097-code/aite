@@ -48,7 +48,7 @@ export default function Accounts(): JSX.Element {
     try {
       if (user) await signOut();
       if (account.provider === 'google') {
-        await signInWithGoogle();
+        await signInWithGoogle(false);
       } else {
         await signInWithUsername(account.username, account.password);
       }

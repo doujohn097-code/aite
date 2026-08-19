@@ -82,7 +82,7 @@ export function UserHomeAvatar({
         </div>
         {online && (
           <span
-            className='absolute -bottom-0.5 -left-0.5 h-4 w-4 rounded-full bg-emerald-400
+            className='absolute bottom-1 left-1 z-10 h-4 w-4 rounded-full bg-emerald-400
                        ring-2 ring-main-background shadow-[0_0_6px_2px_rgba(52,211,153,0.9)]'
             title='نشط الآن'
           />

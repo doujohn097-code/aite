@@ -54,7 +54,7 @@ type AuthContext = {
   unreadNotifications: number;
   unreadMessages: number;
   signOut: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (accountChooser?: boolean) => Promise<void>;
   signInWithUsername: (username: string, password: string) => Promise<void>;
   signUpWithUsername: (data: SignUpData) => Promise<void>;
   /** Locally mark a user's story as seen so the ring disappears instantly. */
@@ -324,17 +324,18 @@ export function AuthContextProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const signInWithGoogle = async (): Promise<void> => {
+  const signInWithGoogle = async (accountChooser = true): Promise<void> => {
     try {
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
+      if (accountChooser) provider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, provider);
     } catch (error) {
       const { code } = error as { code?: string };
       if (code === 'auth/popup-blocked') {
         try {
           const provider = new GoogleAuthProvider();
-          provider.setCustomParameters({ prompt: 'select_account' });
+          if (accountChooser)
+            provider.setCustomParameters({ prompt: 'select_account' });
           await signInWithRedirect(auth, provider);
         } catch (redirectError) {
           setError(redirectError as Error);

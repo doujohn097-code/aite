@@ -55,18 +55,6 @@
   }
 }
 
-/* Smooth rotating conic swirl for story rings */
-@keyframes story-ring-rotate {
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-
-.story-ring-spin {
-  animation: story-ring-rotate 5s linear infinite;
-  will-change: transform;
-}
-
 @layer components {
   .hover-animation {
     @apply transition-colors duration-200;

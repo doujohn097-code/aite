@@ -89,7 +89,7 @@ export function LoginMain(): JSX.Element {
             className='flex justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition
                        hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white
                        dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
-            onClick={signInWithGoogle}
+            onClick={(): void => void signInWithGoogle()}
           >
             <CustomIcon iconName='GoogleIcon' />
             {isSignUp ? 'سجل عبر Google' : 'سجل الدخول عبر Google'}
