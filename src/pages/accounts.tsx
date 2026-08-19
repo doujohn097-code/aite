@@ -17,8 +17,13 @@ import { Loading } from '@components/ui/loading';
 import type { SavedAccount } from '@lib/accounts';
 
 export default function Accounts(): JSX.Element {
-  const { user, loading: authLoading, signInWithUsername, signOut } =
-    useAuth();
+  const {
+    user,
+    loading: authLoading,
+    signInWithUsername,
+    signInWithGoogle,
+    signOut
+  } = useAuth();
   const router = useRouter();
 
   const [accounts, setAccounts] = useState<SavedAccount[] | null>(null);
@@ -42,11 +47,17 @@ export default function Accounts(): JSX.Element {
     setSigningIn(account.username);
     try {
       if (user) await signOut();
-      await signInWithUsername(account.username, account.password);
+      if (account.provider === 'google') {
+        await signInWithGoogle();
+      } else {
+        await signInWithUsername(account.username, account.password);
+      }
       await router.push(getRedirectTarget());
     } catch {
       toast.error(
-        'تعذر تسجيل الدخول بهذا الحساب، ربما تغيرت كلمة المرور. سجل الدخول يدوياً.'
+        account.provider === 'google'
+          ? 'تعذر تسجيل الدخول عبر Google، يرجى المحاولة مرة أخرى.'
+          : 'تعذر تسجيل الدخول بهذا الحساب، ربما تغيرت كلمة المرور. سجل الدخول يدوياً.'
       );
     } finally {
       setSigningIn(null);
@@ -121,8 +132,13 @@ export default function Accounts(): JSX.Element {
                             </span>
                           )}
                         </span>
-                        <span className='truncate text-xs text-light-secondary dark:text-dark-secondary'>
+                        <span className='flex items-center gap-1.5 truncate text-xs text-light-secondary dark:text-dark-secondary'>
                           @{account.username}
+                          {account.provider === 'google' && (
+                            <span className='rounded-full bg-light-line-reply/60 px-1.5 py-0.5 text-[10px] font-semibold dark:bg-dark-line-reply/60'>
+                              Google
+                            </span>
+                          )}
                         </span>
                       </span>
                       {signingIn === account.username ? (

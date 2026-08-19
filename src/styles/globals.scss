@@ -51,6 +51,7 @@
   body {
     @apply hover-animation bg-main-background font-aite text-light-primary dark:text-dark-primary select-none;
     overscroll-behavior: none;
+    overflow-x: hidden;
   }
 }
 

@@ -59,8 +59,8 @@ export function Sidebar(): JSX.Element {
   return (
     <header
       id='sidebar'
-      className='flex w-0 shrink-0 transition-opacity duration-200 xs:w-20 md:w-24
-                 lg:max-w-none xl:-ml-4 xl:w-full xl:max-w-xs xl:justify-start'
+      className='order-last flex w-0 shrink-0 transition-opacity duration-200 xs:w-20 md:w-24
+                 lg:max-w-none xl:w-full xl:max-w-xs xl:justify-start'
     >
       <Modal
         className='flex items-start justify-center'
@@ -71,9 +71,9 @@ export function Sidebar(): JSX.Element {
         <Input modal closeModal={closeModal} />
       </Modal>
       <div
-        className={`fixed bottom-0 z-50 w-full flex-col justify-between border-t border-light-border 
+        className={`fixed inset-x-0 bottom-0 z-50 w-full flex-col justify-between border-t border-light-border 
                    bg-main-background/95 backdrop-blur-md py-0 pb-[env(safe-area-inset-bottom)] dark:border-dark-border dark:bg-black/95
-                   xs:top-0 xs:h-[100dvh] xs:w-auto xs:border-0 xs:overflow-y-auto xs:overscroll-contain xs:[scrollbar-width:thin]
+                   xs:inset-x-auto xs:top-0 xs:h-[100dvh] xs:w-auto xs:border-0 xs:overflow-y-auto xs:overscroll-contain xs:[scrollbar-width:thin]
                    xs:bg-transparent xs:px-2 xs:py-2 md:px-4 xl:w-72 ${
                      isConversation ? 'hidden xs:flex' : 'flex'
                    }`}

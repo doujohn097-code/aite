@@ -30,6 +30,7 @@ import {
 import { getRandomId, getRandomInt } from '@lib/random';
 import { checkUsernameAvailability } from '@lib/firebase/utils';
 import { usernameToInternalEmail } from '@lib/utils';
+import { saveAccount } from '@lib/accounts';
 import type { ReactNode } from 'react';
 import type { User as AuthUser } from 'firebase/auth';
 import type { WithFieldValue } from 'firebase/firestore';
@@ -91,6 +92,19 @@ export function AuthContextProvider({
 
     const manageUser = async (authUser: AuthUser): Promise<void> => {
       const { uid, displayName, photoURL } = authUser;
+
+      const isGoogleAccount = authUser.providerData?.some(
+        ({ providerId }) => providerId === 'google.com'
+      );
+
+      const persistGoogleAccount = (
+        username: string,
+        name: string,
+        photo: string | null
+      ): void => {
+        if (isGoogleAccount)
+          saveAccount({ username, password: '', name, photoURL: photo, provider: 'google' });
+      };
 
       if (!uid || processedUid.current === uid) return;
 
@@ -175,12 +189,18 @@ export function AuthContextProvider({
 
           const newUser = (await getDoc(doc(usersCollection, uid))).data();
           setUser({ ...defaultUserData, ...newUser } as User);
+          persistGoogleAccount(randomUsername, fallbackName, fallbackPhoto);
         } catch (error) {
           setError(error as Error);
         }
       } else {
         const userData = userSnapshot.data();
         setUser({ ...defaultUserData, ...userData } as User);
+        persistGoogleAccount(
+          (userData?.username as string) ?? '',
+          (userData?.name as string) ?? fallbackName,
+          (userData?.photoURL as string) ?? fallbackPhoto
+        );
       }
 
       setLoading(false);

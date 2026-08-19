@@ -1,8 +1,10 @@
 export type SavedAccount = {
   username: string;
+  /** Empty for Google accounts — they re-authenticate via the Google popup. */
   password: string;
   name: string;
   photoURL: string | null;
+  provider?: 'password' | 'google';
   savedAt: number;
 };
 
@@ -16,7 +18,10 @@ function isValidAccount(value: unknown): value is SavedAccount {
     typeof account.username === 'string' &&
     typeof account.password === 'string' &&
     typeof account.name === 'string' &&
-    (typeof account.photoURL === 'string' || account.photoURL === null)
+    (typeof account.photoURL === 'string' || account.photoURL === null) &&
+    (account.provider === undefined ||
+      account.provider === 'password' ||
+      account.provider === 'google')
   );
 }
 

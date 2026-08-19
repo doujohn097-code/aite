@@ -1,130 +1,88 @@
-<br />
+<div align="center">
 
-![](/.github/assets/presentation.png)
+# Aite
 
-<p align="center">
-  Twitter clone built in Next.js + TypeScript + Tailwind CSS using Cloud Firestore and Storage
-</p>
+منصة تواصل اجتماعي عربية مبنية بـ Next.js و TypeScript و Firebase
 
-## Notice ⚠️
+</div>
 
-Please note that this repository is now archived. This project was built as an incredible learning frontend experience, but my focus has since shifted to other work and newer projects.
+## المميزات ✨
 
-The live site will remain available for an undisclosed amount of time, provided it does not exceed the free usage tier on GCP/Firebase. Thank you to everyone who checked it out!
+- تسجيل الدخول باسم المستخدم وكلمة المرور أو بحساب Google
+- حفظ عدة حسابات والتبديل بينها بلمسة واحدة
+- نشر المنشورات مع الصور وملفات GIF
+- نظام تعليقات متكامل مع ردود متداخلة
+- الإعجاب وإعادة النشر والحفظ والتثبيت
+- ريلز (فيديوهات قصيرة) وقصص (Stories)
+- رسائل خاصة لحظية وإشعارات فورية
+- المتابعة وقوائم المتابِعين والمتابَعين
+- البحث عن المستخدمين والمنشورات
+- تعديل الملف الشخصي (الصورة، الغلاف، النبذة)
+- واجهة عربية كاملة باتجاه RTL
+- تصميم متجاوب للهاتف واللوحي وسطح المكتب
+- تخصيص ألوان الموقع والخلفية
 
-## Preview 🎬
+## التقنيات 🛠
 
-https://user-images.githubusercontent.com/55032197/201472767-9db0177a-79b5-4913-8666-1744102b0ad7.mp4
-
-## Features ✨
-
-- Authentication with Firebase Authentication
-- Strongly typed React components with TypeScript
-- Users can add tweets, like, retweet, and reply
-- Users can delete tweets, add a tweet to bookmarks, and pin their tweet
-- Users can add images and GIFs to tweet
-- Users can follow and unfollow other users
-- Users can see their and other followers and the following list
-- Users can see all users and the trending list
-- Realtime update likes, retweets, and user profile
-- Realtime trending data from Twitter API
-- User can edit their profile
-- Responsive design for mobile, tablet, and desktop
-- Users can customize the site color scheme and color background
-- All images uploads are stored on Firebase Cloud Storage
-
-## Tech 🛠
-
-- [Next.js](https://nextjs.org)
-- [TypeScript](https://www.typescriptlang.org)
+- [Next.js](https://nextjs.org) + [TypeScript](https://www.typescriptlang.org)
 - [Tailwind CSS](https://tailwindcss.com)
-- [Firebase](https://firebase.google.com)
-- [SWR](https://swr.vercel.app)
-- [Headless UI](https://headlessui.com)
-- [React Hot Toast](https://react-hot-toast.com)
-- [Framer Motion](https://framer.com)
+- [Firebase](https://firebase.google.com) — المصادقة و Firestore و Storage
+- [Cloudflare R2](https://www.cloudflare.com/products/r2/) — رفع الوسائط
+- [SWR](https://swr.vercel.app) · [Headless UI](https://headlessui.com) · [Framer Motion](https://framer.com)
 
-## Development 💻
+## التشغيل محلياً 💻
 
-Here are the steps to run the project locally.
-
-1. Clone the repository
+1. استنساخ المشروع وتثبيت الحزم:
 
    ```bash
-   git clone https://github.com/ccrsxx/twitter-clone.git
+   git clone https://github.com/doujohn097-code/aite.git
+   cd aite
+   npm install
    ```
 
-1. Install dependencies
+1. إنشاء مشروع Firebase وتفعيل الخدمات التالية:
+
+   - **Authentication** — تفعيل طريقة Google
+   - **Cloud Firestore** — إنشاء قاعدة بيانات
+   - **Cloud Storage** — إنشاء حاوية تخزين
+
+1. نسخ ملف البيئة وتعبئة القيم:
 
    ```bash
-   npm i
+   cp .env.example .env.local
    ```
 
-1. Create a Firebase project and select the web app
+   ثم ضع إعدادات Firebase (ومفاتيح R2 لرفع الوسائط) داخل `.env.local`.
 
-1. Add your Firebase config to `.env.development`. Note that `NEXT_PUBLIC_MEASUREMENT_ID` is optional
-
-1. Make sure you have enabled the following Firebase services:
-
-   - Authentication. Enable the Google sign-in method.
-   - Cloud Firestore. Create a database and set its location to your nearest region.
-   - Cloud Storage. Create a storage bucket.
-
-1. Install Firebase CLI globally
+1. نشر قواعد وفهارس Firestore:
 
    ```bash
    npm i -g firebase-tools
-   ```
-
-1. Log in to Firebase
-
-   ```bash
    firebase login
-   ```
-
-1. Get your project ID
-
-   ```bash
-   firebase projects:list
-   ```
-
-1. Select your project ID
-
-   ```bash
    firebase use your-project-id
+   firebase deploy --except functions
    ```
 
-1. At this point, you have two choices. Either run this project using the Firebase on the cloud or locally using emulator.
+1. تشغيل المشروع:
 
-   1. Using the Firebase Cloud Backend:
+   ```bash
+   npm run dev        # وضع التطوير
+   npm run build      # بناء الإنتاج
+   npm start          # تشغيل نسخة الإنتاج
+   ```
 
-      1. Deploy Firestore rules, Firestore indexes, and Cloud Storage rules
+> **ملاحظة:** قد تستغرق فهارس Firestore بضع دقائق لتصبح جاهزة بعد النشر.
 
-         ```bash
-         firebase deploy --except functions
-         ```
+## البنية 📁
 
-      1. Run the project
+```
+src/
+├── components/     # مكونات الواجهة
+├── lib/            # السياقات والأدوات وإعدادات Firebase
+├── pages/          # صفحات Next.js وواجهات API
+└── styles/         # الأنماط والخطوط
+```
 
-         ```bash
-         npm run dev
-         ```
+---
 
-   1. Using Firebase Local Emulator:
-
-      1. Install [Java JDK version 11 or higher](https://jdk.java.net/) before proceeding. This is required to run the emulators.
-
-      1. Set the environment variable `NEXT_PUBLIC_USE_EMULATOR` to `true` in `.env.development`. This will make the app use the emulators instead of the cloud backend.
-
-      1. At this point, you can run the following command to have a fully functional Twitter clone running locally:
-
-         ```bash
-         npm run dev:emulators
-         ```
-
-> **_Note_**: When you deploy Firestore indexes rules, it might take a few minutes to complete. So before the indexes are enabled, you will get an error when you fetch the data from Firestore.<br><br>You can check the status of your Firestore indexes with the link below, replace `your-project-id` with your project ID: https://console.firebase.google.com/u/0/project/your-project-id/firestore/indexes
-
-Optional:
-
-- If you want to get trending data from Twitter API, you need to create a Twitter developer account and get your API keys. Then add your API keys to `.env.development`. I hope Elon Musk doesn't make this API paid 😅.
-- If you want to make the user stats synced with the deleted tweets, you need to enable the Cloud Functions for Firebase. Then deploy the Cloud Functions.
+صُنع بحب 🤍 من Salem Ahmed

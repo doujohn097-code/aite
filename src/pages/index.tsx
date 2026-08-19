@@ -4,14 +4,18 @@ import { AuthLayout } from '@components/layout/auth-layout';
 import { SEO } from '@components/common/seo';
 import { LoginMain } from '@components/login/login-main';
 import { LoginFooter } from '@components/login/login-footer';
+import { useAuth } from '@lib/context/auth-context';
 import { hasSavedAccounts } from '@lib/accounts';
 import type { ReactElement, ReactNode } from 'react';
 
 export default function Login(): JSX.Element {
   const { replace, query, isReady } = useRouter();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (!isReady) return;
+    // Wait for the auth session to resolve first — a logged-in user must
+    // never be bounced to the accounts picker.
+    if (!isReady || loading || user) return;
 
     const redirect =
       typeof query.redirect === 'string'
@@ -27,7 +31,7 @@ export default function Login(): JSX.Element {
     if (!('manual' in query) && hasSavedAccounts())
       void replace(`/accounts${redirect}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady]);
+  }, [isReady, loading, user]);
   return (
     <div className='grid min-h-screen grid-rows-[1fr,auto]'>
       <SEO

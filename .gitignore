@@ -27,6 +27,13 @@ yarn-error.log*
 
 # local env files
 .env*.local
+# env files (keep .env.example)
+.env
+.env.*
+!.env.example
+
+# node compile cache
+/node-compile-cache/
 
 # vercel
 .vercel
