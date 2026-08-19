@@ -12,12 +12,7 @@ import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 
 const modalVariants = {
   initial: { opacity: 0, scale: 0.94, y: 15 },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { type: 'spring', duration: 0.35, bounce: 0.1 }
-  },
+  animate: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', duration: 0.35, bounce: 0.1 } },
   exit: { opacity: 0, scale: 0.94, y: 15, transition: { duration: 0.2 } }
 };
 
@@ -176,20 +171,16 @@ export function CreateReelModal({
       closeModal();
     } catch (error) {
       console.error('Failed to upload reel:', error);
-      const msg =
-        error instanceof Error
-          ? error.message
-          : 'فشل نشر الريل، يرجى المحاولة مرة أخرى';
+      const msg = error instanceof Error ? error.message : 'فشل نشر الريل، يرجى المحاولة مرة أخرى';
       toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const currentDurationSec =
-    selectedVideos[0] && durations[selectedVideos[0].id]
-      ? Math.round(durations[selectedVideos[0].id] / 1000)
-      : null;
+  const currentDurationSec = selectedVideos[0] && durations[selectedVideos[0].id]
+    ? Math.round(durations[selectedVideos[0].id] / 1000)
+    : null;
 
   return (
     <Modal
@@ -202,7 +193,7 @@ export function CreateReelModal({
         <div className='flex items-center justify-between border-b border-light-border px-6 py-4 dark:border-dark-border'>
           <div className='flex items-center gap-2.5'>
             <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-main-accent/15 text-main-accent'>
-              <HeroIcon className='h-5 w-5' iconName='ClapperboardIcon' />
+              <HeroIcon className='h-5 w-5' iconName='FilmIcon' />
             </div>
             <div>
               <h2 className='text-lg font-bold leading-none text-light-primary dark:text-dark-primary'>
@@ -217,10 +208,7 @@ export function CreateReelModal({
             className='rounded-full p-2 hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
             onClick={closeModal}
           >
-            <HeroIcon
-              className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
-              iconName='XMarkIcon'
-            />
+            <HeroIcon className='h-5 w-5 text-light-secondary dark:text-dark-secondary' iconName='XMarkIcon' />
           </Button>
         </div>
 
@@ -233,9 +221,9 @@ export function CreateReelModal({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileRef.current?.click()}
-              className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-all ${
+              className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed py-12 px-6 text-center transition-all ${
                 isDragging
-                  ? 'scale-[1.01] border-main-accent bg-main-accent/10'
+                  ? 'border-main-accent bg-main-accent/10 scale-[1.01]'
                   : 'border-light-border hover:border-main-accent/60 hover:bg-main-accent/5 dark:border-dark-border'
               }`}
             >
@@ -267,7 +255,7 @@ export function CreateReelModal({
           ) : (
             <div className='relative overflow-hidden rounded-2xl bg-black'>
               {/* Video Player Preview */}
-              <div className='relative flex aspect-[9/14] max-h-[340px] w-full items-center justify-center overflow-hidden bg-black'>
+              <div className='relative aspect-[9/14] w-full max-h-[340px] overflow-hidden bg-black flex items-center justify-center'>
                 <video
                   ref={videoRef}
                   src={videoPreview[0].src}
@@ -276,7 +264,7 @@ export function CreateReelModal({
                   muted={isMuted}
                   playsInline
                   onClick={toggleVideoPlay}
-                  className='h-full w-full cursor-pointer object-cover'
+                  className='h-full w-full object-cover cursor-pointer'
                 />
 
                 {/* Overlays / Badges */}
@@ -284,21 +272,14 @@ export function CreateReelModal({
 
                 {/* Duration Badge */}
                 {currentDurationSec !== null && (
-                  <div className='absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md'>
+                  <div className='absolute bottom-3 right-3 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-xs font-semibold text-white'>
                     {computingDuration ? (
                       <span className='flex items-center gap-1'>
-                        <HeroIcon
-                          className='h-3 w-3 animate-spin'
-                          iconName='ArrowPathIcon'
-                        />
+                        <HeroIcon className='h-3 w-3 animate-spin' iconName='ArrowPathIcon' />
                         جاري الحساب...
                       </span>
                     ) : (
-                      `⏱ ${Math.floor(currentDurationSec / 60)}:${(
-                        currentDurationSec % 60
-                      )
-                        .toString()
-                        .padStart(2, '0')}`
+                      `⏱ ${Math.floor(currentDurationSec / 60)}:${(currentDurationSec % 60).toString().padStart(2, '0')}`
                     )}
                   </div>
                 )}
@@ -319,7 +300,7 @@ export function CreateReelModal({
                 <button
                   type='button'
                   onClick={toggleVideoPlay}
-                  className='absolute left-3 top-3 rounded-full bg-black/60 p-2 text-white backdrop-blur-md transition hover:bg-black/80'
+                  className='absolute top-3 left-3 rounded-full bg-black/60 p-2 text-white backdrop-blur-md transition hover:bg-black/80'
                 >
                   <HeroIcon
                     className='h-4 w-4'
@@ -331,7 +312,7 @@ export function CreateReelModal({
                 <button
                   type='button'
                   onClick={removeVideo}
-                  className='absolute right-3 top-3 flex items-center gap-1 rounded-full bg-red-600/90 px-3 py-1 text-xs font-bold text-white shadow-md backdrop-blur-md transition hover:bg-red-700'
+                  className='absolute top-3 right-3 flex items-center gap-1 rounded-full bg-red-600/90 px-3 py-1 text-xs font-bold text-white shadow-md backdrop-blur-md transition hover:bg-red-700'
                 >
                   <HeroIcon className='h-3.5 w-3.5' iconName='TrashIcon' />
                   <span>حذف الفيديو</span>
@@ -346,13 +327,7 @@ export function CreateReelModal({
               <label className='text-sm font-bold text-light-primary dark:text-dark-primary'>
                 وصف الريل
               </label>
-              <span
-                className={`text-xs ${
-                  caption.length > 260
-                    ? 'font-bold text-accent-red'
-                    : 'text-light-secondary dark:text-dark-secondary'
-                }`}
-              >
+              <span className={`text-xs ${caption.length > 260 ? 'text-accent-red font-bold' : 'text-light-secondary dark:text-dark-secondary'}`}>
                 {caption.length} / 280
               </span>
             </div>
@@ -363,7 +338,7 @@ export function CreateReelModal({
               placeholder='اكتب وصفاً جذاباً للريل، يمكنك إضافة وسوم مثل #ريلز...'
               rows={3}
               maxLength={280}
-              className='w-full resize-none rounded-2xl border border-light-border bg-light-line-reply/20 p-3.5 text-sm text-light-primary outline-none transition placeholder:text-light-secondary/60 focus:border-main-accent focus:ring-1 focus:ring-main-accent dark:border-dark-border dark:bg-dark-line-reply/20 dark:text-dark-primary dark:placeholder:text-dark-secondary/60'
+              className='w-full resize-none rounded-2xl border border-light-border bg-light-line-reply/20 p-3.5 text-sm text-light-primary outline-none transition focus:border-main-accent focus:ring-1 focus:ring-main-accent dark:border-dark-border dark:bg-dark-line-reply/20 dark:text-dark-primary placeholder:text-light-secondary/60 dark:placeholder:text-dark-secondary/60'
             />
 
             {/* Quick Hashtags */}
@@ -398,7 +373,7 @@ export function CreateReelModal({
 
           <Button
             type='button'
-            className='flex items-center gap-2 rounded-full bg-main-accent px-6 py-2.5 font-bold text-black shadow-lg transition hover:brightness-95 active:scale-95 disabled:pointer-events-none disabled:opacity-50'
+            className='flex items-center gap-2 rounded-full bg-main-accent px-6 py-2.5 font-bold text-black shadow-lg transition hover:brightness-95 active:scale-95 disabled:opacity-50 disabled:pointer-events-none'
             onClick={handleSubmit}
             loading={loading || computingDuration}
             disabled={!selectedVideos.length || loading || computingDuration}
@@ -425,9 +400,7 @@ function getMediaDuration(url: string): Promise<number> {
     video.onloadedmetadata = () => {
       cleanup();
       const duration = video.duration;
-      resolve(
-        duration && isFinite(duration) ? Math.round(duration * 1000) : 15000
-      );
+      resolve(duration && isFinite(duration) ? Math.round(duration * 1000) : 15000);
     };
     video.onerror = () => {
       cleanup();

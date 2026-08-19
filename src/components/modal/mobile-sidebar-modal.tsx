@@ -19,12 +19,12 @@ const coreNavLinks: Readonly<MobileNavLink[]> = [
   {
     href: '/home',
     linkName: 'الرئيسية',
-    iconName: 'HouseIcon'
+    iconName: 'HomeIcon'
   },
   {
     href: '/reels',
     linkName: 'الريلز',
-    iconName: 'ClapperboardIcon'
+    iconName: 'FilmIcon'
   },
   {
     href: '/accounts',

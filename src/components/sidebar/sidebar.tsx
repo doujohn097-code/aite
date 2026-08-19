@@ -23,17 +23,17 @@ const navLinks: Readonly<NavLink[]> = [
   {
     href: '/home',
     linkName: 'الرئيسية',
-    iconName: 'HouseIcon'
+    iconName: 'HomeIcon'
   },
   {
     href: '/reels',
     linkName: 'الريلز',
-    iconName: 'ClapperboardIcon'
+    iconName: 'FilmIcon'
   },
   {
     href: '/messages',
     linkName: 'الرسائل',
-    iconName: 'MessengerIcon',
+    iconName: 'EnvelopeIcon',
     disabled: true
   },
   {
