@@ -73,9 +73,7 @@ export function UserHeader(): JSX.Element {
             {isInFollowPage
               ? `@${user.username}`
               : isInTweetPage
-              ? totalTweets
-                ? `${totalTweets} ${totalTweets > 1 ? 'منشورات' : 'منشور'}`
-                : 'لا توجد منشورات'
+              ? `@${user.username}`
               : currentPage === 'media'
               ? totalPhotos
                 ? `${totalPhotos} ${
