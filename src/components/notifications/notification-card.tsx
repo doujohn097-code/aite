@@ -2,7 +2,10 @@ import Link from 'next/link';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { useDocument } from '@lib/hooks/useDocument';
-import { usersCollection, notificationsCollection } from '@lib/firebase/collections';
+import {
+  usersCollection,
+  notificationsCollection
+} from '@lib/firebase/collections';
 import { formatDate } from '@lib/date';
 import { UserAvatar } from '@components/user/user-avatar';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -10,22 +13,23 @@ import cn from 'clsx';
 import type { Notification } from '@lib/types/notification';
 import type { IconName } from '@components/ui/hero-icon';
 
-const notificationText: Record<
-  Notification['type'],
-  (name: string) => string
-> = {
-  like: () => 'أعجب بمنشورك',
-  retweet: () => 'أعاد نشر منشورك',
-  follow: () => 'بدأ بمتابعتك',
-  reply: () => 'رد على منشورك',
-  storyLike: () => 'أعجب بقصتك'
-};
+const notificationText: Record<Notification['type'], (name: string) => string> =
+  {
+    like: () => 'أعجب بمنشورك',
+    retweet: () => 'أعاد نشر منشورك',
+    follow: () => 'بدأ بمتابعتك',
+    reply: () => 'رد على منشورك',
+    storyLike: () => 'أعجب بقصتك'
+  };
 
 const typeStyles: Record<
   Notification['type'],
   { icon: IconName; classes: string }
 > = {
-  like: { icon: 'HeartIcon', classes: 'bg-rose-500/50 text-rose-100 backdrop-blur-md' },
+  like: {
+    icon: 'HeartIcon',
+    classes: 'bg-rose-500/50 text-rose-100 backdrop-blur-md'
+  },
   storyLike: {
     icon: 'HeartIcon',
     classes: 'bg-rose-500/50 text-rose-100 backdrop-blur-md'
@@ -67,17 +71,16 @@ export function NotificationCard({
     notification.type === 'follow'
       ? `/user/${username}`
       : notification.type === 'storyLike' && notification.storyUserId
-      ? `/stories/${notification.storyUserId}?storyId=${notification.storyId ?? ''}`
+      ? `/stories/${notification.storyUserId}?storyId=${
+          notification.storyId ?? ''
+        }`
       : notification.tweetId
       ? `/tweet/${notification.tweetId}`
       : '/home';
 
   const markAsRead = async (): Promise<void> => {
     if (!currentUser) return;
-    const ref = doc(
-      notificationsCollection(currentUser.id),
-      notification.id
-    );
+    const ref = doc(notificationsCollection(currentUser.id), notification.id);
     await updateDoc(ref, { read: true });
   };
 

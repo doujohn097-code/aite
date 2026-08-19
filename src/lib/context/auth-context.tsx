@@ -1,4 +1,12 @@
-import { useState, useEffect, useContext, createContext, useMemo, useRef, useCallback } from 'react';
+import {
+  useState,
+  useEffect,
+  useContext,
+  createContext,
+  useMemo,
+  useRef,
+  useCallback
+} from 'react';
 import {
   signInWithPopup,
   signInWithRedirect,
@@ -103,7 +111,13 @@ export function AuthContextProvider({
         photo: string | null
       ): void => {
         if (isGoogleAccount)
-          saveAccount({ username, password: '', name, photoURL: photo, provider: 'google' });
+          saveAccount({
+            username,
+            password: '',
+            name,
+            photoURL: photo,
+            provider: 'google'
+          });
       };
 
       if (!uid || processedUid.current === uid) return;
@@ -277,7 +291,9 @@ export function AuthContextProvider({
     const unsubscribeUser = onSnapshot(
       doc(usersCollection, id),
       (doc) => {
-        setUser((prevUser) => ({ ...prevUser, ...(doc.data() as User) }) as User);
+        setUser(
+          (prevUser) => ({ ...prevUser, ...(doc.data() as User) } as User)
+        );
       },
       (error) => {
         console.error('user snapshot error:', error);
@@ -303,7 +319,8 @@ export function AuthContextProvider({
   const signInWithGoogle = async (accountChooser = true): Promise<void> => {
     try {
       const provider = new GoogleAuthProvider();
-      if (accountChooser) provider.setCustomParameters({ prompt: 'select_account' });
+      if (accountChooser)
+        provider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, provider);
     } catch (error) {
       const { code } = error as { code?: string };

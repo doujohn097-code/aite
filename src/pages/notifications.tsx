@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { query, orderBy, where, onSnapshot, getDocs, writeBatch } from 'firebase/firestore';
+import {
+  query,
+  orderBy,
+  where,
+  onSnapshot,
+  getDocs,
+  writeBatch
+} from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { db } from '@lib/firebase/app';
 import { notificationsCollection } from '@lib/firebase/collections';
@@ -78,7 +85,10 @@ export default function Notifications(): JSX.Element {
       ) : notifications.length ? (
         <section>
           {notifications.map((notification) => (
-            <NotificationCard notification={notification} key={notification.id} />
+            <NotificationCard
+              notification={notification}
+              key={notification.id}
+            />
           ))}
         </section>
       ) : (

@@ -113,7 +113,7 @@ export function MobileSidebarModal({
             type='button'
             onClick={closeModal}
             aria-label='إغلاق'
-            className='absolute top-3 left-3 z-20 flex h-8 w-8 items-center justify-center rounded-full
+            className='absolute left-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full
                        bg-black/50 text-white backdrop-blur-md transition hover:bg-black/70 active:scale-95'
           >
             <HeroIcon className='h-4 w-4' iconName='XMarkIcon' />

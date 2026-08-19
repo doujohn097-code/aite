@@ -34,10 +34,9 @@ export function userStatsCollection(id: string): CollectionReference<Stats> {
 export function notificationsCollection(
   userId: string
 ): CollectionReference<Notification> {
-  return collection(
-    db,
-    `users/${userId}/notifications`
-  ).withConverter(notificationConverter);
+  return collection(db, `users/${userId}/notifications`).withConverter(
+    notificationConverter
+  );
 }
 
 export const storiesCollection = collection(db, 'stories').withConverter(

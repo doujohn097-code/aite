@@ -17,7 +17,11 @@ import {
   getCountFromServer,
   Timestamp
 } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from 'firebase/storage';
 import { db, auth, storage } from './app';
 import {
   usersCollection,
@@ -207,7 +211,13 @@ export async function uploadImages(
 
       if (response.ok) {
         const { files: uploadFiles } = (await response.json()) as {
-          files: { id: string; alt: string; type: string; uploadUrl: string; publicUrl: string }[];
+          files: {
+            id: string;
+            alt: string;
+            type: string;
+            uploadUrl: string;
+            publicUrl: string;
+          }[];
         };
 
         if (uploadFiles && uploadFiles.length) {
@@ -218,7 +228,8 @@ export async function uploadImages(
                 headers: { 'Content-Type': files[i].type },
                 body: files[i]
               }).then((res) => {
-                if (!res.ok) throw new Error(`Failed to upload ${files[i].name}`);
+                if (!res.ok)
+                  throw new Error(`Failed to upload ${files[i].name}`);
               })
             )
           );
@@ -233,14 +244,20 @@ export async function uploadImages(
       }
     }
   } catch (err) {
-    console.warn('R2 upload failed or not configured, falling back to Firebase Storage:', err);
+    console.warn(
+      'R2 upload failed or not configured, falling back to Firebase Storage:',
+      err
+    );
   }
 
   // 2. Fallback directly to Firebase Storage
   const results = await Promise.all(
     files.map(async (file) => {
       const safeName = file.name.replace(/\s+/g, '-');
-      const fileRef = storageRef(storage, `images/${userId}/${file.id}-${safeName}`);
+      const fileRef = storageRef(
+        storage,
+        `images/${userId}/${file.id}-${safeName}`
+      );
       const uploadResult = await uploadBytes(fileRef, file);
       const publicUrl = await getDownloadURL(uploadResult.ref);
       return {
@@ -342,19 +359,27 @@ export function manageRetweet(
         userRetweets: arrayUnion(userId),
         updatedAt: serverTimestamp()
       });
-      batch.set(userStatsRef, {
-        tweets: arrayUnion(tweetId),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      batch.set(
+        userStatsRef,
+        {
+          tweets: arrayUnion(tweetId),
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
     } else {
       batch.update(tweetRef, {
         userRetweets: arrayRemove(userId),
         updatedAt: serverTimestamp()
       });
-      batch.set(userStatsRef, {
-        tweets: arrayRemove(tweetId),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      batch.set(
+        userStatsRef,
+        {
+          tweets: arrayRemove(tweetId),
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
     }
 
     await batch.commit();
@@ -389,19 +414,27 @@ export function manageLike(
         userLikes: arrayUnion(userId),
         updatedAt: serverTimestamp()
       });
-      batch.set(userStatsRef, {
-        likes: arrayUnion(tweetId),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      batch.set(
+        userStatsRef,
+        {
+          likes: arrayUnion(tweetId),
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
     } else {
       batch.update(tweetRef, {
         userLikes: arrayRemove(userId),
         updatedAt: serverTimestamp()
       });
-      batch.set(userStatsRef, {
-        likes: arrayRemove(tweetId),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      batch.set(
+        userStatsRef,
+        {
+          likes: arrayRemove(tweetId),
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
     }
 
     await batch.commit();
@@ -626,7 +659,10 @@ export async function likeStory(
     });
 }
 
-export async function deleteStory(storyId: string, userId: string): Promise<void> {
+export async function deleteStory(
+  storyId: string,
+  userId: string
+): Promise<void> {
   const storyRef = doc(storiesCollection, storyId);
   const storySnap = await getDoc(storyRef);
   const storyData = storySnap.data();
@@ -647,9 +683,15 @@ export async function deleteStory(storyId: string, userId: string): Promise<void
       const createdMs = getTimestampMillis(s.createdAt);
       let expiresMs = getTimestampMillis(s.expiresAt);
       if (!expiresMs && createdMs) expiresMs = createdMs + 24 * 60 * 60 * 1000;
-      return expiresMs > nowMs || (createdMs > 0 && nowMs - createdMs < 24 * 60 * 60 * 1000);
+      return (
+        expiresMs > nowMs ||
+        (createdMs > 0 && nowMs - createdMs < 24 * 60 * 60 * 1000)
+      );
     })
-    .sort((a, b) => getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt))[0];
+    .sort(
+      (a, b) =>
+        getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt)
+    )[0];
 
   const userRef = doc(usersCollection, userId);
   if (!latest) {
@@ -665,7 +707,10 @@ export async function deleteStory(storyId: string, userId: string): Promise<void
   }
 }
 
-export async function setStoryColor(userId: string, color: string): Promise<void> {
+export async function setStoryColor(
+  userId: string,
+  color: string
+): Promise<void> {
   const userRef = doc(usersCollection, userId);
   await updateDoc(userRef, {
     storyColor: color,
@@ -730,7 +775,12 @@ export async function addReelComment(
   reelOwnerId: string,
   userId: string,
   text: string,
-  replyTo?: { id: string; username: string; name?: string; text?: string | null } | null
+  replyTo?: {
+    id: string;
+    username: string;
+    name?: string;
+    text?: string | null;
+  } | null
 ): Promise<string> {
   const trimmed = text.trim();
   if (!trimmed) throw new Error('لا يمكن إرسال تعليق فارغ');

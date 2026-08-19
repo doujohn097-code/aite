@@ -46,7 +46,7 @@ export function SidebarLink({
           <HeroIcon className='h-7 w-7' iconName={iconName} solid={isActive} />
           {showBadge && (
             <span
-              className='absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center 
+              className='absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center 
                          rounded-full bg-main-accent px-1 text-[10px] font-bold text-black'
             >
               {badge > 99 ? '99+' : badge}
