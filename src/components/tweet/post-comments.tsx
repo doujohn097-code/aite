@@ -369,102 +369,6 @@ export function PostComments({
           )}
         </div>
 
-        {/* Composer */}
-        <div className='flex flex-col border-b border-light-border dark:border-dark-border'>
-          <AnimatePresence>
-            {replyingTo && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className='flex items-center justify-between overflow-hidden bg-main-accent/10 px-4 py-2 text-xs text-main-accent'
-              >
-                <div className='flex items-center gap-2 truncate'>
-                  <HeroIcon
-                    className='h-4 w-4 shrink-0 rotate-180 text-main-accent'
-                    iconName='ArrowUturnLeftIcon'
-                  />
-                  <span className='truncate'>
-                    الرد على <strong>@{replyingTo.username}</strong>
-                    {replyingTo.text && (
-                      <span className='mx-1 truncate font-normal opacity-75'>
-                        &ldquo;{replyingTo.text.slice(0, 35)}
-                        {replyingTo.text.length > 35 ? '...' : ''}&rdquo;
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <button
-                  type='button'
-                  onClick={cancelReply}
-                  className='shrink-0 rounded-full p-1 text-main-accent hover:bg-main-accent/20'
-                  aria-label='إلغاء الرد'
-                >
-                  <HeroIcon className='h-3.5 w-3.5' iconName='XMarkIcon' />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <form
-            onSubmit={handleSubmit}
-            className='flex items-center gap-3 px-4 py-3'
-          >
-            <UserAvatar
-              src={user?.photoURL}
-              alt={user?.name ?? 'أنت'}
-              username={user?.username ?? ''}
-              size={36}
-            />
-            <input
-              ref={inputRef}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder={
-                replyingTo
-                  ? `اكتب رداً على @${replyingTo.username}...`
-                  : 'أضف تعليقاً...'
-              }
-              maxLength={280}
-              className='flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-sm
-                         text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent
-                         dark:bg-dark-line-reply/50 dark:text-dark-primary'
-            />
-            <Button
-              type='submit'
-              loading={sending}
-              disabled={!comment.trim()}
-              className='flex items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm font-bold
-                         text-black shadow-md transition hover:brightness-95 active:scale-95
-                         disabled:pointer-events-none disabled:opacity-40'
-            >
-              <span>إرسال</span>
-              <HeroIcon
-                className='h-4 w-4 rotate-180'
-                iconName='PaperAirplaneIcon'
-              />
-            </Button>
-          </form>
-
-          {/* Quick Emojis */}
-          <div
-            className='flex items-center gap-2 overflow-x-auto border-t border-light-border/60 px-4 py-1.5
-                       dark:border-dark-border/60'
-          >
-            {QUICK_EMOJIS.map((emoji) => (
-              <button
-                key={emoji}
-                type='button'
-                onClick={() => handleEmojiClick(emoji)}
-                className='rounded-full px-2 py-1 text-base transition hover:scale-125
-                           hover:bg-light-line-reply/40 dark:hover:bg-dark-line-reply/40'
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Comments List */}
         <div className='flex flex-col gap-4 px-4 py-4'>
           {loading && !allComments.length ? (
@@ -756,6 +660,102 @@ export function PostComments({
             })
           )}
         </div>
+        {/* Composer */}
+        <div className='sticky bottom-0 z-10 flex flex-col border-t border-light-border bg-main-background dark:border-dark-border'>
+          <AnimatePresence>
+            {replyingTo && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className='flex items-center justify-between overflow-hidden bg-main-accent/10 px-4 py-2 text-xs text-main-accent'
+              >
+                <div className='flex items-center gap-2 truncate'>
+                  <HeroIcon
+                    className='h-4 w-4 shrink-0 rotate-180 text-main-accent'
+                    iconName='ArrowUturnLeftIcon'
+                  />
+                  <span className='truncate'>
+                    الرد على <strong>@{replyingTo.username}</strong>
+                    {replyingTo.text && (
+                      <span className='mx-1 truncate font-normal opacity-75'>
+                        &ldquo;{replyingTo.text.slice(0, 35)}
+                        {replyingTo.text.length > 35 ? '...' : ''}&rdquo;
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <button
+                  type='button'
+                  onClick={cancelReply}
+                  className='shrink-0 rounded-full p-1 text-main-accent hover:bg-main-accent/20'
+                  aria-label='إلغاء الرد'
+                >
+                  <HeroIcon className='h-3.5 w-3.5' iconName='XMarkIcon' />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <form
+            onSubmit={handleSubmit}
+            className='flex items-center gap-3 px-4 py-3'
+          >
+            <UserAvatar
+              src={user?.photoURL}
+              alt={user?.name ?? 'أنت'}
+              username={user?.username ?? ''}
+              size={36}
+            />
+            <input
+              ref={inputRef}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={
+                replyingTo
+                  ? `اكتب رداً على @${replyingTo.username}...`
+                  : 'أضف تعليقاً...'
+              }
+              maxLength={280}
+              className='flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-sm
+                         text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent
+                         dark:bg-dark-line-reply/50 dark:text-dark-primary'
+            />
+            <Button
+              type='submit'
+              loading={sending}
+              disabled={!comment.trim()}
+              className='flex items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm font-bold
+                         text-black shadow-md transition hover:brightness-95 active:scale-95
+                         disabled:pointer-events-none disabled:opacity-40'
+            >
+              <span>إرسال</span>
+              <HeroIcon
+                className='h-4 w-4 rotate-180'
+                iconName='PaperAirplaneIcon'
+              />
+            </Button>
+          </form>
+
+          {/* Quick Emojis */}
+          <div
+            className='flex items-center gap-2 overflow-x-auto border-t border-light-border/60 px-4 py-1.5
+                       dark:border-dark-border/60'
+          >
+            {QUICK_EMOJIS.map((emoji) => (
+              <button
+                key={emoji}
+                type='button'
+                onClick={() => handleEmojiClick(emoji)}
+                className='rounded-full px-2 py-1 text-base transition hover:scale-125
+                           hover:bg-light-line-reply/40 dark:hover:bg-dark-line-reply/40'
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </div>
+
       </section>
 
       {/* Delete confirmation */}

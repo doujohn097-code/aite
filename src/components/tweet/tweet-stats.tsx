@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import cn from 'clsx';
+import { toast } from 'react-hot-toast';
 import { manageRetweet, manageLike } from '@lib/firebase/utils';
 
 import { TweetOption } from './tweet-option';
@@ -67,6 +68,54 @@ export function TweetStats({
   const tweetIsLiked = userLikes?.includes(userId) ?? false;
   const tweetIsRetweeted = userRetweets?.includes(userId) ?? false;
 
+  const [optimisticLike, setOptimisticLike] = useState<boolean | null>(null);
+  const [optimisticRetweet, setOptimisticRetweet] = useState<boolean | null>(
+    null
+  );
+
+  // Drop the override once the Firestore listener confirms the new state
+  useEffect(() => {
+    if (optimisticLike !== null && tweetIsLiked === optimisticLike)
+      setOptimisticLike(null);
+  }, [tweetIsLiked, optimisticLike]);
+
+  useEffect(() => {
+    if (optimisticRetweet !== null && tweetIsRetweeted === optimisticRetweet)
+      setOptimisticRetweet(null);
+  }, [tweetIsRetweeted, optimisticRetweet]);
+
+  const liked = optimisticLike ?? tweetIsLiked;
+  const retweeted = optimisticRetweet ?? tweetIsRetweeted;
+
+  const likeDelta =
+    optimisticLike === null
+      ? 0
+      : (optimisticLike ? 1 : 0) - (tweetIsLiked ? 1 : 0);
+  const retweetDelta =
+    optimisticRetweet === null
+      ? 0
+      : (optimisticRetweet ? 1 : 0) - (tweetIsRetweeted ? 1 : 0);
+
+  const handleLike = (): void => {
+    const next = !liked;
+    setOptimisticLike(next);
+    void manageLike(next ? 'like' : 'unlike', userId, tweetId)().catch(() => {
+      setOptimisticLike(null);
+      toast.error('تعذر تنفيذ العملية، حاول مجدداً');
+    });
+  };
+
+  const handleRetweet = (): void => {
+    const next = !retweeted;
+    setOptimisticRetweet(next);
+    void manageRetweet(next ? 'retweet' : 'unretweet', userId, tweetId)().catch(
+      () => {
+        setOptimisticRetweet(null);
+        toast.error('تعذر تنفيذ العملية، حاول مجدداً');
+      }
+    );
+  };
+
   const isStatsVisible = !!(totalReplies || totalTweets || totalLikes);
 
   return (
@@ -92,40 +141,34 @@ export function TweetStats({
         <TweetOption
           className={cn(
             'hover:text-accent-green focus-visible:text-accent-green',
-            tweetIsRetweeted && 'text-accent-green'
+            retweeted && 'text-accent-green'
           )}
           iconClassName='group-hover:bg-accent-green/10 group-active:bg-accent-green/20
                          group-focus-visible:bg-accent-green/10 group-focus-visible:ring-accent-green/80'
-          tip={tweetIsRetweeted ? 'تراجع عن إعادة النشر' : 'إعادة نشر'}
-          move={tweetMove}
-          stats={currentTweets}
+          tip={retweeted ? 'تراجع عن إعادة النشر' : 'إعادة نشر'}
+          move={retweetDelta ? (retweetDelta > 0 ? -25 : 25) : tweetMove}
+          stats={currentTweets + retweetDelta}
           iconName='ArrowPathRoundedSquareIcon'
           viewTweet={viewTweet}
-          solid={tweetIsRetweeted}
-          onClick={manageRetweet(
-            tweetIsRetweeted ? 'unretweet' : 'retweet',
-            userId,
-            tweetId
-          )}
+          solid={retweeted}
+          pop
+          onClick={handleRetweet}
         />
         <TweetOption
           className={cn(
             'hover:text-red-600 focus-visible:text-red-600',
-            tweetIsLiked && 'text-red-600'
+            liked && 'text-red-600'
           )}
           iconClassName='group-hover:bg-red-500/10 group-active:bg-red-500/20
                          group-focus-visible:bg-red-500/10 group-focus-visible:ring-red-500/80'
-          tip={tweetIsLiked ? 'إلغاء الإعجاب' : 'إعجاب'}
-          move={likeMove}
-          stats={currentLikes}
+          tip={liked ? 'إلغاء الإعجاب' : 'إعجاب'}
+          move={likeDelta ? (likeDelta > 0 ? -25 : 25) : likeMove}
+          stats={currentLikes + likeDelta}
           iconName='HeartIcon'
           viewTweet={viewTweet}
-          solid={tweetIsLiked}
-          onClick={manageLike(
-            tweetIsLiked ? 'unlike' : 'like',
-            userId,
-            tweetId
-          )}
+          solid={liked}
+          pop
+          onClick={handleLike}
         />
         <TweetShare userId={userId} tweetId={tweetId} viewTweet={viewTweet} />
       </div>

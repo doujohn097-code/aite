@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import cn from 'clsx';
 import { preventBubbling } from '@lib/utils';
 import { Button } from '@components/ui/button';
@@ -16,6 +18,8 @@ type TweetOption = {
   viewTweet?: boolean;
   iconClassName: string;
   solid?: boolean;
+  /** Springy pop animation whenever `solid` flips. */
+  pop?: boolean;
   onClick?: (...args: unknown[]) => unknown;
 };
 
@@ -29,8 +33,23 @@ export function TweetOption({
   viewTweet,
   iconClassName,
   solid,
+  pop,
   onClick
 }: TweetOption): JSX.Element {
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    mounted.current = true;
+  }, []);
+
+  const icon = (
+    <HeroIcon
+      className={viewTweet ? 'h-6 w-6' : 'h-5 w-5'}
+      iconName={iconName}
+      solid={solid}
+    />
+  );
+
   return (
     <Button
       className={cn(
@@ -49,11 +68,19 @@ export function TweetOption({
           iconClassName
         )}
       >
-        <HeroIcon
-          className={viewTweet ? 'h-6 w-6' : 'h-5 w-5'}
-          iconName={iconName}
-          solid={solid}
-        />
+        {pop ? (
+          <motion.span
+            key={String(solid)}
+            initial={mounted.current ? { scale: 0.3, rotate: -12 } : false}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 700, damping: 15 }}
+            className='flex'
+          >
+            {icon}
+          </motion.span>
+        ) : (
+          icon
+        )}
         <ToolTip tip={tip} />
       </i>
       <NumberStats move={move as number} stats={stats as number} />

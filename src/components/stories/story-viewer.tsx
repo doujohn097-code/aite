@@ -244,9 +244,30 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
     ? currentStory.likes.includes(authUser?.id ?? '')
     : false;
 
-  const toggleLike = async (): Promise<void> => {
+  const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
+
+  // Reset when moving to another story; drop the override once Firestore confirms
+  useEffect(() => {
+    setOptimisticLiked(null);
+  }, [currentStory?.id]);
+
+  useEffect(() => {
+    if (optimisticLiked !== null && isLiked === optimisticLiked)
+      setOptimisticLiked(null);
+  }, [isLiked, optimisticLiked]);
+
+  const liked = optimisticLiked ?? isLiked;
+  const likeDelta =
+    optimisticLiked === null ? 0 : (optimisticLiked ? 1 : 0) - (isLiked ? 1 : 0);
+
+  const toggleLike = (): void => {
     if (!currentStory || !authUser) return;
-    await likeStory(currentStory.id, authUser.id, userId, !isLiked);
+    const next = !liked;
+    setOptimisticLiked(next);
+    void likeStory(currentStory.id, authUser.id, userId, next).catch(() => {
+      setOptimisticLiked(null);
+      toast.error('تعذر تنفيذ العملية، حاول مجدداً');
+    });
   };
 
   const confirmDelete = async (): Promise<void> => {
@@ -463,16 +484,24 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
           onClick={toggleLike}
           className={cn(
             'flex items-center gap-2 rounded-full px-4 py-2 transition',
-            isLiked
+            liked
               ? 'bg-red-500 text-white'
               : 'bg-white/10 text-white hover:bg-white/20'
           )}
         >
-          <HeroIcon
-            className={cn('h-5 w-5', isLiked && 'fill-current')}
-            iconName='HeartIcon'
-          />
-          <span>{currentStory?.likes.length ?? 0}</span>
+          <motion.span
+            key={String(liked) + currentStory?.id}
+            initial={{ scale: 0.4 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 600, damping: 15 }}
+            className='flex'
+          >
+            <HeroIcon
+              className={cn('h-5 w-5', liked && 'fill-current')}
+              iconName='HeartIcon'
+            />
+          </motion.span>
+          <span>{(currentStory?.likes.length ?? 0) + likeDelta}</span>
         </Button>
         {authUser?.id === userId && (
           <div className='flex items-center gap-2 opacity-80'>
