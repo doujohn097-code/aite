@@ -33,7 +33,7 @@ const navLinks: Readonly<NavLink[]> = [
   {
     href: '/messages',
     linkName: 'الرسائل',
-    iconName: 'EnvelopeIcon',
+    iconName: 'MessengerIcon',
     disabled: true
   },
   {
