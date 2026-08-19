@@ -8,6 +8,7 @@ import { manageRetweet, manageLike } from '@lib/firebase/utils';
 import { TweetOption } from './tweet-option';
 import { TweetShare } from './tweet-share';
 import type { Tweet } from '@lib/types/tweet';
+import type { SharedPostRef } from '@lib/types/message';
 
 type TweetStatsProps = Pick<
   Tweet,
@@ -19,6 +20,8 @@ type TweetStatsProps = Pick<
   tweetId: string;
   viewTweet?: boolean;
   openModal?: () => void;
+  /** بطاقة مشاركة المنشور عبر الرسائل */
+  shared?: SharedPostRef;
 };
 
 export function TweetStats({
@@ -30,7 +33,8 @@ export function TweetStats({
   viewTweet,
   userRetweets,
   userReplies: totalReplies,
-  openModal
+  openModal,
+  shared
 }: TweetStatsProps): JSX.Element {
   const totalLikes = userLikes?.length ?? 0;
   const totalTweets = userRetweets?.length ?? 0;
@@ -170,7 +174,12 @@ export function TweetStats({
           pop
           onClick={handleRetweet}
         />
-        <TweetShare userId={userId} tweetId={tweetId} viewTweet={viewTweet} />
+        <TweetShare
+          userId={userId}
+          tweetId={tweetId}
+          viewTweet={viewTweet}
+          post={shared}
+        />
       </div>
     </>
   );

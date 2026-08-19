@@ -19,7 +19,8 @@ import {
 import {
   sendMessage,
   markConversationRead,
-  markMessageSeen
+  markMessageSeen,
+  toggleMessageReaction
 } from '@lib/messages';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -254,6 +255,8 @@ export default function Chat(): JSX.Element {
       media: null,
       audio: null,
       replyTo,
+      sharedPost: null,
+      reactions: {},
       createdAt: Timestamp.now(),
       seenBy: [user.id]
     };
@@ -364,7 +367,18 @@ export default function Chat(): JSX.Element {
               key={message.id}
               message={message}
               isOwn={message.senderId === user?.id}
+              viewerId={user?.id}
               onReply={setReplyTarget}
+              onReaction={(target, emoji) => {
+                if (!user || !conversationId) return;
+                void toggleMessageReaction(
+                  conversationId,
+                  target.id,
+                  user.id,
+                  target.reactions?.[user.id] ?? null,
+                  emoji
+                );
+              }}
             />
           ))
         ) : (

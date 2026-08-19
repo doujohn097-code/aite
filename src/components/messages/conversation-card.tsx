@@ -51,7 +51,22 @@ export function ConversationCard({
       ? 'PhotoIcon'
       : lastMessage?.type === 'video'
       ? 'VideoCameraIcon'
+      : lastMessage?.type === 'shared'
+      ? 'ArrowUpTrayIcon'
       : null;
+
+  const previewText = lastMessage
+    ? lastMessage.text ||
+      (lastMessage.type === 'audio'
+        ? 'رسالة صوتية'
+        : lastMessage.type === 'image'
+        ? 'صورة'
+        : lastMessage.type === 'video'
+        ? 'فيديو'
+        : lastMessage.type === 'shared'
+        ? 'شارك منشورًا'
+        : '')
+    : 'ابدأ المحادثة الآن';
 
   return (
     <Link href={`/messages/${id}`}>
@@ -111,7 +126,7 @@ export function ConversationCard({
               {typeIcon && (
                 <HeroIcon className='h-4 w-4 shrink-0' iconName={typeIcon} />
               )}
-              {lastMessage ? lastMessage.text : 'ابدأ المحادثة الآن'}
+              {previewText}
             </p>
             {unreadCount > 0 && (
               <span

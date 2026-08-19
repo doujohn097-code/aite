@@ -1,8 +1,16 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Popover } from '@headlessui/react';
 import { toast } from 'react-hot-toast';
-import { query, where, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import {
+  query,
+  where,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove
+} from 'firebase/firestore';
 import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
@@ -22,6 +30,7 @@ import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
+import { useShareToChat } from '@components/messages/share-to-chat';
 import { ReelsComments } from './reels-comments';
 import type { Story } from '@lib/types/story';
 import type { User } from '@lib/types/user';
@@ -46,13 +55,20 @@ const PARTICLES = [
   { x: 0, y: 85, r: 0, s: 0.75, delay: 0.06 }
 ];
 
-export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.Element {
+export function ReelCard({
+  reel,
+  user,
+  isActive = true
+}: ReelCardProps): JSX.Element {
   const { user: authUser } = useAuth();
   const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const { open: confirmOpen, openModal: openConfirm, closeModal: closeConfirm } =
-    useModal();
+  const {
+    open: confirmOpen,
+    openModal: openConfirm,
+    closeModal: closeConfirm
+  } = useModal();
   const {
     open: menuOpen,
     openModal: openMenu,
@@ -65,7 +81,10 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
   } = useModal();
 
   const [burst, setBurst] = useState(0);
-  const [burstCoords, setBurstCoords] = useState<{ x: number; y: number } | null>(null);
+  const [burstCoords, setBurstCoords] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -87,7 +106,10 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
 
   // Live comment count for this reel
   const commentsCountQuery = useMemo(
-    () => (reel.id ? query(tweetsCollection, where('parent.id', '==', reel.id)) : null),
+    () =>
+      reel.id
+        ? query(tweetsCollection, where('parent.id', '==', reel.id))
+        : null,
     [reel.id]
   );
   const { data: commentsDocs } = useCollection(commentsCountQuery, {
@@ -115,7 +137,10 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
           .catch(() => {
             video.muted = true;
             setIsMuted(true);
-            void video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+            void video
+              .play()
+              .then(() => setIsPlaying(true))
+              .catch(() => setIsPlaying(false));
           });
       }
     } else {
@@ -137,15 +162,18 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
     [authUser, isLiked, reel.id, reel.userId]
   );
 
-  const triggerHeartBurst = useCallback((coords?: { x: number; y: number }): void => {
-    if (coords) {
-      setBurstCoords(coords);
-    } else if (cardRef.current) {
-      const rect = cardRef.current.getBoundingClientRect();
-      setBurstCoords({ x: rect.width / 2, y: rect.height / 2 });
-    }
-    setBurst((b) => b + 1);
-  }, []);
+  const triggerHeartBurst = useCallback(
+    (coords?: { x: number; y: number }): void => {
+      if (coords) {
+        setBurstCoords(coords);
+      } else if (cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect();
+        setBurstCoords({ x: rect.width / 2, y: rect.height / 2 });
+      }
+      setBurst((b) => b + 1);
+    },
+    []
+  );
 
   const handleVideoTimeUpdate = (): void => {
     const video = videoRef.current;
@@ -235,7 +263,11 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     const target = e.target as HTMLElement;
     // Don't intercept actual interactive child buttons or links
-    if (target.closest('button') || target.closest('a') || target.closest('input')) {
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('input')
+    ) {
       return;
     }
 
@@ -250,8 +282,14 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
     if (rect) {
       // Safely clamp coordinates within the card frame so burst animation stays inside
       const margin = 70;
-      clickX = Math.max(margin, Math.min(rect.width - margin, e.clientX - rect.left));
-      clickY = Math.max(margin, Math.min(rect.height - margin, e.clientY - rect.top));
+      clickX = Math.max(
+        margin,
+        Math.min(rect.width - margin, e.clientX - rect.left)
+      );
+      clickY = Math.max(
+        margin,
+        Math.min(rect.height - margin, e.clientY - rect.top)
+      );
     }
 
     if (delta < DOUBLE_TAP_MS) {
@@ -284,10 +322,26 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
     openCommentsModal();
   };
 
+  const { openShare, element: shareChatElement } = useShareToChat({
+    id: reel.id,
+    kind: 'reel',
+    authorName: user.name ?? null,
+    authorUsername: user.username ?? null,
+    authorPhoto: user.photoURL ?? null,
+    text: reel.caption ?? null,
+    thumbnail: media?.src ?? null
+  });
+
+  const handleShareToChat = (e?: React.MouseEvent): void => {
+    if (e) e.stopPropagation();
+    openShare();
+  };
+
   const handleShare = async (e?: React.MouseEvent): Promise<void> => {
     if (e) e.stopPropagation();
     closeMenu();
-    const reelUrl = typeof window !== 'undefined' ? `${window.location.origin}/reels` : '';
+    const reelUrl =
+      typeof window !== 'undefined' ? `${window.location.origin}/reels` : '';
     const shareData = {
       title: `ريل بواسطة ${user.name}`,
       text: reel.caption || 'شاهد هذا الريل على Aite!',
@@ -317,7 +371,8 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
   const handleCopyLink = async (e?: React.MouseEvent): Promise<void> => {
     if (e) e.stopPropagation();
     closeMenu();
-    const reelUrl = typeof window !== 'undefined' ? `${window.location.origin}/reels` : '';
+    const reelUrl =
+      typeof window !== 'undefined' ? `${window.location.origin}/reels` : '';
     try {
       await navigator.clipboard.writeText(reelUrl);
       toast.success('تم نسخ رابط الريل');
@@ -347,10 +402,10 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
     <section
       ref={cardRef}
       onClick={handleCardClick}
-      className='relative h-full w-full snap-center overflow-hidden bg-black select-none cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:outline-none [-webkit-tap-highlight-color:transparent]'
+      className='relative h-full w-full cursor-pointer select-none snap-center overflow-hidden bg-black outline-none [-webkit-tap-highlight-color:transparent] focus:outline-none focus:ring-0 focus-visible:outline-none'
     >
       {/* Media Layer */}
-      <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+      <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
         {media &&
           (isVideo ? (
             <video
@@ -361,18 +416,18 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
               muted={isMuted}
               playsInline
               onTimeUpdate={handleVideoTimeUpdate}
-              className='h-full w-full object-cover outline-none pointer-events-none'
+              className='pointer-events-none h-full w-full object-cover outline-none'
             />
           ) : (
             <img
               src={media.src}
               alt={media.alt || 'Reel media'}
-              className='h-full w-full object-cover outline-none pointer-events-none'
+              className='pointer-events-none h-full w-full object-cover outline-none'
             />
           ))}
 
         {/* Gradient overlays for contrast and readability */}
-        <div className='absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none' />
+        <div className='pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85' />
       </div>
 
       {/* Center Animated Play / Pause Indicator */}
@@ -383,11 +438,14 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 1.25, opacity: 0 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className='pointer-events-none absolute inset-0 flex items-center justify-center z-30'
+            className='pointer-events-none absolute inset-0 z-30 flex items-center justify-center'
           >
-            <div className='flex h-18 w-18 items-center justify-center rounded-full bg-black/45 backdrop-blur-md text-white shadow-2xl border border-white/10'>
+            <div className='h-18 w-18 flex items-center justify-center rounded-full border border-white/10 bg-black/45 text-white shadow-2xl backdrop-blur-md'>
               <HeroIcon
-                className={cn('h-9 w-9 text-white', isPlaying ? 'translate-x-0.5' : '')}
+                className={cn(
+                  'h-9 w-9 text-white',
+                  isPlaying ? 'translate-x-0.5' : ''
+                )}
                 iconName={isPlaying ? 'PlayIcon' : 'PauseIcon'}
               />
             </div>
@@ -403,9 +461,9 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: -10 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className='pointer-events-none absolute inset-0 flex items-center justify-center z-30'
+            className='pointer-events-none absolute inset-0 z-30 flex items-center justify-center'
           >
-            <div className='flex items-center gap-2 rounded-full bg-black/75 px-5 py-2.5 text-sm font-bold text-white shadow-2xl backdrop-blur-md border border-white/10'>
+            <div className='flex items-center gap-2 rounded-full border border-white/10 bg-black/75 px-5 py-2.5 text-sm font-bold text-white shadow-2xl backdrop-blur-md'>
               <HeroIcon
                 className='h-5 w-5 text-main-accent'
                 iconName={isMuted ? 'SpeakerXMarkIcon' : 'SpeakerWaveIcon'}
@@ -417,12 +475,12 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
       </AnimatePresence>
 
       {/* Top Floating Controls */}
-      <div className='absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none'>
+      <div className='pointer-events-none absolute left-4 right-4 top-4 z-20 flex items-center justify-between'>
         {/* Sound toggle button */}
         <button
           type='button'
           onClick={toggleMute}
-          className='pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md shadow border border-white/10 transition hover:bg-black/70 active:scale-90 outline-none focus:outline-none [-webkit-tap-highlight-color:transparent]'
+          className='pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white shadow outline-none backdrop-blur-md transition [-webkit-tap-highlight-color:transparent] hover:bg-black/70 focus:outline-none active:scale-90'
           aria-label={isMuted ? 'تشغيل الصوت' : 'كتم الصوت'}
         >
           <HeroIcon
@@ -461,7 +519,7 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
               className='relative flex items-center justify-center'
             >
               <HeroIcon
-                className='h-24 w-24 text-rose-500 filter drop-shadow-[0_8px_24px_rgba(244,63,94,0.85)]'
+                className='h-24 w-24 text-rose-500 drop-shadow-[0_8px_24px_rgba(244,63,94,0.85)] filter'
                 solid
                 iconName='HeartIcon'
               />
@@ -484,10 +542,10 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
                   delay: p.delay,
                   ease: 'easeOut'
                 }}
-                className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center'
+                className='absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center'
               >
                 <HeroIcon
-                  className='h-5 w-5 text-rose-400 filter drop-shadow-[0_4px_10px_rgba(244,63,94,0.7)]'
+                  className='h-5 w-5 text-rose-400 drop-shadow-[0_4px_10px_rgba(244,63,94,0.7)] filter'
                   solid
                   iconName='HeartIcon'
                 />
@@ -501,15 +559,13 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
       {/* LEFT SIDE: Interaction Action Rail (Likes, Comments, Share, Menu, Audio) */}
       {/* Strictly pinned to the PHYSICAL LEFT                                      */}
       {/* ========================================================================= */}
-      <div
-        className='absolute left-4 bottom-20 xs:bottom-16 sm:bottom-14 z-20 flex flex-col items-center gap-5 text-white'
-      >
+      <div className='absolute bottom-20 left-4 z-20 flex flex-col items-center gap-5 text-white xs:bottom-16 sm:bottom-14'>
         {/* Like Button */}
         <div className='flex flex-col items-center gap-1.5'>
           <button
             type='button'
             onClick={handleLikeButton}
-            className='flex h-10 w-10 items-center justify-center text-white transition active:scale-75 hover:scale-110 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent]'
+            className='flex h-10 w-10 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
             aria-label={isLiked ? 'إلغاء الإعجاب' : 'إعجاب'}
           >
             <motion.div
@@ -520,7 +576,7 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
             >
               <HeroIcon
                 className={cn(
-                  'h-8 w-8 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-colors',
+                  'h-8 w-8 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] filter transition-colors',
                   isLiked
                     ? 'fill-rose-500 text-rose-500'
                     : 'text-white hover:text-rose-400'
@@ -540,11 +596,11 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
           <button
             type='button'
             onClick={openComments}
-            className='flex h-10 w-10 items-center justify-center text-white transition active:scale-75 hover:scale-110 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent]'
+            className='flex h-10 w-10 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
             aria-label='التعليقات'
           >
             <HeroIcon
-              className='h-8 w-8 text-white filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-colors hover:text-main-accent'
+              className='h-8 w-8 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] filter transition-colors hover:text-main-accent'
               iconName='ChatBubbleOvalLeftIcon'
             />
           </button>
@@ -558,12 +614,12 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
           <button
             type='button'
             onClick={handleRetweet}
-            className='flex h-10 w-10 items-center justify-center text-white transition active:scale-75 hover:scale-110 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent]'
+            className='flex h-10 w-10 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
             aria-label={retweeted ? 'تراجع عن إعادة النشر' : 'إعادة نشر'}
           >
             <HeroIcon
               className={cn(
-                'h-8 w-8 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-colors',
+                'h-8 w-8 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] filter transition-colors',
                 retweeted
                   ? 'text-accent-green'
                   : 'text-white hover:text-accent-green'
@@ -586,20 +642,62 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
         </div>
 
         {/* Share Button */}
-        <div className='flex flex-col items-center gap-1.5'>
-          <button
-            type='button'
-            onClick={handleShare}
-            className='flex h-10 w-10 items-center justify-center text-white transition active:scale-75 hover:scale-110 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent]'
-            aria-label='مشاركة'
-          >
-            <HeroIcon
-              className='h-8 w-8 text-white filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-colors hover:text-main-accent'
-              iconName='ArrowUpTrayIcon'
-            />
-          </button>
-          <span className='text-xs font-bold drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>مشاركة</span>
-        </div>
+        <Popover className='relative flex flex-col items-center gap-1.5'>
+          {({ open, close }): JSX.Element => (
+            <>
+              <Popover.Button
+                type='button'
+                className='flex h-10 w-10 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
+                aria-label='مشاركة'
+              >
+                <HeroIcon
+                  className='h-8 w-8 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] filter transition-colors hover:text-main-accent'
+                  iconName='ArrowUpTrayIcon'
+                />
+              </Popover.Button>
+              <span className='text-xs font-bold drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
+                مشاركة
+              </span>
+              <AnimatePresence>
+                {open && (
+                  <Popover.Panel
+                    static
+                    as={motion.div}
+                    initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.85, y: 8 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className='menu-container absolute bottom-14 w-max max-w-xs'
+                  >
+                    <Popover.Button
+                      className='accent-tab flex w-full gap-3 rounded-md p-4 text-light-primary hover:bg-main-sidebar-background dark:text-dark-primary'
+                      as={Button}
+                      onClick={preventBubbling((event) => {
+                        close();
+                        void handleShare(event);
+                      })}
+                    >
+                      <HeroIcon iconName='ShareIcon' />
+                      مشاركة الريل
+                    </Popover.Button>
+                    <Popover.Button
+                      className='accent-tab flex w-full gap-3 rounded-md p-4 text-light-primary hover:bg-main-sidebar-background dark:text-dark-primary'
+                      as={Button}
+                      onClick={preventBubbling((event) => {
+                        close();
+                        handleShareToChat(event);
+                      })}
+                    >
+                      <HeroIcon iconName='PaperAirplaneIcon' />
+                      إرسال عبر رسالة
+                    </Popover.Button>
+                  </Popover.Panel>
+                )}
+              </AnimatePresence>
+              {shareChatElement}
+            </>
+          )}
+        </Popover>
 
         {/* Three Dots Menu Button */}
         <div className='flex flex-col items-center gap-1.5'>
@@ -609,11 +707,11 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
               e.stopPropagation();
               openMenu();
             }}
-            className='flex h-9 w-9 items-center justify-center text-white transition active:scale-75 hover:scale-110 outline-none focus:outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent]'
+            className='flex h-9 w-9 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
             aria-label='المزيد من الخيارات'
           >
             <HeroIcon
-              className='h-7 w-7 text-white filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-colors hover:text-main-accent'
+              className='h-7 w-7 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] filter transition-colors hover:text-main-accent'
               iconName='EllipsisVerticalIcon'
             />
           </button>
@@ -624,9 +722,12 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-            className='flex h-9 w-9 items-center justify-center rounded-full border-2 border-white/70 bg-gradient-to-tr from-gray-900 to-black text-white shadow-lg mt-1'
+            className='mt-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white/70 bg-gradient-to-tr from-gray-900 to-black text-white shadow-lg'
           >
-            <HeroIcon className='h-4 w-4 text-main-accent' iconName='MusicalNoteIcon' />
+            <HeroIcon
+              className='h-4 w-4 text-main-accent'
+              iconName='MusicalNoteIcon'
+            />
           </motion.div>
         )}
       </div>
@@ -637,13 +738,13 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
       {/* ========================================================================= */}
       <div
         dir='rtl'
-        className='absolute right-4 bottom-8 z-20 flex max-w-[65%] flex-col items-start text-right gap-2 text-white'
+        className='absolute bottom-8 right-4 z-20 flex max-w-[65%] flex-col items-start gap-2 text-right text-white'
       >
         {/* User profile row with verified badge */}
         <Link href={`/user/${user.username}`}>
           <a
             onClick={(e) => e.stopPropagation()}
-            className='flex items-center gap-2.5 group'
+            className='group flex items-center gap-2.5'
           >
             <div className='relative shrink-0'>
               <UserAvatar
@@ -651,19 +752,19 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
                 alt={user.name}
                 username={user.username}
                 size={42}
-                className='ring-2 ring-white/90 transition group-hover:ring-main-accent shadow-md'
+                className='shadow-md ring-2 ring-white/90 transition group-hover:ring-main-accent'
               />
             </div>
-            <div className='flex flex-col min-w-0 text-right'>
+            <div className='flex min-w-0 flex-col text-right'>
               <div className='flex items-center gap-1 truncate'>
-                <span className='truncate font-bold text-sm leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] group-hover:text-main-accent transition-colors'>
+                <span className='truncate text-sm font-bold leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] transition-colors group-hover:text-main-accent'>
                   {user.name}
                 </span>
                 {user.verified && (
                   <VerifiedBadge className='h-4 w-4 shrink-0' />
                 )}
               </div>
-              <span className='text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] truncate'>
+              <span className='truncate text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
                 @{user.username}
               </span>
             </div>
@@ -698,8 +799,11 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
 
         {/* Music track tag */}
         {reel.music?.name && (
-          <div className='flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1 text-xs text-white/90 backdrop-blur-md max-w-fit shadow border border-white/10'>
-            <HeroIcon className='h-3.5 w-3.5 shrink-0 text-main-accent animate-pulse' iconName='MusicalNoteIcon' />
+          <div className='flex max-w-fit items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1 text-xs text-white/90 shadow backdrop-blur-md'>
+            <HeroIcon
+              className='h-3.5 w-3.5 shrink-0 animate-pulse text-main-accent'
+              iconName='MusicalNoteIcon'
+            />
             <span className='truncate font-medium'>{reel.music.name}</span>
           </div>
         )}
@@ -707,7 +811,7 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
 
       {/* Video Real-time Progress Bar at the bottom */}
       {isVideo && (
-        <div className='absolute bottom-0 inset-x-0 h-1 bg-white/20 z-20 pointer-events-none'>
+        <div className='pointer-events-none absolute inset-x-0 bottom-0 z-20 h-1 bg-white/20'>
           <motion.div
             className='h-full bg-main-accent shadow-sm'
             style={{ width: `${progress}%` }}
@@ -729,26 +833,35 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
                 closeMenu();
                 openConfirm();
               }}
-              className='flex items-center gap-3 w-full rounded-2xl p-3 text-sm font-bold text-accent-red hover:bg-accent-red/10 transition active:scale-98'
+              className='active:scale-98 flex w-full items-center gap-3 rounded-2xl p-3 text-sm font-bold text-accent-red transition hover:bg-accent-red/10'
             >
-              <HeroIcon className='h-5 w-5 text-accent-red' iconName='TrashIcon' />
+              <HeroIcon
+                className='h-5 w-5 text-accent-red'
+                iconName='TrashIcon'
+              />
               <span>حذف الريل</span>
             </button>
           )}
           <button
             type='button'
             onClick={handleCopyLink}
-            className='flex items-center gap-3 w-full rounded-2xl p-3 text-sm font-bold text-light-primary dark:text-dark-primary hover:bg-light-primary/10 dark:hover:bg-dark-primary/10 transition active:scale-98'
+            className='active:scale-98 flex w-full items-center gap-3 rounded-2xl p-3 text-sm font-bold text-light-primary transition hover:bg-light-primary/10 dark:text-dark-primary dark:hover:bg-dark-primary/10'
           >
-            <HeroIcon className='h-5 w-5 text-light-secondary dark:text-dark-secondary' iconName='LinkIcon' />
+            <HeroIcon
+              className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
+              iconName='LinkIcon'
+            />
             <span>نسخ الرابط</span>
           </button>
           <button
             type='button'
             onClick={handleShare}
-            className='flex items-center gap-3 w-full rounded-2xl p-3 text-sm font-bold text-light-primary dark:text-dark-primary hover:bg-light-primary/10 dark:hover:bg-dark-primary/10 transition active:scale-98'
+            className='active:scale-98 flex w-full items-center gap-3 rounded-2xl p-3 text-sm font-bold text-light-primary transition hover:bg-light-primary/10 dark:text-dark-primary dark:hover:bg-dark-primary/10'
           >
-            <HeroIcon className='h-5 w-5 text-light-secondary dark:text-dark-secondary' iconName='ShareIcon' />
+            <HeroIcon
+              className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
+              iconName='ShareIcon'
+            />
             <span>مشاركة الريل</span>
           </button>
         </div>

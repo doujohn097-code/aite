@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import Link from 'next/link';
 import cn from 'clsx';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useTransform
+} from 'framer-motion';
 import { VoicePlayer } from './voice-player';
 import { ImagePreview } from '@components/input/image-preview';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -10,16 +16,23 @@ import type { Message, MessageType } from '@lib/types/message';
 type MessageBubbleProps = {
   message: Message;
   isOwn: boolean;
+  /** معرّف المستخدم الحالي لتمييز تفاعله */
+  viewerId?: string;
   /** اسحب الرسالة أفقيًا لتفعيل الرد */
   onReply?: (message: Message) => void;
+  /** التفاعل بالإيموجي مع الرسالة (تمرير نفس الإيموجي يحذفه) */
+  onReaction?: (message: Message, emoji: string) => void;
 };
 
-const SWIPE_THRESHOLD = 60;
+const SWIPE_THRESHOLD = 56;
+
+const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
 
 const replyLabels: Record<Exclude<MessageType, 'text'>, string> = {
   image: 'صورة',
   video: 'فيديو',
-  audio: 'رسالة صوتية'
+  audio: 'رسالة صوتية',
+  shared: 'منشور'
 };
 
 function formatTime(createdAt: Message['createdAt']): string {
@@ -33,26 +46,47 @@ function formatTime(createdAt: Message['createdAt']): string {
 export function MessageBubble({
   message,
   isOwn,
-  onReply
+  viewerId,
+  onReply,
+  onReaction
 }: MessageBubbleProps): JSX.Element {
-  const { type, text, media, audio, replyTo, createdAt, seenBy } = message;
+  const {
+    type,
+    text,
+    media,
+    audio,
+    replyTo,
+    sharedPost,
+    reactions,
+    createdAt,
+    seenBy
+  } = message;
   const seen = seenBy?.length > 1;
 
-  // سحب أفقي مرن بالكامل — الفقاعة تميل وتتوهج ويكشف زر الرد في المؤخرة
+  // سحب أفقي انسيابي — الفقاعة تميل وتتوهج ويكشف زر الرد خلفها
   const dragX = useMotionValue(0);
   const [triggered, setTriggered] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [heartBurst, setHeartBurst] = useState(0);
 
-  const rotate = useTransform(dragX, [-90, 0, 90], [-6, 0, 6]);
+  const rotate = useTransform(dragX, [-80, 0, 80], [-4, 0, 4]);
   const replyScale = useTransform(dragX, (v) =>
-    Math.min(Math.abs(v) / SWIPE_THRESHOLD, 1.25)
+    Math.min(Math.abs(v) / SWIPE_THRESHOLD, 1.35)
   );
   const replyOpacity = useTransform(dragX, (v) =>
-    Math.min(Math.abs(v) / (SWIPE_THRESHOLD * 0.6), 1)
+    Math.min(Math.abs(v) / (SWIPE_THRESHOLD * 0.5), 1)
   );
-  // خط توهج مرن خلف الفقاعة يتمدد كلما سحبت أكثر
   const glowScaleX = useTransform(dragX, (v) =>
     Math.min(Math.abs(v) / SWIPE_THRESHOLD, 1.6)
   );
+
+  const myReaction = viewerId ? (reactions ?? {})[viewerId] : undefined;
+  const reactionGroups = Object.values(reactions ?? {}).reduce<
+    Record<string, number>
+  >((acc, emoji) => {
+    acc[emoji] = (acc[emoji] ?? 0) + 1;
+    return acc;
+  }, {});
 
   const handleDragEnd = (): void => {
     if (Math.abs(dragX.get()) >= SWIPE_THRESHOLD && onReply) {
@@ -64,6 +98,36 @@ export function MessageBubble({
       }
       onReply(message);
     }
+  };
+
+  const react = (emoji: string): void => {
+    setPickerOpen(false);
+    onReaction?.(message, emoji);
+  };
+
+  // نقر سريع مزدوج = قلب
+  const tapRef = useRef<number>(0);
+  const handlePointerUp = (): void => {
+    if (Math.abs(dragX.get()) > 12) return;
+    const now = Date.now();
+    if (now - tapRef.current < 300) {
+      tapRef.current = 0;
+      setHeartBurst((value) => value + 1);
+      react('❤️');
+    } else {
+      tapRef.current = now;
+    }
+  };
+
+  // ضغطة مطوّلة تفتح منتقي التفاعلات (تلغى بأي حركة أفقية)
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handlePointerDown = (): void => {
+    if (!onReaction) return;
+    pressTimer.current = setTimeout(() => setPickerOpen(true), 450);
+  };
+  const cancelPress = (): void => {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    pressTimer.current = null;
   };
 
   const bubbleClass = cn(
@@ -94,7 +158,6 @@ export function MessageBubble({
         isOwn ? 'bg-black/15' : 'bg-black/5 dark:bg-white/10'
       )}
     >
-      {/* شريط جانبي متدرج ينحني مع الاقتباس */}
       <span
         className='absolute inset-y-0 start-0 w-[3px] rounded-full bg-gradient-to-b
                    from-main-accent via-main-accent/70 to-transparent'
@@ -122,16 +185,21 @@ export function MessageBubble({
       )}
       drag='x'
       dragDirectionLock
+      dragMomentum={false}
       dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={{ left: 0.18, right: 0.18 }}
+      dragElastic={{ left: 0.24, right: 0.24 }}
+      dragTransition={{ bounceStiffness: 600, bounceDamping: 28 }}
       style={{ x: dragX, rotate }}
-      onDrag={() => setTriggered(false)}
+      onDrag={() => {
+        setTriggered(false);
+        cancelPress();
+      }}
       onDragEnd={handleDragEnd}
       initial={triggered ? { scale: 0.97 } : false}
       animate={{ scale: 1 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
     >
-      {/* وهج مرن يمتد من طرف الفقاعة مع السحب */}
+      {/* وهج مرن خلف الفقاعة أثناء السحب */}
       <motion.span
         aria-hidden
         className={cn(
@@ -158,7 +226,62 @@ export function MessageBubble({
         />
       </motion.div>
 
-      <div className={cn(bubbleClass, 'relative z-10')} dir='auto'>
+      {/* انفجار القلب عند النقر المزدوج */}
+      <AnimatePresence>
+        <motion.span
+          key={heartBurst}
+          aria-hidden
+          className='pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-4xl'
+        >
+          {!!heartBurst && (
+            <motion.span
+              className='block'
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0, 1.3, 1], opacity: [0, 1, 0], y: -10 }}
+              transition={{ duration: 0.9, ease: 'easeOut' }}
+            >
+              ❤️
+            </motion.span>
+          )}
+        </motion.span>
+      </AnimatePresence>
+
+      {/* منتقي التفاعلات بالضغطة المطوّلة */}
+      <AnimatePresence>
+        {pickerOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.7, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.7, y: 8 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            className='absolute -top-11 z-30 flex items-center gap-1 rounded-full border
+                       border-light-border bg-main-background/95 px-2 py-1 shadow-xl backdrop-blur-md
+                       dark:border-dark-border'
+          >
+            {REACTION_EMOJIS.map((emoji) => (
+              <button
+                key={emoji}
+                className={cn(
+                  'rounded-full p-1 text-xl transition hover:-translate-y-0.5 hover:scale-125',
+                  myReaction === emoji && 'bg-main-accent/20'
+                )}
+                onClick={() => react(emoji)}
+                type='button'
+              >
+                {emoji}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div
+        className={cn(bubbleClass, 'relative z-10')}
+        dir='auto'
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerMove={() => Math.abs(dragX.get()) > 8 && cancelPress()}
+      >
         {replyQuote}
 
         {type === 'text' && (
@@ -201,6 +324,66 @@ export function MessageBubble({
           />
         )}
 
+        {type === 'shared' && sharedPost && (
+          <Link
+            href={
+              sharedPost.kind === 'reel'
+                ? `/reels?video=${sharedPost.id}`
+                : `/tweet/${sharedPost.id}`
+            }
+          >
+            <a
+              className={cn(
+                'block min-w-[230px] max-w-[300px] overflow-hidden rounded-xl border bg-main-background/70 backdrop-blur-md xs:min-w-[290px]',
+                isOwn
+                  ? 'border-black/15 text-black'
+                  : 'border-black/10 text-light-primary dark:border-white/15 dark:text-dark-primary'
+              )}
+              onClick={(event) => event.stopPropagation()}
+            >
+              {sharedPost.thumbnail && (
+                <img
+                  className='h-32 w-full object-cover'
+                  src={sharedPost.thumbnail}
+                  alt='معاينة المنشور'
+                />
+              )}
+              <div className='flex items-center gap-2 px-3 pt-2.5'>
+                {sharedPost.authorPhoto && (
+                  <img
+                    className='h-7 w-7 rounded-full object-cover'
+                    src={sharedPost.authorPhoto}
+                    alt={sharedPost.authorName ?? ''}
+                  />
+                )}
+                <div className='min-w-0 flex-1 leading-tight'>
+                  <p className='truncate text-sm font-bold'>
+                    {sharedPost.authorName ?? 'مستخدم'}
+                  </p>
+                  {sharedPost.authorUsername && (
+                    <p className='truncate text-[11px] opacity-60'>
+                      @{sharedPost.authorUsername}
+                    </p>
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                    isOwn ? 'bg-black/15' : 'bg-main-accent/15 text-main-accent'
+                  )}
+                >
+                  {sharedPost.kind === 'reel' ? 'ريل' : 'منشور'}
+                </span>
+              </div>
+              {sharedPost.text && (
+                <p className='line-clamp-2 px-3 pb-2.5 pt-1 text-[13px] opacity-80'>
+                  {sharedPost.text}
+                </p>
+              )}
+            </a>
+          </Link>
+        )}
+
         {text && type !== 'text' && (
           <p
             className={cn(
@@ -220,9 +403,10 @@ export function MessageBubble({
         )}
       </div>
 
+      {/* تفاعلات الرسالة + الوقت ومؤشر القراءة */}
       <div
         className={cn(
-          'flex items-center gap-1 px-1 text-[11px] text-light-secondary dark:text-dark-secondary',
+          'flex items-center gap-1.5 px-1 text-[11px] text-light-secondary dark:text-dark-secondary',
           isOwn ? 'flex-row-reverse' : 'flex-row'
         )}
       >
@@ -234,6 +418,18 @@ export function MessageBubble({
             solid={seen}
           />
         )}
+        {Object.entries(reactionGroups).map(([emoji, count]) => (
+          <span
+            key={emoji}
+            className='flex items-center gap-0.5 rounded-full border border-light-border bg-main-search-background
+                       px-1.5 py-0.5 text-[11px] leading-none dark:border-dark-border'
+          >
+            {emoji}
+            {count > 1 && (
+              <span className='text-[10px] font-bold'>{count}</span>
+            )}
+          </span>
+        ))}
       </div>
     </motion.div>
   );

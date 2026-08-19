@@ -8,19 +8,36 @@ import { siteURL } from '@lib/env';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ToolTip } from '@components/ui/tooltip';
+import { useShareToChat } from '@components/messages/share-to-chat';
 import { variants } from './tweet-actions';
+import type { SharedPostRef } from '@lib/types/message';
 
 type TweetShareProps = {
   userId: string;
   tweetId: string;
   viewTweet?: boolean;
+  /** بطاقة المنشور المشاركة عبر الرسائل */
+  post?: SharedPostRef;
 };
 
 export function TweetShare({
   userId,
   tweetId,
-  viewTweet
+  viewTweet,
+  post
 }: TweetShareProps): JSX.Element {
+  const { openShare, element } = useShareToChat(
+    post ?? {
+      id: tweetId,
+      kind: 'tweet',
+      authorName: null,
+      authorUsername: null,
+      authorPhoto: null,
+      text: null,
+      thumbnail: null
+    }
+  );
+
   const handleCopy = (closeMenu: () => void) => async (): Promise<void> => {
     closeMenu();
     await navigator.clipboard.writeText(`${siteURL}/tweet/${tweetId}`);
@@ -61,6 +78,17 @@ export function TweetShare({
                 <Popover.Button
                   className='accent-tab flex w-full gap-3 rounded-md p-4 hover:bg-main-sidebar-background'
                   as={Button}
+                  onClick={preventBubbling(async () => {
+                    close();
+                    openShare();
+                  })}
+                >
+                  <HeroIcon iconName='PaperAirplaneIcon' />
+                  إرسال عبر رسالة
+                </Popover.Button>
+                <Popover.Button
+                  className='accent-tab flex w-full gap-3 rounded-md p-4 hover:bg-main-sidebar-background'
+                  as={Button}
                   onClick={preventBubbling(handleCopy(close))}
                 >
                   <HeroIcon iconName='LinkIcon' />
@@ -69,6 +97,7 @@ export function TweetShare({
               </Popover.Panel>
             )}
           </AnimatePresence>
+          {element}
         </>
       )}
     </Popover>

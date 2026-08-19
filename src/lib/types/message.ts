@@ -1,6 +1,20 @@
 import { Timestamp, type FirestoreDataConverter } from 'firebase/firestore';
 
-export type MessageType = 'text' | 'image' | 'video' | 'audio';
+export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'shared';
+
+/** بطاقة مشاركة منشور/ريل داخل الدردشة */
+export type SharedPostRef = {
+  id: string;
+  kind: 'tweet' | 'reel';
+  authorName: string | null;
+  authorUsername: string | null;
+  authorPhoto: string | null;
+  text: string | null;
+  thumbnail: string | null;
+};
+
+/** اسم المستخدم المعجب لكل emoji */
+export type MessageReactions = Record<string, string>;
 
 export type MessageMedia = {
   src: string;
@@ -32,6 +46,9 @@ export type Message = {
   media: MessageMedia[] | null;
   audio: VoiceData | null;
   replyTo: ReplyData | null;
+  sharedPost: SharedPostRef | null;
+  /** تفاعلات الرسالة: بمعرف المستخدم الإيموجي الذي وضعه */
+  reactions: MessageReactions;
   createdAt: Timestamp;
   seenBy: string[];
 };
@@ -70,6 +87,8 @@ export const messageConverter: FirestoreDataConverter<Message> = {
       media: null,
       audio: null,
       replyTo: null,
+      sharedPost: null,
+      reactions: {},
       createdAt: Timestamp.now(),
       seenBy: [],
       ...data

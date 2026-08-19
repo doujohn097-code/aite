@@ -141,6 +141,15 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
               userRetweets={userRetweets}
               userReplies={userReplies}
               openModal={openModal}
+              shared={{
+                id: tweetId,
+                kind: 'tweet',
+                authorName: name ?? null,
+                authorUsername: username ?? null,
+                authorPhoto: photoURL ?? null,
+                text: text ?? null,
+                thumbnail: images?.[0]?.src ?? null
+              }}
             />
           </div>
         </div>

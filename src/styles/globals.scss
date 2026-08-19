@@ -110,3 +110,9 @@
 .font-splash-credit {
   font-family: 'Great Vibes', 'Segoe Script', 'Brush Script MT', cursive;
 }
+
+/* منع أي تمدد أفقي في كامل التطبيق (clip لا يكسر position: sticky) */
+html,
+body {
+  overflow-x: clip;
+}

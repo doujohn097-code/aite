@@ -16,11 +16,13 @@ import { db } from '@lib/firebase/app';
 import { uploadImages } from '@lib/firebase/utils';
 import { getRandomId } from '@lib/random';
 import type { FilesWithId } from '@lib/types/file';
+import { deleteField } from 'firebase/firestore';
 import type {
   Conversation,
   MessageMedia,
   MessageType,
   ReplyData,
+  SharedPostRef,
   VoiceData
 } from '@lib/types/message';
 
@@ -61,17 +63,19 @@ export async function getOrCreateConversation(
   return { id, ...conversation };
 }
 
-type SendPayload = { replyTo?: ReplyData | null } & (
+export type SendPayload = { replyTo?: ReplyData | null } & (
   | { type: 'text'; text: string }
   | { type: 'image' | 'video'; files: FilesWithId }
   | { type: 'audio'; blob: Blob; duration: number; peaks: number[] }
+  | { type: 'shared'; post: SharedPostRef }
 );
 
 const lastMessageLabels: Record<MessageType, string> = {
   text: '',
   image: 'صورة',
   video: 'فيديو',
-  audio: 'رسالة صوتية'
+  audio: 'رسالة صوتية',
+  shared: 'شارك منشورًا'
 };
 
 export async function sendMessage(
@@ -85,8 +89,12 @@ export async function sendMessage(
   let text: string | null = null;
   let media: MessageMedia[] | null = null;
   let audio: VoiceData | null = null;
+  let sharedPost: SharedPostRef | null = null;
 
-  if (payload.type === 'text') {
+  if (payload.type === 'shared') {
+    type = 'shared';
+    sharedPost = payload.post;
+  } else if (payload.type === 'text') {
     text = payload.text.trim();
     if (!text) return;
   } else if (payload.type === 'audio') {
@@ -124,6 +132,8 @@ export async function sendMessage(
     media,
     audio,
     replyTo: payload.replyTo ?? null,
+    sharedPost,
+    reactions: {},
     createdAt: serverTimestamp() as Timestamp,
     seenBy: [senderId]
   });
@@ -149,6 +159,22 @@ export async function sendMessage(
     [`unread.${senderId}`]: 0,
     ...othersUnread
   });
+}
+
+/** إضافة/إزالة تفاعل المستخدم مع رسالة — تمرير نفس الإيموجي يحذفه */
+export async function toggleMessageReaction(
+  conversationId: string,
+  messageId: string,
+  userId: string,
+  currentEmoji: string | null,
+  emoji: string
+): Promise<void> {
+  await updateDoc(
+    doc(conversationMessagesCollection(conversationId), messageId),
+    {
+      [`reactions.${userId}`]: currentEmoji === emoji ? deleteField() : emoji
+    }
+  );
 }
 
 export async function markConversationRead(

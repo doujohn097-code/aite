@@ -215,6 +215,15 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                     userReplies={userReplies}
                     userRetweets={userRetweets}
                     openModal={!parent ? openModal : undefined}
+                    shared={{
+                      id: tweetId,
+                      kind: 'tweet',
+                      authorName: name ?? null,
+                      authorUsername: username ?? null,
+                      authorPhoto: photoURL ?? null,
+                      text: text ?? null,
+                      thumbnail: images?.[0]?.src ?? null
+                    }}
                   />
                 )}
               </div>
