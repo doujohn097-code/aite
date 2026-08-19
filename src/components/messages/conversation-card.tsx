@@ -7,8 +7,6 @@ import { getTimestampMillis } from '@lib/date';
 import type { Conversation } from '@lib/types/message';
 import type { User } from '@lib/types/user';
 
-const ONLINE_WINDOW_MS = 3 * 60 * 1000;
-
 type ConversationCardProps = {
   conversation: Conversation;
   peer: User | null;
@@ -45,12 +43,7 @@ export function ConversationCard({
   const unreadCount = unread?.[currentUserId] ?? 0;
   const isOwnLast = lastMessage?.senderId === currentUserId;
 
-  const lastActiveMillis = peer?.lastActiveAt
-    ? getTimestampMillis(peer.lastActiveAt)
-    : null;
-  const isOnline =
-    !!lastActiveMillis && Date.now() - lastActiveMillis < ONLINE_WINDOW_MS;
-
+  // نقطة النشاط الخضراء تُعرض من UserAvatar نفسها — لا نضيف نقطة ثانية هنا
   const typeIcon: string | null =
     lastMessage?.type === 'audio'
       ? 'MicrophoneIcon'
@@ -79,9 +72,6 @@ export function ConversationCard({
               alt='مستخدم'
               className='h-12 w-12 rounded-full object-cover'
             />
-          )}
-          {isOnline && (
-            <span className='absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-main-background bg-green-500' />
           )}
         </div>
 

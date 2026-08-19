@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@lib/context/auth-context';
 import { useWindow } from '@lib/context/window-context';
 import { useModal } from '@lib/hooks/useModal';
+import { useUnreadMessagesCount } from '@lib/hooks/useUnreadMessagesCount';
 import { Modal } from '@components/modal/modal';
 import { Input } from '@components/input/input';
 import { CustomIcon } from '@components/ui/custom-icon';
@@ -49,6 +50,7 @@ export function Sidebar(): JSX.Element {
   const { asPath } = useRouter();
 
   const { open, openModal, closeModal } = useModal();
+  const unreadMessages = useUnreadMessagesCount();
 
   const username = user?.username as string;
   const path = asPath.split('?')[0];
@@ -92,7 +94,14 @@ export function Sidebar(): JSX.Element {
           </h1>
           <nav className='flex items-center justify-around xs:flex-col xs:justify-center xl:block'>
             {navLinks.map(({ ...linkData }) => (
-              <SidebarLink {...linkData} key={linkData.href} />
+              <SidebarLink
+                {...linkData}
+                key={linkData.href}
+                badge={
+                  linkData.href === '/messages' ? unreadMessages : undefined
+                }
+                badgeClassName='bg-accent-red text-white'
+              />
             ))}
             <SidebarLink
               href={`/user/${username}`}

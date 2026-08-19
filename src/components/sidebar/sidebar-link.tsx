@@ -8,6 +8,7 @@ import type { NavLink } from './sidebar';
 type SidebarLinkProps = NavLink & {
   username?: string;
   badge?: number;
+  badgeClassName?: string;
 };
 
 export function SidebarLink({
@@ -17,7 +18,8 @@ export function SidebarLink({
   linkName,
   disabled,
   canBeHidden,
-  badge
+  badge,
+  badgeClassName
 }: SidebarLinkProps): JSX.Element {
   const { asPath } = useRouter();
   const isActive = username ? asPath.includes(username) : asPath === href;
@@ -46,8 +48,10 @@ export function SidebarLink({
           <HeroIcon className='h-7 w-7' iconName={iconName} solid={isActive} />
           {showBadge && (
             <span
-              className='absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center 
-                         rounded-full bg-main-accent px-1 text-[10px] font-bold text-black'
+              className={cn(
+                'absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold',
+                badgeClassName ?? 'bg-main-accent text-black'
+              )}
             >
               {badge > 99 ? '99+' : badge}
             </span>

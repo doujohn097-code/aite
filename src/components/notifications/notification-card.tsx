@@ -103,6 +103,7 @@ export function NotificationCard({
             alt={name}
             username={username}
             size={46}
+            showPresence={false}
           />
           <span
             className={cn(

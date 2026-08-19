@@ -87,6 +87,15 @@ export default function Chat(): JSX.Element {
     };
   }, []);
 
+  // مكوّن الصفحة يعاد استخدامه عند تبديل المحادثة — نعيد التهيئة لكل معرّف
+  useEffect(() => {
+    setForbidden(false);
+    setConversation(null);
+    setMessages(null);
+    setOptimistic([]);
+    setReplyTarget(null);
+  }, [conversationId]);
+
   // الاستماع للمحادثة والتحقق من العضوية
   useEffect(() => {
     if (!user || !conversationId) return;
@@ -103,6 +112,7 @@ export default function Chat(): JSX.Element {
           setForbidden(true);
           return;
         }
+        setForbidden(false);
         setConversation(data);
 
         const otherId = data.participants.find(
@@ -320,9 +330,6 @@ export default function Chat(): JSX.Element {
             <a className='flex min-w-0 items-center gap-3'>
               <span className='relative shrink-0'>
                 <StoryAvatar user={peer} size={40} />
-                {peerOnline && (
-                  <span className='absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-main-background bg-green-500' />
-                )}
               </span>
               <span className='flex min-w-0 flex-col'>
                 <span className='flex items-center gap-1'>
@@ -347,7 +354,7 @@ export default function Chat(): JSX.Element {
       {/* الرسائل */}
       <div
         ref={scrollRef}
-        className='flex flex-1 flex-col gap-2 overflow-y-auto overscroll-contain bg-main-background px-3 py-4'
+        className='flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-clip overscroll-contain bg-main-background px-3 py-4'
       >
         {!messages ? (
           <Loading className='mt-5' />

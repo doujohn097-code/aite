@@ -4,6 +4,7 @@ import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { VoicePlayer } from './voice-player';
 import { ImagePreview } from '@components/input/image-preview';
 import { HeroIcon } from '@components/ui/hero-icon';
+import { LinkifiedText } from '@components/ui/linkified-text';
 import type { Message, MessageType } from '@lib/types/message';
 
 type MessageBubbleProps = {
@@ -161,7 +162,18 @@ export function MessageBubble({
         {replyQuote}
 
         {type === 'text' && (
-          <p className='whitespace-pre-wrap break-words'>{text}</p>
+          <p className='whitespace-pre-wrap break-words'>
+            {text && (
+              <LinkifiedText
+                text={text}
+                linkClassName={
+                  isOwn
+                    ? 'break-all font-semibold text-[#0b3d91] underline underline-offset-2'
+                    : undefined
+                }
+              />
+            )}
+          </p>
         )}
 
         {(type === 'image' || type === 'video') && media && (
@@ -196,7 +208,14 @@ export function MessageBubble({
               isOwn ? 'text-black' : 'text-light-primary dark:text-dark-primary'
             )}
           >
-            {text}
+            <LinkifiedText
+              text={text}
+              linkClassName={
+                isOwn
+                  ? 'break-all font-semibold text-[#0b3d91] underline underline-offset-2'
+                  : undefined
+              }
+            />
           </p>
         )}
       </div>

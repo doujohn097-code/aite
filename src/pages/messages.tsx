@@ -158,7 +158,7 @@ export default function Messages(): JSX.Element {
           لا توجد نتائج مطابقة
         </p>
       ) : conversations.length ? (
-        <section>
+        <section className='overflow-x-clip'>
           {filtered?.map((conversation) => {
             const peerId = conversation.participants.find(
               (participant) => participant !== user?.id

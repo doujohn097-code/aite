@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
+import { LinkifiedText } from '@components/ui/linkified-text';
 import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { delayScroll } from '@lib/utils';
@@ -107,7 +108,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
             `accent-tab hover-card relative flex flex-col 
              gap-y-4 px-4 py-3 outline-none duration-200`,
             parentTweet
-              ? 'mt-0.5 pt-2.5 pb-0'
+              ? 'mt-0.5 pb-0 pt-2.5'
               : 'border-b border-light-border dark:border-dark-border'
           )}
           draggable={false}
@@ -124,7 +125,9 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                   <TweetStatus type='tweet'>
                     <Link href={profileUsername as string}>
                       <a className='custom-underline truncate text-sm font-bold'>
-                        {userId === profileId ? 'أعدت نشر' : `أعاد ${profileName ?? ''} نشر`}
+                        {userId === profileId
+                          ? 'أعدت نشر'
+                          : `أعاد ${profileName ?? ''} نشر`}
                       </a>
                     </Link>
                   </TweetStatus>
@@ -190,7 +193,9 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                 </p>
               )}
               {text && (
-                <p className='whitespace-pre-line break-words'>{text}</p>
+                <p className='whitespace-pre-line break-words'>
+                  <LinkifiedText text={text} />
+                </p>
               )}
               <div className='mt-1 flex flex-col gap-2'>
                 {images && (

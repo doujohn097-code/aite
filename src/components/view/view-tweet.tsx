@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import cn from 'clsx';
+import { LinkifiedText } from '@components/ui/linkified-text';
 import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
@@ -117,7 +118,9 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
             </p>
           )}
           {text && (
-            <p className='whitespace-pre-line break-words text-2xl'>{text}</p>
+            <p className='whitespace-pre-line break-words text-2xl'>
+              <LinkifiedText text={text} />
+            </p>
           )}
           {images && (
             <ImagePreview
@@ -126,14 +129,8 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
               previewCount={images.length}
             />
           )}
-          <div
-            className='border-b border-light-border pb-2 dark:border-dark-border'
-          >
-            <TweetDate
-              viewTweet
-              tweetLink={tweetLink}
-              createdAt={createdAt}
-            />
+          <div className='border-b border-light-border pb-2 dark:border-dark-border'>
+            <TweetDate viewTweet tweetLink={tweetLink} createdAt={createdAt} />
             <TweetStats
               viewTweet
               reply={reply}
