@@ -7,7 +7,8 @@ import {
   doc,
   updateDoc,
   onSnapshot,
-  Timestamp
+  Timestamp,
+  documentId
 } from 'firebase/firestore';
 import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
@@ -19,6 +20,7 @@ import {
 import { useDocument } from '@lib/hooks/useDocument';
 import { useCollection } from '@lib/hooks/useCollection';
 import { getOrCreateConversation } from '@lib/firebase/utils';
+import { deleteConversation } from '@lib/firebase/delete-conversation';
 import { getTimestampMillis } from '@lib/date';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -33,6 +35,10 @@ import { MessageInput } from '@components/messages/message-input';
 import { StoryAvatar } from '@components/stories/story-avatar';
 import { UserName } from '@components/user/user-name';
 import { UserAvatar } from '@components/user/user-avatar';
+import { Modal } from '@components/modal/modal';
+import { ActionModal } from '@components/modal/action-modal';
+import { StoriesBar } from '@components/stories/stories-bar';
+import { Popover } from '@headlessui/react';
 import type { ReactElement, ReactNode } from 'react';
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import type { WithFieldValue } from 'firebase/firestore';
@@ -118,6 +124,27 @@ function ConversationsList({ userId }: { userId?: string }): JSX.Element {
     [search, user?.following]
   );
 
+  const followingIds = user?.following ?? (user ? [] : null);
+
+  // All followed users for quick chat starts
+  const followedQuery = useMemo(
+    () =>
+      followingIds?.length
+        ? query(
+            usersCollection,
+            where(
+              documentId(), 'in', followingIds.slice(0, 30)
+            )
+          )
+        : null,
+    [JSON.stringify(followingIds)]
+  );
+
+  const { data: followedUsers } = useCollection(followedQuery, {
+    allowNull: true,
+    disabled: !followingIds?.length
+  });
+
   const { data: candidates } = useCollection(followingQuery, {
     allowNull: true,
     disabled: !search
@@ -185,6 +212,8 @@ function ConversationsList({ userId }: { userId?: string }): JSX.Element {
         )}
       </div>
 
+      <StoriesBar />
+
       {/* Conversations */}
       {loading ? (
         <Loading className='mt-5' />
@@ -210,6 +239,41 @@ function ConversationsList({ userId }: { userId?: string }): JSX.Element {
           ))}
         </section>
       )}
+
+      {/* All users you follow — quick chat starts */}
+      {followedUsers && (
+        <section className='flex flex-col'>
+          <h2 className='border-b border-light-border px-4 py-2 text-sm font-bold
+                         text-light-secondary dark:border-dark-border dark:text-dark-secondary'>
+            المتابعون
+          </h2>
+          {followedUsers.map((target: User) => (
+            <button
+              key={target.id}
+              type='button'
+              onClick={(): void => void startChat(target)}
+              className='hover-animation flex items-center gap-3 border-b border-light-border/60
+                         px-4 py-3 text-right hover:bg-light-primary/5
+                         dark:border-dark-border/60 dark:hover:bg-dark-primary/5'
+            >
+              <UserAvatar
+                src={target.photoURL}
+                alt={target.name}
+                username={target.username}
+                size={44}
+              />
+              <div className='flex flex-col'>
+                <span className='text-sm font-bold text-light-primary dark:text-dark-primary'>
+                  {target.name}
+                </span>
+                <span className='text-xs text-light-secondary dark:text-dark-secondary'>
+                  @{target.username}
+                </span>
+              </div>
+            </button>
+          ))}
+        </section>
+      )}
     </MainContainer>
   );
 }
@@ -228,6 +292,8 @@ function ConversationRoom({
   const router = useRouter();
   const { user } = useAuth();
   const [replyTo, setReplyTo] = useState<ReplyTo | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const conversationRef = doc(conversationsCollection, conversationId);
   const { data: conversation, loading: conversationLoading } =
@@ -282,6 +348,27 @@ function ConversationRoom({
             </div>
           </>
         )}
+        <Popover className='relative ms-auto'>
+          <Popover.Button
+            className='rounded-full p-1.5 transition hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
+          >
+            <HeroIcon className='h-5 w-5' iconName='EllipsisVerticalIcon' />
+          </Popover.Button>
+          <Popover.Panel
+            className='absolute left-0 z-20 mt-1 w-44 overflow-hidden rounded-xl bg-main-sidebar-background py-1
+                       shadow-lg ring-1 ring-light-border dark:bg-dark-sidebar-background dark:ring-dark-border'
+          >
+            <button
+              type='button'
+              onClick={(): void => setDeleteOpen(true)}
+              className='hover-animation flex w-full items-center gap-2 px-4 py-2.5 text-right
+                         text-accent-red hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
+            >
+              <HeroIcon className='h-4 w-4' iconName='TrashIcon' />
+              حذف المحادثة
+            </button>
+          </Popover.Panel>
+        </Popover>
       </div>
 
       {conversationLoading || messagesLoading ? (
@@ -303,6 +390,31 @@ function ConversationRoom({
         />
         </div>
       )}
+
+      <Modal
+        open={deleteOpen}
+        closeModal={(): void => setDeleteOpen(false)}
+      >
+        <ActionModal
+          useIcon
+          focusOnMainBtn
+          title='حذف المحادثة بالكامل؟'
+          description='ستُحذف كل الرسائل نهائياً ولا يمكن استرجاعها.'
+          mainBtnLabel='حذف'
+          action={async (): Promise<void> => {
+            setDeleting(true);
+            try {
+              await deleteConversation(conversationId);
+              setDeleteOpen(false);
+              await router.push('/messages');
+            } finally {
+              setDeleting(false);
+            }
+          }}
+          closeModal={(): void => setDeleteOpen(false)}
+          loading={deleting}
+        />
+      </Modal>
 
       <MessageInput
         conversationId={conversationId}
