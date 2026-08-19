@@ -50,7 +50,7 @@ export function UserFollowStats({
   ];
 
   return (
-    <div className='flex items-center gap-3 text-light-secondary dark:text-dark-secondary'>
+    <div className='flex flex-col items-stretch gap-2 text-light-secondary dark:text-dark-secondary'>
       {allStats.map(([title, link, move, stats], index) => {
         const label = index === 1 && stats > 1 ? 'متابعون' : title;
         const statSpan = (

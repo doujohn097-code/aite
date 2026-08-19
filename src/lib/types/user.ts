@@ -25,6 +25,8 @@ export type User = {
   storyColor?: string | null;
   lastStoryAt?: Timestamp | null;
   storyViews?: { [userId: string]: Timestamp } | null;
+  /** Presence heartbeat — updated every minute while the app is open. */
+  lastActiveAt?: Timestamp | null;
 };
 
 export type EditableData = Extract<

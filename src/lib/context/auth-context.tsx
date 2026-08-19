@@ -14,6 +14,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   onSnapshot,
   serverTimestamp,
   Timestamp,
@@ -243,6 +244,33 @@ export function AuthContextProvider({
       unsubscribe();
     };
   }, []);
+
+  // Presence heartbeat: claim "online" immediately and keep it alive while
+  // the app is open; the green dot appears everywhere within a minute.
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) return;
+
+    const beat = (): void => {
+      void updateDoc(doc(usersCollection, userId), {
+        lastActiveAt: serverTimestamp()
+      }).catch(() => null);
+    };
+
+    const handleVisibility = (): void => {
+      if (document.visibilityState === 'visible') beat();
+    };
+
+    beat();
+    document.addEventListener('visibilitychange', handleVisibility);
+    const interval = setInterval(beat, 60_000);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;

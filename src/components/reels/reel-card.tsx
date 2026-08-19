@@ -10,6 +10,7 @@ import { useCollection } from '@lib/hooks/useCollection';
 import { useDocument } from '@lib/hooks/useDocument';
 import {
   tweetsCollection,
+  storiesCollection,
   userStatsCollection
 } from '@lib/firebase/collections';
 import { likeReel, viewReel, deleteReel } from '@lib/firebase/utils';
@@ -214,12 +215,20 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
     if (!authUser) return;
     const next = !retweeted;
     setOptimisticRetweet(next);
+
+    // Guaranteed write: viewer's own stats doc (drives the profile tab)
     void updateDoc(doc(userStatsCollection(authUser.id), 'stats'), {
       reels: next ? arrayUnion(reel.id) : arrayRemove(reel.id)
     }).catch(() => {
       setOptimisticRetweet(null);
       toast.error('تعذر تنفيذ العملية، حاول مجدداً');
     });
+
+    // Best-effort public counter on the story doc — needs the updated
+    // Firestore rules (userRetweets in the engagement whitelist)
+    void updateDoc(doc(storiesCollection, reel.id), {
+      userRetweets: next ? arrayUnion(authUser.id) : arrayRemove(authUser.id)
+    }).catch(() => null);
   };
 
   // Handles clicks anywhere across the entire reel card frame
@@ -563,6 +572,17 @@ export function ReelCard({ reel, user, isActive = true }: ReelCardProps): JSX.El
               iconName='ArrowPathRoundedSquareIcon'
             />
           </button>
+          <span className='text-xs font-bold drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
+            {formatNumber(
+              Math.max(
+                (reel.userRetweets?.length ?? 0) +
+                  (optimisticRetweet !== null
+                    ? (optimisticRetweet ? 1 : 0) - (isRetweeted ? 1 : 0)
+                    : 0),
+                0
+              )
+            )}
+          </span>
         </div>
 
         {/* Share Button */}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import cn from 'clsx';
 import { NextImage } from '@components/ui/next-image';
+import { useOnlineStatus } from '@lib/presence-store';
 
 type UserAvatarProps = {
   src?: string | null;
@@ -17,22 +18,35 @@ export function UserAvatar({
   username,
   className
 }: UserAvatarProps): JSX.Element {
+  const online = useOnlineStatus(username);
+
   const pictureSize = size ?? 48;
   const normalizedSrc =
     !src || src === '/assets/default-avatar.jpg'
       ? '/assets/default-avatar.png'
       : src;
 
+  const dotSize = Math.max(10, Math.round(pictureSize / 3));
+
   const image = (
-    <NextImage
-      useSkeleton
-      imgClassName='rounded-full'
-      width={pictureSize}
-      height={pictureSize}
-      src={normalizedSrc}
-      alt={alt ?? ''}
-      key={normalizedSrc}
-    />
+    <span className='relative inline-flex shrink-0'>
+      <NextImage
+        useSkeleton
+        imgClassName='rounded-full'
+        width={pictureSize}
+        height={pictureSize}
+        src={normalizedSrc}
+        alt={alt ?? ''}
+        key={normalizedSrc}
+      />
+      {online && username && (
+        <span
+          className='absolute -bottom-0.5 -right-0.5 rounded-full bg-emerald-500 ring-2 ring-main-background'
+          style={{ width: dotSize, height: dotSize }}
+          title='نشط الآن'
+        />
+      )}
+    </span>
   );
 
   if (!username)
