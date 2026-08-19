@@ -16,6 +16,7 @@ import type { ImagesPreview, ImageData } from '@lib/types/file';
 type ImagePreviewProps = {
   tweet?: boolean;
   viewTweet?: boolean;
+  chat?: boolean;
   previewCount: number;
   imagesPreview: ImagesPreview;
   removeImage?: (targetId: string) => () => void;
@@ -44,6 +45,7 @@ const postImageBorderRadius: Readonly<PostImageBorderRadius> = {
 export function ImagePreview({
   tweet,
   viewTweet,
+  chat,
   previewCount,
   imagesPreview,
   removeImage
@@ -83,10 +85,12 @@ export function ImagePreview({
     <div
       className={cn(
         'grid grid-cols-2 grid-rows-2 rounded-2xl',
-        viewTweet
+        chat
+          ? 'h-[42vw] xs:h-[28vw] md:h-[180px]'
+          : viewTweet
           ? 'h-[51vw] xs:h-[42vw] md:h-[305px]'
           : 'h-[42vw] xs:h-[37vw] md:h-[271px]',
-        isTweet ? 'mt-2 gap-0.5' : 'gap-3'
+        isTweet ? (chat ? 'gap-0.5' : 'mt-2 gap-0.5') : 'gap-3'
       )}
     >
       <Modal
@@ -132,7 +136,7 @@ export function ImagePreview({
               {isVideo ? (
                 <>
                   <Button
-                    className='visible absolute top-0 right-0 z-10 -translate-x-1 translate-y-1 
+                    className='visible absolute right-0 top-0 z-10 -translate-x-1 translate-y-1 
                                bg-light-primary/75 p-1 opacity-0 backdrop-blur-sm transition
                                hover:bg-image-preview-hover/75 group-hover:opacity-100 xs:invisible'
                   >
@@ -171,7 +175,7 @@ export function ImagePreview({
               )}
               {removeImage && (
                 <Button
-                  className='group absolute top-0 left-0 translate-x-1 translate-y-1
+                  className='group absolute left-0 top-0 translate-x-1 translate-y-1
                            bg-light-primary/75 p-1 backdrop-blur-sm 
                            hover:bg-image-preview-hover/75'
                   onClick={preventBubbling(removeImage(id))}

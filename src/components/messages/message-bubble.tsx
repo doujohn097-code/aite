@@ -1,6 +1,6 @@
 import cn from 'clsx';
 import { VoicePlayer } from './voice-player';
-import { CustomVideoPlayer } from '@components/ui/custom-video-player';
+import { ImagePreview } from '@components/input/image-preview';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { Message } from '@lib/types/message';
 
@@ -58,41 +58,18 @@ export function MessageBubble({
         )}
 
         {(type === 'image' || type === 'video') && media && (
-          <div
-            className={cn(
-              'grid gap-0.5',
-              media.length > 1 ? 'grid-cols-2' : 'grid-cols-1'
-            )}
-          >
-            {media.map((item, index) =>
-              item.type?.startsWith('video') || type === 'video' ? (
-                <div
-                  key={index}
-                  className='max-h-80 overflow-hidden rounded-2xl border border-light-border/40 dark:border-dark-border/40'
-                >
-                  <CustomVideoPlayer
-                    src={item.src}
-                    videoClassName='max-h-80 w-full object-cover'
-                  />
-                </div>
-              ) : (
-                <a
-                  key={index}
-                  href={item.src}
-                  target='_blank'
-                  rel='noreferrer'
-                  className='block overflow-hidden rounded-2xl border border-light-border/40 dark:border-dark-border/40'
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.src}
-                    alt={item.alt || 'صورة'}
-                    className='max-h-80 w-full object-cover transition hover:brightness-95'
-                    loading='lazy'
-                  />
-                </a>
-              )
-            )}
+          <div className='min-w-[230px] xs:min-w-[290px] md:min-w-[330px]'>
+            <ImagePreview
+              tweet
+              chat
+              imagesPreview={media.map((item, index) => ({
+                id: `${message.id}-${index}`,
+                src: item.src,
+                alt: item.alt || 'معاينة',
+                type: item.type || (type === 'video' ? 'video/mp4' : undefined)
+              }))}
+              previewCount={media.length}
+            />
           </div>
         )}
 

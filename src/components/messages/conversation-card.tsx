@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import cn from 'clsx';
+import { HeroIcon } from '@components/ui/hero-icon';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { getTimestampMillis } from '@lib/date';
 import type { Conversation } from '@lib/types/message';
@@ -40,6 +41,15 @@ export function ConversationCard({
   const { id, lastMessage, unread } = conversation;
   const unreadCount = unread?.[currentUserId] ?? 0;
   const isOwnLast = lastMessage?.senderId === currentUserId;
+
+  const typeIcon: string | null =
+    lastMessage?.type === 'audio'
+      ? 'MicrophoneIcon'
+      : lastMessage?.type === 'image'
+      ? 'PhotoIcon'
+      : lastMessage?.type === 'video'
+      ? 'VideoCameraIcon'
+      : null;
 
   return (
     <Link href={`/messages/${id}`}>
@@ -83,15 +93,17 @@ export function ConversationCard({
           <div className='flex items-center justify-between gap-2'>
             <p
               className={cn(
-                'trim-alt text-sm',
+                'trim-alt flex items-center gap-1 text-sm',
                 unreadCount > 0
                   ? 'font-bold text-light-primary dark:text-dark-primary'
                   : 'text-light-secondary dark:text-dark-secondary'
               )}
             >
-              {lastMessage
-                ? `${isOwnLast ? 'أنت: ' : ''}${lastMessage.text}`
-                : 'ابدأ المحادثة الآن'}
+              {isOwnLast && lastMessage && <span>أنت: </span>}
+              {typeIcon && (
+                <HeroIcon className='h-4 w-4 shrink-0' iconName={typeIcon} />
+              )}
+              {lastMessage ? lastMessage.text : 'ابدأ المحادثة الآن'}
             </p>
             {unreadCount > 0 && (
               <span

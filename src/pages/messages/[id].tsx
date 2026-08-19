@@ -29,7 +29,7 @@ import { HeroIcon } from '@components/ui/hero-icon';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { MessageBubble } from '@components/messages/message-bubble';
 import { ChatComposer } from '@components/messages/chat-composer';
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement, ReactNode, Ref } from 'react';
 import type { Conversation, Message } from '@lib/types/message';
 import type { User } from '@lib/types/user';
 import type { FilesWithId } from '@lib/types/file';
@@ -46,6 +46,39 @@ export default function Chat(): JSX.Element {
   const [forbidden, setForbidden] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement | null>(null);
+  const previousBodyOverflow = useRef<string>('');
+
+  // قفل الجسم وتتبع نافذة العرض المرئية حتى لا يُدفع الكيبورد الشريط العلوي
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const body = document.body;
+    previousBodyOverflow.current = body.style.overflow;
+    body.style.overflow = 'hidden';
+
+    const visualViewport = window.visualViewport;
+    const update = (): void => {
+      const element = mainRef.current;
+      if (!element || !visualViewport) return;
+      // فقط على الشاشات الضيقة (أقل من xs) نثبّت الحاوية على النافذة المرئية
+      if (window.innerWidth >= 520) {
+        element.style.height = '';
+        element.style.top = '';
+        return;
+      }
+      element.style.height = `${visualViewport.height}px`;
+      element.style.top = `${visualViewport.offsetTop}px`;
+    };
+
+    update();
+    visualViewport?.addEventListener('resize', update);
+    visualViewport?.addEventListener('scroll', update);
+    return () => {
+      body.style.overflow = previousBodyOverflow.current;
+      visualViewport?.removeEventListener('resize', update);
+      visualViewport?.removeEventListener('scroll', update);
+    };
+  }, []);
 
   // الاستماع للمحادثة والتحقق من العضوية
   useEffect(() => {
@@ -170,8 +203,10 @@ export default function Chat(): JSX.Element {
 
   return (
     <main
-      className='hover-animation mx-auto flex h-[100dvh] w-full max-w-xl flex-col
-                 border-x-0 border-light-border dark:border-dark-border xs:border-x'
+      ref={mainRef as Ref<HTMLElement>}
+      className='hover-animation fixed inset-x-0 top-0 z-40 mx-auto flex h-[100dvh]
+                 w-full max-w-xl flex-col border-x-0 border-light-border
+                 dark:border-dark-border xs:static xs:border-x'
     >
       <SEO title={`${peerName} / الرسائل / Aite`} />
 
@@ -249,7 +284,7 @@ export default function Chat(): JSX.Element {
       </div>
 
       {/* مربع الكتابة */}
-      <div className='border-t border-light-border pb-16 dark:border-dark-border xs:pb-0'>
+      <div className='border-t border-light-border dark:border-dark-border'>
         {user && conversation && (
           <ChatComposer
             sending={sending}

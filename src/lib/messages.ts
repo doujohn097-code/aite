@@ -57,9 +57,9 @@ type SendPayload =
 
 const lastMessageLabels: Record<MessageType, string> = {
   text: '',
-  image: '📷 صورة',
-  video: '🎥 فيديو',
-  audio: '🎤 رسالة صوتية'
+  image: 'صورة',
+  video: 'فيديو',
+  audio: 'رسالة صوتية'
 };
 
 export async function sendMessage(
