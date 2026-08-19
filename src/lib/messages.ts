@@ -34,9 +34,15 @@ export async function getOrCreateConversation(
 ): Promise<Conversation> {
   const id = getConversationId(userId, targetId);
   const ref = doc(conversationsCollection, id);
-  const snapshot = await getDoc(ref);
 
-  if (snapshot.exists()) return snapshot.data();
+  // قراءة مستند محادثة غير موجود تُرفض من قواعد الأمان (resource فارغ)،
+  // لذلك نتجاهل فشل القراءة وننتقل مباشرة إلى الإنشاء
+  try {
+    const snapshot = await getDoc(ref);
+    if (snapshot.exists()) return snapshot.data();
+  } catch {
+    /* المستند غير موجود أو القراءة مرفوضة — ننشئ أدناه */
+  }
 
   const conversation: Omit<Conversation, 'id'> = {
     participants: [userId, targetId],
@@ -46,7 +52,11 @@ export async function getOrCreateConversation(
     updatedAt: Timestamp.now()
   };
 
-  await setDoc(ref, conversation);
+  try {
+    await setDoc(ref, conversation);
+  } catch {
+    /* ربما أنشأها الطرف الآخر في نفس اللحظة */
+  }
 
   return { id, ...conversation };
 }

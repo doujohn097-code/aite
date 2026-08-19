@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
 import { useUser } from '@lib/context/user-context';
 import { getOrCreateConversation } from '@lib/messages';
@@ -48,6 +49,8 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
     try {
       const conversation = await getOrCreateConversation(user.id, userData.id);
       void push(`/messages/${conversation.id}`);
+    } catch {
+      toast.error('تعذر فتح المحادثة، حاول مرة أخرى');
     } finally {
       setMessaging(false);
     }
@@ -97,15 +100,11 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
                     <>
                       {isFollowing && (
                         <Button
-                          className='flex items-center gap-1.5 bg-green-500 px-4 py-1.5 font-bold text-white
-                                     transition hover:bg-green-600 active:bg-green-600/80'
+                          className='bg-green-400 px-5 py-1.5 font-bold text-black shadow-md shadow-green-400/40
+                                     transition hover:bg-green-300 active:bg-green-400/80'
                           onClick={() => void openConversation()}
                           loading={messaging}
                         >
-                          <HeroIcon
-                            className='h-4 w-4'
-                            iconName='PaperAirplaneIcon'
-                          />
                           مراسلة
                         </Button>
                       )}

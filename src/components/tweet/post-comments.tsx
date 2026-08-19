@@ -664,8 +664,8 @@ export function PostComments({
         </div>
         {/* Composer — مثبت أسفل الشاشة فوق شريط التنقل ليبقى دائمًا ظاهرًا */}
         <div
-          className='sticky bottom-0 z-30 -mx-px flex flex-col border-t border-light-border
-                     bg-main-background pb-[calc(env(safe-area-inset-bottom)+64px)]
+          className='sticky bottom-0 z-30 flex w-full min-w-0 flex-col border-t border-light-border
+                     bg-main-background pb-[calc(env(safe-area-inset-bottom)_+_64px)]
                      dark:border-dark-border xs:pb-0'
         >
           <AnimatePresence>
@@ -705,14 +705,16 @@ export function PostComments({
 
           <form
             onSubmit={handleSubmit}
-            className='flex items-center gap-3 px-4 py-3'
+            className='flex w-full min-w-0 items-center gap-3 px-4 py-3'
           >
-            <UserAvatar
-              src={user?.photoURL}
-              alt={user?.name ?? 'أنت'}
-              username={user?.username ?? ''}
-              size={36}
-            />
+            <span className='shrink-0'>
+              <UserAvatar
+                src={user?.photoURL}
+                alt={user?.name ?? 'أنت'}
+                username={user?.username ?? ''}
+                size={36}
+              />
+            </span>
             <input
               ref={inputRef}
               value={comment}
@@ -723,7 +725,7 @@ export function PostComments({
                   : 'أضف تعليقاً...'
               }
               maxLength={280}
-              className='flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-base
+              className='min-w-0 flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-base
                          text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent
                          dark:bg-dark-line-reply/50 dark:text-dark-primary xs:text-sm'
             />
@@ -731,8 +733,8 @@ export function PostComments({
               type='submit'
               loading={sending}
               disabled={!comment.trim()}
-              className='flex items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm font-bold
-                         text-black shadow-md transition hover:brightness-95 active:scale-95
+              className='flex shrink-0 items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm
+                         font-bold text-black shadow-md transition hover:brightness-95 active:scale-95
                          disabled:pointer-events-none disabled:opacity-40'
             >
               <span>إرسال</span>

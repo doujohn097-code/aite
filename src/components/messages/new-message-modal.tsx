@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
+import { toast } from 'react-hot-toast';
 import { usersCollection } from '@lib/firebase/collections';
 import { useAuth } from '@lib/context/auth-context';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -24,7 +25,12 @@ export function NewMessageModal({
   const handleSelect = async (person: User): Promise<void> => {
     if (busyId) return;
     setBusyId(person.id);
-    await onSelect(person);
+    try {
+      await onSelect(person);
+    } catch {
+      toast.error('تعذر فتح المحادثة، حاول مرة أخرى');
+      setBusyId(null);
+    }
   };
 
   useEffect(() => {
