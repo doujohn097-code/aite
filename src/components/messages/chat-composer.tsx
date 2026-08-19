@@ -157,8 +157,8 @@ export function ChatComposer({
 
             {voice && (
               <div
-                className='relative flex items-center rounded-xl border border-light-border
-                           p-1.5 dark:border-dark-border'
+                className='relative flex w-full min-w-0 max-w-[260px] items-center rounded-xl
+                           border border-light-border p-1.5 dark:border-dark-border'
               >
                 <VoicePlayer
                   src={voice.url}
@@ -173,8 +173,9 @@ export function ChatComposer({
                     setVoice(null);
                   }}
                   aria-label='حذف التسجيل'
-                  className='absolute -left-1.5 -top-1.5 flex h-5 w-5 items-center justify-center
-                             rounded-full bg-black/80 text-white transition hover:bg-black'
+                  className='absolute -left-1.5 -top-1.5 flex h-5 w-5 shrink-0 items-center
+                             justify-center rounded-full bg-black/80 text-white
+                             transition hover:bg-black'
                 >
                   <HeroIcon className='h-3 w-3' iconName='XMarkIcon' />
                 </button>

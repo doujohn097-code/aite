@@ -95,8 +95,8 @@ export function VoicePlayer({
   return (
     <div
       className={cn(
-        'flex items-center gap-2 overflow-visible',
-        compact ? 'w-44' : 'w-60 xs:w-64'
+        'flex min-w-0 items-center gap-2 overflow-visible',
+        compact ? 'w-full' : 'w-52 xs:w-56'
       )}
       dir='ltr'
     >
@@ -145,7 +145,7 @@ export function VoicePlayer({
       </div>
       <span
         className={cn(
-          'w-9 shrink-0 text-left text-xs tabular-nums',
+          'w-auto min-w-[2.25rem] shrink-0 text-left text-xs tabular-nums',
           isOwn
             ? 'text-black/70'
             : 'text-light-secondary dark:text-dark-secondary'

@@ -51,6 +51,7 @@ export function Sidebar(): JSX.Element {
 
   const username = user?.username as string;
   const isReels = asPath.split('?')[0].startsWith('/reels');
+  const isMessages = asPath.split('?')[0].startsWith('/messages');
 
   return (
     <header
@@ -94,7 +95,7 @@ export function Sidebar(): JSX.Element {
               iconName='UserIcon'
             />
           </nav>
-          {!isReels && (
+          {!isReels && !isMessages && (
             <Button
               className='accent-tab absolute right-4 -translate-y-[72px] bg-main-accent text-lg font-bold text-black
                          outline-none transition hover:brightness-90 active:brightness-75 xs:static xs:translate-y-0
