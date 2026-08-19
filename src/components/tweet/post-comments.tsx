@@ -155,9 +155,7 @@ export function PostComments({
     }
 
     repliesMap.forEach((repList, parentId) => {
-      repList.sort(
-        (a, b) => toMillis(a.createdAt) - toMillis(b.createdAt)
-      );
+      repList.sort((a, b) => toMillis(a.createdAt) - toMillis(b.createdAt));
       repliesMap.set(parentId, repList);
     });
 
@@ -335,9 +333,7 @@ export function PostComments({
         try {
           const commentRef = doc(tweetsCollection, commentId);
           await updateDoc(commentRef, {
-            userLikes: isLiked
-              ? arrayRemove(user.id)
-              : arrayUnion(user.id),
+            userLikes: isLiked ? arrayRemove(user.id) : arrayUnion(user.id),
             updatedAt: serverTimestamp()
           });
         } catch {
@@ -510,7 +506,9 @@ export function PostComments({
                       type='button'
                       onClick={toggleCommentLike(item.id, item.userLikes)}
                       className='p-1.5 text-light-secondary transition hover:text-rose-500 dark:text-dark-secondary'
-                      aria-label={isLiked ? 'إلغاء إعجاب التعليق' : 'إعجاب بالتعليق'}
+                      aria-label={
+                        isLiked ? 'إلغاء إعجاب التعليق' : 'إعجاب بالتعليق'
+                      }
                     >
                       <HeroIcon
                         className={cn(
@@ -591,7 +589,9 @@ export function PostComments({
                                 />
                                 <span>رد على</span>
                                 <span className='py-0.2 rounded bg-main-accent/15 px-1.5 text-main-accent'>
-                                  @{reply.replyTo?.username || item.user.username}
+                                  @
+                                  {reply.replyTo?.username ||
+                                    item.user.username}
                                 </span>
                               </div>
 
@@ -636,7 +636,9 @@ export function PostComments({
                               )}
                               className='p-1 text-light-secondary transition hover:text-rose-500 dark:text-dark-secondary'
                               aria-label={
-                                isReplyLiked ? 'إلغاء إعجاب الرد' : 'إعجاب بالرد'
+                                isReplyLiked
+                                  ? 'إلغاء إعجاب الرد'
+                                  : 'إعجاب بالرد'
                               }
                             >
                               <HeroIcon
@@ -660,8 +662,12 @@ export function PostComments({
             })
           )}
         </div>
-        {/* Composer */}
-        <div className='flex flex-col border-t border-light-border bg-main-background dark:border-dark-border'>
+        {/* Composer — مثبت أسفل الشاشة فوق شريط التنقل ليبقى دائمًا ظاهرًا */}
+        <div
+          className='sticky bottom-0 z-30 -mx-px flex flex-col border-t border-light-border
+                     bg-main-background pb-[calc(env(safe-area-inset-bottom)+64px)]
+                     dark:border-dark-border xs:pb-0'
+        >
           <AnimatePresence>
             {replyingTo && (
               <motion.div
@@ -717,9 +723,9 @@ export function PostComments({
                   : 'أضف تعليقاً...'
               }
               maxLength={280}
-              className='flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-sm
+              className='flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-base
                          text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent
-                         dark:bg-dark-line-reply/50 dark:text-dark-primary'
+                         dark:bg-dark-line-reply/50 dark:text-dark-primary xs:text-sm'
             />
             <Button
               type='submit'
@@ -755,7 +761,6 @@ export function PostComments({
             ))}
           </div>
         </div>
-
       </section>
 
       {/* Delete confirmation */}

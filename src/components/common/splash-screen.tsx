@@ -48,26 +48,26 @@ export function SplashScreen({ isVisible }: SplashScreenProps): JSX.Element {
               transition={{ duration: 0.45, ease: 'easeOut', delay: 0.8 }}
             />
 
-            {/* 3. Second logo on the right */}
-            <motion.img
-              src='/assets/home-logo.png'
-              alt='Aite'
-              className='h-11 w-auto object-contain'
-              initial={{ opacity: 0, x: 14 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, ease: 'easeOut', delay: 1.25 }}
-            />
+            {/* 3. Second logo on the right + credit underneath it */}
+            <div className='flex flex-col gap-1.5'>
+              <motion.img
+                src='/assets/home-logo.png'
+                alt='Aite'
+                className='h-11 w-auto object-contain'
+                initial={{ opacity: 0, x: 14 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut', delay: 1.25 }}
+              />
+              <motion.p
+                className='font-splash-credit text-lg leading-none text-white/90'
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: 'easeOut', delay: 1.9 }}
+              >
+                from salem ahmed
+              </motion.p>
+            </div>
           </div>
-
-          {/* 4. Credit */}
-          <motion.p
-            className='font-splash-credit text-2xl text-white/90'
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 1.9 }}
-          >
-            فروم سالم أحمد
-          </motion.p>
         </motion.div>
       )}
     </AnimatePresence>

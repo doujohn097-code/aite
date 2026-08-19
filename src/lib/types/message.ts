@@ -16,6 +16,14 @@ export type VoiceData = {
   peaks: number[];
 };
 
+export type ReplyData = {
+  id: string;
+  senderId: string;
+  senderName: string | null;
+  text: string | null;
+  type: MessageType;
+};
+
 export type Message = {
   id: string;
   senderId: string;
@@ -23,6 +31,7 @@ export type Message = {
   text: string | null;
   media: MessageMedia[] | null;
   audio: VoiceData | null;
+  replyTo: ReplyData | null;
   createdAt: Timestamp;
   seenBy: string[];
 };
@@ -60,6 +69,7 @@ export const messageConverter: FirestoreDataConverter<Message> = {
       text: null,
       media: null,
       audio: null,
+      replyTo: null,
       createdAt: Timestamp.now(),
       seenBy: [],
       ...data

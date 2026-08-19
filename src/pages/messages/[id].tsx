@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import {
   doc,
-  getDoc,
   onSnapshot,
   query,
   orderBy,
-  limitToLast
+  limitToLast,
+  Timestamp
 } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
@@ -29,6 +29,8 @@ import { HeroIcon } from '@components/ui/hero-icon';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { MessageBubble } from '@components/messages/message-bubble';
 import { ChatComposer } from '@components/messages/chat-composer';
+import { StoryAvatar } from '@components/stories/story-avatar';
+import { getTimestampMillis } from '@lib/date';
 import type { ReactElement, ReactNode, Ref } from 'react';
 import type { Conversation, Message } from '@lib/types/message';
 import type { User } from '@lib/types/user';
@@ -41,9 +43,14 @@ export default function Chat(): JSX.Element {
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [peer, setPeer] = useState<User | null>(null);
+  const [peerId, setPeerId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [sending, setSending] = useState(false);
   const [forbidden, setForbidden] = useState(false);
+  // رسائل ظاهرة فورًا قبل وصول نسخة الخادم (مثل إنستغرام)
+  const [optimistic, setOptimistic] = useState<Message[]>([]);
+  // الرسالة قيد الرد عليها عبر السحب
+  const [replyTarget, setReplyTarget] = useState<Message | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement | null>(null);
@@ -98,13 +105,10 @@ export default function Chat(): JSX.Element {
         }
         setConversation(data);
 
-        const peerId = data.participants.find(
+        const otherId = data.participants.find(
           (participant) => participant !== user.id
         );
-        if (peerId)
-          void getDoc(doc(usersCollection, peerId)).then((peerSnapshot) => {
-            if (peerSnapshot.exists()) setPeer(peerSnapshot.data());
-          });
+        setPeerId(otherId ?? null);
       },
       (error) => {
         console.error('chat conversation error:', error);
@@ -115,6 +119,25 @@ export default function Chat(): JSX.Element {
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, conversationId]);
+
+  // الاستماع الحي لبيانات الطرف الآخر (النشاط، الصورة، القصة)
+  useEffect(() => {
+    if (!peerId) return;
+    const unsubscribe = onSnapshot(
+      doc(usersCollection, peerId),
+      (snapshot) => {
+        if (snapshot.exists()) setPeer(snapshot.data());
+      },
+      () => undefined
+    );
+    return unsubscribe;
+  }, [peerId]);
+
+  const peerActiveMillis = peer?.lastActiveAt
+    ? getTimestampMillis(peer.lastActiveAt)
+    : null;
+  const peerOnline =
+    !!peerActiveMillis && Date.now() - peerActiveMillis < 3 * 60 * 1000;
 
   // الاستماع للرسائل
   useEffect(() => {
@@ -166,7 +189,32 @@ export default function Chat(): JSX.Element {
     const element = scrollRef.current;
     if (!element) return;
     element.scrollTop = element.scrollHeight;
-  }, [messages?.length]);
+  }, [messages?.length, optimistic.length]);
+
+  const toMillis = (value: Message['createdAt']): number =>
+    typeof value?.toMillis === 'function'
+      ? value.toMillis()
+      : (value as unknown as { seconds?: number })?.seconds
+      ? (value as unknown as { seconds: number }).seconds * 1000
+      : Date.now();
+
+  // تُعرض الرسائل المتفائلة حتى تصل النسخة الحقيقية من الخادم ثم تزول
+  const shownMessages = useMemo(() => {
+    const server = messages ?? [];
+    const pending = optimistic.filter((opt) => {
+      const optTime = toMillis(opt.createdAt);
+      return !server.some(
+        (srv) =>
+          srv.senderId === opt.senderId &&
+          srv.type === opt.type &&
+          srv.text === opt.text &&
+          Math.abs(toMillis(srv.createdAt) - optTime) < 120000
+      );
+    });
+    return [...server, ...pending].sort(
+      (a, b) => toMillis(a.createdAt) - toMillis(b.createdAt)
+    );
+  }, [messages, optimistic]);
 
   const handleSend = async (
     payload:
@@ -175,10 +223,52 @@ export default function Chat(): JSX.Element {
       | { type: 'audio'; blob: Blob; duration: number; peaks: number[] }
   ): Promise<void> => {
     if (!conversation || !user) return;
+
+    const replyTo = replyTarget
+      ? {
+          id: replyTarget.id,
+          senderId: replyTarget.senderId,
+          senderName:
+            replyTarget.senderId === user.id ? user.name : peer?.name ?? null,
+          text: replyTarget.text,
+          type: replyTarget.type
+        }
+      : null;
+
+    // بناء نسخة فورية قابلة للعرض محليًا
+    const optimisticMessage: Message = {
+      id: `opt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      senderId: user.id,
+      type: payload.type,
+      text: payload.type === 'text' ? payload.text : null,
+      media: null,
+      audio: null,
+      replyTo,
+      createdAt: Timestamp.now(),
+      seenBy: [user.id]
+    };
+    if (payload.type === 'image' || payload.type === 'video')
+      optimisticMessage.media = payload.files.map((file) => ({
+        src: URL.createObjectURL(file),
+        alt: file.name,
+        type: file.type
+      }));
+    if (payload.type === 'audio')
+      optimisticMessage.audio = {
+        src: URL.createObjectURL(payload.blob),
+        duration: payload.duration,
+        peaks: payload.peaks
+      };
+
+    setOptimistic((prev) => [...prev, optimisticMessage]);
+    setReplyTarget(null);
     setSending(true);
     try {
-      await sendMessage(conversation, user.id, payload);
+      await sendMessage(conversation, user.id, { ...payload, replyTo });
     } catch {
+      setOptimistic((prev) =>
+        prev.filter((message) => message.id !== optimisticMessage.id)
+      );
       toast.error('تعذر إرسال الرسالة، حاول مرة أخرى');
     } finally {
       setSending(false);
@@ -228,19 +318,25 @@ export default function Chat(): JSX.Element {
         {peer && (
           <Link href={`/user/${peer.username}`}>
             <a className='flex min-w-0 items-center gap-3'>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={peer.photoURL || '/assets/default-avatar.png'}
-                alt={peer.name}
-                className='h-9 w-9 rounded-full object-cover'
-              />
+              <span className='relative shrink-0'>
+                <StoryAvatar user={peer} size={40} />
+                {peerOnline && (
+                  <span className='absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-main-background bg-green-500' />
+                )}
+              </span>
               <span className='flex min-w-0 flex-col'>
                 <span className='flex items-center gap-1'>
                   <span className='truncate font-bold'>{peer.name}</span>
                   {peer.verified && <VerifiedBadge className='h-4 w-4' />}
                 </span>
-                <span className='truncate text-xs text-light-secondary dark:text-dark-secondary'>
-                  @{peer.username}
+                <span
+                  className={
+                    peerOnline
+                      ? 'truncate text-xs font-semibold text-green-500'
+                      : 'truncate text-xs text-light-secondary dark:text-dark-secondary'
+                  }
+                >
+                  {peerOnline ? 'نشط الآن' : `@${peer.username}`}
                 </span>
               </span>
             </a>
@@ -255,12 +351,13 @@ export default function Chat(): JSX.Element {
       >
         {!messages ? (
           <Loading className='mt-5' />
-        ) : messages.length ? (
-          messages.map((message) => (
+        ) : shownMessages.length ? (
+          shownMessages.map((message) => (
             <MessageBubble
               key={message.id}
               message={message}
               isOwn={message.senderId === user?.id}
+              onReply={setReplyTarget}
             />
           ))
         ) : (
@@ -288,6 +385,19 @@ export default function Chat(): JSX.Element {
         {user && conversation && (
           <ChatComposer
             sending={sending}
+            replyingTo={
+              replyTarget
+                ? {
+                    senderName:
+                      replyTarget.senderId === user?.id
+                        ? user?.name ?? 'أنت'
+                        : peer?.name ?? 'مستخدم',
+                    text: replyTarget.text,
+                    type: replyTarget.type
+                  }
+                : null
+            }
+            onCancelReply={() => setReplyTarget(null)}
             onSendText={(text) => void handleSend({ type: 'text', text })}
             onSendMedia={(files, kind) =>
               void handleSend({ type: kind, files })

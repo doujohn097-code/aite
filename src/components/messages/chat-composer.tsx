@@ -7,6 +7,7 @@ import { VoiceRecorder } from './voice-recorder';
 import { VoicePlayer } from './voice-player';
 import { getRandomId } from '@lib/random';
 import type { FilesWithId } from '@lib/types/file';
+import type { MessageType } from '@lib/types/message';
 
 type VoiceDraft = {
   url: string;
@@ -17,6 +18,12 @@ type VoiceDraft = {
 
 type ChatComposerProps = {
   sending?: boolean;
+  replyingTo?: {
+    senderName: string;
+    text: string | null;
+    type: MessageType;
+  } | null;
+  onCancelReply?: () => void;
   onSendText: (text: string) => void;
   onSendMedia: (files: FilesWithId, kind: 'image' | 'video') => void;
   onSendVoice: (blob: Blob, duration: number, peaks: number[]) => void;
@@ -24,6 +31,8 @@ type ChatComposerProps = {
 
 export function ChatComposer({
   sending,
+  replyingTo,
+  onCancelReply,
   onSendText,
   onSendMedia,
   onSendVoice
@@ -111,6 +120,53 @@ export function ChatComposer({
 
   return (
     <div className='bg-main-background px-2 pb-2 pt-2'>
+      {/* شريط الرد قبل الإرسال */}
+      <AnimatePresence>
+        {replyingTo && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className='overflow-hidden'
+          >
+            <div
+              className='relative mb-2 flex items-center gap-2 overflow-hidden rounded-2xl
+                         border border-main-accent/30 bg-main-accent/10 px-3 py-2 ps-5'
+            >
+              <span className='absolute inset-y-0 start-0 w-1 rounded-full bg-gradient-to-b from-main-accent to-main-accent/30' />
+              <HeroIcon
+                className='h-4 w-4 shrink-0 rotate-180 text-main-accent'
+                iconName='ArrowUturnLeftIcon'
+              />
+              <div className='flex min-w-0 flex-1 flex-col text-xs'>
+                <span className='font-bold text-main-accent'>
+                  الرد على {replyingTo.senderName}
+                </span>
+                <span className='truncate text-light-secondary dark:text-dark-secondary'>
+                  {replyingTo.text ||
+                    (replyingTo.type === 'audio'
+                      ? 'رسالة صوتية'
+                      : replyingTo.type === 'image'
+                      ? 'صورة'
+                      : replyingTo.type === 'video'
+                      ? 'فيديو'
+                      : '')}
+                </span>
+              </div>
+              <button
+                type='button'
+                onClick={onCancelReply}
+                aria-label='إلغاء الرد'
+                className='shrink-0 rounded-full p-1.5 text-light-secondary transition
+                           hover:bg-light-primary/10 dark:text-dark-secondary'
+              >
+                <HeroIcon className='h-4 w-4' iconName='XMarkIcon' />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* معاينة الوسائط والصوت قبل الإرسال */}
       <AnimatePresence>
         {(previews.length > 0 || voice) && (

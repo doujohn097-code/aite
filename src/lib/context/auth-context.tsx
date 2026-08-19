@@ -432,17 +432,18 @@ export function AuthContextProvider({
   const randomSeed = useMemo(getRandomId, [user?.id]);
 
   const markStoryViewed = useCallback((storyUserId: string): void => {
-    setUser((prevUser) =>
-      prevUser
-        ? {
-            ...prevUser,
-            storyViews: {
-              ...(prevUser.storyViews ?? {}),
-              [storyUserId]: Timestamp.now()
-            }
-          }
-        : prevUser
-    );
+    setUser((prevUser) => {
+      if (!prevUser) return prevUser;
+      // لا تعيد التسجيل إن كانت القصة مشاهدة — يمنع حلقة تحديثات لا نهائية
+      if (prevUser.storyViews?.[storyUserId]) return prevUser;
+      return {
+        ...prevUser,
+        storyViews: {
+          ...(prevUser.storyViews ?? {}),
+          [storyUserId]: Timestamp.now()
+        }
+      };
+    });
   }, []);
 
   const value: AuthContext = {

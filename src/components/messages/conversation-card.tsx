@@ -2,9 +2,12 @@ import Link from 'next/link';
 import cn from 'clsx';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { VerifiedBadge } from '@components/ui/verified-badge';
+import { StoryAvatar } from '@components/stories/story-avatar';
 import { getTimestampMillis } from '@lib/date';
 import type { Conversation } from '@lib/types/message';
 import type { User } from '@lib/types/user';
+
+const ONLINE_WINDOW_MS = 3 * 60 * 1000;
 
 type ConversationCardProps = {
   conversation: Conversation;
@@ -42,6 +45,12 @@ export function ConversationCard({
   const unreadCount = unread?.[currentUserId] ?? 0;
   const isOwnLast = lastMessage?.senderId === currentUserId;
 
+  const lastActiveMillis = peer?.lastActiveAt
+    ? getTimestampMillis(peer.lastActiveAt)
+    : null;
+  const isOnline =
+    !!lastActiveMillis && Date.now() - lastActiveMillis < ONLINE_WINDOW_MS;
+
   const typeIcon: string | null =
     lastMessage?.type === 'audio'
       ? 'MicrophoneIcon'
@@ -60,12 +69,21 @@ export function ConversationCard({
           active && 'bg-light-primary/5 dark:bg-dark-primary/5'
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={peer?.photoURL || '/assets/default-avatar.png'}
-          alt={peer?.name || 'مستخدم'}
-          className='h-12 w-12 shrink-0 rounded-full object-cover'
-        />
+        <div className='relative shrink-0'>
+          {peer ? (
+            <StoryAvatar user={peer} size={48} />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src='/assets/default-avatar.png'
+              alt='مستخدم'
+              className='h-12 w-12 rounded-full object-cover'
+            />
+          )}
+          {isOnline && (
+            <span className='absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-main-background bg-green-500' />
+          )}
+        </div>
 
         <div className='flex min-w-0 flex-1 flex-col'>
           <div className='flex items-center justify-between gap-2'>

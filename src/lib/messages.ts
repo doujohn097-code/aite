@@ -20,6 +20,7 @@ import type {
   Conversation,
   MessageMedia,
   MessageType,
+  ReplyData,
   VoiceData
 } from '@lib/types/message';
 
@@ -50,10 +51,11 @@ export async function getOrCreateConversation(
   return { id, ...conversation };
 }
 
-type SendPayload =
+type SendPayload = { replyTo?: ReplyData | null } & (
   | { type: 'text'; text: string }
   | { type: 'image' | 'video'; files: FilesWithId }
-  | { type: 'audio'; blob: Blob; duration: number; peaks: number[] };
+  | { type: 'audio'; blob: Blob; duration: number; peaks: number[] }
+);
 
 const lastMessageLabels: Record<MessageType, string> = {
   text: '',
@@ -111,6 +113,7 @@ export async function sendMessage(
     text,
     media,
     audio,
+    replyTo: payload.replyTo ?? null,
     createdAt: serverTimestamp() as Timestamp,
     seenBy: [senderId]
   });

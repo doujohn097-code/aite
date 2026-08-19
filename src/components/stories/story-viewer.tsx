@@ -169,13 +169,32 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
     } else void replace('/home');
   }, [index, prevUserId, push, replace]);
 
+  const viewedStoriesRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     const story = stories.find((s) => s.id === currentStoryId);
-    if (story && authUser) {
-      markStoryViewed(userId);
-      void viewStory(story.id, authUser.id, userId);
-    }
-  }, [currentStoryId, authUser, userId, stories, markStoryViewed]);
+    if (!story || !authUser || viewedStoriesRef.current.has(story.id)) return;
+    viewedStoriesRef.current.add(story.id);
+    markStoryViewed(userId);
+    void viewStory(story.id, authUser.id, userId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStoryId, authUser?.id, userId]);
+
+  // الخروج دائمًا متاح عبر Escape وإيقاف الصوت عند المغادرة
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') void replace('/home');
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.removeAttribute('src');
+      }
+    };
+  }, [replace]);
 
   useEffect(() => {
     elapsedRef.current = 0;

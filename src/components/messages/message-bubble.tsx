@@ -1,12 +1,24 @@
+import { useState } from 'react';
 import cn from 'clsx';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { VoicePlayer } from './voice-player';
 import { ImagePreview } from '@components/input/image-preview';
 import { HeroIcon } from '@components/ui/hero-icon';
-import type { Message } from '@lib/types/message';
+import type { Message, MessageType } from '@lib/types/message';
 
 type MessageBubbleProps = {
   message: Message;
   isOwn: boolean;
+  /** اسحب الرسالة أفقيًا لتفعيل الرد */
+  onReply?: (message: Message) => void;
+};
+
+const SWIPE_THRESHOLD = 60;
+
+const replyLabels: Record<Exclude<MessageType, 'text'>, string> = {
+  image: 'صورة',
+  video: 'فيديو',
+  audio: 'رسالة صوتية'
 };
 
 function formatTime(createdAt: Message['createdAt']): string {
@@ -19,10 +31,39 @@ function formatTime(createdAt: Message['createdAt']): string {
 
 export function MessageBubble({
   message,
-  isOwn
+  isOwn,
+  onReply
 }: MessageBubbleProps): JSX.Element {
-  const { type, text, media, audio, createdAt, seenBy } = message;
+  const { type, text, media, audio, replyTo, createdAt, seenBy } = message;
   const seen = seenBy?.length > 1;
+
+  // سحب أفقي مرن بالكامل — الفقاعة تميل وتتوهج ويكشف زر الرد في المؤخرة
+  const dragX = useMotionValue(0);
+  const [triggered, setTriggered] = useState(false);
+
+  const rotate = useTransform(dragX, [-90, 0, 90], [-6, 0, 6]);
+  const replyScale = useTransform(dragX, (v) =>
+    Math.min(Math.abs(v) / SWIPE_THRESHOLD, 1.25)
+  );
+  const replyOpacity = useTransform(dragX, (v) =>
+    Math.min(Math.abs(v) / (SWIPE_THRESHOLD * 0.6), 1)
+  );
+  // خط توهج مرن خلف الفقاعة يتمدد كلما سحبت أكثر
+  const glowScaleX = useTransform(dragX, (v) =>
+    Math.min(Math.abs(v) / SWIPE_THRESHOLD, 1.6)
+  );
+
+  const handleDragEnd = (): void => {
+    if (Math.abs(dragX.get()) >= SWIPE_THRESHOLD && onReply) {
+      setTriggered(true);
+      try {
+        navigator.vibrate?.(12);
+      } catch {
+        /* ignore */
+      }
+      onReply(message);
+    }
+  };
 
   const bubbleClass = cn(
     'max-w-[78%] xs:max-w-[70%]',
@@ -45,14 +86,80 @@ export function MessageBubble({
     isOwn ? 'self-end' : 'self-start'
   );
 
-  return (
+  const replyQuote = replyTo && (
     <div
       className={cn(
-        'flex w-full flex-col gap-1',
-        isOwn ? 'items-end' : 'items-start'
+        'relative mb-1.5 overflow-hidden rounded-xl px-3 py-1.5 ps-4 text-xs',
+        isOwn ? 'bg-black/15' : 'bg-black/5 dark:bg-white/10'
       )}
     >
-      <div className={bubbleClass} dir='auto'>
+      {/* شريط جانبي متدرج ينحني مع الاقتباس */}
+      <span
+        className='absolute inset-y-0 start-0 w-[3px] rounded-full bg-gradient-to-b
+                   from-main-accent via-main-accent/70 to-transparent'
+      />
+      <span className='flex items-center gap-1 font-bold opacity-80'>
+        <HeroIcon
+          className='h-3 w-3 rotate-180'
+          iconName='ArrowUturnLeftIcon'
+        />
+        {replyTo.senderName ?? 'رسالة'}
+      </span>
+      <span className='block truncate opacity-70'>
+        {replyTo.text ||
+          replyLabels[replyTo.type as Exclude<MessageType, 'text'>] ||
+          ''}
+      </span>
+    </div>
+  );
+
+  return (
+    <motion.div
+      className={cn(
+        'relative flex w-full flex-col gap-1',
+        isOwn ? 'items-end' : 'items-start'
+      )}
+      drag='x'
+      dragDirectionLock
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={{ left: 0.18, right: 0.18 }}
+      style={{ x: dragX, rotate }}
+      onDrag={() => setTriggered(false)}
+      onDragEnd={handleDragEnd}
+      initial={triggered ? { scale: 0.97 } : false}
+      animate={{ scale: 1 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+    >
+      {/* وهج مرن يمتد من طرف الفقاعة مع السحب */}
+      <motion.span
+        aria-hidden
+        className={cn(
+          'absolute inset-y-2 w-24 rounded-full bg-main-accent/25 blur-md',
+          isOwn ? 'end-1/2' : 'start-1/2'
+        )}
+        style={{ scaleX: glowScaleX, opacity: replyOpacity }}
+      />
+
+      {/* زر الرد الظاهر خلف الفقاعة أثناء السحب */}
+      <motion.div
+        aria-hidden
+        className={cn(
+          'absolute top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full',
+          'bg-main-accent text-black shadow-lg shadow-main-accent/40',
+          isOwn ? '-start-2' : '-end-2'
+        )}
+        style={{ scale: replyScale, opacity: replyOpacity }}
+      >
+        <HeroIcon
+          className='h-4 w-4 rotate-180'
+          iconName='ArrowUturnLeftIcon'
+          solid
+        />
+      </motion.div>
+
+      <div className={cn(bubbleClass, 'relative z-10')} dir='auto'>
+        {replyQuote}
+
         {type === 'text' && (
           <p className='whitespace-pre-wrap break-words'>{text}</p>
         )}
@@ -109,6 +216,6 @@ export function MessageBubble({
           />
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
