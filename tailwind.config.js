@@ -12,7 +12,8 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        'aite': [
+        aite: [
+          '"IBM Plex Sans Arabic"',
           'system-ui',
           '-apple-system',
           'BlinkMacSystemFont',
@@ -20,9 +21,11 @@ module.exports = {
           'Roboto',
           'Helvetica',
           'Arial',
-          'sans-serif'
+          'sans-serif',
+          '"Noto Color Emoji"'
         ],
         'aite-extended': [
+          '"IBM Plex Sans Arabic"',
           'system-ui',
           '-apple-system',
           'BlinkMacSystemFont',
@@ -30,7 +33,8 @@ module.exports = {
           'Roboto',
           'Helvetica',
           'Arial',
-          'sans-serif'
+          'sans-serif',
+          '"Noto Color Emoji"'
         ]
       },
       // prettier-ignore
