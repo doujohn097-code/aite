@@ -26,12 +26,27 @@ const typeStyles: Record<
   Notification['type'],
   { icon: IconName; classes: string }
 > = {
-  like: { icon: 'HeartIcon', classes: 'bg-rose-500 text-white' },
-  storyLike: { icon: 'HeartIcon', classes: 'bg-rose-500 text-white' },
-  retweet: { icon: 'ArrowPathRoundedSquareIcon', classes: 'bg-emerald-500 text-white' },
-  follow: { icon: 'UserPlusIcon', classes: 'bg-sky-500 text-white' },
-  reply: { icon: 'ChatBubbleOvalLeftIcon', classes: 'bg-sky-500 text-white' },
-  message: { icon: 'EnvelopeIcon', classes: 'bg-indigo-500 text-white' }
+  like: { icon: 'HeartIcon', classes: 'bg-rose-500/50 text-rose-100 backdrop-blur-md' },
+  storyLike: {
+    icon: 'HeartIcon',
+    classes: 'bg-rose-500/50 text-rose-100 backdrop-blur-md'
+  },
+  retweet: {
+    icon: 'ArrowPathRoundedSquareIcon',
+    classes: 'bg-emerald-500/50 text-emerald-100 backdrop-blur-md'
+  },
+  follow: {
+    icon: 'UserPlusIcon',
+    classes: 'bg-sky-500/50 text-sky-100 backdrop-blur-md'
+  },
+  reply: {
+    icon: 'ChatBubbleOvalLeftIcon',
+    classes: 'bg-sky-500/50 text-sky-100 backdrop-blur-md'
+  },
+  message: {
+    icon: 'EnvelopeIcon',
+    classes: 'bg-indigo-500/50 text-indigo-100 backdrop-blur-md'
+  }
 };
 
 export function NotificationCard({

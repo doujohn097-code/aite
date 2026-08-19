@@ -61,9 +61,10 @@ export function UserFollowStats({
         return (
           <Link href={link} key={title}>
             <a
-              className='group flex flex-col items-center gap-0.5 rounded-xl bg-light-sidebar-background/50 px-4 py-1.5
-                         transition hover:bg-light-primary/10 dark:bg-dark-sidebar-background/50
-                         dark:hover:bg-dark-primary/10'
+              className='group flex flex-col items-center gap-0.5 rounded-xl border border-light-line-reply/60
+                         bg-light-primary/[0.06] px-4 py-1.5 backdrop-blur-md transition
+                         hover:bg-light-primary/[0.12] dark:border-white/10 dark:bg-white/[0.06]
+                         dark:hover:bg-white/[0.12]'
             >
               {statSpan}
               <span className='text-xs font-semibold text-light-secondary transition group-hover:text-light-primary
