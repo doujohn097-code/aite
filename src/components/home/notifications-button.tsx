@@ -17,11 +17,14 @@ export function NotificationsButton(): JSX.Element {
         <span className='relative'>
           <HeroIcon className='h-7 w-7' iconName='BellIcon' />
           {showBadge && (
-            <span
-              className='absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center
-                         rounded-full bg-main-accent px-1 text-[10px] font-bold text-black'
-            >
-              {unreadNotifications > 99 ? '99+' : unreadNotifications}
+            <span className='absolute -top-1 -right-1'>
+              <span className='absolute inset-0 animate-ping rounded-full bg-red-500 opacity-60' />
+              <span
+                className='relative flex h-4 min-w-[16px] items-center justify-center rounded-full
+                           bg-red-500 px-1 text-[10px] font-bold text-white shadow-md'
+              >
+                {unreadNotifications > 99 ? '99+' : unreadNotifications}
+              </span>
             </span>
           )}
         </span>

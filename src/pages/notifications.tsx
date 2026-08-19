@@ -9,6 +9,7 @@ import { MainContainer } from '@components/home/main-container';
 import { MainHeader } from '@components/home/main-header';
 import { SEO } from '@components/common/seo';
 import { Loading } from '@components/ui/loading';
+import { HeroIcon } from '@components/ui/hero-icon';
 import { NotificationCard } from '@components/notifications/notification-card';
 import type { ReactElement, ReactNode } from 'react';
 import type { Notification } from '@lib/types/notification';
@@ -72,8 +73,8 @@ export default function Notifications(): JSX.Element {
 
   return (
     <MainContainer>
-      <SEO title='التنبيهات / Aite' />
-      <MainHeader title='التنبيهات' />
+      <SEO title='الإشعارات / Aite' />
+      <MainHeader title='الإشعارات' />
       {notifications === null ? (
         <Loading className='mt-5' />
       ) : notifications.length ? (
@@ -83,10 +84,13 @@ export default function Notifications(): JSX.Element {
           ))}
         </section>
       ) : (
-        <div className='p-8 text-center'>
-          <p className='text-2xl font-bold'>لا توجد تنبيهات</p>
-          <p className='mt-2 text-light-secondary dark:text-dark-secondary'>
-            ستظهر هنا عندما يتفاعل أحدهم معك.
+        <div className='flex flex-col items-center gap-4 p-12 text-center'>
+          <div className='flex h-20 w-20 items-center justify-center rounded-full bg-main-accent/10 text-main-accent'>
+            <HeroIcon className='h-10 w-10' iconName='BellIcon' />
+          </div>
+          <p className='text-2xl font-bold'>لا توجد إشعارات</p>
+          <p className='max-w-xs text-light-secondary dark:text-dark-secondary'>
+            عندما يتفاعل أحدهم مع منشوراتك أو يتابعك، ستظهر التنبيهات هنا.
           </p>
         </div>
       )}

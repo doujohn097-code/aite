@@ -2,6 +2,7 @@ import { Timestamp } from 'firebase/firestore';
 import { formatDate } from '@lib/date';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ToolTip } from '@components/ui/tooltip';
+import { ExpandableText } from '@components/ui/expandable-text';
 import { UserName } from './user-name';
 import { UserFollowing } from './user-following';
 import { UserFollowStats } from './user-follow-stats';
@@ -56,15 +57,21 @@ export function UserDetails({
           <UserFollowing userTargetId={id} />
         </div>
       </div>
-      <div className='flex flex-col gap-2'>
-        {bio && <p className='whitespace-pre-line break-words'>{bio}</p>}
-        <div className='flex flex-wrap gap-x-3 gap-y-1 text-light-secondary dark:text-dark-secondary'>
+      <div className='flex flex-col gap-2.5'>
+        {bio && (
+          <ExpandableText
+            text={bio}
+            maxChars={140}
+            className='rounded-xl bg-light-sidebar-background/50 p-3 dark:bg-dark-sidebar-background/50'
+          />
+        )}
+        <div className='flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-light-secondary dark:text-dark-secondary'>
           {detailIcons.map(
             ([detail, icon], index) =>
               detail && (
-                <div className='flex items-center gap-1' key={icon}>
-                  <i>
-                    <HeroIcon className='h-5 w-5' iconName={icon} />
+                <div className='flex items-center gap-1.5' key={icon}>
+                  <i className='flex h-6 w-6 items-center justify-center rounded-full bg-main-accent/10 text-main-accent'>
+                    <HeroIcon className='h-3.5 w-3.5' iconName={icon} />
                   </i>
                   {index === 1 ? (
                     <a
