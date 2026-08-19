@@ -27,8 +27,8 @@ export function StoryAvatar({
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cn(
-        'relative rounded-full transition',
-        hasStory ? 'p-0.5' : 'p-0',
+        'relative transition',
+        hasStory ? 'story-ring-blob p-0.5' : 'rounded-full p-0',
         onClick && 'cursor-pointer',
         className
       )}
