@@ -27,11 +27,6 @@ const coreNavLinks: Readonly<MobileNavLink[]> = [
     iconName: 'FilmIcon'
   },
   {
-    href: '/messages',
-    linkName: 'الرسائل',
-    iconName: 'EnvelopeIcon'
-  },
-  {
     href: '/accounts',
     linkName: 'الحسابات',
     iconName: 'UsersIcon'

@@ -3,7 +3,6 @@ import Link from 'next/link';
 const footerLinks = [
   ['الأشخاص', '/search'],
   ['الريلز', '/reels'],
-  ['الرسائل', '/messages'],
   ['استكشاف', '/home']
 ] as const;
 

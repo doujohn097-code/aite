@@ -25,8 +25,7 @@ import { auth } from '@lib/firebase/app';
 import {
   usersCollection,
   userStatsCollection,
-  notificationsCollection,
-  conversationsCollection
+  notificationsCollection
 } from '@lib/firebase/collections';
 import { getRandomId, getRandomInt } from '@lib/random';
 import { checkUsernameAvailability } from '@lib/firebase/utils';
@@ -52,7 +51,6 @@ type AuthContext = {
   isAdmin: boolean;
   randomSeed: string;
   unreadNotifications: number;
-  unreadMessages: number;
   signOut: () => Promise<void>;
   signInWithGoogle: (accountChooser?: boolean) => Promise<void>;
   signInWithUsername: (username: string, password: string) => Promise<void>;
@@ -72,7 +70,6 @@ export function AuthContextProvider({
 }: AuthContextProviderProps): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const [unreadMessages, setUnreadMessages] = useState(0);
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
   const processedUid = useRef<string | null>(null);
@@ -289,37 +286,16 @@ export function AuthContextProvider({
 
     const unsubscribeNotifications = onSnapshot(
       query(notificationsCollection(id), where('read', '==', false)),
-      (snapshot) =>
-        setUnreadNotifications(
-          snapshot.docs.filter(
-            (docSnapshot) => docSnapshot.data().type !== 'message'
-          ).length
-        ),
+      (snapshot) => setUnreadNotifications(snapshot.size),
       (error) => {
         console.error('notifications count error:', error);
         setUnreadNotifications(0);
       }
     );
 
-    const unsubscribeConversations = onSnapshot(
-      query(conversationsCollection, where('participants', 'array-contains', id)),
-      (snapshot) => {
-        const count = snapshot.docs.reduce((acc, docSnapshot) => {
-          const data = docSnapshot.data({ serverTimestamps: 'estimate' });
-          return acc + (data.unreadCount?.[id] ?? 0);
-        }, 0);
-        setUnreadMessages(count);
-      },
-      (error) => {
-        console.error('conversations count error:', error);
-        setUnreadMessages(0);
-      }
-    );
-
     return () => {
       unsubscribeUser();
       unsubscribeNotifications();
-      unsubscribeConversations();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
@@ -459,7 +435,6 @@ export function AuthContextProvider({
     isAdmin,
     randomSeed,
     unreadNotifications,
-    unreadMessages,
     signOut,
     signInWithGoogle,
     signInWithUsername,

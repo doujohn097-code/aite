@@ -32,9 +32,9 @@ export default function Notifications(): JSX.Element {
     const unsubscribe = onSnapshot(
       notificationsQuery,
       (snapshot) => {
-        const data = snapshot.docs
-          .map((docSnapshot) => docSnapshot.data({ serverTimestamps: 'estimate' }))
-          .filter((notification) => notification.type !== 'message');
+        const data = snapshot.docs.map((docSnapshot) =>
+          docSnapshot.data({ serverTimestamps: 'estimate' })
+        );
         setNotifications(data);
       },
       (error) => {
@@ -59,11 +59,9 @@ export default function Notifications(): JSX.Element {
       if (snapshot.empty) return;
 
       const batch = writeBatch(db);
-      snapshot.docs
-        .filter((docSnapshot) => docSnapshot.data().type !== 'message')
-        .forEach((docSnapshot) => {
-          batch.update(docSnapshot.ref, { read: true });
-        });
+      snapshot.docs.forEach((docSnapshot) => {
+        batch.update(docSnapshot.ref, { read: true });
+      });
 
       await batch.commit();
     };

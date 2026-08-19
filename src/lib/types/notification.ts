@@ -5,7 +5,6 @@ export type NotificationType =
   | 'retweet'
   | 'follow'
   | 'reply'
-  | 'message'
   | 'storyLike';
 
 export type Notification = {
@@ -16,7 +15,6 @@ export type Notification = {
   tweetId?: string | null;
   storyId?: string | null;
   storyUserId?: string | null;
-  messageText?: string | null;
   read: boolean;
   createdAt: Timestamp | null;
 };
@@ -38,7 +36,6 @@ export const notificationConverter: FirestoreDataConverter<Notification> = {
       tweetId: null,
       storyId: null,
       storyUserId: null,
-      messageText: null,
       read: false,
       createdAt: null,
       ...data

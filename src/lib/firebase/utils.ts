@@ -15,7 +15,6 @@ import {
   arrayRemove,
   serverTimestamp,
   getCountFromServer,
-  deleteField,
   Timestamp
 } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -25,8 +24,6 @@ import {
   tweetsCollection,
   userStatsCollection,
   userBookmarksCollection,
-  conversationsCollection,
-  messagesCollection,
   notificationsCollection,
   storiesCollection
 } from './collections';
@@ -35,7 +32,6 @@ import type { User, EditableUserData } from '@lib/types/user';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import type { Bookmark } from '@lib/types/bookmark';
 import type { Theme, Accent } from '@lib/types/theme';
-import type { Conversation, Message, ParticipantData, ReplyTo, AudioData } from '@lib/types/message';
 import type { Notification } from '@lib/types/notification';
 import type { Story } from '@lib/types/story';
 import { getTimestampMillis } from '@lib/date';
@@ -446,158 +442,6 @@ export async function clearAllBookmarks(userId: string): Promise<void> {
   bookmarksSnapshot.forEach(({ ref }) => batch.delete(ref));
 
   await batch.commit();
-}
-
-export function getConversationId(uid1: string, uid2: string): string {
-  return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
-}
-
-export async function getOrCreateConversation(
-  userId: string,
-  targetUser: User
-): Promise<string> {
-  const conversationId = getConversationId(userId, targetUser.id);
-  const conversationRef = doc(conversationsCollection, conversationId);
-  const conversationSnap = await getDoc(conversationRef);
-
-  if (!conversationSnap.exists()) {
-    const currentUserSnap = await getDoc(doc(usersCollection, userId));
-    const currentUser = currentUserSnap.data();
-
-    const participantData: Record<string, ParticipantData> = {
-      [userId]: {
-        name: currentUser?.name ?? '',
-        username: currentUser?.username ?? '',
-        photoURL: currentUser?.photoURL ?? '',
-        verified: currentUser?.verified ?? false
-      },
-      [targetUser.id]: {
-        name: targetUser.name,
-        username: targetUser.username,
-        photoURL: targetUser.photoURL,
-        verified: targetUser.verified ?? false
-      }
-    };
-
-    const conversationData: WithFieldValue<Conversation> = {
-      id: conversationRef.id,
-      participants: [userId, targetUser.id].sort(),
-      participantData,
-      lastMessage: null,
-      lastMessageSenderId: null,
-      lastMessageAt: null,
-      unreadCount: { [userId]: 0, [targetUser.id]: 0 },
-      createdAt: serverTimestamp(),
-      updatedAt: null
-    };
-
-    await setDoc(conversationRef, conversationData);
-  }
-
-  return conversationId;
-}
-
-export async function sendMessage(
-  conversationId: string,
-  senderId: string,
-  receiverId: string,
-  text: string | null,
-  images: ImagesPreview | null,
-  replyTo: ReplyTo | null = null,
-  audio: AudioData | null = null
-): Promise<void> {
-  const batch = writeBatch(db);
-
-  const messageRef = doc(messagesCollection(conversationId));
-  const conversationRef = doc(conversationsCollection, conversationId);
-
-  batch.set(messageRef, {
-    id: messageRef.id,
-    conversationId,
-    participants: [senderId, receiverId].sort(),
-    senderId,
-    text: text?.trim() ?? null,
-    images,
-    replyTo,
-    audio,
-    likes: [],
-    reactions: {},
-    createdAt: serverTimestamp(),
-    updatedAt: null
-  });
-
-  const trimmedText = text?.trim();
-  const lastMessage = audio
-    ? 'رسالة صوتية'
-    : images
-    ? 'أرسل صورة'
-    : replyTo
-    ? `رد: ${trimmedText ?? ''}`
-    : trimmedText ?? '';
-
-  batch.update(conversationRef, {
-    lastMessage,
-    lastMessageSenderId: senderId,
-    lastMessageAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    [`unreadCount.${receiverId}`]: increment(1)
-  } as Partial<WithFieldValue<Conversation>>);
-
-  await batch.commit();
-}
-
-export async function toggleMessageLike(
-  conversationId: string,
-  messageId: string,
-  userId: string,
-  liked: boolean
-): Promise<void> {
-  const messageRef = doc(messagesCollection(conversationId), messageId);
-  await updateDoc(messageRef, {
-    likes: liked ? arrayUnion(userId) : arrayRemove(userId),
-    updatedAt: serverTimestamp()
-  } as Partial<WithFieldValue<Message>>);
-}
-
-export async function setMessageReaction(
-  conversationId: string,
-  messageId: string,
-  userId: string,
-  emoji: string | null
-): Promise<void> {
-  const messageRef = doc(messagesCollection(conversationId), messageId);
-  if (emoji) {
-    await updateDoc(messageRef, {
-      [`reactions.${userId}`]: emoji,
-      updatedAt: serverTimestamp()
-    } as Partial<WithFieldValue<Message>>);
-  } else {
-    await updateDoc(messageRef, {
-      [`reactions.${userId}`]: deleteField(),
-      updatedAt: serverTimestamp()
-    } as Partial<WithFieldValue<Message>>);
-  }
-}
-
-export async function markConversationRead(
-  conversationId: string,
-  userId: string
-): Promise<void> {
-  const conversationRef = doc(conversationsCollection, conversationId);
-  await updateDoc(conversationRef, {
-    [`unreadCount.${userId}`]: 0,
-    updatedAt: serverTimestamp()
-  } as Partial<WithFieldValue<Conversation>>);
-}
-
-export function mapMessagesWithSender(
-  messages: Message[],
-  participantData: Record<string, ParticipantData>
-): (Message & { sender: ParticipantData | undefined })[] {
-  return messages.map((message) => ({
-    ...message,
-    sender: participantData[message.senderId]
-  }));
 }
 
 export async function createNotification(

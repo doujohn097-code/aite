@@ -18,7 +18,6 @@ const notificationText: Record<
   retweet: () => 'أعاد نشر منشورك',
   follow: () => 'بدأ بمتابعتك',
   reply: () => 'رد على منشورك',
-  message: () => 'أرسل لك رسالة',
   storyLike: () => 'أعجب بقصتك'
 };
 
@@ -42,10 +41,6 @@ const typeStyles: Record<
   reply: {
     icon: 'ChatBubbleOvalLeftIcon',
     classes: 'bg-sky-500/50 text-sky-100 backdrop-blur-md'
-  },
-  message: {
-    icon: 'EnvelopeIcon',
-    classes: 'bg-indigo-500/50 text-indigo-100 backdrop-blur-md'
   }
 };
 
@@ -69,11 +64,7 @@ export function NotificationCard({
   const username = fromUser?.username ?? 'unknown';
 
   const href =
-    notification.type === 'message'
-      ? `/messages/${[notification.fromUserId, currentUser?.id ?? '']
-          .sort()
-          .join('_')}`
-      : notification.type === 'follow'
+    notification.type === 'follow'
       ? `/user/${username}`
       : notification.type === 'storyLike' && notification.storyUserId
       ? `/stories/${notification.storyUserId}?storyId=${notification.storyId ?? ''}`
@@ -129,11 +120,6 @@ export function NotificationCard({
               {notificationText[notification.type](name)}
             </span>
           </p>
-          {notification.messageText && (
-            <p className='truncate text-sm text-light-secondary dark:text-dark-secondary'>
-              {notification.messageText}
-            </p>
-          )}
           {notification.createdAt && (
             <p className='mt-0.5 text-xs text-light-secondary/80 dark:text-dark-secondary/80'>
               {formatDate(notification.createdAt, 'tweet')}
