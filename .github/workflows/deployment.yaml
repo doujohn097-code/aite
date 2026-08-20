@@ -58,10 +58,5 @@ jobs:
       - name: 🚀 Deploy firestore rules + indexes
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa.json
-        run: |
-          echo "$FIREBASE_SERVICE_ACCOUNT" > /tmp/sa.json
-          npx -y firebase-tools@latest deploy \
-            --only "firestore:rules,firestore:indexes" \
-            --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
-            --non-interactive
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: node scripts/deploy-firestore.mjs
