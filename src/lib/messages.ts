@@ -1,13 +1,9 @@
 import {
   doc,
   getDoc,
-  getDocs,
   setDoc,
   addDoc,
   updateDoc,
-  query,
-  where,
-  limit,
   serverTimestamp,
   Timestamp,
   increment
@@ -204,27 +200,6 @@ export async function toggleMessageReaction(
       createdAt: serverTimestamp()
     }
   });
-}
-
-/** ترحيل الرسائل القديمة: إضافة حقل participants لتظهر في استعلام الدردشة
- *  المُفلتر بالمشاركين (القواعد تسمح بتحديث participants/seenBy/reactions فقط).
- *  يعمل تلقائيًا عند فتح محادثة قديمة ويتجاهل أي رسالة تفشل. */
-export async function backfillMessageParticipants(
-  conversationId: string,
-  participants: string[]
-): Promise<void> {
-  // استعلام بدون where حتى يعمل حتى لو كانت القاعدة المنشورة لا تزال
-  // تستخدم get() — فهي تسمح بقراءة مستندات مفردة وترفض قواعد-القوائم
-  const snapshot = await getDocs(
-    query(conversationMessagesCollection(conversationId), limit(300))
-  );
-  await Promise.all(
-    snapshot.docs
-      .filter((messageDoc) => !messageDoc.data().participants?.length)
-      .map((messageDoc) =>
-        updateDoc(messageDoc.ref, { participants }).catch(() => undefined)
-      )
-  );
 }
 
 export async function markConversationRead(

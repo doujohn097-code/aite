@@ -1,15 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import {
-  doc,
-  onSnapshot,
-  query,
-  where,
-  orderBy,
-  limitToLast,
-  Timestamp
-} from 'firebase/firestore';
+import { doc, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
 import {
@@ -21,8 +13,7 @@ import {
   sendMessage,
   markConversationRead,
   markMessageSeen,
-  toggleMessageReaction,
-  backfillMessageParticipants
+  toggleMessageReaction
 } from '@lib/messages';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -118,12 +109,6 @@ export default function Chat(): JSX.Element {
         setForbidden(false);
         setConversation(data);
 
-        // ترحيل الرسائل القديمة مرة واحدة لتظهر مع الاستعلام المُفلتر
-        void backfillMessageParticipants(
-          conversationId,
-          data.participants
-        ).catch(() => undefined);
-
         const otherId = data.participants.find(
           (participant) => participant !== user.id
         );
@@ -162,21 +147,26 @@ export default function Chat(): JSX.Element {
   useEffect(() => {
     if (!user || !conversationId || forbidden) return;
 
-    // الفلترة بالمشاركين تجعل الاستعلام متوافقًا مع قواعد الأمان
-    // (الرسائل القديمة بلا حقل participants تُستبعد تلقائيًا بدل رفض الاستعلام)
+    // فلتر واحد فقط بلا orderBy — array-contains مع orderBy يتطلب فهرسًا مركّبًا
+    // غير موجود فيفشل الاستعلام وتختفي الرسائل. نرتّب محليًا ونقتطع آخر 150.
     const messagesQuery = query(
       conversationMessagesCollection(conversationId),
-      where('participants', 'array-contains', user.id),
-      orderBy('createdAt', 'asc'),
-      limitToLast(150)
+      where('participants', 'array-contains', user.id)
     );
 
     const unsubscribe = onSnapshot(
       messagesQuery,
       (snapshot) => {
-        const data = snapshot.docs.map((docSnapshot) =>
-          docSnapshot.data({ serverTimestamps: 'estimate' })
-        );
+        const data = snapshot.docs
+          .map((docSnapshot) =>
+            docSnapshot.data({ serverTimestamps: 'estimate' })
+          )
+          .sort(
+            (a, b) =>
+              (a.createdAt?.toMillis?.() ?? 0) -
+              (b.createdAt?.toMillis?.() ?? 0)
+          )
+          .slice(-150);
         setMessages(data);
         void markConversationRead(conversationId, user.id);
 
