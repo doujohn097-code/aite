@@ -497,26 +497,33 @@ export async function createNotification(
 ): Promise<void> {
   if (!toUserId || toUserId === notification.fromUserId) return;
 
-  const notificationsRef = notificationsCollection(toUserId);
-  const notificationRef = doc(notificationsRef);
+  // Notification delivery is best-effort — a failing notification write
+  // (e.g. exhausted Spark write quota) must never break the original
+  // like/reply/retweet/follow action that triggered it.
+  try {
+    const notificationsRef = notificationsCollection(toUserId);
+    const notificationRef = doc(notificationsRef);
 
-  const notificationData: WithFieldValue<Notification> = {
-    ...notification,
-    id: notificationRef.id,
-    createdAt: serverTimestamp()
-  };
+    const notificationData: WithFieldValue<Notification> = {
+      ...notification,
+      id: notificationRef.id,
+      createdAt: serverTimestamp()
+    };
 
-  await setDoc(notificationRef, notificationData);
+    await setDoc(notificationRef, notificationData);
 
-  sendPushNotification({
-    kind: 'activity',
-    toUserId,
-    type: notification.type,
-    context,
-    tweetId: notification.tweetId ?? null,
-    storyId: notification.storyId ?? null,
-    storyUserId: notification.storyUserId ?? null
-  });
+    sendPushNotification({
+      kind: 'activity',
+      toUserId,
+      type: notification.type,
+      context,
+      tweetId: notification.tweetId ?? null,
+      storyId: notification.storyId ?? null,
+      storyUserId: notification.storyUserId ?? null
+    });
+  } catch (error) {
+    console.warn('notification delivery skipped:', error);
+  }
 }
 
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;

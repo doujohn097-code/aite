@@ -220,13 +220,25 @@ export function AuthContextProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // Presence heartbeat: claim "online" immediately and keep it alive while
-  // the app is open; the green dot appears everywhere within a minute.
+  // Presence heartbeat: claim "online" immediately then refresh every 5
+  // minutes (with a client-side fresher guard so visibility flaps never
+  // burn extra Firestore writes). Keeps the green dot alive within the
+  // presence window defined in presence-store without exhausting the
+  // daily write quota on Spark projects.
+  const HEARTBEAT_MS = 5 * 60 * 1000;
+  const HEARTBEAT_FREQUENT_GUARD_MS = HEARTBEAT_MS / 2;
+  const lastBeatRef = useRef<number>(0);
+
   useEffect(() => {
     const userId = user?.id;
     if (!userId) return;
+    lastBeatRef.current = 0;
 
-    const beat = (): void => {
+    const beat = (force = false): void => {
+      const now = Date.now();
+      if (!force && now - lastBeatRef.current < HEARTBEAT_FREQUENT_GUARD_MS)
+        return;
+      lastBeatRef.current = now;
       void updateDoc(doc(usersCollection, userId), {
         lastActiveAt: serverTimestamp()
       }).catch(() => null);
@@ -236,9 +248,9 @@ export function AuthContextProvider({
       if (document.visibilityState === 'visible') beat();
     };
 
-    beat();
+    beat(true);
     document.addEventListener('visibilitychange', handleVisibility);
-    const interval = setInterval(beat, 60_000);
+    const interval = setInterval(beat, HEARTBEAT_MS);
 
     return () => {
       clearInterval(interval);

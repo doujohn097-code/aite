@@ -2,7 +2,10 @@ import { useSyncExternalStore } from 'react';
 import { onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { usersCollection } from '@lib/firebase/collections';
 
-const ONLINE_WINDOW_MS = 2.5 * 60 * 1000;
+// Must comfortably exceed the heartbeat interval in auth-context so dots
+// never flicker offline between beats; a 12-minute window pairs with the
+// 5-minute heartbeat to cut Firestore write quota ~5x.
+const ONLINE_WINDOW_MS = 12 * 60 * 1000;
 
 /**
  * Shared realtime map of online users (heartbeat within the last 2.5

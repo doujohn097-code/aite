@@ -12,6 +12,7 @@ import { UserTooltip } from '@components/user/user-tooltip';
 import { UserName } from '@components/user/user-name';
 import { variants } from '@components/tweet/tweet';
 import { TweetActions } from '@components/tweet/tweet-actions';
+import { TweetAudioPlayer } from '@components/tweet/tweet-audio';
 import { TweetStats } from '@components/tweet/tweet-stats';
 import { TweetDate } from '@components/tweet/tweet-date';
 import type { RefObject } from 'react';
@@ -28,6 +29,7 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
     id: tweetId,
     text,
     images = [],
+    audio,
     parent,
     userLikes = [],
     createdBy,
@@ -129,6 +131,7 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
               previewCount={images.length}
             />
           )}
+          {audio && <TweetAudioPlayer audio={audio} />}
           <div className='border-b border-light-border pb-2 dark:border-dark-border'>
             <TweetDate viewTweet tweetLink={tweetLink} createdAt={createdAt} />
             <TweetStats

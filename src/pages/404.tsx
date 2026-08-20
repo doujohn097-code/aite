@@ -1,8 +1,13 @@
-import { useTheme } from '@lib/context/theme-context';
+import { ThemeContext } from '@lib/context/theme-context';
 import { SEO } from '@components/common/seo';
+import { useContext } from 'react';
 
 export default function NotFound(): JSX.Element {
-  const { theme } = useTheme();
+  // The 404 page is statically generated outside the app providers during
+  // the build — useTheme would throw and break SSR, so read the context
+  // leniently instead.
+  const context = useContext(ThemeContext);
+  const theme = context?.theme ?? 'dark';
 
   const isDarkMode = ['dim', 'dark'].includes(theme);
 
