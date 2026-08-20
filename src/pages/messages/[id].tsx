@@ -21,7 +21,8 @@ import {
   sendMessage,
   markConversationRead,
   markMessageSeen,
-  toggleMessageReaction
+  toggleMessageReaction,
+  backfillMessageParticipants
 } from '@lib/messages';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -116,6 +117,12 @@ export default function Chat(): JSX.Element {
         }
         setForbidden(false);
         setConversation(data);
+
+        // ترحيل الرسائل القديمة مرة واحدة لتظهر مع الاستعلام المُفلتر
+        void backfillMessageParticipants(
+          conversationId,
+          data.participants
+        ).catch(() => undefined);
 
         const otherId = data.participants.find(
           (participant) => participant !== user.id
