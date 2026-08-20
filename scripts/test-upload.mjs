@@ -31,12 +31,19 @@ await auth.createUser({
   uid,
   email: `${uid}@example.com`,
   displayName: 'Test User',
-  photoURL: 'https://pub-ac6ca2c23fe44a8c93e7a74791c80260.r2.dev/media/test/avatar.png'
+  photoURL:
+    'https://pub-ac6ca2c23fe44a8c93e7a74791c80260.r2.dev/media/test/avatar.png'
 });
 
 const token = await auth.createCustomToken(uid);
 
-const testImagePath = join(__dirname, '..', 'public', 'assets', 'twitter-avatar.jpg');
+const testImagePath = join(
+  __dirname,
+  '..',
+  'public',
+  'assets',
+  'twitter-avatar.jpg'
+);
 const buffer = readFileSync(testImagePath);
 
 const id = `${Date.now()}-test`;
@@ -71,7 +78,11 @@ const uploadResponse = await fetch(uploadUrl, {
 });
 
 if (!uploadResponse.ok) {
-  console.error('R2 upload failed:', uploadResponse.status, await uploadResponse.text());
+  console.error(
+    'R2 upload failed:',
+    uploadResponse.status,
+    await uploadResponse.text()
+  );
   process.exit(1);
 }
 

@@ -10,7 +10,7 @@ import type { User } from '@lib/types/user';
 
 type NewMessageModalProps = {
   closeModal: () => void;
-  onSelect: (user: User) => void;
+  onSelect: (user: User) => void | Promise<void>;
 };
 
 export function NewMessageModal({

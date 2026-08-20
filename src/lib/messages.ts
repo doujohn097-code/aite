@@ -194,9 +194,7 @@ export async function toggleMessageReaction(
   );
   if (!conversationDoc.exists()) return;
 
-  const peer = (conversationDoc.data() as Conversation).participants.find(
-    (id) => id !== userId
-  );
+  const peer = conversationDoc.data().participants.find((id) => id !== userId);
 
   await updateDoc(doc(conversationsCollection, conversationId), {
     ...(peer ? { [`unread.${peer}`]: increment(1) } : {}),

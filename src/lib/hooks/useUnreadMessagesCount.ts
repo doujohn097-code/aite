@@ -24,7 +24,7 @@ export function useUnreadMessagesCount(): number {
       (snapshot) => {
         let total = 0;
         snapshot.forEach((document) => {
-          const data = document.data() as Conversation;
+          const data = document.data();
           total += data.unread?.[user.id] ?? 0;
         });
         setCount(total);

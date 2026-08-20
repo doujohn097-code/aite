@@ -78,7 +78,7 @@ export function TweetShare({
                 <Popover.Button
                   className='accent-tab flex w-full gap-3 rounded-md p-4 hover:bg-main-sidebar-background'
                   as={Button}
-                  onClick={preventBubbling(async () => {
+                  onClick={preventBubbling(() => {
                     close();
                     openShare();
                   })}

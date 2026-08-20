@@ -8,14 +8,20 @@ if (!base64Key) {
   process.exit(1);
 }
 
-const serviceAccount = JSON.parse(Buffer.from(base64Key, 'base64').toString('utf8'));
+const serviceAccount = JSON.parse(
+  Buffer.from(base64Key, 'base64').toString('utf8')
+);
 
 const app = admin.default.initializeApp({
   credential: admin.default.credential.cert(serviceAccount),
   projectId: serviceAccount.project_id
 });
 
-const source = await import('node:fs/promises').then(fs => fs.readFile('./firestore.rules', 'utf8'));
+const source = await import('node:fs/promises').then((fs) =>
+  fs.readFile('./firestore.rules', 'utf8')
+);
 
-const result = await app.securityRules().releaseFirestoreRulesetFromSource(source);
+const result = await app
+  .securityRules()
+  .releaseFirestoreRulesetFromSource(source);
 console.log('Rules deployed:', result.name);

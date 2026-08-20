@@ -9,7 +9,9 @@ if (!base64Key || !apiKey) {
   process.exit(1);
 }
 
-const serviceAccount = JSON.parse(Buffer.from(base64Key, 'base64').toString('utf8'));
+const serviceAccount = JSON.parse(
+  Buffer.from(base64Key, 'base64').toString('utf8')
+);
 
 function base64UrlEncode(str) {
   return Buffer.from(str)
@@ -73,7 +75,11 @@ const uploadResponse = await fetch('http://localhost:3000/api/upload', {
 });
 
 if (!uploadResponse.ok) {
-  console.error('api/upload failed:', uploadResponse.status, await uploadResponse.text());
+  console.error(
+    'api/upload failed:',
+    uploadResponse.status,
+    await uploadResponse.text()
+  );
   process.exit(1);
 }
 
@@ -89,7 +95,11 @@ const r2Response = await fetch(uploadData.files[0].uploadUrl, {
 });
 
 if (!r2Response.ok) {
-  console.error('R2 upload failed:', r2Response.status, await r2Response.text());
+  console.error(
+    'R2 upload failed:',
+    r2Response.status,
+    await r2Response.text()
+  );
   process.exit(1);
 }
 

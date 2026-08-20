@@ -21,7 +21,6 @@ import { Tweet } from '@components/tweet/tweet';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { IconName } from '@components/ui/hero-icon';
 import type { ReactElement, ReactNode } from 'react';
-import type { Story } from '@lib/types/story';
 
 type ProfileTab = 'posts' | 'retweets' | 'reels';
 
@@ -79,9 +78,7 @@ export default function UserTweets(): JSX.Element {
     disabled: !id
   });
 
-  const reelIds = (ownerStats?.reels ?? (ownerStats ? [] : null)) as
-    | string[]
-    | null;
+  const reelIds = ownerStats?.reels ?? (ownerStats ? [] : null);
 
   const repostedReelsQuery =
     id && reelIds?.length
@@ -101,8 +98,7 @@ export default function UserTweets(): JSX.Element {
   const filteredPeopleTweets =
     peopleTweets?.filter((tweet) => tweet.createdBy !== id) ?? null;
 
-  const reels =
-    repostedReels?.filter((story) => (story as Story).kind === 'reel') ?? null;
+  const reels = repostedReels?.filter((story) => story.kind === 'reel') ?? null;
 
   const loading = ownerLoading || peopleLoading || reelsLoading;
 

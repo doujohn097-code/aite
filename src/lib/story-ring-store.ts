@@ -31,7 +31,7 @@ function ensureListener(): void {
         const data = docSnap.data();
         if (data.lastStoryAt)
           next[docSnap.id] = {
-            lastStoryAt: data.lastStoryAt as Timestamp,
+            lastStoryAt: data.lastStoryAt,
             storyColor: (data.storyColor as string | null) ?? null
           };
       });
