@@ -14,12 +14,7 @@ import { Loading } from '@components/ui/loading';
 import type { SavedAccount } from '@lib/accounts';
 
 export default function Accounts(): JSX.Element {
-  const {
-    user,
-    loading: authLoading,
-    signInWithUsername,
-    signInWithGoogle
-  } = useAuth();
+  const { user, loading: authLoading, signInWithUsername } = useAuth();
   const router = useRouter();
 
   const [accounts, setAccounts] = useState<SavedAccount[] | null>(null);
@@ -27,7 +22,10 @@ export default function Accounts(): JSX.Element {
   const [removing, setRemoving] = useState<string | null>(null);
 
   useEffect(() => {
-    setAccounts(getSavedAccounts());
+    // حسابات Google القديمة لا تملك كلمة مرور — لا يمكن الدخول بها مباشرة فنخفيها
+    setAccounts(
+      getSavedAccounts().filter((account) => account.provider !== 'google')
+    );
   }, []);
 
   const getRedirectTarget = (): string => {
@@ -43,20 +41,12 @@ export default function Accounts(): JSX.Element {
     setSigningIn(account.username);
     try {
       // دخول مباشر — Firebase يبدل الجلسة بهدوء دون الخروج المُسبَق (يمنع الغليتش)
-      if (account.provider === 'google') {
-        await signInWithGoogle(false);
-      } else {
-        await signInWithUsername(account.username, account.password);
-      }
+      await signInWithUsername(account.username, account.password);
       if (typeof window !== 'undefined')
         window.sessionStorage.removeItem('aite:post-logout');
       await router.push(getRedirectTarget());
     } catch {
-      toast.error(
-        account.provider === 'google'
-          ? 'تعذر تسجيل الدخول عبر Google، يرجى المحاولة مرة أخرى.'
-          : 'تعذر تسجيل الدخول بهذا الحساب — تحقق من كلمة المرور.'
-      );
+      toast.error('تعذر تسجيل الدخول بهذا الحساب — تحقق من كلمة المرور.');
     } finally {
       setSigningIn(null);
     }
@@ -130,13 +120,8 @@ export default function Accounts(): JSX.Element {
                             </span>
                           )}
                         </span>
-                        <span className='flex items-center gap-1.5 truncate text-xs text-light-secondary dark:text-dark-secondary'>
+                        <span className='truncate text-xs text-light-secondary dark:text-dark-secondary'>
                           @{account.username}
-                          {account.provider === 'google' && (
-                            <span className='rounded-full bg-light-line-reply/60 px-1.5 py-0.5 text-[10px] font-semibold dark:bg-dark-line-reply/60'>
-                              Google
-                            </span>
-                          )}
                         </span>
                       </span>
                       {signingIn === account.username ? (

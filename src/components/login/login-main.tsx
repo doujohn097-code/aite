@@ -2,12 +2,16 @@ import { useState, type FormEvent, type ChangeEvent } from 'react';
 import { useAuth } from '@lib/context/auth-context';
 import { auth } from '@lib/firebase/app';
 import { saveAccount } from '@lib/accounts';
-import { CustomIcon } from '@components/ui/custom-icon';
+import { AiteLogo } from '@components/ui/aite-logo';
 import { Button } from '@components/ui/button';
 import { InputField } from '@components/input/input-field';
 
 export function LoginMain(): JSX.Element {
-  const { signInWithGoogle, signInWithUsername, signUpWithUsername, error: authError } = useAuth();
+  const {
+    signInWithUsername,
+    signUpWithUsername,
+    error: authError
+  } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
@@ -40,7 +44,8 @@ export function LoginMain(): JSX.Element {
           password
         });
       } else {
-        if (!cleanedUsername || !password) throw new Error('يرجى إدخال اسم المستخدم وكلمة المرور');
+        if (!cleanedUsername || !password)
+          throw new Error('يرجى إدخال اسم المستخدم وكلمة المرور');
         await signInWithUsername(cleanedUsername, password);
       }
       const currentUser = auth.currentUser;
@@ -61,23 +66,17 @@ export function LoginMain(): JSX.Element {
   };
 
   return (
-    <main className='grid lg:grid-cols-[1fr,45vw] min-h-screen'>
+    <main className='grid min-h-screen lg:grid-cols-[1fr,45vw]'>
       <div className='relative hidden items-center justify-center bg-black p-12 lg:flex'>
         <img
           src='/assets/home-logo.png'
           alt='Aite'
-          className='max-w-md w-full object-contain select-none'
+          className='w-full max-w-md select-none object-contain'
         />
       </div>
       <div className='flex flex-col items-center justify-between gap-6 p-8 lg:items-start lg:justify-center'>
-        <i className='mb-0 self-center lg:mb-10 lg:self-auto'>
-          <CustomIcon
-            className='-mt-4 h-10 w-10 lg:h-14 lg:w-14'
-            iconName='AiteIcon'
-          />
-        </i>
         <div className='flex max-w-md flex-col gap-4 font-aite-extended lg:max-w-2xl lg:gap-16'>
-          <h1 className='text-3xl lg:text-6xl font-aite-extended'>
+          <h1 className='font-aite-extended text-3xl lg:text-6xl'>
             تواصل بشكل أنيق مع الجميع!
           </h1>
           <h2 className='hidden text-xl lg:block lg:text-3xl'>
@@ -85,19 +84,9 @@ export function LoginMain(): JSX.Element {
           </h2>
         </div>
         <div className='flex w-full max-w-xs flex-col gap-6 [&_button]:py-2'>
-          <Button
-            className='flex justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition
-                       hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white
-                       dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
-            onClick={(): void => void signInWithGoogle()}
-          >
-            <CustomIcon iconName='GoogleIcon' />
-            {isSignUp ? 'سجل عبر Google' : 'سجل الدخول عبر Google'}
-          </Button>
-          <div className='grid w-full grid-cols-[1fr,auto,1fr] items-center gap-2'>
-            <i className='border-b border-light-border dark:border-dark-border' />
-            <p>أو</p>
-            <i className='border-b border-light-border dark:border-dark-border' />
+          <div className='flex flex-col items-center gap-3'>
+            <AiteLogo className='h-16 w-16 lg:h-20 lg:w-20' />
+            <i className='w-full border-b border-light-border dark:border-dark-border' />
           </div>
           <form onSubmit={handleSubmit} className='grid gap-3'>
             {isSignUp && (
@@ -135,7 +124,9 @@ export function LoginMain(): JSX.Element {
               }
             />
             {(error || authError) && (
-              <p className='text-sm text-accent-red'>{error ?? authError?.message}</p>
+              <p className='text-sm text-accent-red'>
+                {error ?? authError?.message}
+              </p>
             )}
             <Button
               type='submit'

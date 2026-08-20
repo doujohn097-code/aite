@@ -8,10 +8,6 @@ import {
   useCallback
 } from 'react';
 import {
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
@@ -38,7 +34,6 @@ import {
 import { getRandomId, getRandomInt } from '@lib/random';
 import { checkUsernameAvailability } from '@lib/firebase/utils';
 import { usernameToInternalEmail } from '@lib/utils';
-import { saveAccount } from '@lib/accounts';
 import type { ReactNode } from 'react';
 import type { User as AuthUser } from 'firebase/auth';
 import type { WithFieldValue } from 'firebase/firestore';
@@ -60,7 +55,6 @@ type AuthContext = {
   randomSeed: string;
   unreadNotifications: number;
   signOut: () => Promise<void>;
-  signInWithGoogle: (accountChooser?: boolean) => Promise<void>;
   signInWithUsername: (username: string, password: string) => Promise<void>;
   signUpWithUsername: (data: SignUpData) => Promise<void>;
   /** Locally mark a user's story as seen so the ring disappears instantly. */
@@ -84,41 +78,9 @@ export function AuthContextProvider({
 
   useEffect(() => {
     let cancelled = false;
-    const authResolved = { current: false };
-    const redirectResolved = { current: false };
-
-    const finishInitialCheck = (): void => {
-      if (cancelled) return;
-      if (
-        authResolved.current &&
-        redirectResolved.current &&
-        !processedUid.current
-      ) {
-        setLoading(false);
-      }
-    };
 
     const manageUser = async (authUser: AuthUser): Promise<void> => {
       const { uid, displayName, photoURL } = authUser;
-
-      const isGoogleAccount = authUser.providerData?.some(
-        ({ providerId }) => providerId === 'google.com'
-      );
-
-      const persistGoogleAccount = (
-        username: string,
-        name: string,
-        photo: string | null
-      ): void => {
-        if (isGoogleAccount)
-          saveAccount({
-            username,
-            password: '',
-            name,
-            photoURL: photo,
-            provider: 'google'
-          });
-      };
 
       if (!uid || processedUid.current === uid) return;
 
@@ -210,24 +172,19 @@ export function AuthContextProvider({
 
           const newUser = (await getDoc(doc(usersCollection, uid))).data();
           setUser({ ...defaultUserData, ...newUser } as User);
-          persistGoogleAccount(randomUsername, fallbackName, fallbackPhoto);
         } catch (error) {
           setError(error as Error);
         }
       } else {
         const userData = userSnapshot.data();
         setUser({ ...defaultUserData, ...userData } as User);
-        persistGoogleAccount(
-          (userData?.username as string) ?? '',
-          (userData?.name as string) ?? fallbackName,
-          (userData?.photoURL as string) ?? fallbackPhoto
-        );
       }
 
       setLoading(false);
     };
 
-    const handleUserAuth = (authUser: AuthUser | null): void => {
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+      if (cancelled) return;
       if (authUser) {
         if (processedUid.current === authUser.uid) return;
         void manageUser(authUser).catch((error) => {
@@ -236,26 +193,11 @@ export function AuthContextProvider({
         });
       } else {
         setUser(null);
-        finishInitialCheck();
+        // تصفير المعرّف يسمح بإعادة الدخول بنفس الحساب بعد الخروج دون تحديث الصفحة
+        processedUid.current = null;
+        setLoading(false);
       }
-    };
-
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
-      authResolved.current = true;
-      handleUserAuth(authUser);
     });
-
-    getRedirectResult(auth)
-      .then((result) => {
-        redirectResolved.current = true;
-        if (result?.user) handleUserAuth(result.user);
-        else finishInitialCheck();
-      })
-      .catch((error) => {
-        redirectResolved.current = true;
-        setError(error as Error);
-        finishInitialCheck();
-      });
 
     return () => {
       cancelled = true;
@@ -338,30 +280,6 @@ export function AuthContextProvider({
       'auth/popup-closed-by-user': 'أُلغي تسجيل الدخول عبر Google'
     };
     return new Error(map[code] ?? 'تعذر تسجيل الدخول — حاول مرة أخرى');
-  };
-
-  // غوغل بلا اختيار حساب افتراضيًا — دخول مباشر بالحساب المستخدم آخر مرة
-  const signInWithGoogle = async (accountChooser = false): Promise<void> => {
-    try {
-      const provider = new GoogleAuthProvider();
-      if (accountChooser)
-        provider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      const { code } = error as { code?: string };
-      if (code === 'auth/popup-blocked') {
-        try {
-          const provider = new GoogleAuthProvider();
-          if (accountChooser)
-            provider.setCustomParameters({ prompt: 'select_account' });
-          await signInWithRedirect(auth, provider);
-        } catch (redirectError) {
-          setError(toArabicAuthError(redirectError));
-        }
-      } else if (code !== 'auth/popup-closed-by-user') {
-        setError(toArabicAuthError(error));
-      }
-    }
   };
 
   const signInWithUsername = async (
@@ -479,7 +397,6 @@ export function AuthContextProvider({
     randomSeed,
     unreadNotifications,
     signOut,
-    signInWithGoogle,
     signInWithUsername,
     signUpWithUsername,
     markStoryViewed
