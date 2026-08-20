@@ -29,7 +29,7 @@ function initialize(): Firebase {
 
   const auth = getAuth(firebaseApp);
   // جلسة دائمة — يبقى المستخدم مسجلاً بعد إعادة التحميل (توكن محفوظ محليًا)
-  void setPersistence(auth, browserLocalPersistence);
+  setPersistence(auth, browserLocalPersistence).catch(() => undefined);
 
   const storage = getStorage(firebaseApp);
   const firestore = getFirestore(firebaseApp);

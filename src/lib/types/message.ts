@@ -49,6 +49,8 @@ export type Message = {
   sharedPost: SharedPostRef | null;
   /** تفاعلات الرسالة: بمعرف المستخدم الإيموجي الذي وضعه */
   reactions: MessageReactions;
+  /** نسخة من مشاركي المحادثة — تتيح لقواعد الأمان فحص العضوية دون get() */
+  participants: string[];
   createdAt: Timestamp;
   seenBy: string[];
 };
@@ -89,6 +91,7 @@ export const messageConverter: FirestoreDataConverter<Message> = {
       replyTo: null,
       sharedPost: null,
       reactions: {},
+      participants: [],
       createdAt: Timestamp.now(),
       seenBy: [],
       ...data

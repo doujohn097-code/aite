@@ -5,6 +5,7 @@ import {
   doc,
   onSnapshot,
   query,
+  where,
   orderBy,
   limitToLast,
   Timestamp
@@ -154,8 +155,11 @@ export default function Chat(): JSX.Element {
   useEffect(() => {
     if (!user || !conversationId || forbidden) return;
 
+    // الفلترة بالمشاركين تجعل الاستعلام متوافقًا مع قواعد الأمان
+    // (الرسائل القديمة بلا حقل participants تُستبعد تلقائيًا بدل رفض الاستعلام)
     const messagesQuery = query(
       conversationMessagesCollection(conversationId),
+      where('participants', 'array-contains', user.id),
       orderBy('createdAt', 'asc'),
       limitToLast(150)
     );
@@ -257,6 +261,7 @@ export default function Chat(): JSX.Element {
       replyTo,
       sharedPost: null,
       reactions: {},
+      participants: conversation.participants,
       createdAt: Timestamp.now(),
       seenBy: [user.id]
     };

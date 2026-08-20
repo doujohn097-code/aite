@@ -134,6 +134,7 @@ export async function sendMessage(
     replyTo: payload.replyTo ?? null,
     sharedPost,
     reactions: {},
+    participants,
     createdAt: serverTimestamp() as Timestamp,
     seenBy: [senderId]
   });

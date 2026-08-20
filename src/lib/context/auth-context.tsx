@@ -128,7 +128,14 @@ export function AuthContextProvider({
       const fallbackName = displayName ?? 'مستخدم';
       const fallbackPhoto = photoURL ?? '/assets/default-avatar.png';
 
-      const userSnapshot = await getDoc(doc(usersCollection, uid));
+      // قراءة الملف مع إعادة محاولة — لا نترك المستخدم عالقًا بسبب خطأ عابر
+      let userSnapshot;
+      try {
+        userSnapshot = await getDoc(doc(usersCollection, uid));
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        userSnapshot = await getDoc(doc(usersCollection, uid));
+      }
 
       const defaultUserData: User = {
         id: uid,
@@ -319,8 +326,10 @@ export function AuthContextProvider({
   const toArabicAuthError = (error: unknown): Error => {
     const code = (error as { code?: string })?.code ?? '';
     const map: Record<string, string> = {
-      'auth/invalid-credential': 'اسم المستخدم أو كلمة المرور غير صحيحة',
-      'auth/wrong-password': 'اسم المستخدم أو كلمة المرور غير صحيحة',
+      'auth/invalid-credential':
+        'اسم المستخدم أو كلمة المرور غير صحيحة — إن أنشأت حسابك عبر Google فسجّل بزر Google',
+      'auth/wrong-password':
+        'اسم المستخدم أو كلمة المرور غير صحيحة — إن أنشأت حسابك عبر Google فسجّل بزر Google',
       'auth/user-not-found': 'لا يوجد حساب بهذا الاسم',
       'auth/too-many-requests': 'محاولات كثيرة — انتظر قليلًا ثم حاول مجددًا',
       'auth/network-request-failed': 'تحقق من اتصالك بالإنترنت',
