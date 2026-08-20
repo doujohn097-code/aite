@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import cn from 'clsx';
 import {
@@ -17,6 +17,8 @@ import type { Message, MessageType } from '@lib/types/message';
 type MessageBubbleProps = {
   message: Message;
   isOwn: boolean;
+  /** هل منتقي التفاعل مفتوح لهذه الرسالة (مُدار من الصفحة — منتقي واحد فقط) */
+  pickerOpen?: boolean;
   /** إن كانت الرسالة من أوائل القائمة يُعرض منتقي التفاعل أسفلها ليبقى داخل المحتوى */
   pickerBelow?: boolean;
   /** معرّف المستخدم الحالي لتمييز تفاعله */
@@ -25,11 +27,14 @@ type MessageBubbleProps = {
   onReply?: (message: Message) => void;
   /** التفاعل بالإيموجي مع الرسالة (تمرير نفس الإيموجي يحذفه) */
   onReaction?: (message: Message, emoji: string) => void;
+  /** طلب فتح/إغلاق منتقي التفاعل (null = إغلاق) */
+  onPickerChange?: (message: Message | null) => void;
 };
 
 const SWIPE_THRESHOLD = 56;
 
-const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
+// الإيموجيات + الحصرية تُدار من emoji-data (تشمل أحدث الإضافات)
+import { PICKER_EMOJIS } from '@components/ui/emoji-data';
 
 const replyLabels: Record<Exclude<MessageType, 'text'>, string> = {
   image: 'صورة',
@@ -49,10 +54,12 @@ function formatTime(createdAt: Message['createdAt']): string {
 export function MessageBubble({
   message,
   isOwn,
+  pickerOpen,
   pickerBelow,
   viewerId,
   onReply,
-  onReaction
+  onReaction,
+  onPickerChange
 }: MessageBubbleProps): JSX.Element {
   const {
     type,
@@ -70,7 +77,6 @@ export function MessageBubble({
   // سحب أفقي انسيابي — الفقاعة تميل وتتوهج ويكشف زر الرد خلفها
   const dragX = useMotionValue(0);
   const [triggered, setTriggered] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
 
   const rotate = useTransform(dragX, [-80, 0, 80], [-4, 0, 4]);
@@ -105,9 +111,16 @@ export function MessageBubble({
   };
 
   const react = (emoji: string): void => {
-    setPickerOpen(false);
+    onPickerChange?.(null);
     onReaction?.(message, emoji);
   };
+
+  // انفجار القلب يُنهى حتميًا بعد الحركة — `exit` لم يكن يعمل لثبات السجل
+  useEffect(() => {
+    if (!heartBurst) return;
+    const timeout = setTimeout(() => setHeartBurst(0), 1100);
+    return () => clearTimeout(timeout);
+  }, [heartBurst]);
 
   // نقر سريع مزدوج = قلب
   const tapRef = useRef<number>(0);
@@ -117,7 +130,8 @@ export function MessageBubble({
     if (now - tapRef.current < 300) {
       tapRef.current = 0;
       setHeartBurst((value) => value + 1);
-      react('❤️');
+      onPickerChange?.(null);
+      onReaction?.(message, '❤️');
     } else {
       tapRef.current = now;
     }
@@ -126,8 +140,8 @@ export function MessageBubble({
   // ضغطة مطوّلة تفتح منتقي التفاعلات (تلغى بأي حركة أفقية)
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handlePointerDown = (): void => {
-    if (!onReaction) return;
-    pressTimer.current = setTimeout(() => setPickerOpen(true), 450);
+    if (!onReaction || pickerOpen) return;
+    pressTimer.current = setTimeout(() => onPickerChange?.(message), 450);
   };
   const cancelPress = (): void => {
     if (pressTimer.current) clearTimeout(pressTimer.current);
@@ -274,60 +288,60 @@ export function MessageBubble({
         )}
       </AnimatePresence>
 
-      {/* منتقي التفاعلات بالضغطة المطوّلة + إغلاب بخلفية عند اللمس خارج المنتقي */}
-      {pickerOpen && (
-        <button
-          className='fixed inset-0 z-20 cursor-default'
-          aria-label='إغلاق المنتقي'
-          onClick={() => setPickerOpen(false)}
-          type='button'
-        />
-      )}
+      {/* منتقي التفاعلات — مطابق فُتح واحد عبر الصفحة، إغلاق باللمس خارج */}
       <AnimatePresence>
         {pickerOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.7, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.7, y: 8 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className={cn(
-              `absolute z-30 flex items-center gap-1 rounded-full border
-               border-light-border bg-main-background/95 px-2 py-1 shadow-xl
-               backdrop-blur-md dark:border-dark-border`,
-              pickerBelow ? 'top-full mt-2' : '-top-12',
-              isOwn ? 'right-0' : 'left-0'
-            )}
-          >
-            {REACTION_EMOJIS.map((emoji) => (
-              <button
-                key={emoji}
-                className={cn(
-                  'rounded-full p-1 transition hover:-translate-y-0.5 hover:scale-125',
-                  myReaction === emoji && 'bg-main-accent/20'
-                )}
-                onClick={() => react(emoji)}
-                type='button'
-              >
-                <Twemoji emoji={emoji} className='h-6 w-6' />
-              </button>
-            ))}
-            {onReply && (
-              <button
-                className='rounded-full p-1.5 text-main-accent transition hover:scale-125'
-                onClick={() => {
-                  setPickerOpen(false);
-                  onReply(message);
-                }}
-                type='button'
-                aria-label='رد'
-              >
-                <HeroIcon
-                  className='h-5 w-5 rotate-180'
-                  iconName='ArrowUturnLeftIcon'
-                />
-              </button>
-            )}
-          </motion.div>
+          <>
+            <button
+              className='fixed inset-0 z-20 cursor-default'
+              aria-label='إغلاق المنتقي'
+              onClick={() => onPickerChange?.(null)}
+              type='button'
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.7, y: 8 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              className={cn(
+                `absolute z-30 flex items-center gap-0.5 rounded-full border
+                 border-light-border bg-main-background/95 px-1.5 py-1 shadow-xl
+                 backdrop-blur-md dark:border-dark-border`,
+                pickerBelow ? 'top-full mt-2' : '-top-14',
+                isOwn ? 'right-0' : 'left-0'
+              )}
+            >
+              {PICKER_EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  className={cn(
+                    'rounded-full p-1 transition hover:-translate-y-0.5 hover:scale-125',
+                    myReaction === emoji && 'bg-main-accent/20'
+                  )}
+                  onClick={() => react(emoji)}
+                  type='button'
+                >
+                  <Twemoji emoji={emoji} className='h-6 w-6' />
+                </button>
+              ))}
+              {onReply && (
+                <button
+                  className='rounded-full p-1.5 text-main-accent transition hover:scale-125'
+                  onClick={() => {
+                    onPickerChange?.(null);
+                    onReply(message);
+                  }}
+                  type='button'
+                  aria-label='رد'
+                >
+                  <HeroIcon
+                    className='h-5 w-5 rotate-180'
+                    iconName='ArrowUturnLeftIcon'
+                  />
+                </button>
+              )}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

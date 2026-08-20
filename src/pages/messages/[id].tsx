@@ -45,6 +45,8 @@ export default function Chat(): JSX.Element {
   const [optimistic, setOptimistic] = useState<Message[]>([]);
   // الرسالة قيد الرد عليها عبر السحب
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
+  // منتقي تفاعل واحد فقط — يمنع تعدد النوافذ والغليتش
+  const [activePickerId, setActivePickerId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement | null>(null);
@@ -210,6 +212,9 @@ export default function Chat(): JSX.Element {
       ? (value as unknown as { seconds: number }).seconds * 1000
       : Date.now();
 
+  // إغلاق المنتقي عند التمرير — متسق مع باقي النوافذ
+  const closePicker = (): void => setActivePickerId(null);
+
   // تُعرض الرسائل المتفائلة حتى تصل النسخة الحقيقية من الخادم ثم تزول
   const shownMessages = useMemo(() => {
     const server = messages ?? [];
@@ -359,6 +364,7 @@ export default function Chat(): JSX.Element {
       {/* الرسائل */}
       <div
         ref={scrollRef}
+        onScroll={closePicker}
         className='flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-clip overscroll-contain bg-main-background px-3 py-4'
       >
         {!messages ? (
@@ -369,8 +375,10 @@ export default function Chat(): JSX.Element {
               key={message.id}
               message={message}
               isOwn={message.senderId === user?.id}
+              pickerOpen={activePickerId === message.id}
               pickerBelow={index < 2}
               viewerId={user?.id}
+              onPickerChange={(target) => setActivePickerId(target?.id ?? null)}
               onReply={setReplyTarget}
               onReaction={(target, emoji) => {
                 if (!user || !conversationId) return;
