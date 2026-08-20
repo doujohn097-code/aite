@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactElement } from 'react';
 
-export function PullToRefresh(): ReactNode {
+export function PullToRefresh(): ReactElement | null {
   const startY = useRef(0);
   const pulling = useRef(false);
   const [distance, setDistance] = useState(0);
