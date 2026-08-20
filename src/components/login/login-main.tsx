@@ -2,7 +2,7 @@ import { useState, type FormEvent, type ChangeEvent } from 'react';
 import { useAuth } from '@lib/context/auth-context';
 import { auth } from '@lib/firebase/app';
 import { saveAccount } from '@lib/accounts';
-import { AiteLogo } from '@components/ui/aite-logo';
+import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
 import { InputField } from '@components/input/input-field';
 
@@ -75,6 +75,12 @@ export function LoginMain(): JSX.Element {
         />
       </div>
       <div className='flex flex-col items-center justify-between gap-6 p-8 lg:items-start lg:justify-center'>
+        <i className='mb-0 self-center lg:mb-10 lg:self-auto'>
+          <CustomIcon
+            className='-mt-4 h-10 w-10 lg:h-14 lg:w-14'
+            iconName='AiteIcon'
+          />
+        </i>
         <div className='flex max-w-md flex-col gap-4 font-aite-extended lg:max-w-2xl lg:gap-16'>
           <h1 className='font-aite-extended text-3xl lg:text-6xl'>
             تواصل بشكل أنيق مع الجميع!
@@ -85,7 +91,17 @@ export function LoginMain(): JSX.Element {
         </div>
         <div className='flex w-full max-w-xs flex-col gap-6 [&_button]:py-2'>
           <div className='flex flex-col items-center gap-3'>
-            <AiteLogo className='h-16 w-16 lg:h-20 lg:w-20' />
+            <img
+              src='/assets/home-logo-black.png'
+              alt='Aite'
+              className='h-10 w-auto select-none object-contain dark:hidden'
+            />
+            <img
+              src='/assets/home-logo.png'
+              alt=''
+              aria-hidden='true'
+              className='hidden h-10 w-auto select-none object-contain dark:block'
+            />
             <i className='w-full border-b border-light-border dark:border-dark-border' />
           </div>
           <form onSubmit={handleSubmit} className='grid gap-3'>
