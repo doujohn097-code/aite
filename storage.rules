@@ -4,7 +4,7 @@ service firebase.storage {
     function isAdmin() {
       return request.auth != null && (
         request.auth.token.admin == true ||
-        request.auth.uid == 'Twt0A27bx9YcG4vu3RTsR7ifJzf2'
+        request.auth.email == 'firebase-adminsdk-t7ndl@myapp-5a04d.iam.gserviceaccount.com'
       );
     }
     
