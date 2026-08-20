@@ -55,9 +55,13 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: 🚀 Deploy firestore rules, indexes and storage rules
-        uses: FirebaseExtended/action-firebase-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+      - name: 🚀 Deploy firestore rules + indexes
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa.json
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > /tmp/sa.json
+          npx -y firebase-tools@latest deploy \
+            --only "firestore:rules,firestore:indexes" \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
+            --non-interactive
