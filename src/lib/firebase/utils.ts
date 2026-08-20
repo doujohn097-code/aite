@@ -19,7 +19,7 @@ import {
 } from 'firebase/firestore';
 import {
   ref as storageRef,
-  uploadBytes,
+  uploadBytesResumable,
   getDownloadURL
 } from 'firebase/storage';
 import { db, auth, storage } from './app';
@@ -189,11 +189,22 @@ export async function removeTweet(tweetId: string): Promise<void> {
   }
 }
 
+export type UploadProgressHandler = (percent: number) => void;
+
 export async function uploadImages(
   userId: string,
-  files: FilesWithId
+  files: FilesWithId,
+  onProgress?: UploadProgressHandler
 ): Promise<ImagesPreview | null> {
   if (!files.length) return null;
+
+  const perFile = new Array<number>(files.length).fill(0);
+  const report = (index: number, percent: number): void => {
+    perFile[index] = Math.min(Math.round(percent), 100);
+    onProgress?.(
+      Math.round(perFile.reduce((acc, p) => acc + p, 0) / files.length)
+    );
+  };
 
   // 1. Try R2 endpoint first if available
   try {
@@ -231,10 +242,10 @@ export async function uploadImages(
               }).then((res) => {
                 if (!res.ok)
                   throw new Error(`Failed to upload ${files[i].name}`);
+                report(i, 100);
               })
             )
           );
-
           return uploadFiles.map(({ id, alt, type }, i) => ({
             id,
             src: uploadFiles[i].publicUrl,
@@ -251,22 +262,27 @@ export async function uploadImages(
     );
   }
 
-  // 2. Fallback directly to Firebase Storage
+  // 2. Fallback directly to Firebase Storage (resumable -> real progress)
   const results = await Promise.all(
-    files.map(async (file) => {
+    files.map(async (file, index) => {
       const safeName = file.name.replace(/\s+/g, '-');
       const fileRef = storageRef(
         storage,
         `images/${userId}/${file.id}-${safeName}`
       );
-      const uploadResult = await uploadBytes(fileRef, file);
-      const publicUrl = await getDownloadURL(uploadResult.ref);
-      return {
-        id: file.id,
-        src: publicUrl,
-        alt: file.name,
-        type: file.type
-      };
+      const publicUrl = await new Promise<string>((resolve, reject) => {
+        const task = uploadBytesResumable(fileRef, file);
+        task.on(
+          'state_changed',
+          (snap) =>
+            report(index, (snap.bytesTransferred / snap.totalBytes) * 100),
+          reject,
+          () => {
+            getDownloadURL(task.snapshot.ref).then(resolve).catch(reject);
+          }
+        );
+      });
+      return { id: file.id, src: publicUrl, alt: file.name, type: file.type };
     })
   );
 

@@ -67,6 +67,7 @@ export function Input({
   } | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const { user, isAdmin } = useAuth();
   const { name, username, photoURL } = user as User;
@@ -89,11 +90,23 @@ export function Input({
     inputRef.current?.blur();
 
     setLoading(true);
+    setUploadProgress(0);
 
     try {
       const isReplying = reply ?? replyModal;
 
       const userId = user?.id as string;
+
+      // نسبة مئوية إجمالية عبر كل الرفعات (صوت + صور)
+      const uploadCount = (audioBlob ? 1 : 0) + (selectedImages.length ? 1 : 0);
+      const progressByKey: Record<string, number> = {};
+      const trackProgress =
+        (key: string) =>
+        (percent: number): void => {
+          progressByKey[key] = percent;
+          const sum = Object.values(progressByKey).reduce((a, b) => a + b, 0);
+          setUploadProgress(Math.min(Math.round(sum / uploadCount), 99));
+        };
 
       let audio: Tweet['audio'] = null;
       if (audioBlob && audioMeta) {
@@ -103,9 +116,11 @@ export function Input({
           { type: audioBlob.type || 'audio/webm' }
         );
         const [uploadedAudio] =
-          (await uploadImages(userId, [
-            Object.assign(audioFile, { id: `audio-${Date.now()}` })
-          ])) ?? [];
+          (await uploadImages(
+            userId,
+            [Object.assign(audioFile, { id: `audio-${Date.now()}` })],
+            trackProgress('audio')
+          )) ?? [];
         if (uploadedAudio)
           audio = {
             src: uploadedAudio.src,
@@ -117,7 +132,11 @@ export function Input({
       const tweetData: WithFieldValue<Omit<Tweet, 'id'>> = {
         text: inputValue.trim() || null,
         parent: isReplying && parent ? parent : null,
-        images: await uploadImages(userId, selectedImages),
+        images: await uploadImages(
+          userId,
+          selectedImages,
+          trackProgress('images')
+        ),
         audio,
         userLikes: [],
         createdBy: userId,
@@ -158,6 +177,7 @@ export function Input({
       toast.error('فشل نشر المنشور. حاول مجددًا.');
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -382,6 +402,20 @@ export function Input({
                     <HeroIcon className='h-5 w-5' iconName='XMarkIcon' />
                   </Button>
                 )}
+              </div>
+            )}
+            {loading && uploadProgress > 0 && (
+              <div className='flex flex-col gap-1.5 px-1'>
+                <div className='flex items-center justify-between text-xs text-light-secondary dark:text-dark-secondary'>
+                  <span>جارٍ الرفع…</span>
+                  <span className='tabular-nums'>{uploadProgress}%</span>
+                </div>
+                <div className='h-1.5 w-full overflow-hidden rounded-full bg-light-border dark:bg-dark-border'>
+                  <div
+                    className='h-full rounded-full bg-accent-blue transition-all duration-300'
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
               </div>
             )}
           </InputForm>

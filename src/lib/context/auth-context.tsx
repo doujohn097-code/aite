@@ -88,7 +88,24 @@ export function AuthContextProvider({
       setLoading(true);
       processedUid.current = uid;
 
-      const fallbackName = displayName ?? 'مستخدم';
+      // استخدم بيانات التسجيل المحلية (الاسم + اسم المستخدم) إن توفرت
+      // لتجنب استبدالها بالافتراضي "مستخدم..." عند أول دخول
+      let pendingData: { name?: string; username?: string } | null = null;
+      try {
+        const storageKey = `aite:pending-profile:${uid}`;
+        const raw = sessionStorage.getItem(storageKey);
+        if (raw) {
+          pendingData = JSON.parse(raw) as {
+            name?: string;
+            username?: string;
+          };
+          sessionStorage.removeItem(storageKey);
+        }
+      } catch {
+        /* القراءة محمولة — لا تُوقف التدفق */
+      }
+
+      const fallbackName = pendingData?.name ?? displayName ?? 'مستخدم';
       const fallbackPhoto = photoURL ?? '/assets/default-avatar.png';
 
       // قراءة الملف مع إعادة محاولة — لا نترك المستخدم عالقًا بسبب خطأ عابر
@@ -122,20 +139,28 @@ export function AuthContextProvider({
       };
 
       if (!userSnapshot.exists()) {
-        let available = false;
         let randomUsername = '';
 
-        while (!available) {
-          const normalizeName = fallbackName.replace(/\s/g, '').toLowerCase();
-          const randomInt = getRandomInt(1, 10_000);
+        // اسم المستخدم المُدخل عند التسجيل له الأولوية — لا نولّد اسماً عشوائياً بدلائه
+        if (
+          pendingData?.username &&
+          (await checkUsernameAvailability(pendingData.username))
+        ) {
+          randomUsername = pendingData.username;
+        } else {
+          let available = false;
+          while (!available) {
+            const normalizeName = fallbackName.replace(/\s/g, '').toLowerCase();
+            const randomInt = getRandomInt(1, 10_000);
 
-          randomUsername = `${normalizeName}${randomInt}`;
+            randomUsername = `${normalizeName}${randomInt}`;
 
-          const isUsernameAvailable = await checkUsernameAvailability(
-            randomUsername
-          );
+            const isUsernameAvailable = await checkUsernameAvailability(
+              randomUsername
+            );
 
-          if (isUsernameAvailable) available = true;
+            if (isUsernameAvailable) available = true;
+          }
         }
 
         const userData: WithFieldValue<User> = {
@@ -343,6 +368,16 @@ export function AuthContextProvider({
         email,
         password
       );
+
+      // خزّن الاسم المُدخل مؤقتًا حتى يستخدمه manageUser عند إنشاء الملف
+      try {
+        sessionStorage.setItem(
+          `aite:pending-profile:${authUser.uid}`,
+          JSON.stringify({ name, username })
+        );
+      } catch {
+        /* تخزين محمول — لا يؤثر على التسجيل */
+      }
 
       const defaultPhotoURL = '/assets/default-avatar.png';
 

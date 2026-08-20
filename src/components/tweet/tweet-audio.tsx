@@ -48,6 +48,7 @@ export function TweetAudioPlayer({
         duration={audio.duration}
         peaks={audio.peaks}
         compact
+        tall
       />
     </div>
   );

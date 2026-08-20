@@ -8,6 +8,8 @@ type VoicePlayerProps = {
   peaks: number[];
   isOwn?: boolean;
   compact?: boolean;
+  /** موجة أطول وزر أكبر — لبطاقات المنشورات الصوتية */
+  tall?: boolean;
 };
 
 const BAR_COUNT = 30;
@@ -33,11 +35,24 @@ export function VoicePlayer({
   duration,
   peaks,
   isOwn,
-  compact
+  compact,
+  tall
 }: VoicePlayerProps): JSX.Element {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [speed, setSpeed] = useState(1);
+
+  const SPEEDS = [1, 1.5, 2] as const;
+
+  const cycleSpeed = (): void => {
+    const next =
+      SPEEDS[
+        (SPEEDS.indexOf(speed as (typeof SPEEDS)[number]) + 1) % SPEEDS.length
+      ];
+    setSpeed(next);
+    if (audioRef.current) audioRef.current.playbackRate = next;
+  };
 
   const bars = useMemo(
     () => normalizePeaks(peaks?.length ? peaks : [0.4, 0.7, 1, 0.5, 0.8]),
@@ -72,8 +87,12 @@ export function VoicePlayer({
       audio.pause();
       setPlaying(false);
     } else {
-      void audio.play();
-      setPlaying(true);
+      audio.playbackRate = speed;
+      // قد يفشل play() إن أُوقف فورًا أو حُجب — لا نُظهر خطأً للمستخدم
+      audio
+        .play()
+        .then(() => setPlaying(true))
+        .catch(() => setPlaying(false));
     }
   };
 
@@ -106,20 +125,24 @@ export function VoicePlayer({
         aria-label={playing ? 'إيقاف' : 'تشغيل'}
         onClick={togglePlay}
         className={cn(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition active:scale-90',
+          'flex shrink-0 items-center justify-center rounded-full transition active:scale-90',
+          tall ? 'h-11 w-11' : 'h-9 w-9',
           isOwn
             ? 'bg-black/15 text-black hover:bg-black/25'
             : 'bg-main-accent text-black hover:brightness-90'
         )}
       >
         <HeroIcon
-          className='h-5 w-5'
+          className={tall ? 'h-6 w-6' : 'h-5 w-5'}
           iconName={playing ? 'PauseIcon' : 'PlayIcon'}
           solid
         />
       </button>
       <div
-        className='flex h-8 min-w-0 flex-1 cursor-pointer items-center gap-[2px]'
+        className={cn(
+          'flex min-w-0 flex-1 cursor-pointer items-center gap-[2px]',
+          tall ? 'h-11' : 'h-8'
+        )}
         onClick={seek}
         role='presentation'
       >
@@ -155,6 +178,23 @@ export function VoicePlayer({
           playing || progress > 0 ? duration - current : duration
         )}
       </span>
+      <button
+        type='button'
+        aria-label='سرعة التشغيل'
+        onClick={cycleSpeed}
+        className={cn(
+          'shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums transition active:scale-90',
+          speed === 1
+            ? isOwn
+              ? 'text-black/50'
+              : 'text-light-secondary/60 dark:text-dark-secondary/60'
+            : isOwn
+            ? 'bg-black/15 text-black'
+            : 'bg-main-accent/15 text-main-accent'
+        )}
+      >
+        {speed}×
+      </button>
     </div>
   );
 }

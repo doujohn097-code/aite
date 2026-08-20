@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import cn from 'clsx';
+import { HeroIcon } from '@components/ui/hero-icon';
 import type { KeyboardEvent, ChangeEvent, InputHTMLAttributes } from 'react';
 
 export type InputFieldProps = {
@@ -31,6 +33,10 @@ export function InputField({
   handleChange,
   handleKeyboardShortcut
 }: InputFieldProps): JSX.Element {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === 'password';
+  const effectiveType = isPassword && showPassword ? 'text' : type;
+
   const slicedInputValue = inputValue?.slice(0, inputLimit) ?? '';
 
   const inputLength = slicedInputValue.length;
@@ -63,13 +69,30 @@ export function InputField({
             className='peer mt-6 w-full bg-inherit px-3 pb-1
                        placeholder-transparent outline-none transition'
             id={inputId}
-            type={type}
+            type={effectiveType}
             inputMode={inputMode}
             placeholder={inputId}
             onChange={!isHittingInputLimit ? handleChange : undefined}
             value={slicedInputValue}
             onKeyUp={handleKeyboardShortcut}
           />
+        )}
+        {isPassword && (
+          <button
+            type='button'
+            aria-label={
+              showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'
+            }
+            onClick={(): void => setShowPassword((prev) => !prev)}
+            className='absolute left-2 top-1/2 -translate-y-1/2 rounded-full p-1.5
+                       text-light-secondary transition hover:bg-light-primary/10
+                       dark:text-dark-secondary dark:hover:bg-dark-primary/10'
+          >
+            <HeroIcon
+              className='h-5 w-5'
+              iconName={showPassword ? 'EyeSlashIcon' : 'EyeIcon'}
+            />
+          </button>
         )}
         <label
           className={cn(
