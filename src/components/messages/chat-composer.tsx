@@ -3,7 +3,6 @@ import TextareaAutosize from 'react-textarea-autosize';
 import cn from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HeroIcon } from '@components/ui/hero-icon';
-import { EmojiPickerButton } from '@components/ui/emoji-picker';
 import { VoiceRecorder } from './voice-recorder';
 import { VoicePlayer } from './voice-player';
 import { getRandomId } from '@lib/random';
@@ -39,7 +38,6 @@ export function ChatComposer({
   onSendVoice
 }: ChatComposerProps): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textRef = useRef<HTMLTextAreaElement>(null);
 
   const [text, setText] = useState('');
   const [files, setFiles] = useState<FilesWithId>([]);
@@ -50,23 +48,6 @@ export function ChatComposer({
   const [recording, setRecording] = useState(false);
 
   const hasContent = text.trim().length > 0 || files.length > 0 || !!voice;
-
-  // إدراج الإيموجي عند موضع المؤشر
-  const insertEmoji = (emoji: string): void => {
-    const element = textRef.current;
-    if (element) {
-      const start = element.selectionStart ?? text.length;
-      const end = element.selectionEnd ?? text.length;
-      const next = text.slice(0, start) + emoji + text.slice(end);
-      setText(next);
-      requestAnimationFrame(() => {
-        element.focus();
-        element.setSelectionRange(start + emoji.length, start + emoji.length);
-      });
-    } else {
-      setText((prev) => prev + emoji);
-    }
-  };
 
   const addFiles = (list: FileList | null): void => {
     if (!list) return;
@@ -301,7 +282,6 @@ export function ChatComposer({
             </button>
 
             <TextareaAutosize
-              ref={textRef}
               value={text}
               onChange={(event) => setText(event.target.value)}
               onKeyDown={handleKeyDown}
@@ -311,8 +291,6 @@ export function ChatComposer({
                          text-[15px] outline-none placeholder:text-light-secondary
                          dark:placeholder:text-dark-secondary'
             />
-
-            <EmojiPickerButton onSelect={insertEmoji} />
 
             {hasContent ? (
               <button

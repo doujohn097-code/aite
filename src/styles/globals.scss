@@ -49,7 +49,7 @@
   }
 
   body {
-    @apply hover-animation bg-main-background font-aite text-light-primary dark:text-dark-primary select-none;
+    @apply hover-animation select-none bg-main-background font-aite text-light-primary dark:text-dark-primary;
     overscroll-behavior: none;
     overflow-x: hidden;
   }
@@ -91,7 +91,7 @@
   }
 
   .trim-alt {
-    @apply overflow-hidden text-ellipsis break-all [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical];
+    @apply overflow-hidden text-ellipsis break-all [-webkit-box-orient:vertical] [-webkit-line-clamp:1] [display:-webkit-box];
   }
 
   .hover-card {
@@ -115,23 +115,4 @@
 html,
 body {
   overflow-x: clip;
-}
-
-.scrollbar-none {
-  scrollbar-width: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-
-.emoji-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
-}
-.emoji-scroll::-webkit-scrollbar {
-  width: 5px;
-}
-.emoji-scroll::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.35);
-  border-radius: 999px;
 }
