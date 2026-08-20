@@ -89,6 +89,9 @@ public class MainActivity extends Activity {
         refreshLayout.setOnRefreshListener(() -> webView.reload());
         refreshLayout.setColorSchemeColors(0xFFFFFFFF);
         refreshLayout.setProgressBackgroundColorSchemeColor(0xFF222222);
+        // لا تفعّل السحب للتحديث إلا عندما لا يستطيع أي عنصر داخل الصفحة
+        // التمرير للأعلى — يمنع التحديث العرضي أثناء تمرير الرسائل والقوائم
+        refreshLayout.setOnChildScrollUpCallback((parent, child) -> webView.canScrollVertically(-1));
 
         registerNetworkCallback();
         askNotificationPermission();

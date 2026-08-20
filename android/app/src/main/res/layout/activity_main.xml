@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="@color/aite_black">
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    <com.aite.app.SmartSwipeRefreshLayout
         android:id="@+id/refreshLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -13,7 +13,7 @@
             android:id="@+id/webView"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </com.aite.app.SmartSwipeRefreshLayout>
 
     <ProgressBar
         android:id="@+id/progressBar"

@@ -416,13 +416,13 @@ export function ReelCard({
               muted={isMuted}
               playsInline
               onTimeUpdate={handleVideoTimeUpdate}
-              className='pointer-events-none h-full w-full object-cover outline-none'
+              className='pointer-events-none h-full w-full object-contain outline-none'
             />
           ) : (
             <img
               src={media.src}
               alt={media.alt || 'Reel media'}
-              className='pointer-events-none h-full w-full object-cover outline-none'
+              className='pointer-events-none h-full w-full object-contain outline-none'
             />
           ))}
 
