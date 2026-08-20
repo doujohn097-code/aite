@@ -46,3 +46,18 @@ jobs:
       # ! uncomment this after you add test
       # - name: 🔬 Test
       # run: npm run test:ci
+
+  firebase-rules:
+    name: 🔥 Firebase rules + indexes
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy firestore rules, indexes and storage rules
+        uses: FirebaseExtended/action-firebase-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
