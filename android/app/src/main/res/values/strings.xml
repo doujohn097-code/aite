@@ -1,11 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="app_name">Aite</string>
-    <string name="offline_title">لا يوجد اتصال بالإنترنت</string>
-    <string name="offline_subtitle">تعذّر الوصول إلى Aite. تحقّق من اتصالك بالشبكة ثم حاول مجددًا.</string>
-    <string name="offline_retry">إعادة المحاولة</string>
-    <string name="channel_messages_name">الرسائل</string>
-    <string name="channel_messages_desc">إشعارات الرسائل الجديدة</string>
-    <string name="channel_general_name">إشعارات عامة</string>
-    <string name="channel_general_desc">تنبيهات وإشعارات التطبيق</string>
+    <string name="title_activity_main">Aite</string>
+    <string name="package_name">com.aite.app</string>
+    <string name="custom_url_scheme">com.aite.app</string>
 </resources>
