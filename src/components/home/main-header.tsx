@@ -66,7 +66,14 @@ export function MainHeader({
       {/* Center slot (Logo or Title) */}
       <div className='flex flex-1 items-center justify-center px-2'>
         {logo ? (
-          <AiteWordmark className='h-8 max-h-9 w-auto max-w-[140px]' />
+          <button
+            onClick={() => window.location.replace('/home')}
+            title='الرئيسية + تحديث'
+            aria-label='الرئيسية'
+            className='cursor-pointer'
+          >
+            <AiteWordmark className='h-8 max-h-9 w-auto max-w-[140px]' />
+          </button>
         ) : title ? (
           <h2 className='truncate text-xl font-bold' key={title}>
             {title}

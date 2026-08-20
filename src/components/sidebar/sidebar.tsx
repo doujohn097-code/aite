@@ -85,8 +85,9 @@ export function Sidebar(): JSX.Element {
           <h1 className='hidden xs:flex'>
             <Link href='/home'>
               <a
-                className='custom-button main-tab transition hover:bg-light-primary/10 
-                           focus-visible:!ring-main-accent/80 dark:hover:bg-dark-primary/10'
+                onClick={(e) => { e.preventDefault(); window.location.replace('/home'); }}
+                title='الرئيسية + تحديث'
+                className='custom-button main-tab cursor-pointer transition hover:bg-light-primary/10 focus-visible:!ring-main-accent/80 dark:hover:bg-dark-primary/10'
               >
                 <CustomIcon className='h-8 w-8' iconName='AiteIcon' />
               </a>

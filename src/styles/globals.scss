@@ -116,3 +116,11 @@ html,
 body {
   overflow-x: clip;
 }
+
+/* إظهار إطار الفيديو الأول بشكل صحيح بدل الأيقونة الرمادية في التطبيق */
+video {
+  background: transparent;
+}
+video:not([src]) {
+  background-image: none;
+}
