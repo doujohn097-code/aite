@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import cn from 'clsx';
 import type { ReactNode } from 'react';
@@ -34,6 +34,12 @@ export function NextImage({
 }: NextImageProps): JSX.Element {
   const [loading, setLoading] = useState(!!useSkeleton);
   const [imgSrc, setImgSrc] = useState(src);
+
+  // متابعة تغيّر المصدر (معاينة الصور المختارة محليًا) وإلا ظلّت الصورة القديمة
+  useEffect(() => {
+    setImgSrc(src);
+    setLoading(!!useSkeleton);
+  }, [src]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLoad = (): void => setLoading(false);
   const handleError = (): void => {
