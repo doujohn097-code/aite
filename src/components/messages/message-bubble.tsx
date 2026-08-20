@@ -11,11 +11,14 @@ import { VoicePlayer } from './voice-player';
 import { ImagePreview } from '@components/input/image-preview';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { LinkifiedText } from '@components/ui/linkified-text';
+import { Twemoji } from '@components/ui/twemoji';
 import type { Message, MessageType } from '@lib/types/message';
 
 type MessageBubbleProps = {
   message: Message;
   isOwn: boolean;
+  /** إن كانت الرسالة من أوائل القائمة يُعرض منتقي التفاعل أسفلها ليبقى داخل المحتوى */
+  pickerBelow?: boolean;
   /** معرّف المستخدم الحالي لتمييز تفاعله */
   viewerId?: string;
   /** اسحب الرسالة أفقيًا لتفعيل الرد */
@@ -46,6 +49,7 @@ function formatTime(createdAt: Message['createdAt']): string {
 export function MessageBubble({
   message,
   isOwn,
+  pickerBelow,
   viewerId,
   onReply,
   onReaction
@@ -235,7 +239,7 @@ export function MessageBubble({
             className='pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2'
           >
             <motion.span
-              className='block text-4xl'
+              className='block'
               initial={{ scale: 0, opacity: 0, rotate: -15 }}
               animate={{
                 scale: [0, 1.45, 1.15],
@@ -248,12 +252,12 @@ export function MessageBubble({
                 duration: 0.9
               }}
             >
-              ❤️
+              <Twemoji emoji='❤️' className='h-10 w-10 drop-shadow-lg' />
             </motion.span>
             {[-2, -1.2, -0.4, 0.4, 1.2, 2].map((turn, index) => (
               <motion.span
                 key={index}
-                className='absolute text-xs'
+                className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'
                 initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
                 animate={{
                   scale: 1.1,
@@ -263,7 +267,7 @@ export function MessageBubble({
                 }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
               >
-                💛
+                <Twemoji emoji='💛' className='h-3 w-3' />
               </motion.span>
             ))}
           </motion.span>
@@ -286,21 +290,25 @@ export function MessageBubble({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.7, y: 8 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className='absolute -top-12 z-30 flex items-center gap-1 rounded-full border
-                       border-light-border bg-main-background/95 px-2 py-1 shadow-xl backdrop-blur-md
-                       dark:border-dark-border'
+            className={cn(
+              `absolute z-30 flex items-center gap-1 rounded-full border
+               border-light-border bg-main-background/95 px-2 py-1 shadow-xl
+               backdrop-blur-md dark:border-dark-border`,
+              pickerBelow ? 'top-full mt-2' : '-top-12',
+              isOwn ? 'right-0' : 'left-0'
+            )}
           >
             {REACTION_EMOJIS.map((emoji) => (
               <button
                 key={emoji}
                 className={cn(
-                  'rounded-full p-1 text-xl transition hover:-translate-y-0.5 hover:scale-125',
+                  'rounded-full p-1 transition hover:-translate-y-0.5 hover:scale-125',
                   myReaction === emoji && 'bg-main-accent/20'
                 )}
                 onClick={() => react(emoji)}
                 type='button'
               >
-                {emoji}
+                <Twemoji emoji={emoji} className='h-6 w-6' />
               </button>
             ))}
             {onReply && (
@@ -472,7 +480,7 @@ export function MessageBubble({
             className='flex items-center gap-0.5 rounded-full border border-light-border bg-main-search-background
                        px-1.5 py-0.5 text-[11px] leading-none dark:border-dark-border'
           >
-            {emoji}
+            <Twemoji emoji={emoji} className='h-3.5 w-3.5' />
             {count > 1 && (
               <span className='text-[10px] font-bold'>{count}</span>
             )}

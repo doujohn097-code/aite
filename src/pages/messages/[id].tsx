@@ -364,11 +364,12 @@ export default function Chat(): JSX.Element {
         {!messages ? (
           <Loading className='mt-5' />
         ) : shownMessages.length ? (
-          shownMessages.map((message) => (
+          shownMessages.map((message, index) => (
             <MessageBubble
               key={message.id}
               message={message}
               isOwn={message.senderId === user?.id}
+              pickerBelow={index < 2}
               viewerId={user?.id}
               onReply={setReplyTarget}
               onReaction={(target, emoji) => {
