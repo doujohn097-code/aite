@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { query, where, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, Timestamp } from 'firebase/firestore';
+import {
+  query,
+  where,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  serverTimestamp,
+  Timestamp
+} from 'firebase/firestore';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import cn from 'clsx';
@@ -49,9 +58,15 @@ export function ReelsComments({
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ReplyingTo>(null);
-  const [optimisticLikes, setOptimisticLikes] = useState<Record<string, string[]>>({});
-  const [optimisticComments, setOptimisticComments] = useState<TweetWithUser[]>([]);
-  const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
+  const [optimisticLikes, setOptimisticLikes] = useState<
+    Record<string, string[]>
+  >({});
+  const [optimisticComments, setOptimisticComments] = useState<TweetWithUser[]>(
+    []
+  );
+  const [expandedThreads, setExpandedThreads] = useState<
+    Record<string, boolean>
+  >({});
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +75,11 @@ export function ReelsComments({
   const lastLongPressTimeRef = useRef<number>(0);
 
   // Long press handler for deleting comments and replies
-  const startLongPress = (id: string, isReply = false, canDelete = false): void => {
+  const startLongPress = (
+    id: string,
+    isReply = false,
+    canDelete = false
+  ): void => {
     if (!canDelete) return;
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = setTimeout(() => {
@@ -89,7 +108,10 @@ export function ReelsComments({
 
   // Query comments belonging to this reel (only when modal is open and reelId exists)
   const commentsQuery = useMemo(
-    () => (open && reelId ? query(tweetsCollection, where('parent.id', '==', reelId)) : null),
+    () =>
+      open && reelId
+        ? query(tweetsCollection, where('parent.id', '==', reelId))
+        : null,
     [open, reelId]
   );
 
@@ -108,9 +130,7 @@ export function ReelsComments({
     const pendingOptimistic = optimisticComments.filter((opt) => {
       if (serverIds.has(opt.id)) return false;
       const isAlreadyInServer = serverList.some(
-        (srv) =>
-          srv.createdBy === opt.createdBy &&
-          srv.text === opt.text
+        (srv) => srv.createdBy === opt.createdBy && srv.text === opt.text
       );
       return !isAlreadyInServer;
     });
@@ -233,7 +253,9 @@ export function ReelsComments({
       : null;
 
     // Create optimistic comment object for instant UI rendering
-    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const tempId = `temp-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 6)}`;
     const optimisticItem: TweetWithUser = {
       id: tempId,
       text: trimmed,
@@ -279,7 +301,13 @@ export function ReelsComments({
     }
 
     try {
-      await addReelComment(reelId, reelOwnerId, user.id, trimmed, replyMetadata);
+      await addReelComment(
+        reelId,
+        reelOwnerId,
+        user.id,
+        trimmed,
+        replyMetadata
+      );
       // Cleanly remove the temp item when server confirms without UI flicker
       setOptimisticComments((prev) => prev.filter((c) => c.id !== tempId));
     } catch (err) {
@@ -309,7 +337,11 @@ export function ReelsComments({
       while (changed) {
         changed = false;
         for (const item of prev) {
-          if (!removedIds.has(item.id) && item.replyTo?.id && removedIds.has(item.replyTo.id)) {
+          if (
+            !removedIds.has(item.id) &&
+            item.replyTo?.id &&
+            removedIds.has(item.replyTo.id)
+          ) {
             removedIds.add(item.id);
             changed = true;
           }
@@ -362,7 +394,10 @@ export function ReelsComments({
         } catch {
           toast.error('تعذر تحديث الإعجاب');
           // Revert optimistic update
-          setOptimisticLikes((prev) => ({ ...prev, [commentId]: effectiveLikes }));
+          setOptimisticLikes((prev) => ({
+            ...prev,
+            [commentId]: effectiveLikes
+          }));
         }
       },
     [user, optimisticLikes]
@@ -385,10 +420,13 @@ export function ReelsComments({
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 350, damping: 35 }}
             onClick={(e) => e.stopPropagation()}
-            className='flex max-h-[82vh] w-full max-w-lg mx-auto flex-col rounded-t-[28px] bg-main-background shadow-2xl border-t border-light-border dark:border-dark-border overflow-hidden'
+            className='mx-auto flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border-t border-light-border bg-main-background shadow-2xl dark:border-dark-border'
           >
             {/* Drag Pill Handle */}
-            <div className='flex justify-center pt-3 pb-1 cursor-pointer' onClick={closeModal}>
+            <div
+              className='flex cursor-pointer justify-center pb-1 pt-3'
+              onClick={closeModal}
+            >
               <div className='h-1.5 w-12 rounded-full bg-light-line-reply dark:bg-dark-line-reply' />
             </div>
 
@@ -408,28 +446,42 @@ export function ReelsComments({
                 className='rounded-full p-1.5 hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
                 onClick={closeModal}
               >
-                <HeroIcon className='h-5 w-5 text-light-secondary dark:text-dark-secondary' iconName='XMarkIcon' />
+                <HeroIcon
+                  className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
+                  iconName='XMarkIcon'
+                />
               </Button>
             </div>
 
             {/* Comments List */}
-            <div ref={listContainerRef} className='flex-1 overflow-y-auto px-5 py-4 scroll-smooth space-y-4'>
+            <div
+              ref={listContainerRef}
+              className='flex-1 space-y-4 overflow-y-auto scroll-smooth px-5 py-4'
+            >
               {loading && !allComments.length ? (
-                <div className='py-12 flex justify-center'>
+                <div className='flex justify-center py-12'>
                   <Loading className='mt-2' />
                 </div>
               ) : !allComments?.length ? (
-                <div className='flex flex-col items-center justify-center py-12 text-center text-light-secondary dark:text-dark-secondary gap-2'>
-                  <div className='flex h-14 w-14 items-center justify-center rounded-full bg-light-line-reply/30 dark:bg-dark-line-reply/30 text-light-secondary dark:text-dark-secondary'>
-                    <HeroIcon className='h-7 w-7' iconName='ChatBubbleBottomCenterTextIcon' />
+                <div className='flex flex-col items-center justify-center gap-2 py-12 text-center text-light-secondary dark:text-dark-secondary'>
+                  <div className='flex h-14 w-14 items-center justify-center rounded-full bg-light-line-reply/30 text-light-secondary dark:bg-dark-line-reply/30 dark:text-dark-secondary'>
+                    <HeroIcon
+                      className='h-7 w-7'
+                      iconName='ChatBubbleBottomCenterTextIcon'
+                    />
                   </div>
-                  <p className='text-sm font-semibold text-light-primary dark:text-dark-primary'>لا توجد تعليقات بعد</p>
-                  <p className='text-xs opacity-75'>كن أول من يعلق ويبدأ المحادثة على هذا الريل!</p>
+                  <p className='text-sm font-semibold text-light-primary dark:text-dark-primary'>
+                    لا توجد تعليقات بعد
+                  </p>
+                  <p className='text-xs opacity-75'>
+                    كن أول من يعلق ويبدأ المحادثة على هذا الريل!
+                  </p>
                 </div>
               ) : (
                 <div className='flex flex-col gap-4'>
                   {rootComments.map((item: TweetWithUser) => {
-                    const currentLikes = optimisticLikes[item.id] ?? item.userLikes ?? [];
+                    const currentLikes =
+                      optimisticLikes[item.id] ?? item.userLikes ?? [];
                     const isLiked = currentLikes.includes(user?.id ?? '');
                     const isCommentAuthor = user?.id === item.createdBy;
                     const isReelOwner = user?.id === reelOwnerId;
@@ -442,13 +494,18 @@ export function ReelsComments({
                       <div
                         key={item.id}
                         className={cn(
-                          'flex flex-col rounded-2xl p-2 transition-colors select-none',
-                          canDelete && 'cursor-pointer hover:bg-light-primary/[0.03] dark:hover:bg-white/[0.03] active:scale-[0.99]'
+                          'flex select-none flex-col rounded-2xl p-2 transition-colors',
+                          canDelete &&
+                            'cursor-pointer hover:bg-light-primary/[0.03] active:scale-[0.99] dark:hover:bg-white/[0.03]'
                         )}
-                        onTouchStart={() => startLongPress(item.id, false, canDelete)}
+                        onTouchStart={() =>
+                          startLongPress(item.id, false, canDelete)
+                        }
                         onTouchEnd={cancelLongPress}
                         onTouchMove={cancelLongPress}
-                        onMouseDown={() => startLongPress(item.id, false, canDelete)}
+                        onMouseDown={() =>
+                          startLongPress(item.id, false, canDelete)
+                        }
                         onMouseUp={cancelLongPress}
                         onMouseLeave={cancelLongPress}
                         onContextMenu={(e) => {
@@ -459,7 +516,7 @@ export function ReelsComments({
                         }}
                       >
                         {/* Main / Root Comment Item */}
-                        <div className='flex items-start gap-3 group'>
+                        <div className='group flex items-start gap-3'>
                           <UserAvatar
                             src={item.user.photoURL}
                             alt={item.user.name}
@@ -468,26 +525,32 @@ export function ReelsComments({
                           />
                           <div className='flex flex-1 flex-col'>
                             <div className='flex items-center gap-1.5'>
-                              <span className='font-bold text-sm text-light-primary dark:text-dark-primary'>
+                              <span className='text-sm font-bold text-light-primary dark:text-dark-primary'>
                                 {item.user.name}
                               </span>
                               {item.user.verified && (
                                 <VerifiedBadge className='h-3.5 w-3.5' />
                               )}
-                              <span className='text-xs text-light-secondary dark:text-dark-secondary mr-auto'>
+                              <span className='mr-auto text-xs text-light-secondary dark:text-dark-secondary'>
                                 {formatDate(item.createdAt, 'message')}
                               </span>
                             </div>
 
                             {/* Orphaned reply banner if parent is absent */}
                             {item.replyTo?.username && (
-                              <div className='mt-1 inline-flex items-center gap-1.5 rounded-lg bg-main-accent/10 px-2 py-0.5 text-xs text-main-accent font-medium max-w-fit'>
-                                <HeroIcon className='h-3 w-3 shrink-0 rotate-180' iconName='ArrowUturnLeftIcon' />
-                                <span>رداً على <strong>@{item.replyTo.username}</strong></span>
+                              <div className='mt-1 inline-flex max-w-fit items-center gap-1.5 rounded-lg bg-main-accent/10 px-2 py-0.5 text-xs font-medium text-main-accent'>
+                                <HeroIcon
+                                  className='h-3 w-3 shrink-0 rotate-180'
+                                  iconName='ArrowUturnLeftIcon'
+                                />
+                                <span>
+                                  رداً على{' '}
+                                  <strong>@{item.replyTo.username}</strong>
+                                </span>
                               </div>
                             )}
 
-                            <p className='mt-1 whitespace-pre-line break-words text-sm text-light-primary dark:text-dark-primary leading-relaxed'>
+                            <p className='mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-light-primary dark:text-dark-primary'>
                               {item.text}
                             </p>
 
@@ -499,14 +562,17 @@ export function ReelsComments({
                                   e.stopPropagation();
                                   handleReplyClick(item);
                                 }}
-                                className='transition hover:text-main-accent flex items-center gap-1 active:scale-95'
+                                className='flex items-center gap-1 transition hover:text-main-accent active:scale-95'
                               >
-                                <HeroIcon className='h-3.5 w-3.5 rotate-180' iconName='ArrowUturnLeftIcon' />
+                                <HeroIcon
+                                  className='h-3.5 w-3.5 rotate-180'
+                                  iconName='ArrowUturnLeftIcon'
+                                />
                                 <span>رد</span>
                               </button>
 
                               {!!currentLikes.length && (
-                                <span className='flex items-center gap-1 text-rose-500 font-medium'>
+                                <span className='flex items-center gap-1 font-medium text-rose-500'>
                                   <HeroIcon
                                     className='h-3.5 w-3.5 fill-rose-500 text-rose-500'
                                     solid
@@ -525,7 +591,7 @@ export function ReelsComments({
                                   e.stopPropagation();
                                   toggleThreadReplies(item.id);
                                 }}
-                                className='mt-2.5 flex items-center gap-2 text-xs font-bold text-main-accent transition hover:brightness-110 select-none'
+                                className='mt-2.5 flex select-none items-center gap-2 text-xs font-bold text-main-accent transition hover:brightness-110'
                               >
                                 <span className='h-[1px] w-6 bg-main-accent/60' />
                                 <span>
@@ -534,7 +600,10 @@ export function ReelsComments({
                                     : `عرض الردود (${replies.length})`}
                                 </span>
                                 <HeroIcon
-                                  className={cn('h-3.5 w-3.5 transition-transform duration-200', isExpanded && 'rotate-180')}
+                                  className={cn(
+                                    'h-3.5 w-3.5 transition-transform duration-200',
+                                    isExpanded && 'rotate-180'
+                                  )}
                                   iconName='ChevronDownIcon'
                                 />
                               </button>
@@ -546,7 +615,9 @@ export function ReelsComments({
                             type='button'
                             onClick={toggleCommentLike(item.id, item.userLikes)}
                             className='p-1.5 text-light-secondary transition hover:text-rose-500 dark:text-dark-secondary'
-                            aria-label={isLiked ? 'إلغاء إعجاب التعليق' : 'إعجاب بالتعليق'}
+                            aria-label={
+                              isLiked ? 'إلغاء إعجاب التعليق' : 'إعجاب بالتعليق'
+                            }
                           >
                             <HeroIcon
                               className={cn(
@@ -563,24 +634,44 @@ export function ReelsComments({
 
                         {/* Nested Thread Replies with Distinct Visual Indentation & Connected Rail */}
                         {hasReplies && isExpanded && (
-                          <div className='mr-5 mt-2.5 flex flex-col gap-3 border-r-2 border-dashed border-main-accent/30 pr-3.5 py-1'>
+                          <div className='mr-5 mt-2.5 flex flex-col gap-3 border-r-2 border-dashed border-main-accent/30 py-1 pr-3.5'>
                             {replies.map((reply: TweetWithUser) => {
-                              const replyLikes = optimisticLikes[reply.id] ?? reply.userLikes ?? [];
-                              const isReplyLiked = replyLikes.includes(user?.id ?? '');
-                              const isReplyAuthor = user?.id === reply.createdBy;
-                              const canDeleteReply = isReplyAuthor || isReelOwner;
+                              const replyLikes =
+                                optimisticLikes[reply.id] ??
+                                reply.userLikes ??
+                                [];
+                              const isReplyLiked = replyLikes.includes(
+                                user?.id ?? ''
+                              );
+                              const isReplyAuthor =
+                                user?.id === reply.createdBy;
+                              const canDeleteReply =
+                                isReplyAuthor || isReelOwner;
 
                               return (
                                 <div
                                   key={reply.id}
                                   className={cn(
-                                    'flex items-start gap-2.5 rounded-2xl bg-light-primary/[0.03] dark:bg-white/[0.03] p-2.5 border border-light-border/60 dark:border-dark-border/60 transition hover:bg-light-primary/[0.05] dark:hover:bg-white/[0.05] select-none',
-                                    canDeleteReply && 'cursor-pointer active:scale-[0.99]'
+                                    'flex select-none items-start gap-2.5 rounded-2xl border border-light-border/60 bg-light-primary/[0.03] p-2.5 transition hover:bg-light-primary/[0.05] dark:border-dark-border/60 dark:bg-white/[0.03] dark:hover:bg-white/[0.05]',
+                                    canDeleteReply &&
+                                      'cursor-pointer active:scale-[0.99]'
                                   )}
-                                  onTouchStart={() => startLongPress(reply.id, true, canDeleteReply)}
+                                  onTouchStart={() =>
+                                    startLongPress(
+                                      reply.id,
+                                      true,
+                                      canDeleteReply
+                                    )
+                                  }
                                   onTouchEnd={cancelLongPress}
                                   onTouchMove={cancelLongPress}
-                                  onMouseDown={() => startLongPress(reply.id, true, canDeleteReply)}
+                                  onMouseDown={() =>
+                                    startLongPress(
+                                      reply.id,
+                                      true,
+                                      canDeleteReply
+                                    )
+                                  }
                                   onMouseUp={cancelLongPress}
                                   onMouseLeave={cancelLongPress}
                                   onContextMenu={(e) => {
@@ -598,28 +689,33 @@ export function ReelsComments({
                                   />
                                   <div className='flex flex-1 flex-col'>
                                     <div className='flex items-center gap-1.5'>
-                                      <span className='font-bold text-xs text-light-primary dark:text-dark-primary'>
+                                      <span className='text-xs font-bold text-light-primary dark:text-dark-primary'>
                                         {reply.user.name}
                                       </span>
                                       {reply.user.verified && (
                                         <VerifiedBadge className='h-3 w-3' />
                                       )}
-                                      <span className='text-[11px] text-light-secondary dark:text-dark-secondary mr-auto'>
+                                      <span className='mr-auto text-[11px] text-light-secondary dark:text-dark-secondary'>
                                         {formatDate(reply.createdAt, 'message')}
                                       </span>
                                     </div>
 
                                     {/* Dedicated "Replying To" Highlight Badge */}
                                     <div className='mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-main-accent/90'>
-                                      <HeroIcon className='h-3 w-3 shrink-0 rotate-180 text-main-accent' iconName='ArrowUturnLeftIcon' />
+                                      <HeroIcon
+                                        className='h-3 w-3 shrink-0 rotate-180 text-main-accent'
+                                        iconName='ArrowUturnLeftIcon'
+                                      />
                                       <span>رد على</span>
-                                      <span className='rounded bg-main-accent/15 px-1.5 py-0.2 text-main-accent'>
-                                        @{reply.replyTo?.username || item.user.username}
+                                      <span className='py-0.2 rounded bg-main-accent/15 px-1.5 text-main-accent'>
+                                        @
+                                        {reply.replyTo?.username ||
+                                          item.user.username}
                                       </span>
                                     </div>
 
                                     {/* Reply text body */}
-                                    <p className='mt-1 whitespace-pre-line break-words text-xs text-light-primary dark:text-dark-primary leading-relaxed'>
+                                    <p className='mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-light-primary dark:text-dark-primary'>
                                       {reply.text}
                                     </p>
 
@@ -631,14 +727,17 @@ export function ReelsComments({
                                           e.stopPropagation();
                                           handleReplyClick(reply);
                                         }}
-                                        className='transition hover:text-main-accent flex items-center gap-1 active:scale-95'
+                                        className='flex items-center gap-1 transition hover:text-main-accent active:scale-95'
                                       >
-                                        <HeroIcon className='h-3 w-3 rotate-180' iconName='ArrowUturnLeftIcon' />
+                                        <HeroIcon
+                                          className='h-3 w-3 rotate-180'
+                                          iconName='ArrowUturnLeftIcon'
+                                        />
                                         <span>رد</span>
                                       </button>
 
                                       {!!replyLikes.length && (
-                                        <span className='flex items-center gap-1 text-rose-500 font-medium'>
+                                        <span className='flex items-center gap-1 font-medium text-rose-500'>
                                           <HeroIcon
                                             className='h-3 w-3 fill-rose-500 text-rose-500'
                                             solid
@@ -653,9 +752,16 @@ export function ReelsComments({
                                   {/* Reply Like Heart Button */}
                                   <button
                                     type='button'
-                                    onClick={toggleCommentLike(reply.id, reply.userLikes)}
+                                    onClick={toggleCommentLike(
+                                      reply.id,
+                                      reply.userLikes
+                                    )}
                                     className='p-1 text-light-secondary transition hover:text-rose-500 dark:text-dark-secondary'
-                                    aria-label={isReplyLiked ? 'إلغاء إعجاب الرد' : 'إعجاب بالرد'}
+                                    aria-label={
+                                      isReplyLiked
+                                        ? 'إلغاء إعجاب الرد'
+                                        : 'إعجاب بالرد'
+                                    }
                                   >
                                     <HeroIcon
                                       className={cn(
@@ -681,7 +787,7 @@ export function ReelsComments({
             </div>
 
             {/* Quick Emojis Bar */}
-            <div className='flex items-center gap-2 border-t border-light-border px-4 py-2 dark:border-dark-border overflow-x-auto'>
+            <div className='flex items-center gap-2 overflow-x-auto border-t border-light-border px-4 py-2 dark:border-dark-border'>
               {QUICK_EMOJIS.map((emoji) => (
                 <button
                   key={emoji}
@@ -701,15 +807,19 @@ export function ReelsComments({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className='flex items-center justify-between border-t border-main-accent/30 bg-main-accent/10 px-4 py-2 text-xs text-main-accent dark:border-main-accent/20 overflow-hidden'
+                  className='flex items-center justify-between overflow-hidden border-t border-main-accent/30 bg-main-accent/10 px-4 py-2 text-xs text-main-accent dark:border-main-accent/20'
                 >
                   <div className='flex items-center gap-2 truncate'>
-                    <HeroIcon className='h-4 w-4 shrink-0 rotate-180 text-main-accent' iconName='ArrowUturnLeftIcon' />
+                    <HeroIcon
+                      className='h-4 w-4 shrink-0 rotate-180 text-main-accent'
+                      iconName='ArrowUturnLeftIcon'
+                    />
                     <span className='truncate'>
                       الرد على <strong>@{replyingTo.username}</strong>
                       {replyingTo.text && (
-                        <span className='opacity-75 mx-1 font-normal truncate'>
-                          &ldquo;{replyingTo.text.slice(0, 35)}{replyingTo.text.length > 35 ? '...' : ''}&rdquo;
+                        <span className='mx-1 truncate font-normal opacity-75'>
+                          &ldquo;{replyingTo.text.slice(0, 35)}
+                          {replyingTo.text.length > 35 ? '...' : ''}&rdquo;
                         </span>
                       )}
                     </span>
@@ -717,7 +827,7 @@ export function ReelsComments({
                   <button
                     type='button'
                     onClick={cancelReply}
-                    className='rounded-full p-1 hover:bg-main-accent/20 text-main-accent shrink-0'
+                    className='shrink-0 rounded-full p-1 text-main-accent hover:bg-main-accent/20'
                     aria-label='إلغاء الرد'
                   >
                     <HeroIcon className='h-3.5 w-3.5' iconName='XMarkIcon' />
@@ -729,13 +839,17 @@ export function ReelsComments({
             {/* Input Form */}
             <form
               onSubmit={handleSubmit}
-              className='flex items-center gap-2 border-t border-light-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-dark-border bg-main-background'
+              className='flex items-center gap-2 border-t border-light-border bg-main-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-dark-border'
             >
               <input
                 ref={inputRef}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder={replyingTo ? `اكتب رداً على @${replyingTo.username}...` : 'أضف تعليقاً لطيفاً...'}
+                placeholder={
+                  replyingTo
+                    ? `اكتب رداً على @${replyingTo.username}...`
+                    : 'أضف تعليقاً لطيفاً...'
+                }
                 maxLength={280}
                 className='flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-sm text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent dark:bg-dark-line-reply/50 dark:text-dark-primary'
               />
@@ -743,10 +857,13 @@ export function ReelsComments({
                 type='submit'
                 loading={sending}
                 disabled={!comment.trim()}
-                className='flex items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm font-bold text-black shadow-md transition hover:brightness-95 active:scale-95 disabled:opacity-40 disabled:pointer-events-none'
+                className='flex items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm font-bold text-black shadow-md transition hover:brightness-95 active:scale-95 disabled:pointer-events-none disabled:opacity-40'
               >
                 <span>إرسال</span>
-                <HeroIcon className='h-4 w-4 rotate-180' iconName='PaperAirplaneIcon' />
+                <HeroIcon
+                  className='h-4 w-4 rotate-180'
+                  iconName='PaperAirplaneIcon'
+                />
               </Button>
             </form>
           </motion.div>

@@ -76,10 +76,7 @@ export function StoriesBar(): JSX.Element {
 
         {loading &&
           Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className='flex shrink-0 flex-col items-center gap-1'
-            >
+            <div key={i} className='flex shrink-0 flex-col items-center gap-1'>
               <div className='h-14 w-14 animate-pulse rounded-full bg-light-line-reply dark:bg-dark-line-reply' />
               <div className='h-3 w-10 animate-pulse rounded bg-light-line-reply dark:bg-dark-line-reply' />
             </div>

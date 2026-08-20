@@ -61,7 +61,7 @@ export function UserDetails({
           <ExpandableText
             text={bio}
             maxChars={140}
-            className='rounded-xl bg-light-sidebar-background/50 p-3 dark:bg-dark-sidebar-background/50'
+            className='bg-light-sidebar-background/50 dark:bg-dark-sidebar-background/50 rounded-xl p-3'
           />
         )}
         {(location || website) && (
@@ -103,7 +103,10 @@ export function UserDetails({
           <span className='custom-underline'>
             انضم في {formatDate(createdAt, 'joined')}
           </span>
-          <ToolTip className='translate-y-1' tip={formatDate(createdAt, 'full')} />
+          <ToolTip
+            className='translate-y-1'
+            tip={formatDate(createdAt, 'full')}
+          />
         </button>
         <UserFollowStats following={following} followers={followers} />
       </div>

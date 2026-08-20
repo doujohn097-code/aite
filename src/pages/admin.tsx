@@ -102,10 +102,7 @@ export default function Admin(): JSX.Element {
       <SEO title='لوحة التحكم / Aite' />
       <MainHeader title='لوحة التحكم' />
       {!verified ? (
-        <form
-          onSubmit={handleSubmit}
-          className='flex flex-col gap-4 p-8'
-        >
+        <form onSubmit={handleSubmit} className='flex flex-col gap-4 p-8'>
           <p className='text-light-secondary dark:text-dark-secondary'>
             أدخل كلمة مرور لوحة التحكم
           </p>
@@ -119,9 +116,7 @@ export default function Admin(): JSX.Element {
             className='w-full rounded-xl border-2 border-light-border bg-transparent px-4 py-2 
                        outline-none transition focus:border-main-accent dark:border-dark-border'
           />
-          {error && (
-            <p className='text-sm text-accent-red'>{error}</p>
-          )}
+          {error && <p className='text-sm text-accent-red'>{error}</p>}
           <Button
             type='submit'
             className='bg-main-accent px-4 py-2 font-bold text-black'
@@ -144,7 +139,7 @@ export default function Admin(): JSX.Element {
               <div
                 key={targetUser.id}
                 className='hover-animation flex items-center justify-between gap-3 border-b border-light-border
-                           px-4 py-3 dark:border-dark-border hover:bg-light-primary/5 
+                           px-4 py-3 hover:bg-light-primary/5 dark:border-dark-border 
                            dark:hover:bg-dark-primary/5'
               >
                 <div className='flex items-center gap-3 overflow-hidden'>

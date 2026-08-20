@@ -18,13 +18,13 @@ export function AiteLogo({ className }: LogoProps): ReactElement {
       <img
         src='/assets/logo-black.png'
         alt='Aite Logo'
-        className={cn('object-contain select-none dark:hidden', classes)}
+        className={cn('select-none object-contain dark:hidden', classes)}
       />
       <img
         src='/assets/logo.png'
         alt=''
         aria-hidden='true'
-        className={cn('hidden object-contain select-none dark:block', classes)}
+        className={cn('hidden select-none object-contain dark:block', classes)}
       />
     </>
   );
@@ -41,13 +41,13 @@ export function AiteWordmark({ className }: LogoProps): ReactElement {
       <img
         src='/assets/home-logo-black.png'
         alt='Aite'
-        className={cn('object-contain select-none dark:hidden', classes)}
+        className={cn('select-none object-contain dark:hidden', classes)}
       />
       <img
         src='/assets/home-logo.png'
         alt=''
         aria-hidden='true'
-        className={cn('hidden object-contain select-none dark:block', classes)}
+        className={cn('hidden select-none object-contain dark:block', classes)}
       />
     </>
   );

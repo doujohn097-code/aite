@@ -1,9 +1,5 @@
 import cn from 'clsx';
-import type {
-  KeyboardEvent,
-  ChangeEvent,
-  InputHTMLAttributes
-} from 'react';
+import type { KeyboardEvent, ChangeEvent, InputHTMLAttributes } from 'react';
 
 export type InputFieldProps = {
   label: string;

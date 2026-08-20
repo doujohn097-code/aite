@@ -130,9 +130,7 @@ export function InputForm({
             className='w-full min-w-0 resize-none bg-transparent text-xl outline-none
                        placeholder:text-light-secondary dark:placeholder:text-dark-secondary'
             value={inputValue}
-            placeholder={
-              reply || replyModal ? 'اكتب ردك' : 'ما الجديد؟'
-            }
+            placeholder={reply || replyModal ? 'اكتب ردك' : 'ما الجديد؟'}
             onBlur={handleShowHideNav(true)}
             minRows={loading ? 1 : modal && !isUploadingImages ? 3 : 1}
             maxRows={isUploadingImages ? 5 : 15}

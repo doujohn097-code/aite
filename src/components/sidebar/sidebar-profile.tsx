@@ -50,7 +50,12 @@ export function SidebarProfile(): JSX.Element {
               <div className='flex gap-3 truncate'>
                 <UserAvatar src={photoURL} alt={name} size={40} />
                 <div className='hidden truncate text-start leading-5 xl:block'>
-                  <UserName name={name} username={username} verified={verified} disableLink />
+                  <UserName
+                    name={name}
+                    username={username}
+                    verified={verified}
+                    disableLink
+                  />
                 </div>
               </div>
               <HeroIcon
@@ -61,7 +66,7 @@ export function SidebarProfile(): JSX.Element {
             <AnimatePresence>
               {open && (
                 <Menu.Items
-                  className='menu-container absolute left-0 right-0 -top-36 w-60 xl:w-full'
+                  className='menu-container absolute -top-36 left-0 right-0 w-60 xl:w-full'
                   as={motion.div}
                   {...variants}
                   static
@@ -75,7 +80,12 @@ export function SidebarProfile(): JSX.Element {
                     <div className='flex items-center gap-3 truncate'>
                       <UserAvatar src={photoURL} alt={name} />
                       <div className='truncate'>
-                        <UserName name={name} username={username} verified={verified} disableLink />
+                        <UserName
+                          name={name}
+                          username={username}
+                          verified={verified}
+                          disableLink
+                        />
                       </div>
                     </div>
                     <i>

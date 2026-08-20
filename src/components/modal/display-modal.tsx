@@ -51,8 +51,8 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
               </div>
             </div>
             <p className='whitespace-pre-line break-words'>
-              جوهر Aite هي رسائل قصيرة تُسمّى منشورات — مثل هذه — ويمكن أن
-              تتضمن صورًا وفيديوهات وروابط ونصًا ووسوم وإشارات مثل{' '}
+              جوهر Aite هي رسائل قصيرة تُسمّى منشورات — مثل هذه — ويمكن أن تتضمن
+              صورًا وفيديوهات وروابط ونصًا ووسوم وإشارات مثل{' '}
               <span className='text-main-accent'>@myplatform</span>.
             </p>
           </div>

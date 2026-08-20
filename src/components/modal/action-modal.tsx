@@ -46,7 +46,9 @@ export function ActionModal({
     const result = action();
     if (result && typeof result === 'object' && 'then' in result) {
       setInternalLoading(true);
-      void (result as Promise<unknown>).finally(() => setInternalLoading(false));
+      void (result as Promise<unknown>).finally(() =>
+        setInternalLoading(false)
+      );
     }
   };
 

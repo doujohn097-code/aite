@@ -31,6 +31,7 @@ type InputOptionsProps = {
   inputLength: number;
   isValidTweet: boolean;
   isCharLimitExceeded: boolean;
+  onRecordVoice?: () => void;
   handleImageUpload: (
     e: ChangeEvent<HTMLInputElement> | ClipboardEvent<HTMLTextAreaElement>
   ) => void;
@@ -44,6 +45,7 @@ export function InputOptions({
   inputLength,
   isValidTweet,
   isCharLimitExceeded,
+  onRecordVoice,
   handleImageUpload
 }: InputOptionsProps): JSX.Element {
   const inputFileRef = useRef<HTMLInputElement>(null);
@@ -56,14 +58,14 @@ export function InputOptions({
         <input
           className='hidden'
           type='file'
-          accept='image/*,video/*'
+          accept='image/*,video/*,audio/*'
           onChange={handleImageUpload}
           ref={inputFileRef}
           multiple
         />
         {options.map(({ name, iconName }) => (
           <Button
-            className='accent-tab accent-bg-tab group relative rounded-full p-2 
+            className='accent-tab accent-bg-tab group relative rounded-full p-2
                        hover:bg-main-accent/10 active:bg-main-accent/20'
             onClick={onClick}
             key={name}
@@ -72,6 +74,16 @@ export function InputOptions({
             <ToolTip tip={name} modal={modal} />
           </Button>
         ))}
+        {onRecordVoice && (
+          <Button
+            className='accent-tab accent-bg-tab group relative rounded-full p-2
+                       hover:bg-main-accent/10 active:bg-main-accent/20'
+            onClick={onRecordVoice}
+          >
+            <HeroIcon className='h-5 w-5' iconName='MicrophoneIcon' />
+            <ToolTip tip='تسجيل صوتي' modal={modal} />
+          </Button>
+        )}
       </div>
       <div className='flex items-center gap-4'>
         <motion.div

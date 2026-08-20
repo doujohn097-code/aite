@@ -38,9 +38,7 @@ export function UserHomeAvatar({
     <div className={cn('inline-block', className)}>
       <Modal open={open} closeModal={closeModal}>
         <ImageModal
-          imageData={
-            { src: imageSrc, alt: imageAlt } as ImageData
-          }
+          imageData={{ src: imageSrc, alt: imageAlt } as ImageData}
           previewCount={1}
         />
       </Modal>
@@ -83,7 +81,7 @@ export function UserHomeAvatar({
         {online && (
           <span
             className='absolute bottom-1 left-1 z-10 h-4 w-4 rounded-full bg-emerald-400
-                       ring-2 ring-main-background shadow-[0_0_6px_2px_rgba(52,211,153,0.9)]'
+                       shadow-[0_0_6px_2px_rgba(52,211,153,0.9)] ring-2 ring-main-background'
             title='نشط الآن'
           />
         )}

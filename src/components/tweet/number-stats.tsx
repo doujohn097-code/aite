@@ -17,7 +17,11 @@ export function NumberStats({
     <span className='inline-block overflow-hidden align-middle'>
       <AnimatePresence mode='wait' initial={false}>
         {(alwaysShowStats || !!stats) && (
-          <motion.span className='inline-block text-sm' {...getStatsMove(move)} key={stats}>
+          <motion.span
+            className='inline-block text-sm'
+            {...getStatsMove(move)}
+            key={stats}
+          >
             {formatNumber(stats)}
           </motion.span>
         )}

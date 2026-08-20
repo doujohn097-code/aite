@@ -81,7 +81,8 @@ export function useCollection<T>(
             coverPhotoURL: null
           };
 
-          if (!currentData.createdBy) return { ...currentData, user: fallbackUser };
+          if (!currentData.createdBy)
+            return { ...currentData, user: fallbackUser };
 
           const userDoc = await getDoc(
             doc(usersCollection, currentData.createdBy)

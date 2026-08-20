@@ -15,7 +15,7 @@ const IMAGE_EXTENSIONS = [
   'webp'
 ] as const;
 
-type ImageExtensions = typeof IMAGE_EXTENSIONS[number];
+type ImageExtensions = (typeof IMAGE_EXTENSIONS)[number];
 
 const MEDIA_EXTENSIONS = [
   ...IMAGE_EXTENSIONS,
@@ -31,7 +31,21 @@ const MEDIA_EXTENSIONS = [
   'ts'
 ] as const;
 
-type MediaExtensions = typeof MEDIA_EXTENSIONS[number];
+const AUDIO_EXTENSIONS = [
+  'mp3',
+  'wav',
+  'ogg',
+  'oga',
+  'webm',
+  'm4a',
+  'aac',
+  'opus',
+  'flac'
+] as const;
+
+type AudioExtensions = (typeof AUDIO_EXTENSIONS)[number];
+
+type MediaExtensions = (typeof MEDIA_EXTENSIONS)[number];
 
 function isValidImageExtension(
   extension: string
@@ -47,7 +61,13 @@ function isValidMediaExtension(
   const ext = extension.split('.').pop()?.toLowerCase();
   return (
     MEDIA_EXTENSIONS.includes(ext as MediaExtensions) ||
-    Boolean(extension && (extension.startsWith('video/') || extension.startsWith('image/')))
+    AUDIO_EXTENSIONS.includes(ext as AudioExtensions) ||
+    Boolean(
+      extension &&
+        (extension.startsWith('video/') ||
+          extension.startsWith('image/') ||
+          extension.startsWith('audio/'))
+    )
   );
 }
 
@@ -63,10 +83,8 @@ export function isValidUsername(
   username: string,
   value: string
 ): string | null {
-  if (value.length < 4)
-    return 'يجب أن يكون اسم المستخدم أطول من 4 أحرف.';
-  if (value.length > 15)
-    return 'يجب أن يكون اسم المستخدم أقصر من 15 حرفًا.';
+  if (value.length < 4) return 'يجب أن يكون اسم المستخدم أطول من 4 أحرف.';
+  if (value.length > 15) return 'يجب أن يكون اسم المستخدم أقصر من 15 حرفًا.';
   if (!/^\w+$/i.test(value))
     return "يمكن لاسم المستخدم أن يحتوي فقط على أحرف وأرقام و '_' .";
   if (!/[a-z]/i.test(value)) return 'يجب تضمين حرف غير رقمي.';

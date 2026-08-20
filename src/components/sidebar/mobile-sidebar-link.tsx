@@ -41,7 +41,9 @@ export function MobileSidebarLink({
           )}
           iconName={iconName}
         />
-        <span className='truncate text-light-primary dark:text-dark-primary font-semibold'>{linkName}</span>
+        <span className='truncate font-semibold text-light-primary dark:text-dark-primary'>
+          {linkName}
+        </span>
       </a>
     </Link>
   );

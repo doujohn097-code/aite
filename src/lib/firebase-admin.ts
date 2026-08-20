@@ -17,10 +17,9 @@ if (!base64ServiceAccount) {
   throw new Error('Missing FIREBASE_ADMIN_KEY environment variable');
 }
 
-const serviceAccountJson = Buffer.from(
-  base64ServiceAccount,
-  'base64'
-).toString('utf8');
+const serviceAccountJson = Buffer.from(base64ServiceAccount, 'base64').toString(
+  'utf8'
+);
 const parsed = JSON.parse(serviceAccountJson) as ServiceAccountJson;
 
 const serviceAccount: admin.ServiceAccount = {

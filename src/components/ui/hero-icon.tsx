@@ -19,8 +19,14 @@ export function HeroIcon({
   iconName,
   className
 }: HeroIconProps): ReactElement {
-  const solidMap = SolidIcons as unknown as Record<string, ComponentType<{ className?: string }>>;
-  const outlineMap = OutlineIcons as unknown as Record<string, ComponentType<{ className?: string }>>;
+  const solidMap = SolidIcons as unknown as Record<
+    string,
+    ComponentType<{ className?: string }>
+  >;
+  const outlineMap = OutlineIcons as unknown as Record<
+    string,
+    ComponentType<{ className?: string }>
+  >;
 
   let Icon = solid
     ? solidMap[iconName] ?? outlineMap[iconName]
@@ -28,10 +34,16 @@ export function HeroIcon({
 
   if (!Icon) {
     const withIcon = iconName.endsWith('Icon') ? iconName : `${iconName}Icon`;
-    const withoutIcon = iconName.endsWith('Icon') ? iconName.slice(0, -4) : iconName;
+    const withoutIcon = iconName.endsWith('Icon')
+      ? iconName.slice(0, -4)
+      : iconName;
     Icon =
-      (solid ? solidMap[withIcon] ?? outlineMap[withIcon] : outlineMap[withIcon] ?? solidMap[withIcon]) ??
-      (solid ? solidMap[withoutIcon] ?? outlineMap[withoutIcon] : outlineMap[withoutIcon] ?? solidMap[withoutIcon]);
+      (solid
+        ? solidMap[withIcon] ?? outlineMap[withIcon]
+        : outlineMap[withIcon] ?? solidMap[withIcon]) ??
+      (solid
+        ? solidMap[withoutIcon] ?? outlineMap[withoutIcon]
+        : outlineMap[withoutIcon] ?? solidMap[withoutIcon]);
   }
 
   if (Icon) {
@@ -40,7 +52,12 @@ export function HeroIcon({
 
   // Fallback to CustomIcon
   try {
-    return <CustomIcon iconName={iconName as CustomIconProps['iconName']} className={className} />;
+    return (
+      <CustomIcon
+        iconName={iconName as CustomIconProps['iconName']}
+        className={className}
+      />
+    );
   } catch {
     return <span className={className ?? 'inline-block h-6 w-6'} />;
   }

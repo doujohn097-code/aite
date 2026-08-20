@@ -29,7 +29,10 @@ export default function Search(): JSX.Element {
   const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     const trimmed = inputValue.trim();
-    if (trimmed) void push(`/search?q=${encodeURIComponent(trimmed)}`, undefined, { shallow: true });
+    if (trimmed)
+      void push(`/search?q=${encodeURIComponent(trimmed)}`, undefined, {
+        shallow: true
+      });
     else void push('/search', undefined, { shallow: true });
   };
 
@@ -64,7 +67,9 @@ export default function Search(): JSX.Element {
 
   return (
     <MainContainer>
-      <SEO title={isSearching ? `بحث: ${trimmedQuery} / Aite` : 'الأشخاص / Aite'} />
+      <SEO
+        title={isSearching ? `بحث: ${trimmedQuery} / Aite` : 'الأشخاص / Aite'}
+      />
       <MainHeader title='الأشخاص' />
       <form
         onSubmit={handleSubmit}
@@ -87,7 +92,9 @@ export default function Search(): JSX.Element {
         {loading ? (
           <Loading className='mt-5' />
         ) : results.length ? (
-          results.map((userData) => <UserCard {...userData} follow key={userData.id} />)
+          results.map((userData) => (
+            <UserCard {...userData} follow key={userData.id} />
+          ))
         ) : (
           <div className='p-8 text-center'>
             <p className='text-2xl font-bold'>

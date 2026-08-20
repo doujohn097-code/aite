@@ -18,11 +18,7 @@ export function UserDataLayout({ children }: LayoutProps): JSX.Element {
   const username = Array.isArray(id) ? id[0] : id;
 
   const userQuery = username
-    ? query(
-        usersCollection,
-        where('username', '==', username),
-        limit(1)
-      )
+    ? query(usersCollection, where('username', '==', username), limit(1))
     : null;
 
   const { data, loading: collectionLoading } = useCollection(userQuery, {

@@ -41,9 +41,7 @@ export function hasSavedAccounts(): boolean {
   return getSavedAccounts().length > 0;
 }
 
-export function saveAccount(
-  account: Omit<SavedAccount, 'savedAt'>
-): void {
+export function saveAccount(account: Omit<SavedAccount, 'savedAt'>): void {
   if (typeof window === 'undefined') return;
   const rest = getSavedAccounts().filter(
     (saved) => saved.username !== account.username

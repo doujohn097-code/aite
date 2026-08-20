@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
 import { uploadStory } from '@lib/firebase/utils';
+import { withTimeout } from '@lib/utils';
 import { getImagesData } from '@lib/validation';
 import { Modal } from '@components/modal/modal';
 import { Button } from '@components/ui/button';
@@ -29,7 +30,11 @@ const STORY_COLORS = [
 
 const modalVariants = {
   initial: { opacity: 0, scale: 0.9 },
-  animate: { opacity: 1, scale: 1, transition: { type: 'spring', duration: 0.4 } },
+  animate: {
+    opacity: 1,
+    scale: 1,
+    transition: { type: 'spring', duration: 0.4 }
+  },
   exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2 } }
 };
 
@@ -49,7 +54,9 @@ export function CreateStoryModal({
   const [durations, setDurations] = useState<Record<string, number>>({});
   const [caption, setCaption] = useState('');
   const [color, setColor] = useState(STORY_COLORS[6]);
-  const [music, setMusic] = useState<{ src: string; name: string } | null>(null);
+  const [music, setMusic] = useState<{ src: string; name: string } | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [computingDurations, setComputingDurations] = useState(false);
 
@@ -123,13 +130,9 @@ export function CreateStoryModal({
 
     setLoading(true);
     try {
-      await uploadStory(
-        user.id,
-        selectedImages,
-        color,
-        caption,
-        durations,
-        music
+      await withTimeout(
+        uploadStory(user.id, selectedImages, color, caption, durations, music),
+        120_000
       );
       toast.success('تم نشر القصة');
       closeModal();
@@ -191,7 +194,10 @@ export function CreateStoryModal({
         >
           {computingDurations && (
             <span className='absolute left-3 top-3'>
-              <HeroIcon className='h-5 w-5 animate-spin' iconName='ArrowPathIcon' />
+              <HeroIcon
+                className='h-5 w-5 animate-spin'
+                iconName='ArrowPathIcon'
+              />
             </span>
           )}
           <HeroIcon className='h-6 w-6' iconName='PhotoIcon' />
@@ -211,7 +217,10 @@ export function CreateStoryModal({
             {imagesPreview.map(({ id, src, alt, type }) => (
               <div key={id} className='relative shrink-0'>
                 {type?.startsWith('video/') ? (
-                  <video src={src} className='h-24 w-16 rounded-lg object-cover' />
+                  <video
+                    src={src}
+                    className='h-24 w-16 rounded-lg object-cover'
+                  />
                 ) : (
                   <img
                     src={src}
@@ -260,7 +269,9 @@ function getMediaDuration(url: string, type: string): Promise<number> {
     video.onloadedmetadata = () => {
       cleanup();
       const duration = video.duration;
-      resolve(duration && isFinite(duration) ? Math.round(duration * 1000) : 15000);
+      resolve(
+        duration && isFinite(duration) ? Math.round(duration * 1000) : 15000
+      );
     };
     video.onerror = () => {
       cleanup();

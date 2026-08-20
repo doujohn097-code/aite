@@ -36,13 +36,13 @@ export function MainHeader({
   return (
     <header
       className={cn(
-        'sticky top-0 z-30 flex items-center justify-between bg-main-background/85 px-4 py-2 backdrop-blur-md border-b border-light-border/60 dark:border-dark-border/60 min-h-[53px]',
+        'sticky top-0 z-30 flex min-h-[53px] items-center justify-between border-b border-light-border/60 bg-main-background/85 px-4 py-2 backdrop-blur-md dark:border-dark-border/60',
         disableSticky && 'relative',
         className
       )}
     >
       {/* Right / Start slot */}
-      <div className='flex items-center justify-start min-w-[40px]'>
+      <div className='flex min-w-[40px] items-center justify-start'>
         {useActionButton && (
           <Button
             className='dark-bg-tab group relative p-2 hover:bg-light-primary/10 active:bg-light-primary/20 
@@ -64,18 +64,18 @@ export function MainHeader({
       </div>
 
       {/* Center slot (Logo or Title) */}
-      <div className='flex items-center justify-center flex-1 px-2'>
+      <div className='flex flex-1 items-center justify-center px-2'>
         {logo ? (
           <AiteWordmark className='h-8 max-h-9 w-auto max-w-[140px]' />
         ) : title ? (
-          <h2 className='text-xl font-bold truncate' key={title}>
+          <h2 className='truncate text-xl font-bold' key={title}>
             {title}
           </h2>
         ) : null}
       </div>
 
       {/* Left / End slot */}
-      <div className='flex items-center justify-end min-w-[40px]'>
+      <div className='flex min-w-[40px] items-center justify-end'>
         {children}
       </div>
     </header>

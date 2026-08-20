@@ -5,7 +5,8 @@ import { ToolTip } from '@components/ui/tooltip';
 
 export function NotificationsButton(): JSX.Element {
   const { unreadNotifications } = useAuth();
-  const showBadge = typeof unreadNotifications === 'number' && unreadNotifications > 0;
+  const showBadge =
+    typeof unreadNotifications === 'number' && unreadNotifications > 0;
 
   return (
     <Link href='/notifications'>
@@ -17,7 +18,7 @@ export function NotificationsButton(): JSX.Element {
         <span className='relative'>
           <HeroIcon className='h-7 w-7' iconName='BellIcon' />
           {showBadge && (
-            <span className='absolute -top-1 -right-1'>
+            <span className='absolute -right-1 -top-1'>
               <span className='absolute inset-0 animate-ping rounded-full bg-red-500 opacity-60' />
               <span
                 className='relative flex h-4 min-w-[16px] items-center justify-center rounded-full

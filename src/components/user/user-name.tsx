@@ -43,10 +43,7 @@ export function UserName({
 
   return disableLink || !username ? (
     <span
-      className={cn(
-        'flex items-start gap-1 truncate font-bold',
-        className
-      )}
+      className={cn('flex items-start gap-1 truncate font-bold', className)}
     >
       {nameContent}
     </span>

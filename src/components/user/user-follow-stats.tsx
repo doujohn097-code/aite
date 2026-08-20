@@ -64,8 +64,10 @@ export function UserFollowStats({
               <span className='inline-block text-sm font-bold text-light-primary dark:text-dark-primary'>
                 <NumberStats move={move} stats={stats} alwaysShowStats />
               </span>
-              <span className='text-xs font-semibold text-light-secondary transition group-hover:text-light-primary
-                               dark:text-dark-secondary dark:group-hover:text-dark-primary'>
+              <span
+                className='text-xs font-semibold text-light-secondary transition group-hover:text-light-primary
+                               dark:text-dark-secondary dark:group-hover:text-dark-primary'
+              >
                 {label}
               </span>
             </a>

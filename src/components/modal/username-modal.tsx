@@ -20,8 +20,7 @@ const usernameModalData = [
   },
   {
     title: 'تغيير اسم المستخدم؟',
-    description:
-      'اسم المستخدم @username فريد. يمكنك تغييره هنا في أي وقت.',
+    description: 'اسم المستخدم @username فريد. يمكنك تغييره هنا في أي وقت.',
     cancelLabel: 'إلغاء'
   }
 ] as const;

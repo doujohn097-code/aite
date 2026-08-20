@@ -52,14 +52,12 @@ type PinModalData = Record<'title' | 'description' | 'mainBtnLabel', string>;
 const pinModalData: Readonly<PinModalData[]> = [
   {
     title: 'تثبيت المنشور في الملف الشخصي؟',
-    description:
-      'سيظهر في أعلى ملفك الشخصي ويستبدل أي منشور مثبت سابقًا.',
+    description: 'سيظهر في أعلى ملفك الشخصي ويستبدل أي منشور مثبت سابقًا.',
     mainBtnLabel: 'تثبيت'
   },
   {
     title: 'إلغاء تثبيت المنشور من الملف الشخصي؟',
-    description:
-      'لن يظهر تلقائيًا في أعلى ملفك الشخصي بعد الآن.',
+    description: 'لن يظهر تلقائيًا في أعلى ملفك الشخصي بعد الآن.',
     mainBtnLabel: 'إلغاء التثبيت'
   }
 ];
@@ -214,7 +212,7 @@ export function TweetActions({
             <AnimatePresence>
               {open && (
                 <Popover.Panel
-                  className='menu-container group absolute top-full left-0 z-20 w-max max-w-xs
+                  className='menu-container group absolute left-0 top-full z-20 w-max max-w-xs
                              break-words rounded-md bg-main-background text-light-primary dark:text-dark-primary'
                   as={motion.div}
                   {...variants}

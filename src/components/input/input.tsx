@@ -15,10 +15,15 @@ import {
 import { useAuth } from '@lib/context/auth-context';
 
 import { getImagesData } from '@lib/validation';
+import { getAudioWaveform } from '@lib/audio';
 import { UserAvatar } from '@components/user/user-avatar';
 import { InputForm, fromTop } from './input-form';
 import { ImagePreview } from './image-preview';
 import { InputOptions } from './input-options';
+import { VoicePlayer } from '@components/messages/voice-player';
+import { VoiceRecorder } from '@components/messages/voice-recorder';
+import { Button } from '@components/ui/button';
+import { HeroIcon } from '@components/ui/hero-icon';
 import type { ReactNode, FormEvent, ChangeEvent, ClipboardEvent } from 'react';
 import type { WithFieldValue } from 'firebase/firestore';
 import type { Variants } from 'framer-motion';
@@ -55,6 +60,13 @@ export function Input({
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [visited, setVisited] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioMeta, setAudioMeta] = useState<{
+    duration: number;
+    peaks: number[];
+  } | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
 
   const { user, isAdmin } = useAuth();
   const { name, username, photoURL } = user as User;
@@ -83,10 +95,30 @@ export function Input({
 
       const userId = user?.id as string;
 
+      let audio: Tweet['audio'] = null;
+      if (audioBlob && audioMeta) {
+        const audioFile = new File(
+          [audioBlob],
+          `voice-${Math.random().toString(36).slice(2)}.webm`,
+          { type: audioBlob.type || 'audio/webm' }
+        );
+        const [uploadedAudio] =
+          (await uploadImages(userId, [
+            Object.assign(audioFile, { id: `audio-${Date.now()}` })
+          ])) ?? [];
+        if (uploadedAudio)
+          audio = {
+            src: uploadedAudio.src,
+            duration: Math.round(audioMeta.duration),
+            peaks: audioMeta.peaks
+          };
+      }
+
       const tweetData: WithFieldValue<Omit<Tweet, 'id'>> = {
         text: inputValue.trim() || null,
         parent: isReplying && parent ? parent : null,
         images: await uploadImages(userId, selectedImages),
+        audio,
         userLikes: [],
         createdBy: userId,
         createdAt: serverTimestamp(),
@@ -141,6 +173,23 @@ export function Input({
 
     const files = isClipboardEvent ? e.clipboardData.files : e.target.files;
 
+    // ملف صوتي مفرد → يُعامل كمنشور صوتي مموّج
+    const audioFile =
+      files && files.length === 1 && files[0].type.startsWith('audio/')
+        ? files[0]
+        : null;
+    if (audioFile) {
+      void (async (): Promise<void> => {
+        const meta = await getAudioWaveform(audioFile);
+        if (audioUrl) URL.revokeObjectURL(audioUrl);
+        setAudioBlob(audioFile);
+        setAudioMeta(meta);
+        setAudioUrl(URL.createObjectURL(audioFile));
+      })();
+      if (!isClipboardEvent && e.target) e.target.value = '';
+      return;
+    }
+
     const imagesData = getImagesData(files, {
       currentFiles: previewCount,
       allowUploadingVideos: true
@@ -181,8 +230,29 @@ export function Input({
     setInputValue('');
     setVisited(false);
     cleanImage();
+    discardAudio();
 
     inputRef.current?.blur();
+  };
+
+  const discardAudio = (): void => {
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioBlob(null);
+    setAudioMeta(null);
+    setAudioUrl(null);
+    setRecording(false);
+  };
+
+  const handleRecordComplete = (
+    blob: Blob,
+    duration: number,
+    peaks: number[]
+  ): void => {
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioBlob(blob);
+    setAudioMeta({ duration, peaks });
+    setAudioUrl(URL.createObjectURL(blob));
+    setRecording(false);
   };
 
   const handleChange = ({
@@ -205,7 +275,8 @@ export function Input({
   const isCharLimitExceeded = inputLength > inputLimit;
 
   const isValidTweet =
-    !isCharLimitExceeded && (isValidInput || isUploadingImages);
+    !isCharLimitExceeded &&
+    (isValidInput || isUploadingImages || !!(audioBlob && audioMeta));
 
   return (
     <form
@@ -217,12 +288,15 @@ export function Input({
       onSubmit={handleSubmit}
     >
       {loading && (
-        <motion.i className='h-1 animate-pulse bg-light-primary dark:bg-white' {...variants} />
+        <motion.i
+          className='h-1 animate-pulse bg-light-primary dark:bg-white'
+          {...variants}
+        />
       )}
       {children}
       {reply && visited && (
         <motion.p
-          className='ml-[75px] -mb-2 mt-2 text-light-secondary dark:text-dark-secondary'
+          className='-mb-2 ml-[75px] mt-2 text-light-secondary dark:text-dark-secondary'
           {...fromTop}
         >
           رد على{' '}
@@ -237,7 +311,7 @@ export function Input({
         className={cn(
           'hover-animation grid w-full grid-cols-[auto,1fr] gap-3 px-4 py-3',
           reply
-            ? 'pt-3 pb-1'
+            ? 'pb-1 pt-3'
             : replyModal
             ? 'pt-0'
             : 'border-b-2 border-light-border dark:border-dark-border',
@@ -275,6 +349,41 @@ export function Input({
                 removeImage={!loading ? removeImage : undefined}
               />
             )}
+            {recording && (
+              <div
+                className='rounded-2xl border border-light-border p-2 dark:border-dark-border'
+                onClick={(e) => e.preventDefault()}
+              >
+                <VoiceRecorder
+                  onComplete={handleRecordComplete}
+                  onCancel={(): void => setRecording(false)}
+                />
+              </div>
+            )}
+            {!recording && audioUrl && audioMeta && (
+              <div
+                className='relative flex items-center gap-2 rounded-2xl border border-light-border
+                           bg-light-primary/5 p-3 dark:border-dark-border dark:bg-dark-primary/5'
+                onClick={(e) => e.preventDefault()}
+              >
+                <div className='min-w-0 flex-1'>
+                  <VoicePlayer
+                    src={audioUrl}
+                    duration={audioMeta.duration}
+                    peaks={audioMeta.peaks}
+                  />
+                </div>
+                {!loading && (
+                  <Button
+                    className='shrink-0 rounded-full p-1.5 text-light-secondary
+                               hover:bg-light-primary/10 dark:text-dark-secondary'
+                    onClick={discardAudio}
+                  >
+                    <HeroIcon className='h-5 w-5' iconName='XMarkIcon' />
+                  </Button>
+                )}
+              </div>
+            )}
           </InputForm>
           <AnimatePresence initial={false}>
             {(reply ? reply && visited && !loading : !loading) && (
@@ -286,6 +395,7 @@ export function Input({
                 inputLength={inputLength}
                 isValidTweet={isValidTweet}
                 isCharLimitExceeded={isCharLimitExceeded}
+                onRecordVoice={(): void => setRecording(true)}
                 handleImageUpload={handleImageUpload}
               />
             )}

@@ -1,12 +1,6 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import {
-  limit,
-  query,
-  where,
-  orderBy,
-  documentId
-} from 'firebase/firestore';
+import { limit, query, where, orderBy, documentId } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { useCollection } from '@lib/hooks/useCollection';
 import { usersCollection } from '@lib/firebase/collections';

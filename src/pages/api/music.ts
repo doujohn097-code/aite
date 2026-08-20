@@ -82,7 +82,9 @@ export default async function musicEndpoint(
         artist: r.artistName ?? 'Unknown artist',
         src: r.previewUrl,
         artwork: r.artworkUrl100 ?? null,
-        duration: r.trackTimeMillis ? Math.round(r.trackTimeMillis / 1000) : null
+        duration: r.trackTimeMillis
+          ? Math.round(r.trackTimeMillis / 1000)
+          : null
       }));
 
     // Cache the public response briefly on the edge

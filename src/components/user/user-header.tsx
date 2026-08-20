@@ -53,7 +53,7 @@ export function UserHeader(): JSX.Element {
           {...variants}
           key='loading'
         >
-          <div className='mb-1 -mt-1 h-5 w-24' />
+          <div className='-mt-1 mb-1 h-5 w-24' />
           <div className='h-4 w-12' />
         </motion.div>
       ) : !user ? (
@@ -61,7 +61,11 @@ export function UserHeader(): JSX.Element {
           {isInFollowPage ? `@${id as string}` : 'مستخدم'}
         </motion.h2>
       ) : (
-        <motion.div className='-mb-1 flex flex-col items-end truncate text-right' {...variants} key='found'>
+        <motion.div
+          className='-mb-1 flex flex-col items-end truncate text-right'
+          {...variants}
+          key='found'
+        >
           <UserName
             tag='h2'
             name={user.name}

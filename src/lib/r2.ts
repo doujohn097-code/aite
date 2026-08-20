@@ -40,7 +40,10 @@ async function ensureCors(): Promise<void> {
 
   try {
     await client.send(
-      new PutBucketCorsCommand({ Bucket: bucket, CORSConfiguration: corsConfiguration })
+      new PutBucketCorsCommand({
+        Bucket: bucket,
+        CORSConfiguration: corsConfiguration
+      })
     );
     corsEnsured = true;
   } catch {

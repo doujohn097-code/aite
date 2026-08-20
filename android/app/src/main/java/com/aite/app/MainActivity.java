@@ -164,6 +164,7 @@ public class MainActivity extends Activity {
                 injectNativeEnhancements();
                 pushStoredTokenToWeb();
                 refreshLayout.setRefreshing(false);
+                updateRefreshAvailability(url);
                 if (!pageLoadedOnce) {
                     pageLoadedOnce = true;
                     hideSplash();
@@ -256,8 +257,26 @@ public class MainActivity extends Activity {
                 + "if(!m){m=document.createElement('meta');m.name='viewport';"
                 + "(document.head||document.documentElement).appendChild(m);}"
                 + "m.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');"
+                // راقب تغيّر المسار داخل التطبيق (SPA) لتحديث سلوك السحب للتحديث
+                + "if(!window.__aiteNavWatch){window.__aiteNavWatch=1;"
+                + "var push=history.pushState,rep=history.replaceState;"
+                + "var fire=function(){window.dispatchEvent(new Event('aite-route-change'));};"
+                + "history.pushState=function(){var r=push.apply(this,arguments);fire();return r;};"
+                + "history.replaceState=function(){var r=rep.apply(this,arguments);fire();return r;};"
+                + "window.addEventListener('popstate',fire);"
+                + "window.addEventListener('aite-route-change',function(){"
+                + "if(window.AiteNative&&AiteNative.onRouteChange)AiteNative.onRouteChange(location.pathname);});}"
                 + "})();";
         webView.evaluateJavascript(js, null);
+    }
+
+    /** السحب للتحديث متاح فقط في صفحات التغذية — معطّل في الرسائل والريلز */
+    private void updateRefreshAvailability(String url) {
+        if (refreshLayout == null) return;
+        String path = url != null ? Uri.parse(url).getPath() : null;
+        if (path == null) path = "/";
+        boolean blocked = path.startsWith("/messages") || path.startsWith("/reels");
+        refreshLayout.setEnabled(!blocked);
     }
 
     // ---------------------------------------------------------------- files
@@ -537,6 +556,27 @@ public class MainActivity extends Activity {
         public void refreshToken() {
             fetchFcmToken();
         }
+
+        @JavascriptInterface
+        public void onRouteChange(String path) {
+            runOnUiThread(() -> updateRefreshAvailability(
+                    "https://aite-app-one.vercel.app" + (path != null ? path : "/")));
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (webView != null) {
+            webView.onResume();
+            pushStoredTokenToWeb();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (webView != null) webView.onPause();
     }
 
     static class TokenStore {

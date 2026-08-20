@@ -31,16 +31,21 @@ export async function registerNativePushToken(userId: string): Promise<void> {
   if (!isNativeApp()) return;
 
   window.AiteNative?.refreshToken?.();
-  const token = getNativeFcmToken();
-  if (!token) return;
 
-  try {
-    await updateDoc(doc(usersCollection, userId), {
-      fcmTokens: arrayUnion(token)
-    });
-  } catch {
-    /* التوكن يُعاد تسجيله عند الحدث التالي */
+  // التوكن قد يصل بعد لحظات من تحميل الصفحة — نعيد المحاولة عدة مرات
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const token = getNativeFcmToken();
+    if (token) {
+      try {
+        await updateDoc(doc(usersCollection, userId), {
+          fcmTokens: arrayUnion(token)
+        });
+      } catch {
+        /* التوكن يُعاد تسجيله عند الحدث التالي */
+      }
+      window.AiteNative?.subscribeTopic?.('all');
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
   }
-
-  window.AiteNative?.subscribeTopic?.('all');
 }

@@ -194,7 +194,7 @@ export default async function handler(
     const tokens =
       (recipientSnap.data()?.fcmTokens as string[] | undefined) ?? [];
     if (!tokens.length) {
-      res.status(200).json({ ok: true, sent: 0 });
+      res.status(200).json({ ok: true, sent: 0, reason: 'no_tokens' });
       return;
     }
 
@@ -231,7 +231,9 @@ export default async function handler(
         .catch(() => undefined);
 
     res.status(200).json({ ok: true, sent: response.successCount });
-  } catch {
-    res.status(500).json({ error: 'internal' });
+  } catch (error) {
+    console.error('push/notify failed:', error);
+    const message = error instanceof Error ? error.message : 'unknown';
+    res.status(500).json({ error: 'internal', message });
   }
 }

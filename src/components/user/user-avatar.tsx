@@ -44,8 +44,8 @@ export function UserAvatar({
       />
       {online && username && (
         <span
-          className='absolute bottom-0 left-0 z-10 rounded-full bg-emerald-400 ring-2 ring-main-background
-                     shadow-[0_0_8px_2px_rgba(52,211,153,0.9)]'
+          className='absolute bottom-0 left-0 z-10 rounded-full bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.9)] ring-2
+                     ring-main-background'
           style={{ width: dotSize, height: dotSize }}
           title='نشط الآن'
         />
@@ -62,10 +62,7 @@ export function UserAvatar({
 
   return (
     <Link href={`/user/${username}`}>
-      <a
-        className={cn('blur-picture flex self-start', className)}
-        tabIndex={0}
-      >
+      <a className={cn('blur-picture flex self-start', className)} tabIndex={0}>
         {image}
       </a>
     </Link>

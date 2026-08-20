@@ -4,6 +4,7 @@ import cn from 'clsx';
 import { useUser } from '@lib/context/user-context';
 import { useModal } from '@lib/hooks/useModal';
 import { updateUserData, uploadImages } from '@lib/firebase/utils';
+import { withTimeout } from '@lib/utils';
 
 import { getImagesData } from '@lib/validation';
 import { Modal } from '@components/modal/modal';
@@ -71,8 +72,11 @@ export function UserEditProfile({ hide }: UserEditProfileProps): JSX.Element {
 
       const { photoURL, coverPhotoURL: coverURL } = userImages;
 
-      const [newPhotoURL, newCoverPhotoURL] = await Promise.all(
-        [photoURL, coverURL].map((image) => uploadImages(userId, image))
+      const [newPhotoURL, newCoverPhotoURL] = await withTimeout(
+        Promise.all(
+          [photoURL, coverURL].map((image) => uploadImages(userId, image))
+        ),
+        60_000
       );
 
       const newImages: Partial<Pick<User, 'photoURL' | 'coverPhotoURL'>> = {

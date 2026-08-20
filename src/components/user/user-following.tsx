@@ -15,8 +15,6 @@ export function UserFollowing({
   if (!isOwner) return null;
 
   return (
-    <p className='rounded bg-main-search-background px-1 text-xs'>
-      يتابعك
-    </p>
+    <p className='rounded bg-main-search-background px-1 text-xs'>يتابعك</p>
   );
 }

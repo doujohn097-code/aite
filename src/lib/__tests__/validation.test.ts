@@ -161,9 +161,7 @@ describe('getImagesData', () => {
     expect(getImagesData(makeFileList(five), { currentFiles: 0 })).toBeNull();
 
     // currentFiles counts already-selected files against the 4-image total
-    expect(
-      getImagesData(makeFileList(five), { currentFiles: 1 })
-    ).toBeNull();
+    expect(getImagesData(makeFileList(five), { currentFiles: 1 })).toBeNull();
   });
 
   it('does not cap in single editing mode (currentFiles undefined)', () => {

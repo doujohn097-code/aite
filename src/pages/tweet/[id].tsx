@@ -41,9 +41,7 @@ export default function TweetId(): JSX.Element {
 
   const pageTitle = tweetData
     ? `${tweetData.user.name} على Aite: "${text ?? ''}${
-        images
-          ? ` (${imagesLength} ${imagesLength > 1 ? 'صور' : 'صورة'})`
-          : ''
+        images ? ` (${imagesLength} ${imagesLength > 1 ? 'صور' : 'صورة'})` : ''
       }" / Aite`
     : null;
 

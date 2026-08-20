@@ -10,14 +10,23 @@ type ButtonProps = ComponentPropsWithRef<'button'> & {
 
 // eslint-disable-next-line react/display-name
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, innerClassName, loading: loadingProp, disabled, children, onClick, ...rest }, ref) => {
+  (
+    {
+      className,
+      innerClassName,
+      loading: loadingProp,
+      disabled,
+      children,
+      onClick,
+      ...rest
+    },
+    ref
+  ) => {
     const [internalLoading, setInternalLoading] = useState(false);
     const isLoading = loadingProp ?? internalLoading;
     const isDisabled = isLoading || !!disabled;
 
-    const handleClick = (
-      e: React.MouseEvent<HTMLButtonElement>
-    ): void => {
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
       if (!onClick) return;
       const result = onClick(e) as unknown;
       if (result && typeof result === 'object' && 'then' in result) {
@@ -44,7 +53,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {isLoading && (
           <Loading
             iconClassName='h-5 w-5'
-            className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
+            className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'
           />
         )}
         <span

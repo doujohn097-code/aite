@@ -8,6 +8,7 @@ import { delayScroll } from '@lib/utils';
 import { Modal } from '@components/modal/modal';
 import { TweetReplyModal } from '@components/modal/tweet-reply-modal';
 import { ImagePreview } from '@components/input/image-preview';
+import { TweetAudioPlayer } from './tweet-audio';
 import { StoryAvatar } from '@components/stories/story-avatar';
 import { UserTooltip } from '@components/user/user-tooltip';
 import { UserName } from '@components/user/user-name';
@@ -39,6 +40,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
     text,
     modal,
     images,
+    audio,
     parent,
     pinned,
     profile,
@@ -205,6 +207,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                     previewCount={images.length}
                   />
                 )}
+                {audio && <TweetAudioPlayer audio={audio} />}
                 {!modal && (
                   <TweetStats
                     reply={reply}

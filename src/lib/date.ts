@@ -83,7 +83,11 @@ function getJoinedTime(date: Date): string {
 }
 
 function getShortTime(date: Date): string {
-  const isNear = isToday(date) ? 'today' : isYesterday(date) ? 'yesterday' : null;
+  const isNear = isToday(date)
+    ? 'today'
+    : isYesterday(date)
+    ? 'yesterday'
+    : null;
 
   const time = new Intl.DateTimeFormat('ar', {
     hour: 'numeric',
@@ -105,8 +109,7 @@ function getRelativeTime(date: Date): string {
   for (const [unit, millis] of unitsItems)
     if (elapsed >= millis) {
       const value = Math.round(elapsed / millis);
-      const suffix =
-        unit === 'day' ? 'ي' : unit === 'hour' ? 'س' : 'د';
+      const suffix = unit === 'day' ? 'ي' : unit === 'hour' ? 'س' : 'د';
       return `${value}${suffix}`;
     }
 

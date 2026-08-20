@@ -1,10 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import {
-  onSnapshot,
-  query,
-  where,
-  Timestamp
-} from 'firebase/firestore';
+import { onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { usersCollection } from '@lib/firebase/collections';
 
 type RingInfo = {

@@ -68,7 +68,10 @@ export function SearchBar(): JSX.Element {
           onClick={clearInputValue(true)}
           disabled={!inputValue}
         >
-          <HeroIcon className='h-3 w-3 text-light-primary dark:text-dark-primary' iconName='XMarkIcon' />
+          <HeroIcon
+            className='h-3 w-3 text-light-primary dark:text-dark-primary'
+            iconName='XMarkIcon'
+          />
         </Button>
       </label>
     </form>

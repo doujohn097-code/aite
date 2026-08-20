@@ -27,7 +27,11 @@ type ProfileTab = 'posts' | 'retweets' | 'reels';
 
 const TABS: { id: ProfileTab; label: string; icon: IconName }[] = [
   { id: 'posts', label: 'المنشورات', icon: 'DocumentTextIcon' },
-  { id: 'retweets', label: 'المُعاد نشرها', icon: 'ArrowPathRoundedSquareIcon' },
+  {
+    id: 'retweets',
+    label: 'المُعاد نشرها',
+    icon: 'ArrowPathRoundedSquareIcon'
+  },
   { id: 'reels', label: 'الريلز المعاد نشرها', icon: 'PlayIcon' }
 ];
 
@@ -81,7 +85,10 @@ export default function UserTweets(): JSX.Element {
 
   const repostedReelsQuery =
     id && reelIds?.length
-      ? query(storiesCollection, where(documentId(), 'in', reelIds.slice(0, 30)))
+      ? query(
+          storiesCollection,
+          where(documentId(), 'in', reelIds.slice(0, 30))
+        )
       : null;
 
   const { data: repostedReels, loading: reelsLoading } = useCollection(
@@ -103,8 +110,8 @@ export default function UserTweets(): JSX.Element {
     <section>
       {/* Profile tabs */}
       <div
-        className='sticky top-0 z-10 mx-3 mt-3 flex gap-1 rounded-full bg-light-sidebar-background/60
-                   p-1.5 dark:bg-dark-sidebar-background/60'
+        className='bg-light-sidebar-background/60 dark:bg-dark-sidebar-background/60 sticky top-0 z-10 mx-3 mt-3 flex gap-1
+                   rounded-full p-1.5'
       >
         {TABS.map(({ id: tabId, label, icon }) => (
           <button
@@ -168,8 +175,8 @@ export default function UserTweets(): JSX.Element {
             return (
               <Link href='/reels' key={reel.id}>
                 <a
-                  className='relative aspect-[3/4] overflow-hidden bg-light-sidebar-background
-                             dark:bg-dark-sidebar-background'
+                  className='bg-light-sidebar-background dark:bg-dark-sidebar-background relative aspect-[3/4]
+                             overflow-hidden'
                 >
                   {media &&
                     (isVideo ? (
