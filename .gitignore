@@ -45,3 +45,10 @@ next-env.d.ts
 # python
 /.mypy_cache
 *.py
+
+# Android build artifacts
+android/.gradle/
+android/build/
+android/app/build/
+android/app/aite-release.keystore
+android/local.properties

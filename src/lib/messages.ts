@@ -12,7 +12,7 @@ import {
   conversationsCollection,
   conversationMessagesCollection
 } from '@lib/firebase/collections';
-import { db } from '@lib/firebase/app';
+import { db, auth } from '@lib/firebase/app';
 import { uploadImages } from '@lib/firebase/utils';
 import { getRandomId } from '@lib/random';
 import type { FilesWithId } from '@lib/types/file';
@@ -160,6 +160,33 @@ export async function sendMessage(
     [`unread.${senderId}`]: 0,
     ...othersUnread
   });
+
+  void notifyRecipientPush(
+    id,
+    type === 'text' ? (text as string) : lastMessageLabels[type]
+  );
+}
+
+/** إشعار فوري (FCM) للطرف الآخر عبر مسار الخادم — يعمل فقط في التطبيق الأصلي */
+async function notifyRecipientPush(
+  conversationId: string,
+  preview: string
+): Promise<void> {
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+    const idToken = await currentUser.getIdToken();
+    void fetch('/api/push/message', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`
+      },
+      body: JSON.stringify({ conversationId, preview })
+    }).catch(() => undefined);
+  } catch {
+    /* الإشعار تحسين اختياري — لا يعطّل إرسال الرسالة */
+  }
 }
 
 /** تبديل تفاعل إيموجي — تمرير نفس الإيموجي يحذفه.

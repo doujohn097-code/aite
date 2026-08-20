@@ -27,6 +27,8 @@ export type User = {
   storyViews?: { [userId: string]: Timestamp } | null;
   /** Presence heartbeat — updated every minute while the app is open. */
   lastActiveAt?: Timestamp | null;
+  /** FCM device tokens for the native app push notifications. */
+  fcmTokens?: string[];
 };
 
 export type EditableData = Extract<

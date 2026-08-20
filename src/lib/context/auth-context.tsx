@@ -34,6 +34,7 @@ import {
 import { getRandomId, getRandomInt } from '@lib/random';
 import { checkUsernameAvailability } from '@lib/firebase/utils';
 import { usernameToInternalEmail } from '@lib/utils';
+import { registerNativePushToken } from '@lib/native-bridge';
 import type { ReactNode } from 'react';
 import type { User as AuthUser } from 'firebase/auth';
 import type { WithFieldValue } from 'firebase/firestore';
@@ -204,6 +205,20 @@ export function AuthContextProvider({
       unsubscribe();
     };
   }, []);
+
+  // Native app (Android WebView): persist the FCM token on the user doc so
+  // the server can push message notifications; re-register on token refresh.
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) return;
+
+    void registerNativePushToken(userId);
+    const handleToken = (): void => void registerNativePushToken(userId);
+    window.addEventListener('aite-fcm-token', handleToken);
+
+    return () => window.removeEventListener('aite-fcm-token', handleToken);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   // Presence heartbeat: claim "online" immediately and keep it alive while
   // the app is open; the green dot appears everywhere within a minute.

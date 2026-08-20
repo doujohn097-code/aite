@@ -1,0 +1,3 @@
+-keep class com.aite.app.** { *; }
+-keepattributes JavascriptInterface
+-keepclassmembers class * { @android.webkit.JavascriptInterface <methods>; }

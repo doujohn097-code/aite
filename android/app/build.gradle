@@ -1,0 +1,51 @@
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+}
+
+def keystoreFile = file('aite-release.keystore')
+
+android {
+    namespace 'com.aite.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.aite.app'
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    signingConfigs {
+        release {
+            storeFile keystoreFile
+            storePassword System.getenv('AITE_KEYSTORE_PASSWORD') ?: 'aite-store-pass'
+            keyAlias 'aite'
+            keyPassword System.getenv('AITE_KEY_PASSWORD') ?: 'aite-store-pass'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation platform('com.google.firebase:firebase-bom:33.5.1')
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+}
