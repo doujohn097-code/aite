@@ -12,8 +12,9 @@ import {
   conversationsCollection,
   conversationMessagesCollection
 } from '@lib/firebase/collections';
-import { db, auth } from '@lib/firebase/app';
+import { db } from '@lib/firebase/app';
 import { uploadImages } from '@lib/firebase/utils';
+import { sendPushNotification } from '@lib/push';
 import { getRandomId } from '@lib/random';
 import type { FilesWithId } from '@lib/types/file';
 import { deleteField } from 'firebase/firestore';
@@ -161,32 +162,11 @@ export async function sendMessage(
     ...othersUnread
   });
 
-  void notifyRecipientPush(
-    id,
-    type === 'text' ? (text as string) : lastMessageLabels[type]
-  );
-}
-
-/** إشعار فوري (FCM) للطرف الآخر عبر مسار الخادم — يعمل فقط في التطبيق الأصلي */
-async function notifyRecipientPush(
-  conversationId: string,
-  preview: string
-): Promise<void> {
-  try {
-    const currentUser = auth.currentUser;
-    if (!currentUser) return;
-    const idToken = await currentUser.getIdToken();
-    void fetch('/api/push/message', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`
-      },
-      body: JSON.stringify({ conversationId, preview })
-    }).catch(() => undefined);
-  } catch {
-    /* الإشعار تحسين اختياري — لا يعطّل إرسال الرسالة */
-  }
+  sendPushNotification({
+    kind: 'message',
+    conversationId: id,
+    preview: type === 'text' ? (text as string) : lastMessageLabels[type]
+  });
 }
 
 /** تبديل تفاعل إيموجي — تمرير نفس الإيموجي يحذفه.
@@ -227,6 +207,8 @@ export async function toggleMessageReaction(
       createdAt: serverTimestamp()
     }
   });
+
+  sendPushNotification({ kind: 'messageReaction', conversationId, emoji });
 }
 
 export async function markConversationRead(

@@ -23,6 +23,7 @@ import {
   getDownloadURL
 } from 'firebase/storage';
 import { db, auth, storage } from './app';
+import { sendPushNotification } from '@lib/push';
 import {
   usersCollection,
   tweetsCollection,
@@ -295,13 +296,17 @@ export async function manageReply(
       currentUserId &&
       tweetOwnerId !== currentUserId
     )
-      await createNotification(tweetOwnerId, {
-        type: 'reply',
-        fromUserId: currentUserId,
-        toUserId: tweetOwnerId,
-        tweetId,
-        read: false
-      });
+      await createNotification(
+        tweetOwnerId,
+        {
+          type: 'reply',
+          fromUserId: currentUserId,
+          toUserId: tweetOwnerId,
+          tweetId,
+          read: false
+        },
+        'post'
+      );
   } catch {
     // do nothing, because parent tweet was already deleted
   }
@@ -385,13 +390,17 @@ export function manageRetweet(
     await batch.commit();
 
     if (type === 'retweet' && tweetOwnerId && tweetOwnerId !== userId)
-      await createNotification(tweetOwnerId, {
-        type: 'retweet',
-        fromUserId: userId,
-        toUserId: tweetOwnerId,
-        tweetId,
-        read: false
-      });
+      await createNotification(
+        tweetOwnerId,
+        {
+          type: 'retweet',
+          fromUserId: userId,
+          toUserId: tweetOwnerId,
+          tweetId,
+          read: false
+        },
+        'post'
+      );
   };
 }
 
@@ -440,13 +449,17 @@ export function manageLike(
     await batch.commit();
 
     if (type === 'like' && tweetOwnerId && tweetOwnerId !== userId)
-      await createNotification(tweetOwnerId, {
-        type: 'like',
-        fromUserId: userId,
-        toUserId: tweetOwnerId,
-        tweetId,
-        read: false
-      });
+      await createNotification(
+        tweetOwnerId,
+        {
+          type: 'like',
+          fromUserId: userId,
+          toUserId: tweetOwnerId,
+          tweetId,
+          read: false
+        },
+        'post'
+      );
   };
 }
 
@@ -479,7 +492,8 @@ export async function clearAllBookmarks(userId: string): Promise<void> {
 
 export async function createNotification(
   toUserId: string,
-  notification: Omit<Notification, 'id' | 'createdAt'>
+  notification: Omit<Notification, 'id' | 'createdAt'>,
+  context?: 'post' | 'reel' | 'story'
 ): Promise<void> {
   if (!toUserId || toUserId === notification.fromUserId) return;
 
@@ -493,6 +507,16 @@ export async function createNotification(
   };
 
   await setDoc(notificationRef, notificationData);
+
+  sendPushNotification({
+    kind: 'activity',
+    toUserId,
+    type: notification.type,
+    context,
+    tweetId: notification.tweetId ?? null,
+    storyId: notification.storyId ?? null,
+    storyUserId: notification.storyUserId ?? null
+  });
 }
 
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
@@ -649,14 +673,18 @@ export async function likeStory(
   } as Partial<WithFieldValue<Story>>);
 
   if (liked && storyUserId && storyUserId !== userId)
-    await createNotification(storyUserId, {
-      type: 'storyLike',
-      fromUserId: userId,
-      toUserId: storyUserId,
-      storyId,
+    await createNotification(
       storyUserId,
-      read: false
-    });
+      {
+        type: 'storyLike',
+        fromUserId: userId,
+        toUserId: storyUserId,
+        storyId,
+        storyUserId,
+        read: false
+      },
+      'story'
+    );
 }
 
 export async function deleteStory(
@@ -737,14 +765,18 @@ export async function likeReel(
   } as Partial<WithFieldValue<Story>>);
 
   if (liked && reelOwnerId && reelOwnerId !== userId)
-    await createNotification(reelOwnerId, {
-      type: 'storyLike',
-      fromUserId: userId,
-      toUserId: reelOwnerId,
-      storyId: reelId,
-      storyUserId: reelOwnerId,
-      read: false
-    });
+    await createNotification(
+      reelOwnerId,
+      {
+        type: 'storyLike',
+        fromUserId: userId,
+        toUserId: reelOwnerId,
+        storyId: reelId,
+        storyUserId: reelOwnerId,
+        read: false
+      },
+      'reel'
+    );
 }
 
 export async function viewReel(
@@ -818,13 +850,17 @@ export async function addReelComment(
   // Notify reel owner
   if (reelOwnerId && reelOwnerId !== userId) {
     try {
-      await createNotification(reelOwnerId, {
-        type: 'reply',
-        fromUserId: userId,
-        toUserId: reelOwnerId,
-        tweetId: docRef.id,
-        read: false
-      });
+      await createNotification(
+        reelOwnerId,
+        {
+          type: 'reply',
+          fromUserId: userId,
+          toUserId: reelOwnerId,
+          tweetId: docRef.id,
+          read: false
+        },
+        'reel'
+      );
     } catch {
       // Non-blocking
     }

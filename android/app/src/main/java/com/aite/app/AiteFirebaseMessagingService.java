@@ -85,10 +85,7 @@ public class AiteFirebaseMessagingService extends FirebaseMessagingService {
 
         Bitmap picture = loadBitmap(image);
         if (picture != null) {
-            builder.setStyle(new NotificationCompat.BigPictureStyle()
-                    .bigPicture(picture)
-                    .setSummaryText(body));
-            builder.setLargeIcon(picture);
+            builder.setLargeIcon(circleCrop(picture));
         }
 
         NotificationManager manager =
@@ -97,6 +94,20 @@ public class AiteFirebaseMessagingService extends FirebaseMessagingService {
 
         int id = tag != null ? tag.hashCode() : (int) System.currentTimeMillis();
         manager.notify(tag, id, builder.build());
+    }
+
+    private static Bitmap circleCrop(Bitmap source) {
+        int size = Math.min(source.getWidth(), source.getHeight());
+        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas canvas = new android.graphics.Canvas(output);
+        android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        android.graphics.Path path = new android.graphics.Path();
+        path.addCircle(size / 2f, size / 2f, size / 2f, android.graphics.Path.Direction.CCW);
+        canvas.clipPath(path);
+        int left = (source.getWidth() - size) / 2;
+        int top = (source.getHeight() - size) / 2;
+        canvas.drawBitmap(source, -left, -top, paint);
+        return output;
     }
 
     private Bitmap loadBitmap(String url) {
