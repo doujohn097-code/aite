@@ -43,6 +43,28 @@ export function ImageModal({
   const { src, alt, type } = imageData;
 
   const isVideo = type?.includes('video');
+  const saveMedia = async (): Promise<void> => {
+    try {
+      const response = await fetch(src);
+      if (!response.ok) throw new Error('download failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = alt || (isVideo ? 'aite-video' : 'aite-image');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Download attribute provides the browser fallback when a remote bucket
+      // does not allow an in-memory fetch.
+      const link = document.createElement('a');
+      link.href = src;
+      link.download = alt || 'aite-media';
+      link.click();
+    }
+  };
 
   const requireArrows = handleNextIndex && previewCount > 1;
 
@@ -136,15 +158,18 @@ export function ImageModal({
               </picture>
             )}
             <div className='absolute right-3 top-3 z-20 flex items-center gap-2' dir='ltr'>
-              <a
-                href={src}
-                download
-                aria-label='حفظ الوسيط'
+              <button
+                type='button'
+                aria-label='حفظ الوسيط على الجهاز'
                 className='flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-black/80 active:scale-95'
-                onClick={preventBubbling(null, true)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  void saveMedia();
+                }}
               >
                 <HeroIcon className='h-5 w-5' iconName='ArrowDownTrayIcon' />
-              </a>
+              </button>
               {onClose && (
                 <button
                   type='button'

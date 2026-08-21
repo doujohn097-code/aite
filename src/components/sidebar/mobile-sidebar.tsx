@@ -7,7 +7,7 @@ import type { Variants } from 'framer-motion';
 import type { User } from '@lib/types/user';
 
 const drawerVariant: Variants = {
-  initial: { x: '-100%', opacity: 0 },
+  initial: { x: '100%', opacity: 0 },
   animate: {
     x: 0,
     opacity: 1,
@@ -19,7 +19,7 @@ const drawerVariant: Variants = {
     }
   },
   exit: {
-    x: '-100%',
+    x: '100%',
     opacity: 0,
     transition: {
       duration: 0.22,
@@ -35,9 +35,9 @@ export function MobileSidebar(): JSX.Element {
   return (
     <>
       <Modal
-        className='flex justify-start overflow-hidden p-0'
+        className='flex justify-end overflow-hidden p-0'
         modalAnimation={drawerVariant}
-        modalClassName='h-[100dvh] max-h-[100dvh] w-[86vw] max-w-[340px] bg-main-background shadow-2xl rounded-r-[28px] border-r border-light-border/80 dark:border-dark-border/80 overflow-hidden flex flex-col'
+        modalClassName='h-[100dvh] max-h-[100dvh] w-[86vw] max-w-[340px] bg-main-background shadow-2xl rounded-l-[28px] border-l border-light-border/80 dark:border-dark-border/80 overflow-hidden flex flex-col'
         open={open}
         closeModal={closeModal}
       >

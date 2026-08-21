@@ -8,7 +8,7 @@ import {
   useMotionValue,
   useTransform
 } from 'framer-motion';
-import { VoicePlayer } from './voice-player';
+import { TweetAudioPlayer } from '@components/tweet/tweet-audio';
 import { Modal } from '@components/modal/modal';
 import { ImageModal } from '@components/modal/image-modal';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -199,19 +199,14 @@ export function MessageBubble({
       ? cn(
           'rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed shadow-lg backdrop-blur-xl',
           isOwn
-            ? 'rounded-br-md border border-white/40 bg-main-accent/72 text-[#102033] shadow-[0_10px_30px_rgba(0,0,0,0.12)] backdrop-blur-2xl dark:border-white/25 dark:text-black'
+            ? 'rounded-br-md border border-blue-300/30 bg-[#1d4ed8]/90 text-white shadow-[0_10px_30px_rgba(29,78,216,0.28)] backdrop-blur-2xl dark:border-blue-200/25'
             : `rounded-bl-md border border-black/10 bg-black/5 text-light-primary
                dark:border-white/15 dark:bg-white/10 dark:text-dark-primary`
         )
       : type === 'audio'
-      ? cn(
-          'rounded-2xl px-3 py-2 shadow-lg backdrop-blur-xl',
-          isOwn
-            ? 'rounded-br-md border border-white/40 bg-main-accent/72 shadow-[0_10px_30px_rgba(0,0,0,0.12)] backdrop-blur-2xl dark:border-white/25'
-            : 'rounded-bl-md border border-black/10 bg-black/5 dark:border-white/15 dark:bg-white/10'
-        )
+      ? 'w-full max-w-[320px] rounded-2xl'
       : 'overflow-hidden rounded-2xl shadow-lg',
-    isOwn ? 'self-end' : 'self-start'
+    isOwn ? 'ml-auto mr-0 self-end' : 'mr-auto ml-0 self-start'
   );
 
   const replyQuote = replyTo && (
@@ -244,7 +239,7 @@ export function MessageBubble({
     <motion.div
       className={cn(
         'relative flex w-full flex-col gap-1',
-        isOwn ? 'items-end' : 'items-start'
+        isOwn ? 'ml-auto items-end' : 'mr-auto items-start'
       )}
       drag='x'
       dragDirectionLock
@@ -462,13 +457,7 @@ export function MessageBubble({
         )}
 
         {type === 'audio' && audio && (
-          <VoicePlayer
-            src={audio.src}
-            duration={audio.duration}
-            peaks={audio.peaks}
-            isOwn={isOwn}
-            tall
-          />
+          <TweetAudioPlayer audio={audio} />
         )}
 
         {type === 'shared' && sharedPost && (
