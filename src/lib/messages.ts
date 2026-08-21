@@ -1,6 +1,5 @@
 import {
   doc,
-  deleteDoc,
   getDoc,
   setDoc,
   addDoc,
@@ -220,14 +219,20 @@ export async function setTyping(
   });
 }
 
-/** حذف رسالة للطرفين — يحذف المستند نهائياً */
+/** حذف للطرفين مع إبقاء إشعار واضح ومتزامن داخل المحادثة. */
 export async function deleteMessage(
   conversationId: string,
   messageId: string
 ): Promise<void> {
-  await deleteDoc(
-    doc(db, 'conversations', conversationId, 'messages', messageId)
-  );
+  await updateDoc(doc(db, 'conversations', conversationId, 'messages', messageId), {
+    text: 'تم حذف هذه الرسالة',
+    media: null,
+    audio: null,
+    replyTo: null,
+    sharedPost: null,
+    reactions: {},
+    deletedAt: serverTimestamp()
+  });
 }
 
 export async function markConversationRead(

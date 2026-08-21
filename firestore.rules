@@ -115,12 +115,22 @@ service cloud.firestore {
           && validText(request.resource.data.text, 4000);
         allow update: if signedIn() && request.auth.uid in resource.data.participants
           && request.resource.data.senderId == resource.data.senderId
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seenBy', 'reactions'])
-          && ((request.resource.data.seenBy != resource.data.seenBy
-              && onlyCurrentUserChanged(resource.data.seenBy, request.resource.data.seenBy))
-            || (request.resource.data.reactions != resource.data.reactions
-              && onlyCurrentUserMapChanged(resource.data.reactions, request.resource.data.reactions)));
-        allow delete: if signedIn() && request.auth.uid == resource.data.senderId;
+          && (
+            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seenBy', 'reactions'])
+              && ((request.resource.data.seenBy != resource.data.seenBy
+                  && onlyCurrentUserChanged(resource.data.seenBy, request.resource.data.seenBy))
+                || (request.resource.data.reactions != resource.data.reactions
+                  && onlyCurrentUserMapChanged(resource.data.reactions, request.resource.data.reactions))))
+            || (request.auth.uid == resource.data.senderId
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                'text', 'media', 'audio', 'replyTo', 'sharedPost', 'reactions', 'deletedAt'
+              ])
+              && request.resource.data.text == 'تم حذف هذه الرسالة'
+              && request.resource.data.media == null
+              && request.resource.data.audio == null
+              && request.resource.data.sharedPost == null)
+          );
+        allow delete: if false;
       }
     }
 

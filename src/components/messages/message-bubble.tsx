@@ -74,11 +74,13 @@ export function MessageBubble({
     seenBy
   } = message;
   const seen = seenBy?.length > 1;
+  const isDeleted = !!message.deletedAt;
 
   // سحب أفقي انسيابي — الفقاعة تميل وتتوهج ويكشف زر الرد خلفها
   const dragX = useMotionValue(0);
   const [triggered, setTriggered] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerBelow, setPickerBelow] = useState(false);
   const [swipeReady, setSwipeReady] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
@@ -165,6 +167,8 @@ export function MessageBubble({
     pressStart.current = { x: event.clientX, y: event.clientY };
     pressTimer.current = setTimeout(() => {
       pressTimer.current = null;
+      // Keep the action sheet next to the user's touch: lower messages open below.
+      setPickerBelow((pressStart.current?.y ?? 0) > window.innerHeight / 2);
       try { navigator.vibrate?.(12); } catch { /* optional */ }
       setPickerOpen(true);
     }, 620);
@@ -325,7 +329,7 @@ export function MessageBubble({
               `absolute z-30 w-max max-w-xs overflow-hidden rounded-2xl border border-white/20
                bg-main-background/95 shadow-2xl shadow-black/20 backdrop-blur-xl dark:border-white/10`,
               isOwn ? 'right-0' : 'left-0',
-              '-top-14'
+              pickerBelow ? 'top-full mt-2' : '-top-14'
             )}
           >
             {/* شريط التفاعلات */}
@@ -393,6 +397,13 @@ export function MessageBubble({
           else handlePointerMove(event);
         }}
       >
+        {isDeleted ? (
+          <div className='flex items-center gap-2 px-1 py-1 text-sm italic opacity-65'>
+            <HeroIcon className='h-4 w-4' iconName='NoSymbolIcon' />
+            تم حذف هذه الرسالة
+          </div>
+        ) : (
+          <>
         {replyQuote}
 
         {type === 'text' && (
@@ -415,7 +426,7 @@ export function MessageBubble({
             {media.map((item, index) =>
               type === 'video' || item.type?.startsWith('video/') ? (
                 <div key={`${message.id}-${index}`} className='group relative'>
-                  <video className='block h-auto w-full rounded-2xl' src={item.src} controls playsInline preload='metadata' />
+                  <video className='block max-h-[360px] w-full rounded-2xl object-contain bg-black' src={item.src} controls playsInline preload='metadata' />
                   <button type='button' onClick={() => setSelectedMediaIndex(index)} aria-label='فتح معاينة الفيديو' className='absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white opacity-0 shadow-lg backdrop-blur transition group-hover:opacity-100'>
                     <HeroIcon className='h-5 w-5' iconName='ArrowsPointingOutIcon' />
                   </button>
@@ -429,7 +440,7 @@ export function MessageBubble({
                   aria-label='فتح معاينة الصورة'
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img className='block h-auto w-full rounded-2xl object-contain transition duration-300 group-hover:scale-[1.02]' src={item.src} alt={item.alt || 'صورة'} loading='lazy' />
+                  <img className='block max-h-[360px] w-full rounded-2xl object-contain transition duration-300 group-hover:scale-[1.02]' src={item.src} alt={item.alt || 'صورة'} loading='lazy' />
                   <span className='absolute inset-0 bg-black/0 transition group-hover:bg-black/10' />
                   <HeroIcon className='absolute left-3 top-3 h-5 w-5 rounded-full bg-black/45 p-1 text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100' iconName='ArrowsPointingOutIcon' />
                 </button>
@@ -444,6 +455,7 @@ export function MessageBubble({
             duration={audio.duration}
             peaks={audio.peaks}
             isOwn={isOwn}
+            tall
           />
         )}
 
@@ -524,6 +536,8 @@ export function MessageBubble({
             />
           </p>
         )}
+          </>
+        )}
       </div>
 
       {/* تفاعلات الرسالة + الوقت ومؤشر القراءة */}
@@ -560,6 +574,14 @@ export function MessageBubble({
           closeModal={() => setSelectedMediaIndex(null)}
           modalClassName='relative flex h-full w-full items-center justify-center p-4'
         >
+          <button
+            type='button'
+            aria-label='إغلاق المعاينة'
+            onClick={() => setSelectedMediaIndex(null)}
+            className='absolute right-5 top-5 z-[60] flex h-11 w-11 items-center justify-center rounded-full bg-black/65 text-white shadow-xl backdrop-blur transition hover:bg-black'
+          >
+            <HeroIcon className='h-6 w-6' iconName='XMarkIcon' />
+          </button>
           <ImageModal imageData={media[selectedMediaIndex]} previewCount={media.length} />
         </Modal>
       )}

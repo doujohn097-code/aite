@@ -53,6 +53,8 @@ export type Message = {
   participants: string[];
   createdAt: Timestamp;
   seenBy: string[];
+  /** Soft deletion keeps a clear, synchronized placeholder in the chat. */
+  deletedAt?: Timestamp | null;
 };
 
 export type LastMessage = {

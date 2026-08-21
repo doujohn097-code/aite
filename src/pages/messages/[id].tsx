@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { doc, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, query, where } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
 import {
@@ -63,8 +63,7 @@ export default function Chat(): JSX.Element {
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [sending, setSending] = useState(false);
   const [forbidden, setForbidden] = useState(false);
-  // رسائل ظاهرة فورًا قبل وصول نسخة الخادم (مثل إنستغرام)
-  const [optimistic, setOptimistic] = useState<Message[]>([]);
+
   // معرّف أول رسالة غير مقروءة من الطرف الآخر — لعرض فاصل "رسائل جديدة"
   const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
   // الرسالة قيد الرد عليها عبر السحب
@@ -112,7 +111,6 @@ export default function Chat(): JSX.Element {
     setForbidden(false);
     setConversation(null);
     setMessages(null);
-    setOptimistic([]);
     setReplyTarget(null);
     setFirstUnreadId(null);
     setShowJumpToLatest(false);
@@ -249,7 +247,7 @@ export default function Chat(): JSX.Element {
     const element = scrollRef.current;
     if (!element || !stickToBottomRef.current) return;
     element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
-  }, [messages?.length, optimistic.length, peerTyping]);
+  }, [messages?.length, peerTyping]);
 
   const handleMessageScroll = (): void => {
     const element = scrollRef.current;
@@ -274,23 +272,11 @@ export default function Chat(): JSX.Element {
       ? (value as unknown as { seconds: number }).seconds * 1000
       : Date.now();
 
-  // تُعرض الرسائل المتفائلة حتى تصل النسخة الحقيقية من الخادم ثم تزول
-  const shownMessages = useMemo(() => {
-    const server = messages ?? [];
-    const pending = optimistic.filter((opt) => {
-      const optTime = toMillis(opt.createdAt);
-      return !server.some(
-        (srv) =>
-          srv.senderId === opt.senderId &&
-          srv.type === opt.type &&
-          srv.text === opt.text &&
-          Math.abs(toMillis(srv.createdAt) - optTime) < 120000
-      );
-    });
-    return [...server, ...pending].sort(
-      (a, b) => toMillis(a.createdAt) - toMillis(b.createdAt)
-    );
-  }, [messages, optimistic]);
+  // لا نعرض الرسالة قبل أن تقبلها Firestore؛ هذا يمنع ظهور رسالة لم تُرسل فعليًا.
+  const shownMessages = useMemo(
+    () => [...(messages ?? [])].sort((a, b) => toMillis(a.createdAt) - toMillis(b.createdAt)),
+    [messages]
+  );
 
   const handleSend = async (
     payload:
@@ -311,44 +297,12 @@ export default function Chat(): JSX.Element {
         }
       : null;
 
-    // بناء نسخة فورية قابلة للعرض محليًا
-    const optimisticMessage: Message = {
-      id: `opt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      senderId: user.id,
-      type: payload.type,
-      text: payload.type === 'text' ? payload.text : null,
-      media: null,
-      audio: null,
-      replyTo,
-      sharedPost: null,
-      reactions: {},
-      participants: conversation.participants,
-      createdAt: Timestamp.now(),
-      seenBy: [user.id]
-    };
-    if (payload.type === 'image' || payload.type === 'video')
-      optimisticMessage.media = payload.files.map((file) => ({
-        src: URL.createObjectURL(file),
-        alt: file.name,
-        type: file.type
-      }));
-    if (payload.type === 'audio')
-      optimisticMessage.audio = {
-        src: URL.createObjectURL(payload.blob),
-        duration: payload.duration,
-        peaks: payload.peaks
-      };
-
-    setOptimistic((prev) => [...prev, optimisticMessage]);
     setReplyTarget(null);
     setSending(true);
     try {
       await sendMessage(conversation, user.id, { ...payload, replyTo });
       void setTyping(conversation.id, null).catch(() => undefined);
     } catch {
-      setOptimistic((prev) =>
-        prev.filter((message) => message.id !== optimisticMessage.id)
-      );
       toast.error('تعذر إرسال الرسالة، حاول مرة أخرى');
     } finally {
       setSending(false);
