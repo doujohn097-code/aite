@@ -35,9 +35,9 @@ export function MobileSidebar(): JSX.Element {
   return (
     <>
       <Modal
-        className='flex justify-end overflow-hidden p-0'
+        className='fixed inset-0 overflow-hidden p-0'
         modalAnimation={drawerVariant}
-        modalClassName='h-[100dvh] max-h-[100dvh] w-[86vw] max-w-[340px] bg-main-background shadow-2xl rounded-l-[28px] border-l border-light-border/80 dark:border-dark-border/80 overflow-hidden flex flex-col'
+        modalClassName='!absolute !right-0 !top-0 !bottom-0 h-[100dvh] max-h-[100dvh] w-[86vw] max-w-[340px] bg-main-background shadow-2xl rounded-l-[28px] border-l border-light-border/80 dark:border-dark-border/80 overflow-hidden flex flex-col'
         open={open}
         closeModal={closeModal}
       >
