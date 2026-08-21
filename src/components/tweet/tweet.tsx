@@ -76,6 +76,9 @@ export function Tweet(tweet: TweetProps): JSX.Element {
   const userId = user?.id as string;
 
   const isOwner = userId === createdBy;
+  // A block is enforced at the rendering boundary too, so blocked posts vanish
+  // from home feeds, search, profile tabs and embedded tweet views.
+  const isBlocked = !!ownerId && user?.blockedUsers?.includes(ownerId);
 
   const { id: parentId, username: parentUsername = username } = parent ?? {};
 
@@ -87,6 +90,8 @@ export function Tweet(tweet: TweetProps): JSX.Element {
 
   const reply = !!parent;
   const tweetIsRetweeted = userRetweets.includes(profileId ?? '');
+
+  if (isBlocked) return <></>;
 
   return (
     <motion.article
