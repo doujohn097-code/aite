@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { AuthContextProvider } from '@lib/context/auth-context';
 import { ThemeContextProvider } from '@lib/context/theme-context';
 import { AppHead } from '@components/common/app-head';
-import { PullToRefresh } from '@components/common/pull-to-refresh';
 import { SplashScreen } from '@components/common/splash-screen';
 import type { ReactElement, ReactNode } from 'react';
 import type { NextPage } from 'next';
@@ -37,7 +36,6 @@ export default function App({
     <>
       <AppHead />
       <SplashScreen isVisible={showSplash} />
-      <PullToRefresh />
       <AuthContextProvider>
         <ThemeContextProvider>
           {getLayout(<Component {...pageProps} />)}

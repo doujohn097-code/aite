@@ -1,0 +1,79 @@
+{
+  "name": "Aite",
+  "short_name": "Aite",
+  "description": "منصة تواصل اجتماعي",
+  "id": "/",
+  "start_url": "/home",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "browser"
+  ],
+  "orientation": "portrait",
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "dir": "rtl",
+  "lang": "ar",
+  "categories": [
+    "social"
+  ],
+  "icons": [
+    {
+      "src": "/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "الرئيسية",
+      "url": "/home",
+      "icons": [
+        {
+          "src": "/logo192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "الرسائل",
+      "url": "/messages",
+      "icons": [
+        {
+          "src": "/logo192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "الإشعارات",
+      "url": "/notifications",
+      "icons": [
+        {
+          "src": "/logo192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
