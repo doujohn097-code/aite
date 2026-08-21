@@ -17,12 +17,7 @@ import {
   getCountFromServer,
   Timestamp
 } from 'firebase/firestore';
-import {
-  ref as storageRef,
-  uploadBytesResumable,
-  getDownloadURL
-} from 'firebase/storage';
-import { db, auth, storage } from './app';
+import { db, auth } from './app';
 import { sendPushNotification } from '@lib/push';
 import {
   usersCollection,
@@ -206,87 +201,39 @@ export async function uploadImages(
     );
   };
 
-  // 1. Try R2 endpoint first if available
-  try {
-    const idToken = await auth.currentUser?.getIdToken();
-    if (idToken) {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`
-        },
-        body: JSON.stringify({
-          files: files.map(({ id, name, type }) => ({ id, name, type }))
-        })
-      });
+  // Cloudflare R2 is the only media backend. A failed signed upload must be
+  // surfaced to the UI rather than silently writing to a second provider.
+  const idToken = await auth.currentUser?.getIdToken();
+  if (!idToken) throw new Error('يجب تسجيل الدخول قبل رفع الوسائط');
 
-      if (response.ok) {
-        const { files: uploadFiles } = (await response.json()) as {
-          files: {
-            id: string;
-            alt: string;
-            type: string;
-            uploadUrl: string;
-            publicUrl: string;
-          }[];
-        };
+  const response = await fetch('/api/upload', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${idToken}`
+    },
+    body: JSON.stringify({ files: files.map(({ id, name, type }) => ({ id, name, type })) })
+  });
+  if (!response.ok) throw new Error('تعذر تجهيز رفع الوسائط');
 
-        if (uploadFiles && uploadFiles.length) {
-          await Promise.all(
-            uploadFiles.map(({ uploadUrl }, i) =>
-              fetch(uploadUrl, {
-                method: 'PUT',
-                headers: { 'Content-Type': files[i].type },
-                body: files[i]
-              }).then((res) => {
-                if (!res.ok)
-                  throw new Error(`Failed to upload ${files[i].name}`);
-                report(i, 100);
-              })
-            )
-          );
-          return uploadFiles.map(({ id, alt, type }, i) => ({
-            id,
-            src: uploadFiles[i].publicUrl,
-            alt,
-            type
-          }));
-        }
-      }
-    }
-  } catch (err) {
-    console.warn(
-      'R2 upload failed or not configured, falling back to Firebase Storage:',
-      err
-    );
-  }
+  const { files: uploadFiles } = (await response.json()) as {
+    files: { id: string; alt: string; type: string; uploadUrl: string; publicUrl: string }[];
+  };
+  if (!uploadFiles?.length || uploadFiles.length !== files.length)
+    throw new Error('استجابة رفع الوسائط غير صالحة');
 
-  // 2. Fallback directly to Firebase Storage (resumable -> real progress)
-  const results = await Promise.all(
-    files.map(async (file, index) => {
-      const safeName = file.name.replace(/\s+/g, '-');
-      const fileRef = storageRef(
-        storage,
-        `images/${userId}/${file.id}-${safeName}`
-      );
-      const publicUrl = await new Promise<string>((resolve, reject) => {
-        const task = uploadBytesResumable(fileRef, file);
-        task.on(
-          'state_changed',
-          (snap) =>
-            report(index, (snap.bytesTransferred / snap.totalBytes) * 100),
-          reject,
-          () => {
-            getDownloadURL(task.snapshot.ref).then(resolve).catch(reject);
-          }
-        );
-      });
-      return { id: file.id, src: publicUrl, alt: file.name, type: file.type };
+  await Promise.all(uploadFiles.map(({ uploadUrl }, index) =>
+    fetch(uploadUrl, {
+      method: 'PUT', headers: { 'Content-Type': files[index].type }, body: files[index]
+    }).then((result) => {
+      if (!result.ok) throw new Error(`Failed to upload ${files[index].name}`);
+      report(index, 100);
     })
-  );
+  ));
 
-  return results;
+  return uploadFiles.map(({ id, alt, type, publicUrl }) => ({
+    id, src: publicUrl, alt, type
+  }));
 }
 
 export async function manageReply(

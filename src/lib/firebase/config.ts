@@ -11,10 +11,6 @@ const config = {
     process.env.FIREBASE_PROJECT_ID ||
     process.env.NEXT_PUBLIC_PROJECT_ID ||
     'myapp-5a04d',
-  storageBucket:
-    process.env.FIREBASE_STORAGE_BUCKET ||
-    process.env.NEXT_PUBLIC_STORAGE_BUCKET ||
-    'myapp-5a04d.firebasestorage.app',
   messagingSenderId:
     process.env.FIREBASE_MESSAGING_SENDER_ID ||
     process.env.NEXT_PUBLIC_MESSAGING_SENDER_ID ||

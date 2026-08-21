@@ -26,7 +26,7 @@
 
 - [Next.js](https://nextjs.org) + [TypeScript](https://www.typescriptlang.org)
 - [Tailwind CSS](https://tailwindcss.com)
-- [Firebase](https://firebase.google.com) — المصادقة و Firestore و Storage
+- [Firebase](https://firebase.google.com) — المصادقة و Firestore
 - [Cloudflare R2](https://www.cloudflare.com/products/r2/) — رفع الوسائط
 - [SWR](https://swr.vercel.app) · [Headless UI](https://headlessui.com) · [Framer Motion](https://framer.com)
 
@@ -44,7 +44,6 @@
 
    - **Authentication** — تفعيل طريقة Google
    - **Cloud Firestore** — إنشاء قاعدة بيانات
-   - **Cloud Storage** — إنشاء حاوية تخزين
 
 1. نسخ ملف البيئة وتعبئة القيم:
 
@@ -54,13 +53,13 @@
 
    ثم ضع إعدادات Firebase (ومفاتيح R2 لرفع الوسائط) داخل `.env.local`.
 
-1. نشر قواعد وفهارس Firestore وStorage:
+1. نشر قواعد وفهارس Firestore:
 
    ```bash
    npm i -g firebase-tools
    firebase login
    firebase use your-project-id
-   firebase deploy --only firestore:rules,firestore:indexes,storage
+   firebase deploy --only firestore:rules,firestore:indexes
    ```
 
 1. **صلاحية لوحة الإدارة:** لا تُستخدم كلمة مرور ثابتة. عيّن Firebase Custom Claim للمسؤول (مرة واحدة)، ثم يخرج المسؤول ويدخل مجددًا:

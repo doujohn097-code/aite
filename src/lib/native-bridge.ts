@@ -1,7 +1,6 @@
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { getFirebase } from '@lib/firebase/app';
-import { getFirebaseConfig } from '@lib/firebase/config';
 import { usersCollection } from '@lib/firebase/collections';
 
 // مفتاح VAPID العام لإشعارات الويب (PWA)

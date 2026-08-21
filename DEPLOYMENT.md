@@ -8,7 +8,7 @@
 npm i -g firebase-tools
 firebase login
 firebase use YOUR_PROJECT_ID
-firebase deploy --only firestore:rules,firestore:indexes,storage
+firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 ## 3. لوحة الإدارة
@@ -34,6 +34,6 @@ npm run build
 ```
 
 ## ملاحظات أمنية
-- ملفات الوسائط محددة بـ50MB في العميل وFirebase Storage.
-- المجلدات خارج `images/{uid}` و`media/{uid}` محجوبة بالكامل في Storage.
+- ملفات الوسائط محددة بـ50MB في العميل وCloudflare R2.
+- الرفع يتم حصريًا عبر روابط R2 الموقّعة؛ لا توجد Firebase Storage كطبقة احتياطية.
 - لا تنشر القواعد قبل اختبارها على Firebase Emulator إذا كانت لديك بيانات إنتاجية حساسة.
