@@ -128,11 +128,7 @@ export function CustomVideoPlayer({
         playsInline
         muted={muted}
         preload='metadata'
-        className={cn(
-          'h-full w-full bg-black transition-opacity duration-150',
-          playing ? 'opacity-100' : 'opacity-0',
-          videoClassName
-        )}
+        className={cn('h-full w-full bg-transparent', videoClassName)}
         onPlay={() => {
           setPlaying(true);
           scheduleHide();
