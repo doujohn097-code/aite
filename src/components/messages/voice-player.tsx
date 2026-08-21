@@ -52,7 +52,9 @@ export function VoicePlayer({
     if (audioRef.current) audioRef.current.playbackRate = next;
   };
 
-  const barCount = compact ? 18 : tall ? 34 : 26;
+  // Keep the waveform within its dedicated grid track: it never touches the
+  // play button, timer or speed control on narrow chat bubbles.
+  const barCount = compact ? 16 : tall ? 24 : 20;
   const bars = useMemo(
     () => normalizePeaks(peaks?.length ? peaks : [0.4, 0.7, 1, 0.5, 0.8], barCount),
     [peaks, barCount]
@@ -139,7 +141,7 @@ export function VoicePlayer({
       </button>
       <div
         className={cn(
-          'flex min-w-0 flex-1 cursor-pointer items-center gap-[2px]',
+          'flex min-w-[96px] cursor-pointer items-center justify-between gap-px overflow-hidden rounded-lg px-1',
           tall ? 'h-11' : 'h-8'
         )}
         onClick={seek}
@@ -151,7 +153,7 @@ export function VoicePlayer({
             <span
               key={index}
               className={cn(
-                'w-[3px] shrink-0 rounded-full transition-colors duration-150',
+                'w-0.5 shrink-0 rounded-full transition-[height,background-color] duration-150',
                 isOwn
                   ? played
                     ? 'bg-black'

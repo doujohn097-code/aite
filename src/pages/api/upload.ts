@@ -17,10 +17,16 @@ function safeSegment(value: string): string {
   return value.replace(/[^a-zA-Z0-9._-]/g, '-').replace(/-+/g, '-').slice(0, MAX_FILE_NAME_LENGTH);
 }
 
+function normalizedMime(type: string): string {
+  // MediaRecorder commonly returns values such as `audio/webm;codecs=opus`.
+  // Validate the media type while preserving the complete value for the upload.
+  return type.split(';', 1)[0].trim().toLowerCase();
+}
+
 function isValidFile(file: UploadFile): boolean {
   return typeof file.id === 'string' && /^[a-zA-Z0-9_-]{6,80}$/.test(file.id)
     && typeof file.name === 'string' && file.name.length > 0 && file.name.length <= MAX_FILE_NAME_LENGTH
-    && typeof file.type === 'string' && ALLOWED_TYPES.has(file.type);
+    && typeof file.type === 'string' && ALLOWED_TYPES.has(normalizedMime(file.type));
 }
 
 export default async function uploadEndpoint(
