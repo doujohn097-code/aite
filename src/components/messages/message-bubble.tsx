@@ -470,7 +470,10 @@ export function MessageBubble({
           >
             <a
               className={cn(
-                'block w-[min(320px,calc(100vw-88px))] max-w-full overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl',
+                'block max-w-full overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl',
+                sharedPost.kind === 'reel'
+                  ? 'w-[min(280px,calc(100vw-112px))]'
+                  : 'w-[min(320px,calc(100vw-88px))]',
                 'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50'
               )}
               onClick={(event) => event.stopPropagation()}
