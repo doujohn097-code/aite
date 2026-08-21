@@ -471,18 +471,23 @@ export function MessageBubble({
             <a
               className={cn(
                 'block min-w-[250px] max-w-[320px] overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl xs:min-w-[300px]',
-                isOwn
-                  ? 'border-black/15 text-black'
-                  : 'border-black/10 text-light-primary dark:border-white/15 dark:text-dark-primary'
+                'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50'
               )}
               onClick={(event) => event.stopPropagation()}
             >
-              {sharedPost.thumbnail && (
-                <img
-                  className='h-40 w-full object-cover'
-                  src={sharedPost.thumbnail}
-                  alt='معاينة المنشور'
-                />
+              {sharedPost.thumbnail ? (
+                <div className='relative h-40 overflow-hidden bg-slate-100 dark:bg-slate-900'>
+                  <img className='h-full w-full object-cover' src={sharedPost.thumbnail} alt='معاينة المحتوى' />
+                  {sharedPost.kind === 'reel' && (
+                    <span className='absolute inset-0 flex items-center justify-center bg-black/15'>
+                      <HeroIcon className='h-12 w-12 rounded-full bg-black/55 p-3 text-white backdrop-blur-sm' iconName='PlayIcon' solid />
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className='flex h-24 items-center justify-center bg-gradient-to-br from-main-accent/20 to-main-accent/5 text-main-accent'>
+                  <HeroIcon className='h-9 w-9' iconName={sharedPost.kind === 'reel' ? 'FilmIcon' : 'DocumentTextIcon'} />
+                </div>
               )}
               <div className='flex items-center gap-2 px-3 pt-2.5'>
                 {sharedPost.authorPhoto && (

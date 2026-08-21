@@ -330,7 +330,6 @@ export default function Chat(): JSX.Element {
     try {
       await manageBlock(blocked ? 'unblock' : 'block', user.id, peerId);
       toast.success(blocked ? 'تم إلغاء الحظر' : 'تم حظر المستخدم');
-      if (!blocked) setForbidden(true);
     } catch {
       toast.error('تعذر تحديث الحظر');
     } finally {
