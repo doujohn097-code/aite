@@ -69,6 +69,7 @@ export function MessageBubble({
   const dragX = useMotionValue(0);
   const [triggered, setTriggered] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [swipeReady, setSwipeReady] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
   // نخفي القلب تلقائيًا بعد فترة قصيرة حتى لا يلصق على الصفحة
   const heartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -101,12 +102,14 @@ export function MessageBubble({
   }, {});
 
   const handleDragEnd = (): void => {
-    if (Math.abs(dragX.get()) >= SWIPE_THRESHOLD && onReply) {
+    const shouldReply = Math.abs(dragX.get()) >= SWIPE_THRESHOLD && !!onReply;
+    setSwipeReady(false);
+    if (shouldReply && onReply) {
       setTriggered(true);
       try {
-        navigator.vibrate?.(12);
+        navigator.vibrate?.(18);
       } catch {
-        /* ignore */
+        /* Haptics are optional. */
       }
       onReply(message);
     }
@@ -122,8 +125,13 @@ export function MessageBubble({
   const handlePointerUp = (): void => {
     if (Math.abs(dragX.get()) > 12) return;
     const now = Date.now();
-    if (now - tapRef.current < 300) {
+    if (now - tapRef.current < 300 && onReaction) {
       tapRef.current = 0;
+      try {
+        navigator.vibrate?.(10);
+      } catch {
+        /* Haptics are optional. */
+      }
       setHeartBurst((value) => value + 1);
       react('❤️');
     } else {
@@ -202,9 +210,10 @@ export function MessageBubble({
       dragElastic={{ left: 0.24, right: 0.24 }}
       dragTransition={{ bounceStiffness: 600, bounceDamping: 28 }}
       style={{ x: dragX, rotate }}
-      onDrag={() => {
+      onDrag={(_, info) => {
         setTriggered(false);
         cancelPress();
+        setSwipeReady(Math.abs(info.offset.x) >= SWIPE_THRESHOLD);
       }}
       onDragEnd={handleDragEnd}
       initial={triggered ? { scale: 0.97 } : false}
@@ -225,17 +234,15 @@ export function MessageBubble({
       <motion.div
         aria-hidden
         className={cn(
-          'absolute top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full',
+          'absolute top-1/2 flex h-10 -translate-y-1/2 items-center gap-1.5 rounded-full px-2',
           'bg-main-accent text-black shadow-lg shadow-main-accent/40',
+          swipeReady && 'ring-4 ring-main-accent/25',
           isOwn ? '-start-2' : '-end-2'
         )}
         style={{ scale: replyScale, opacity: replyOpacity }}
       >
-        <HeroIcon
-          className='h-4 w-4 rotate-180'
-          iconName='ArrowUturnLeftIcon'
-          solid
-        />
+        <HeroIcon className='h-4 w-4 rotate-180' iconName='ArrowUturnLeftIcon' solid />
+        <span className='text-[10px] font-black'>{swipeReady ? 'حرّر للرد' : 'اسحب'}</span>
       </motion.div>
 
       {/* انفجار القلب عند النقر المزدوج — قلب نابض مع بارتكلات حلقية */}
@@ -300,8 +307,8 @@ export function MessageBubble({
             exit={{ opacity: 0, scale: 0.9, y: 6 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             className={cn(
-              `menu-container absolute z-30 w-max max-w-xs overflow-hidden
-               rounded-md bg-main-background`,
+              `absolute z-30 w-max max-w-xs overflow-hidden rounded-2xl border border-white/20
+               bg-main-background/95 shadow-2xl shadow-black/20 backdrop-blur-xl dark:border-white/10`,
               isOwn ? 'right-0' : 'left-0',
               '-top-14'
             )}

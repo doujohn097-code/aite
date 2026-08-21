@@ -109,29 +109,29 @@ export function ChatComposer({
     });
   };
 
-  const clearAll = (): void => {
-    previews.forEach((preview) => URL.revokeObjectURL(preview.url));
-    if (voice) URL.revokeObjectURL(voice.url);
-    setText('');
-    setFiles([]);
-    setPreviews([]);
-    setVoice(null);
-  };
-
   const handleSend = (): void => {
     if (!hasContent || sending) return;
 
-    const trimmed = text.trim();
+    // A composer action must create exactly one message. Previously a draft
+    // containing text + media/voice could dispatch several messages at once.
+    // Keep the text in the editor when an attachment is sent, so it is never
+    // silently lost and can be sent as the following message/caption.
     if (files.length) {
       const kind = files.some((file) => file.type.startsWith('video/'))
         ? 'video'
         : 'image';
       onSendMedia(files, kind);
+      previews.forEach((preview) => URL.revokeObjectURL(preview.url));
+      setFiles([]);
+      setPreviews([]);
+    } else if (voice) {
+      onSendVoice(voice.blob, voice.duration, voice.peaks);
+      URL.revokeObjectURL(voice.url);
+      setVoice(null);
+    } else {
+      onSendText(text.trim());
+      setText('');
     }
-    if (voice) onSendVoice(voice.blob, voice.duration, voice.peaks);
-    if (trimmed) onSendText(trimmed);
-
-    clearAll();
     stopTyping();
   };
 
@@ -146,6 +146,9 @@ export function ChatComposer({
 
   return (
     <div className='bg-main-background px-2 pb-2 pt-2'>
+      <div aria-live='polite' className='sr-only'>
+        {sending ? 'جارٍ إرسال الرسالة' : ''}
+      </div>
       {/* شريط الرد قبل الإرسال */}
       <AnimatePresence>
         {replyingTo && (
@@ -268,8 +271,9 @@ export function ChatComposer({
       </AnimatePresence>
 
       <div
-        className='flex items-end gap-1 rounded-3xl border border-light-border
-                   bg-main-search-background/50 px-1.5 py-1.5 dark:border-dark-border'
+        className='flex items-end gap-1 rounded-3xl border border-light-border bg-main-search-background/70
+                   px-1.5 py-1.5 shadow-sm transition focus-within:border-main-accent/60
+                   focus-within:ring-4 focus-within:ring-main-accent/10 dark:border-dark-border'
       >
         {recording ? (
           <VoiceRecorder
@@ -301,7 +305,8 @@ export function ChatComposer({
               type='button'
               onClick={() => fileInputRef.current?.click()}
               aria-label='إرفاق صورة أو فيديو'
-              className='custom-button dark-bg-tab shrink-0 p-2 text-main-accent
+              disabled={sending}
+              className='custom-button disabled:cursor-not-allowed disabled:opacity-40 dark-bg-tab shrink-0 p-2 text-main-accent
                          hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
             >
               <HeroIcon className='h-6 w-6' iconName='PhotoIcon' />

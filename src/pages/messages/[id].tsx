@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { doc, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
@@ -69,8 +69,10 @@ export default function Chat(): JSX.Element {
   const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
   // الرسالة قيد الرد عليها عبر السحب
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const stickToBottomRef = useRef(true);
   const mainRef = useRef<HTMLElement | null>(null);
   const previousBodyOverflow = useRef<string>('');
 
@@ -113,6 +115,8 @@ export default function Chat(): JSX.Element {
     setOptimistic([]);
     setReplyTarget(null);
     setFirstUnreadId(null);
+    setShowJumpToLatest(false);
+    stickToBottomRef.current = true;
   }, [conversationId]);
 
   // إيقاف "يكتب الآن" عند مغادرة المحادثة
@@ -239,12 +243,29 @@ export default function Chat(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, conversationId, forbidden]);
 
-  // التمرير لآخر رسالة
+  // لا نسحب المستخدم إلى الأسفل بينما يقرأ رسائل أقدم. نلتصق بالنهاية فقط
+  // عندما يكون هناك أصلًا، أو عند إرسال رسالة منه.
   useEffect(() => {
     const element = scrollRef.current;
-    if (!element) return;
-    element.scrollTop = element.scrollHeight;
+    if (!element || !stickToBottomRef.current) return;
+    element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
   }, [messages?.length, optimistic.length, peerTyping]);
+
+  const handleMessageScroll = (): void => {
+    const element = scrollRef.current;
+    if (!element) return;
+    stickToBottomRef.current =
+      element.scrollHeight - element.scrollTop - element.clientHeight < 96;
+    setShowJumpToLatest(!stickToBottomRef.current);
+  };
+
+  const jumpToLatest = (): void => {
+    const element = scrollRef.current;
+    if (!element) return;
+    stickToBottomRef.current = true;
+    setShowJumpToLatest(false);
+    element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
+  };
 
   const toMillis = (value: Message['createdAt']): number =>
     typeof value?.toMillis === 'function'
@@ -403,7 +424,8 @@ export default function Chat(): JSX.Element {
       {/* الرسائل */}
       <div
         ref={scrollRef}
-        className='flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-clip overscroll-contain bg-main-background px-3 py-4'
+        onScroll={handleMessageScroll}
+        className='relative flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-clip overscroll-contain bg-main-background px-3 py-4'
       >
         {!messages ? (
           <Loading className='mt-5' />
@@ -484,6 +506,21 @@ export default function Chat(): JSX.Element {
         {/* مؤشر "يكتب الآن…" */}
         <AnimatePresence>
           {peerTyping && <TypingIndicator />}
+        </AnimatePresence>
+        <AnimatePresence>
+          {showJumpToLatest && (
+            <motion.button
+              type='button'
+              initial={{ opacity: 0, y: 12, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.9 }}
+              onClick={jumpToLatest}
+              className='sticky bottom-2 z-20 mx-auto flex w-fit items-center gap-1.5 rounded-full bg-main-accent px-3 py-2 text-xs font-bold text-black shadow-lg'
+            >
+              <HeroIcon className='h-4 w-4' iconName='ArrowDownIcon' />
+              أحدث الرسائل
+            </motion.button>
+          )}
         </AnimatePresence>
       </div>
 

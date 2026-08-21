@@ -27,7 +27,6 @@ const MEDIA_EXTENSIONS = [
   'm4v',
   '3gp',
   'wmv',
-  'flv',
   'ts'
 ] as const;
 
@@ -76,7 +75,7 @@ export function isValidImage(name: string, bytes: number): boolean {
 }
 
 export function isValidMedia(name: string, size: number): boolean {
-  return isValidMediaExtension(name) && size <= 100 * Math.pow(1024, 2);
+  return isValidMediaExtension(name) && size < 50 * Math.pow(1024, 2);
 }
 
 export function isValidUsername(

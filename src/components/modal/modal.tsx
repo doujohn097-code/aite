@@ -21,13 +21,14 @@ const variants: Variants[] = [
     exit: { opacity: 0 }
   },
   {
-    initial: { opacity: 0, scale: 0.8 },
+    initial: { opacity: 0, scale: 0.94, y: 18 },
     animate: {
       opacity: 1,
       scale: 1,
-      transition: { type: 'spring', duration: 0.5, bounce: 0.4 }
+      y: 0,
+      transition: { type: 'spring', stiffness: 420, damping: 30 }
     },
-    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.15 } }
+    exit: { opacity: 0, scale: 0.97, y: 10, transition: { duration: 0.16 } }
   }
 ];
 
@@ -76,7 +77,7 @@ export function Modal({
           static
         >
           <motion.div
-            className='hover-animation fixed inset-0 bg-black/40 dark:bg-[#5B7083]/40'
+            className='fixed inset-0 bg-slate-950/55 backdrop-blur-[2px] dark:bg-black/65'
             aria-hidden='true'
             {...backdrop}
           />

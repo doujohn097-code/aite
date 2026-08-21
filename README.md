@@ -54,14 +54,22 @@
 
    ثم ضع إعدادات Firebase (ومفاتيح R2 لرفع الوسائط) داخل `.env.local`.
 
-1. نشر قواعد وفهارس Firestore:
+1. نشر قواعد وفهارس Firestore وStorage:
 
    ```bash
    npm i -g firebase-tools
    firebase login
    firebase use your-project-id
-   firebase deploy --except functions
+   firebase deploy --only firestore:rules,firestore:indexes,storage
    ```
+
+1. **صلاحية لوحة الإدارة:** لا تُستخدم كلمة مرور ثابتة. عيّن Firebase Custom Claim للمسؤول (مرة واحدة)، ثم يخرج المسؤول ويدخل مجددًا:
+
+   ```bash
+   FIREBASE_ADMIN_KEY="<base64-service-account-json>" node scripts/set-admin.mjs USER_UID
+   ```
+
+   لا تضع مفتاح حساب الخدمة في GitHub. واضبط CORS لحاوية R2 من لوحة Cloudflare بحيث يسمح فقط بنطاق موقعك، وليس `*`.
 
 1. تشغيل المشروع:
 

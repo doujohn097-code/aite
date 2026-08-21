@@ -44,8 +44,9 @@ export function ProgressBar({
 
   return (
     <button
-      className='group relative cursor-pointer outline-none'
+      className='group relative cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-main-accent'
       type='button'
+      aria-label={`يتبقى ${remainingCharacters} حرفًا`}
     >
       <i
         className={cn(

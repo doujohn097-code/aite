@@ -65,12 +65,12 @@ export async function registerWebPushToken(userId: string): Promise<void> {
     }
 
     // إشعارات أثناء فتح التطبيق (المقدمة)
-    onMessage(messaging, (payload) => {
+    void onMessage(messaging, (payload) => {
       const title = payload.notification?.title || payload.data?.title || 'Aite';
       const body = payload.notification?.body || payload.data?.body || '';
       const image = payload.data?.image;
       if (Notification.permission === 'granted') {
-        registration.showNotification(title, {
+        void registration.showNotification(title, {
           body,
           icon: image || '/logo192.png',
           badge: '/logo192.png',
