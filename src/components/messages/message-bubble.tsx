@@ -575,7 +575,7 @@ export function MessageBubble({
       {/* تفاعلات الرسالة + الوقت ومؤشر القراءة */}
       <div
         className={cn(
-          'flex items-center gap-1.5 px-1 text-[11px] text-light-secondary dark:text-dark-secondary',
+          'relative -mt-1 flex min-h-4 items-center gap-1.5 px-1 text-[11px] text-light-secondary dark:text-dark-secondary',
           isOwn ? 'flex-row-reverse' : 'flex-row'
         )}
       >
@@ -590,8 +590,9 @@ export function MessageBubble({
         {Object.entries(reactionGroups).map(([emoji, count]) => (
           <span
             key={emoji}
-            className='flex items-center gap-0.5 rounded-full border border-light-border bg-main-search-background
-                       px-1.5 py-0.5 text-[11px] leading-none dark:border-dark-border'
+            className='relative -top-3 flex items-center gap-0.5 rounded-full border border-light-border
+                       bg-main-background px-1.5 py-0.5 text-[11px] leading-none shadow-sm
+                       dark:border-dark-border dark:bg-slate-800'
           >
             {emoji}
             {count > 1 && (
