@@ -142,12 +142,15 @@ export default function Chat(): JSX.Element {
           setForbidden(true);
           return;
         }
-        setForbidden(false);
-        setConversation(data);
-
         const otherId = data.participants.find(
           (participant) => participant !== user.id
         );
+        if (otherId && user.blockedUsers?.includes(otherId)) {
+          setForbidden(true);
+          return;
+        }
+        setForbidden(false);
+        setConversation(data);
         setPeerId(otherId ?? null);
       },
       (error) => {

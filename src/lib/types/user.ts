@@ -29,6 +29,8 @@ export type User = {
   lastActiveAt?: Timestamp | null;
   /** FCM device tokens for the native app push notifications. */
   fcmTokens?: string[];
+  /** Accounts this user chose not to see or contact. */
+  blockedUsers?: string[];
 };
 
 export type EditableData = Extract<

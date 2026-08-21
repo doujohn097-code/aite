@@ -83,6 +83,18 @@ export async function updateUsername(
   });
 }
 
+export async function manageBlock(
+  type: 'block' | 'unblock',
+  userId: string,
+  targetUserId: string
+): Promise<void> {
+  if (!userId || !targetUserId || userId === targetUserId) return;
+  await updateDoc(doc(usersCollection, userId), {
+    blockedUsers: type === 'block' ? arrayUnion(targetUserId) : arrayRemove(targetUserId),
+    updatedAt: serverTimestamp()
+  });
+}
+
 export async function managePinnedTweet(
   type: 'pin' | 'unpin',
   userId: string,

@@ -108,7 +108,7 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
                           مراسلة
                         </Button>
                       )}
-                      <UserShare username={userData.username} />
+                      <UserShare username={userData.username} userId={userData.id} />
                       <FollowButton
                         userTargetId={userData.id}
                         userTargetUsername={userData.username}

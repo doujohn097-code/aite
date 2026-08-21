@@ -572,16 +572,8 @@ export function MessageBubble({
         <Modal
           open
           closeModal={() => setSelectedMediaIndex(null)}
-          modalClassName='relative flex h-full w-full items-center justify-center p-4'
+          modalClassName='relative flex w-full max-w-4xl items-center justify-center'
         >
-          <button
-            type='button'
-            aria-label='إغلاق المعاينة'
-            onClick={() => setSelectedMediaIndex(null)}
-            className='absolute right-5 top-5 z-[60] flex h-11 w-11 items-center justify-center rounded-full bg-black/65 text-white shadow-xl backdrop-blur transition hover:bg-black'
-          >
-            <HeroIcon className='h-6 w-6' iconName='XMarkIcon' />
-          </button>
           <ImageModal imageData={media[selectedMediaIndex]} previewCount={media.length} />
         </Modal>
       )}

@@ -79,7 +79,7 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'bio', 'name', 'website', 'location', 'photoURL', 'coverPhotoURL',
             'theme', 'accent', 'username', 'pinnedTweet', 'storyColor', 'lastStoryAt',
-            'storyViews', 'lastActiveAt', 'fcmTokens', 'totalTweets', 'totalReplies',
+            'storyViews', 'lastActiveAt', 'fcmTokens', 'blockedUsers', 'totalTweets', 'totalReplies',
             'totalPhotos', 'updatedAt'
           ]));
       allow delete: if isAdmin();

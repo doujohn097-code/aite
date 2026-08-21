@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { preventBubbling } from '@lib/utils';
 import { siteURL } from '@lib/env';
+import { useAuth } from '@lib/context/auth-context';
+import { manageBlock } from '@lib/firebase/utils';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ToolTip } from '@components/ui/tooltip';
@@ -11,9 +13,18 @@ import { variants } from '@components/tweet/tweet-actions';
 
 type UserShareProps = {
   username: string;
+  userId?: string;
 };
 
-export function UserShare({ username }: UserShareProps): JSX.Element {
+export function UserShare({ username, userId }: UserShareProps): JSX.Element {
+  const { user } = useAuth();
+  const isBlocked = !!userId && user?.blockedUsers?.includes(userId);
+  const handleBlock = async (closeMenu: () => void): Promise<void> => {
+    if (!user || !userId || user.id === userId) return;
+    await manageBlock(isBlocked ? 'unblock' : 'block', user.id, userId);
+    closeMenu();
+    toast.success(isBlocked ? `تم إلغاء حظر @${username}` : `تم حظر @${username}`);
+  };
   const handleCopy = (closeMenu: () => void) => async (): Promise<void> => {
     closeMenu();
     await navigator.clipboard.writeText(`${siteURL}/user/${username}`);
@@ -53,6 +64,16 @@ export function UserShare({ username }: UserShareProps): JSX.Element {
                   <HeroIcon iconName='LinkIcon' />
                   نسخ رابط الملف الشخصي
                 </Popover.Button>
+                {userId && user?.id !== userId && (
+                  <Popover.Button
+                    className='flex w-full gap-3 border-t border-light-border p-4 text-accent-red hover:bg-accent-red/10 dark:border-dark-border'
+                    as={Button}
+                    onClick={preventBubbling(() => handleBlock(close))}
+                  >
+                    <HeroIcon iconName={isBlocked ? 'CheckCircleIcon' : 'NoSymbolIcon'} />
+                    {isBlocked ? `إلغاء حظر @${username}` : `حظر @${username}`}
+                  </Popover.Button>
+                )}
               </Popover.Panel>
             )}
           </AnimatePresence>

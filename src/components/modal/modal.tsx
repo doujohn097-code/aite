@@ -86,6 +86,9 @@ export function Modal({
               'fixed inset-0 overflow-y-auto p-4',
               className ?? 'flex items-center justify-center'
             )}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) handleClose();
+            }}
           >
             <Dialog.Panel
               className={panelClassName}

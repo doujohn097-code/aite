@@ -4,6 +4,7 @@ import { doc, query, where, orderBy, documentId } from 'firebase/firestore';
 import { AnimatePresence } from 'framer-motion';
 import cn from 'clsx';
 import { useUser } from '@lib/context/user-context';
+import { useAuth } from '@lib/context/auth-context';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useDocument } from '@lib/hooks/useDocument';
 import {
@@ -36,7 +37,9 @@ const TABS: { id: ProfileTab; label: string; icon: IconName }[] = [
 
 export default function UserTweets(): JSX.Element {
   const { user } = useUser();
+  const { user: authUser } = useAuth();
   const { id, username, pinnedTweet } = user ?? {};
+  const isBlocked = !!id && authUser?.blockedUsers?.includes(id);
 
   const [tab, setTab] = useState<ProfileTab>('posts');
 
@@ -127,7 +130,13 @@ export default function UserTweets(): JSX.Element {
         ))}
       </div>
 
-      {loading ? (
+      {isBlocked ? (
+        <div className='flex flex-col items-center gap-3 p-12 text-center'>
+          <HeroIcon className='h-10 w-10 text-light-secondary dark:text-dark-secondary' iconName='NoSymbolIcon' />
+          <p className='font-bold'>لقد حظرت هذا الحساب</p>
+          <p className='text-sm text-light-secondary dark:text-dark-secondary'>لن تظهر منشوراته أو محتواه في خلاصتك.</p>
+        </div>
+      ) : loading ? (
         <Loading className='mt-5' />
       ) : tab === 'posts' ? (
         !ownerOnlyTweets?.length ? (
