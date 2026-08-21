@@ -1,4 +1,6 @@
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { getFirebase } from '@lib/firebase/app';
 import { usersCollection } from '@lib/firebase/collections';
@@ -22,7 +24,7 @@ export function isInstalledPwa(): boolean {
 }
 
 export function isNativeApp(): boolean {
-  return false;
+  return Capacitor.isNativePlatform();
 }
 
 /** طلب إذن الإشعارات */
@@ -34,8 +36,26 @@ async function ensurePermission(): Promise<boolean> {
   return res === 'granted';
 }
 
-/** يسجّل توكن إشعارات الويب (FCM Web Push) في مستند المستخدم */
+async function registerNativePushToken(userId: string): Promise<void> {
+  const permission = await PushNotifications.requestPermissions();
+  if (permission.receive !== 'granted') return;
+  await PushNotifications.register();
+  await PushNotifications.removeAllListeners();
+  await PushNotifications.addListener('registration', async ({ value }) => {
+    await updateDoc(doc(usersCollection, userId), { fcmTokens: arrayUnion(value) });
+  });
+  await PushNotifications.addListener('pushNotificationActionPerformed', (event) => {
+    const url = event.notification.data?.url as string | undefined;
+    if (url && typeof window !== 'undefined') window.location.assign(url);
+  });
+}
+
+/** يسجّل توكن إشعارات FCM داخل التطبيق أو Web Push في المتصفح. */
 export async function registerWebPushToken(userId: string): Promise<void> {
+  if (isNativeApp()) {
+    await registerNativePushToken(userId);
+    return;
+  }
   if (typeof window === 'undefined') return;
   if (!('serviceWorker' in navigator)) return;
 

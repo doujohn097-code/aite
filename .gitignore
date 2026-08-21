@@ -15,6 +15,16 @@
 # production
 /build
 
+# Android build tools and secrets
+/.tools/
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties
+/android/app/google-services.json
+*.keystore
+*.jks
+
 # misc
 .DS_Store
 *.pem
@@ -28,27 +38,3 @@ yarn-error.log*
 # local env files
 .env*.local
 # env files (keep .env.example)
-.env
-.env.*
-!.env.example
-
-# node compile cache
-/node-compile-cache/
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# python
-/.mypy_cache
-*.py
-
-# Android build artifacts
-android/.gradle/
-android/build/
-android/app/build/
-android/app/aite-release.keystore
-android/local.properties
