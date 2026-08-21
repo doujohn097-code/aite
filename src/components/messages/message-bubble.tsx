@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import cn from 'clsx';
 import {
@@ -68,6 +68,16 @@ export function MessageBubble({
   const [triggered, setTriggered] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
+  // نخفي القلب تلقائيًا بعد فترة قصيرة حتى لا يلصق على الصفحة
+  const heartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!heartBurst) return;
+    if (heartTimer.current) clearTimeout(heartTimer.current);
+    heartTimer.current = setTimeout(() => setHeartBurst(0), 1300);
+    return () => {
+      if (heartTimer.current) clearTimeout(heartTimer.current);
+    };
+  }, [heartBurst]);
 
   const rotate = useTransform(dragX, [-80, 0, 80], [-4, 0, 4]);
   const replyScale = useTransform(dragX, (v) =>
@@ -235,17 +245,18 @@ export function MessageBubble({
             className='pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2'
           >
             <motion.span
-              className='block text-4xl'
-              initial={{ scale: 0, opacity: 0, rotate: -15 }}
+              className='block text-6xl drop-shadow-2xl'
+              initial={{ scale: 0, opacity: 0, rotate: -20 }}
               animate={{
-                scale: [0, 1.45, 1.15],
+                scale: [0, 1.7, 1.25],
                 opacity: [0, 1, 1],
-                rotate: [-15, 5, 0]
+                rotate: [-20, 8, 0],
+                y: [0, -4, 0]
               }}
-              exit={{ opacity: 0, y: -24, scale: 0.4 }}
+              exit={{ opacity: 0, y: -32, scale: 0.3, filter: 'blur(2px)' }}
               transition={{
-                scale: { type: 'spring', stiffness: 400, damping: 15 },
-                duration: 0.9
+                scale: { type: 'spring', stiffness: 420, damping: 14 },
+                duration: 1.1
               }}
             >
               ❤️
@@ -263,7 +274,7 @@ export function MessageBubble({
                 }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
               >
-                💛
+                ✨
               </motion.span>
             ))}
           </motion.span>

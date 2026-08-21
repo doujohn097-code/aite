@@ -27,6 +27,7 @@ type ChatComposerProps = {
   onSendText: (text: string) => void;
   onSendMedia: (files: FilesWithId, kind: 'image' | 'video') => void;
   onSendVoice: (blob: Blob, duration: number, peaks: number[]) => void;
+  onTyping?: (typing: boolean) => void;
 };
 
 export function ChatComposer({
@@ -35,7 +36,8 @@ export function ChatComposer({
   onCancelReply,
   onSendText,
   onSendMedia,
-  onSendVoice
+  onSendVoice,
+  onTyping
 }: ChatComposerProps): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,6 +48,29 @@ export function ChatComposer({
   >([]);
   const [voice, setVoice] = useState<VoiceDraft | null>(null);
   const [recording, setRecording] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingSent = useRef(false);
+
+  const notifyTyping = (): void => {
+    if (!onTyping) return;
+    if (!isTypingSent.current) {
+      isTypingSent.current = true;
+      onTyping(true);
+    }
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => {
+      isTypingSent.current = false;
+      onTyping(false);
+    }, 2500);
+  };
+
+  const stopTyping = (): void => {
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    if (isTypingSent.current) {
+      isTypingSent.current = false;
+      onTyping?.(false);
+    }
+  };
 
   const hasContent = text.trim().length > 0 || files.length > 0 || !!voice;
 
@@ -107,6 +132,7 @@ export function ChatComposer({
     if (trimmed) onSendText(trimmed);
 
     clearAll();
+    stopTyping();
   };
 
   const handleKeyDown = (
@@ -283,7 +309,11 @@ export function ChatComposer({
 
             <TextareaAutosize
               value={text}
-              onChange={(event) => setText(event.target.value)}
+              onChange={(event) => {
+                setText(event.target.value);
+                if (event.target.value) notifyTyping();
+                else stopTyping();
+              }}
               onKeyDown={handleKeyDown}
               placeholder='اكتب رسالة...'
               maxRows={4}

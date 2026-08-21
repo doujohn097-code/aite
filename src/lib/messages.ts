@@ -209,6 +209,16 @@ export async function toggleMessageReaction(
   sendPushNotification({ kind: 'messageReaction', conversationId, emoji });
 }
 
+/** يعلم الطرف الآخر أنني أكتب (null = توقف) — يُمسح تلقائياً بعد بضع ثوانٍ */
+export async function setTyping(
+  conversationId: string,
+  userId: string | null
+): Promise<void> {
+  await updateDoc(doc(db, 'conversations', conversationId), {
+    typing: userId
+  });
+}
+
 export async function markConversationRead(
   conversationId: string,
   userId: string

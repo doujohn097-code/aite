@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { doc, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
@@ -13,7 +14,8 @@ import {
   sendMessage,
   markConversationRead,
   markMessageSeen,
-  toggleMessageReaction
+  toggleMessageReaction,
+  setTyping
 } from '@lib/messages';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -22,6 +24,7 @@ import { Loading } from '@components/ui/loading';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { MessageBubble } from '@components/messages/message-bubble';
+import { TypingIndicator } from '@components/messages/typing-indicator';
 import { ChatComposer } from '@components/messages/chat-composer';
 import { StoryAvatar } from '@components/stories/story-avatar';
 import { getTimestampMillis } from '@lib/date';
@@ -29,6 +32,24 @@ import type { ReactElement, ReactNode, Ref } from 'react';
 import type { Conversation, Message } from '@lib/types/message';
 import type { User } from '@lib/types/user';
 import type { FilesWithId } from '@lib/types/file';
+
+function dayKey(millis: number): string {
+  return new Date(millis).toDateString();
+}
+
+function formatDayLabel(millis: number): string {
+  const d = new Date(millis);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'اليوم';
+  if (d.toDateString() === yesterday.toDateString()) return 'أمس';
+  return new Intl.DateTimeFormat('ar', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  }).format(d);
+}
 
 export default function Chat(): JSX.Element {
   const { user } = useAuth();
@@ -43,6 +64,8 @@ export default function Chat(): JSX.Element {
   const [forbidden, setForbidden] = useState(false);
   // رسائل ظاهرة فورًا قبل وصول نسخة الخادم (مثل إنستغرام)
   const [optimistic, setOptimistic] = useState<Message[]>([]);
+  // معرّف أول رسالة غير مقروءة من الطرف الآخر — لعرض فاصل "رسائل جديدة"
+  const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
   // الرسالة قيد الرد عليها عبر السحب
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
 
@@ -88,7 +111,17 @@ export default function Chat(): JSX.Element {
     setMessages(null);
     setOptimistic([]);
     setReplyTarget(null);
+    setFirstUnreadId(null);
   }, [conversationId]);
+
+  // إيقاف "يكتب الآن" عند مغادرة المحادثة
+  useEffect(() => {
+    if (!conversationId || !user) return;
+    return () => {
+      void setTyping(conversationId, null).catch(() => undefined);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, user?.id]);
 
   // الاستماع للمحادثة والتحقق من العضوية
   useEffect(() => {
@@ -137,6 +170,7 @@ export default function Chat(): JSX.Element {
     return unsubscribe;
   }, [peerId]);
 
+  const peerTyping = conversation?.typing === peerId;
   const peerActiveMillis = peer?.lastActiveAt
     ? getTimestampMillis(peer.lastActiveAt)
     : null;
@@ -167,7 +201,15 @@ export default function Chat(): JSX.Element {
               (b.createdAt?.toMillis?.() ?? 0)
           )
           .slice(-150);
-        setMessages(data);
+        setMessages((prev) => {
+          if (prev === null) {
+            const firstUnread = data.find(
+              (m) => m.senderId !== user.id && !m.seenBy?.includes(user.id)
+            );
+            if (firstUnread) setFirstUnreadId(firstUnread.id);
+          }
+          return data;
+        });
         void markConversationRead(conversationId, user.id);
 
         // تحديث حالة القراءة لرسائل الطرف الآخر
@@ -201,7 +243,7 @@ export default function Chat(): JSX.Element {
     const element = scrollRef.current;
     if (!element) return;
     element.scrollTop = element.scrollHeight;
-  }, [messages?.length, optimistic.length]);
+  }, [messages?.length, optimistic.length, peerTyping]);
 
   const toMillis = (value: Message['createdAt']): number =>
     typeof value?.toMillis === 'function'
@@ -280,6 +322,7 @@ export default function Chat(): JSX.Element {
     setSending(true);
     try {
       await sendMessage(conversation, user.id, { ...payload, replyTo });
+      void setTyping(conversation.id, null).catch(() => undefined);
     } catch {
       setOptimistic((prev) =>
         prev.filter((message) => message.id !== optimisticMessage.id)
@@ -364,25 +407,54 @@ export default function Chat(): JSX.Element {
         {!messages ? (
           <Loading className='mt-5' />
         ) : shownMessages.length ? (
-          shownMessages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isOwn={message.senderId === user?.id}
-              viewerId={user?.id}
-              onReply={setReplyTarget}
-              onReaction={(target, emoji) => {
-                if (!user || !conversationId) return;
-                void toggleMessageReaction(
-                  conversationId,
-                  target.id,
-                  user.id,
-                  target.reactions?.[user.id] ?? null,
-                  emoji
-                );
-              }}
-            />
-          ))
+          shownMessages.map((message, index) => {
+            const millis = toMillis(message.createdAt);
+            const prev = index > 0 ? shownMessages[index - 1] : null;
+            const prevMillis = prev ? toMillis(prev.createdAt) : 0;
+            const showDate = !prev || dayKey(millis) !== dayKey(prevMillis);
+            return (
+              <div key={message.id} className='contents'>
+                {showDate && (
+                  <div
+                    className='sticky top-2 z-10 mx-auto my-2 w-fit rounded-full
+                               bg-main-background/90 px-3 py-1 text-[11px] font-semibold
+                               text-light-secondary shadow-sm backdrop-blur-md
+                               dark:text-dark-secondary'
+                  >
+                    {formatDayLabel(millis)}
+                  </div>
+                )}
+                {message.id === firstUnreadId && (
+                  <div className='my-3 flex items-center gap-2'>
+                    <span className='h-px flex-1 bg-main-accent/40' />
+                    <span
+                      className='rounded-full bg-main-accent/15 px-3 py-0.5 text-[11px]
+                                 font-bold text-main-accent'
+                    >
+                      رسائل جديدة
+                    </span>
+                    <span className='h-px flex-1 bg-main-accent/40' />
+                  </div>
+                )}
+                <MessageBubble
+                  message={message}
+                  isOwn={message.senderId === user?.id}
+                  viewerId={user?.id}
+                  onReply={setReplyTarget}
+                  onReaction={(target, emoji) => {
+                    if (!user || !conversationId) return;
+                    void toggleMessageReaction(
+                      conversationId,
+                      target.id,
+                      user.id,
+                      target.reactions?.[user.id] ?? null,
+                      emoji
+                    );
+                  }}
+                />
+              </div>
+            );
+          })
         ) : (
           <div className='flex flex-1 flex-col items-center justify-center gap-3 text-center'>
             {peer && (
@@ -401,6 +473,10 @@ export default function Chat(): JSX.Element {
             </p>
           </div>
         )}
+        {/* مؤشر "يكتب الآن…" */}
+        <AnimatePresence>
+          {peerTyping && <TypingIndicator />}
+        </AnimatePresence>
       </div>
 
       {/* مربع الكتابة */}
@@ -428,6 +504,12 @@ export default function Chat(): JSX.Element {
             onSendVoice={(blob, duration, peaks) =>
               void handleSend({ type: 'audio', blob, duration, peaks })
             }
+            onTyping={(typing) => {
+              if (!conversationId || !user) return;
+              void setTyping(conversationId, typing ? user.id : null).catch(
+                () => undefined
+              );
+            }}
           />
         )}
       </div>

@@ -68,6 +68,8 @@ export type Conversation = {
   lastMessage: LastMessage | null;
   /** Unread messages count per participant id */
   unread: Record<string, number>;
+  /** معرف المستخدم الذي يكتب الآن */
+  typing?: string | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 };
