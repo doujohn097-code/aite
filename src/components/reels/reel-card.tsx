@@ -402,7 +402,8 @@ export function ReelCard({
     <section
       ref={cardRef}
       onClick={handleCardClick}
-      className='relative h-full w-full cursor-pointer select-none snap-center overflow-hidden bg-black outline-none [-webkit-tap-highlight-color:transparent] focus:outline-none focus:ring-0 focus-visible:outline-none'
+      onContextMenu={(event) => event.preventDefault()}
+      className='relative h-full w-full cursor-pointer select-none snap-center overflow-hidden bg-black outline-none [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none'
     >
       {/* Media Layer */}
       <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>

@@ -478,9 +478,25 @@ export function MessageBubble({
               {sharedPost.thumbnail ? (
                 <div className={cn(
                   'relative overflow-hidden bg-slate-100 dark:bg-slate-900',
-                  sharedPost.kind === 'reel' ? 'h-56 xs:h-64' : 'h-36'
+                  sharedPost.kind === 'reel' ? 'aspect-[9/16]' : 'h-36'
                 )}>
-                  <img className='h-full w-full object-cover transition duration-500 hover:scale-105' src={sharedPost.thumbnail} alt='معاينة المحتوى' />
+                  {sharedPost.kind === 'reel' ? (
+                    <video
+                      className='pointer-events-none h-full w-full object-cover'
+                      src={sharedPost.thumbnail}
+                      muted
+                      playsInline
+                      preload='metadata'
+                      aria-label='معاينة الريل'
+                    />
+                  ) : (
+                    <img
+                      className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
+                      src={sharedPost.thumbnail}
+                      alt='معاينة المنشور'
+                      draggable={false}
+                    />
+                  )}
                   {sharedPost.kind === 'reel' && (
                     <>
                       <span className='absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10' />
