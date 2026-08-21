@@ -470,7 +470,7 @@ export function MessageBubble({
           >
             <a
               className={cn(
-                'block min-w-[230px] max-w-[300px] overflow-hidden rounded-xl border bg-main-background/70 backdrop-blur-md xs:min-w-[290px]',
+                'block min-w-[250px] max-w-[320px] overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl xs:min-w-[300px]',
                 isOwn
                   ? 'border-black/15 text-black'
                   : 'border-black/10 text-light-primary dark:border-white/15 dark:text-dark-primary'
@@ -479,7 +479,7 @@ export function MessageBubble({
             >
               {sharedPost.thumbnail && (
                 <img
-                  className='h-32 w-full object-cover'
+                  className='h-40 w-full object-cover'
                   src={sharedPost.thumbnail}
                   alt='معاينة المنشور'
                 />

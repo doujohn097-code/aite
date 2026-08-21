@@ -1,4 +1,5 @@
 import cn from 'clsx';
+import type { MouseEvent } from 'react';
 import { Popover } from '@headlessui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
@@ -49,6 +50,10 @@ export function TweetShare({
       {({ open, close }): JSX.Element => (
         <>
           <Popover.Button
+            onClick={(event: MouseEvent<HTMLButtonElement>) => {
+              event.preventDefault();
+              openShare();
+            }}
             className={cn(
               `group relative flex w-full items-center justify-center gap-1 p-0 outline-none
                transition-none hover:text-accent-blue focus-visible:text-accent-blue`,

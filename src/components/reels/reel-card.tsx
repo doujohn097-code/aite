@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Popover } from '@headlessui/react';
@@ -647,6 +647,10 @@ export function ReelCard({
             <>
               <Popover.Button
                 type='button'
+                onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                  event.preventDefault();
+                  handleShareToChat(event);
+                }}
                 className='flex h-10 w-10 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
                 aria-label='مشاركة'
               >
