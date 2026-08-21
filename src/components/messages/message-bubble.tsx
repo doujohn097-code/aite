@@ -481,7 +481,7 @@ export function MessageBubble({
               {sharedPost.thumbnail ? (
                 <div className={cn(
                   'relative overflow-hidden bg-slate-100 dark:bg-slate-900',
-                  sharedPost.kind === 'reel' ? 'aspect-[3/4]' : 'h-36'
+                  sharedPost.kind === 'reel' ? 'aspect-[4/5]' : 'h-36'
                 )}>
                   {sharedPost.kind === 'reel' ? (
                     <video
