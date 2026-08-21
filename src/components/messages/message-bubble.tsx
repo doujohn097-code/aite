@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import cn from 'clsx';
 import {
   AnimatePresence,
@@ -80,7 +81,7 @@ export function MessageBubble({
   const dragX = useMotionValue(0);
   const [triggered, setTriggered] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerBelow, setPickerBelow] = useState(false);
+  const [pickerPosition, setPickerPosition] = useState({ left: 16, top: 16 });
   const [swipeReady, setSwipeReady] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
@@ -167,8 +168,20 @@ export function MessageBubble({
     pressStart.current = { x: event.clientX, y: event.clientY };
     pressTimer.current = setTimeout(() => {
       pressTimer.current = null;
-      // Keep the action sheet next to the user's touch: lower messages open below.
-      setPickerBelow((pressStart.current?.y ?? 0) > window.innerHeight / 2);
+      // Position the sheet in viewport coordinates so a scroll container never
+      // clips it. Prefer below the touch, then above, and finally clamp safely.
+      const point = pressStart.current ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+      const width = Math.min(264, window.innerWidth - 24);
+      const height = 210;
+      const left = Math.min(Math.max(12, point.x - width / 2), window.innerWidth - width - 12);
+      const below = point.y + 18;
+      const above = point.y - height - 18;
+      const top = below + height <= window.innerHeight - 12
+        ? below
+        : above >= 12
+        ? above
+        : Math.max(12, Math.min(below, window.innerHeight - height - 12));
+      setPickerPosition({ left, top });
       try { navigator.vibrate?.(12); } catch { /* optional */ }
       setPickerOpen(true);
     }, 620);
@@ -310,27 +323,23 @@ export function MessageBubble({
       </AnimatePresence>
 
       {/* منتقي التفاعلات بالضغطة المطوّلة — تصميم يطابق قائمة المنشور (menu-container) */}
-      {pickerOpen && (
-        <button
-          className='fixed inset-0 z-20 cursor-default'
-          aria-label='إغلاق المنتقي'
-          onClick={() => setPickerOpen(false)}
-          type='button'
-        />
-      )}
-      <AnimatePresence>
-        {pickerOpen && (
+      {pickerOpen && typeof document !== 'undefined' && createPortal(
+        <>
+          <button
+            className='fixed inset-0 z-[60] cursor-default'
+            aria-label='إغلاق المنتقي'
+            onClick={() => setPickerOpen(false)}
+            type='button'
+          />
+          <AnimatePresence>
+            {pickerOpen && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 6 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className={cn(
-              `absolute z-30 w-max max-w-xs overflow-hidden rounded-2xl border border-white/20
-               bg-main-background/95 shadow-2xl shadow-black/20 backdrop-blur-xl dark:border-white/10`,
-              isOwn ? 'right-0' : 'left-0',
-              pickerBelow ? 'top-full mt-2' : '-top-14'
-            )}
+            className='fixed z-[70] w-[min(264px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-white/20 bg-main-background/95 shadow-2xl shadow-black/25 backdrop-blur-xl dark:border-white/10'
+            style={{ left: pickerPosition.left, top: pickerPosition.top }}
           >
             {/* شريط التفاعلات */}
             <div className='flex items-center gap-0.5 px-2 py-1'>
@@ -382,9 +391,12 @@ export function MessageBubble({
                 حذف الرسالة
               </button>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>,
+        document.body
+      )}
 
       <div
         className={cn(bubbleClass, 'relative z-10')}

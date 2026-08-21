@@ -27,6 +27,8 @@ import { VerifiedBadge } from '@components/ui/verified-badge';
 import { MessageBubble } from '@components/messages/message-bubble';
 import { TypingIndicator } from '@components/messages/typing-indicator';
 import { ChatComposer } from '@components/messages/chat-composer';
+import { Modal } from '@components/modal/modal';
+import { ActionModal } from '@components/modal/action-modal';
 import { StoryAvatar } from '@components/stories/story-avatar';
 import { getTimestampMillis } from '@lib/date';
 import type { ReactElement, ReactNode, Ref } from 'react';
@@ -69,6 +71,7 @@ export default function Chat(): JSX.Element {
   // الرسالة قيد الرد عليها عبر السحب
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Message | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
@@ -336,6 +339,25 @@ export default function Chat(): JSX.Element {
                  dark:border-dark-border xs:static xs:border-x'
     >
       <SEO title={`${peerName} / الرسائل / Aite`} />
+      <Modal
+        open={!!deleteTarget}
+        closeModal={() => setDeleteTarget(null)}
+        modalClassName='w-full max-w-sm rounded-3xl border border-light-border bg-main-background p-6 shadow-2xl dark:border-dark-border'
+      >
+        <ActionModal
+          title='حذف الرسالة؟'
+          description='ستُحذف الرسالة للطرفين وتظهر مكانها ملاحظة الحذف.'
+          mainBtnLabel='حذف الرسالة'
+          mainBtnClassName='bg-accent-red hover:bg-accent-red/90'
+          action={async () => {
+            if (!conversationId || !deleteTarget) return;
+            await deleteMessage(conversationId, deleteTarget.id);
+            setDeleteTarget(null);
+            toast.success('تم حذف الرسالة');
+          }}
+          closeModal={() => setDeleteTarget(null)}
+        />
+      </Modal>
 
       {/* الترويسة */}
       <header
@@ -421,13 +443,7 @@ export default function Chat(): JSX.Element {
                   isOwn={message.senderId === user?.id}
                   viewerId={user?.id}
                   onReply={setReplyTarget}
-                  onDelete={(target) => {
-                    if (!conversationId) return;
-                    if (!window.confirm('حذف هذه الرسالة للطرفين؟')) return;
-                    void deleteMessage(conversationId, target.id).catch(() =>
-                      toast.error('تعذر حذف الرسالة')
-                    );
-                  }}
+                  onDelete={(target) => setDeleteTarget(target)}
                   onReaction={(target, emoji) => {
                     if (!user || !conversationId) return;
                     void toggleMessageReaction(
