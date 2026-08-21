@@ -43,8 +43,11 @@ function fallbackUser(userId: string): User {
 }
 
 export default function Reels(): JSX.Element {
+  const router = useRouter();
+  const deepLinkId = typeof router.query.video === 'string' ? router.query.video : null;
   const [activeIndex, setActiveIndex] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [deepLinkReady, setDeepLinkReady] = useState(!deepLinkId);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const reelsConstraints = useMemo(() => [], []);
@@ -130,17 +133,36 @@ export default function Reels(): JSX.Element {
     }
   }, [reels.length, activeIndex]);
 
-  // فتح ريل مُشارك عبر رابط عميق /reels?video=<id>
-  const { query: routeQuery } = useRouter();
   useEffect(() => {
-    const videoId = routeQuery.video;
-    if (typeof videoId !== 'string' || !videoId || !reels.length) return;
-    const index = reels.findIndex((reel) => reel.id === videoId);
-    if (index < 0) return;
+    setDeepLinkReady(!deepLinkId);
+  }, [deepLinkId]);
+
+  // Deep links must open on the requested reel without visibly traversing
+  // every reel above it. Keep the feed hidden for one frame, jump instantly,
+  // then reveal the target card.
+  useEffect(() => {
+    if (!deepLinkId) {
+      setDeepLinkReady(true);
+      return;
+    }
+    if (!reels.length) return;
+    const index = reels.findIndex((reel) => reel.id === deepLinkId);
+    if (index < 0) {
+      setDeepLinkReady(true);
+      return;
+    }
     setActiveIndex(index);
-    const container = containerRef.current;
-    container?.scrollTo({ top: index * container.clientHeight });
-  }, [routeQuery.video, reels]);
+    requestAnimationFrame(() => {
+      const container = containerRef.current;
+      if (container) {
+        const previous = container.style.scrollBehavior;
+        container.style.scrollBehavior = 'auto';
+        container.scrollTop = index * container.clientHeight;
+        container.style.scrollBehavior = previous;
+      }
+      setDeepLinkReady(true);
+    });
+  }, [deepLinkId, reels]);
 
   // Keyboard navigation up / down
   const handleKeyDown = useCallback(
@@ -231,7 +253,9 @@ export default function Reels(): JSX.Element {
         ) : (
           <div
             ref={containerRef}
-            className='h-full w-full select-none snap-y snap-mandatory overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth outline-none [-webkit-tap-highlight-color:transparent] focus:outline-none'
+            className={`h-full w-full select-none snap-y snap-mandatory overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth outline-none transition-opacity duration-150 [-webkit-tap-highlight-color:transparent] focus:outline-none ${
+              deepLinkReady ? 'opacity-100' : 'pointer-events-none opacity-0'
+            }`}
             onScroll={handleScroll}
           >
             <AnimatePresence mode='popLayout'>
