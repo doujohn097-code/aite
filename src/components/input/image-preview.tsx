@@ -108,6 +108,7 @@ export function ImagePreview({
           previewCount={previewCount}
           selectedIndex={selectedIndex}
           handleNextIndex={handleNextIndex}
+          onClose={closeModal}
         />
       </Modal>
       <AnimatePresence mode='popLayout'>

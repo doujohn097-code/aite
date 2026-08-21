@@ -40,6 +40,7 @@ export function UserHomeAvatar({
         <ImageModal
           imageData={{ src: imageSrc, alt: imageAlt } as ImageData}
           previewCount={1}
+          onClose={closeModal}
         />
       </Modal>
       <button

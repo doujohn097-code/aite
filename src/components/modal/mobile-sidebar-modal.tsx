@@ -185,8 +185,19 @@ export function MobileSidebarModal({
 
         <div className='mx-4 border-t border-light-border/70 dark:border-dark-border/70' />
 
+        {/* Always visible account action — navigation alone scrolls on short phones. */}
+        <div className='shrink-0 border-y border-light-border/70 bg-main-background px-3 py-2 dark:border-dark-border/70'>
+          <Button
+            className='flex w-full items-center gap-3 rounded-xl p-3 font-semibold text-accent-red transition hover:bg-accent-red/10 active:bg-accent-red/20'
+            onClick={openModal}
+          >
+            <HeroIcon className='h-5 w-5 text-accent-red' iconName='ArrowRightOnRectangleIcon' />
+            <span>تسجيل الخروج</span>
+          </Button>
+        </div>
+
         {/* Navigation List */}
-        <nav className='flex flex-1 flex-col gap-1 px-3 py-3'>
+        <nav className='flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-3'>
           <MobileSidebarLink
             href={userLink}
             iconName='UserIcon'
@@ -204,20 +215,6 @@ export function MobileSidebarModal({
 
         <div className='mx-4 border-t border-light-border/70 dark:border-dark-border/70' />
 
-        {/* Sign Out Action */}
-        <div className='p-3'>
-          <Button
-            className='flex w-full items-center gap-3 rounded-xl p-3 font-semibold text-accent-red
-                       transition hover:bg-accent-red/10 active:bg-accent-red/20'
-            onClick={openModal}
-          >
-            <HeroIcon
-              className='h-5 w-5 text-accent-red'
-              iconName='ArrowRightOnRectangleIcon'
-            />
-            <span>تسجيل الخروج</span>
-          </Button>
-        </div>
       </div>
     </>
   );

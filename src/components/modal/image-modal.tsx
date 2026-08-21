@@ -19,6 +19,7 @@ type ImageModalProps = {
   previewCount: number;
   selectedIndex?: number;
   handleNextIndex?: (type: 'prev' | 'next') => () => void;
+  onClose?: () => void;
 };
 
 type ArrowButton = ['prev' | 'next', string | null, IconName];
@@ -33,7 +34,8 @@ export function ImageModal({
   imageData,
   previewCount,
   selectedIndex,
-  handleNextIndex
+  handleNextIndex,
+  onClose
 }: ImageModalProps): JSX.Element {
   const [indexes, setIndexes] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,33 +133,29 @@ export function ImageModal({
                   alt={alt}
                   onClick={preventBubbling()}
                 />
-                <a
-                  className='trim-alt accent-tab absolute bottom-0 right-0 mx-2 mb-2 translate-y-4
-                             rounded-md bg-main-background/40 px-2 py-1 text-sm text-light-primary/80 opacity-0
-                             transition hover:bg-main-accent hover:text-black focus-visible:translate-y-0
-                             focus-visible:bg-main-accent focus-visible:text-black focus-visible:opacity-100
-                             group-hover:translate-y-0 group-hover:opacity-100 dark:text-dark-primary/80'
-                  href={src}
-                  target='_blank'
-                  rel='noreferrer'
-                  onClick={preventBubbling(null, true)}
-                >
-                  {alt}
-                </a>
               </picture>
             )}
-            <a
-              className='custom-underline absolute -bottom-7 left-0 font-medium text-light-primary/80
-                         decoration-transparent underline-offset-2 transition hover:text-light-primary hover:underline
-                         hover:decoration-light-primary focus-visible:text-light-primary dark:text-dark-primary/80 
-                         dark:hover:text-dark-primary dark:hover:decoration-dark-primary dark:focus-visible:text-dark-primary'
-              href={src}
-              target='_blank'
-              rel='noreferrer'
-              onClick={preventBubbling(null, true)}
-            >
-              Open original
-            </a>
+            <div className='absolute right-3 top-3 z-20 flex items-center gap-2' dir='ltr'>
+              <a
+                href={src}
+                download
+                aria-label='حفظ الوسيط'
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-black/80 active:scale-95'
+                onClick={preventBubbling(null, true)}
+              >
+                <HeroIcon className='h-5 w-5' iconName='ArrowDownTrayIcon' />
+              </a>
+              {onClose && (
+                <button
+                  type='button'
+                  aria-label='إغلاق المعاينة'
+                  onClick={onClose}
+                  className='flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-black/80 active:scale-95'
+                >
+                  <HeroIcon className='h-5 w-5' iconName='XMarkIcon' />
+                </button>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

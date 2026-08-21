@@ -199,7 +199,7 @@ export function MessageBubble({
       ? cn(
           'rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed shadow-lg backdrop-blur-xl',
           isOwn
-            ? 'rounded-br-md border border-white/30 bg-main-accent/85 text-black'
+            ? 'rounded-br-md border border-white/40 bg-main-accent/72 text-[#102033] shadow-[0_10px_30px_rgba(0,0,0,0.12)] backdrop-blur-2xl dark:border-white/25 dark:text-black'
             : `rounded-bl-md border border-black/10 bg-black/5 text-light-primary
                dark:border-white/15 dark:bg-white/10 dark:text-dark-primary`
         )
@@ -207,7 +207,7 @@ export function MessageBubble({
       ? cn(
           'rounded-2xl px-3 py-2 shadow-lg backdrop-blur-xl',
           isOwn
-            ? 'rounded-br-md border border-white/30 bg-main-accent/85'
+            ? 'rounded-br-md border border-white/40 bg-main-accent/72 shadow-[0_10px_30px_rgba(0,0,0,0.12)] backdrop-blur-2xl dark:border-white/25'
             : 'rounded-bl-md border border-black/10 bg-black/5 dark:border-white/15 dark:bg-white/10'
         )
       : 'overflow-hidden rounded-2xl shadow-lg',
@@ -586,7 +586,7 @@ export function MessageBubble({
           closeModal={() => setSelectedMediaIndex(null)}
           modalClassName='relative flex w-full max-w-4xl items-center justify-center'
         >
-          <ImageModal imageData={media[selectedMediaIndex]} previewCount={media.length} />
+          <ImageModal imageData={media[selectedMediaIndex]} previewCount={media.length} onClose={() => setSelectedMediaIndex(null)} />
         </Modal>
       )}
     </motion.div>
