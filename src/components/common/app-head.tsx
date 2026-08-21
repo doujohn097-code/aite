@@ -8,7 +8,7 @@ export function AppHead(): JSX.Element {
       <link rel='icon' href='/favicon.ico' sizes='any' />
       <link rel='icon' type='image/png' href='/assets/logo.png' />
       <link rel='apple-touch-icon' href='/logo192.png' />
-      <link rel='manifest' href='/site.webmanifest' key='site-manifest' />
+      <link rel='manifest' href='/manifest.json' key='site-manifest' />
     </Head>
   );
 }
