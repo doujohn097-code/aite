@@ -31,6 +31,7 @@ import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { StoryAvatar } from '@components/stories/story-avatar';
 import { getTimestampMillis } from '@lib/date';
+import { manageBlock } from '@lib/firebase/utils';
 import type { ReactElement, ReactNode, Ref } from 'react';
 import type { Conversation, Message } from '@lib/types/message';
 import type { User } from '@lib/types/user';
@@ -72,6 +73,7 @@ export default function Chat(): JSX.Element {
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Message | null>(null);
+  const [blockBusy, setBlockBusy] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
@@ -150,10 +152,6 @@ export default function Chat(): JSX.Element {
         const otherId = data.participants.find(
           (participant) => participant !== user.id
         );
-        if (otherId && user.blockedUsers?.includes(otherId)) {
-          setForbidden(true);
-          return;
-        }
         setForbidden(false);
         setConversation(data);
         setPeerId(otherId ?? null);
@@ -181,7 +179,8 @@ export default function Chat(): JSX.Element {
     return unsubscribe;
   }, [peerId]);
 
-  const peerTyping = conversation?.typing === peerId;
+  const isBlockedConversation = !!peerId && !!user?.blockedUsers?.includes(peerId);
+  const peerTyping = !isBlockedConversation && conversation?.typing === peerId;
   const peerActiveMillis = peer?.lastActiveAt
     ? getTimestampMillis(peer.lastActiveAt)
     : null;
@@ -324,12 +323,37 @@ export default function Chat(): JSX.Element {
     }
   };
 
+  const toggleBlockPeer = async (): Promise<void> => {
+    if (!user || !peerId || blockBusy) return;
+    const blocked = user.blockedUsers?.includes(peerId) ?? false;
+    setBlockBusy(true);
+    try {
+      await manageBlock(blocked ? 'unblock' : 'block', user.id, peerId);
+      toast.success(blocked ? 'تم إلغاء الحظر' : 'تم حظر المستخدم');
+      if (!blocked) setForbidden(true);
+    } catch {
+      toast.error('تعذر تحديث الحظر');
+    } finally {
+      setBlockBusy(false);
+    }
+  };
+
   if (forbidden)
     return (
       <main className='mx-auto flex h-screen w-full max-w-xl flex-col items-center justify-center gap-4 border-x border-light-border text-center dark:border-dark-border'>
         <SEO title='الرسائل / Aite' />
         <HeroIcon className='h-12 w-12' iconName='EnvelopeIcon' />
         <p className='text-xl font-bold'>المحادثة غير متاحة</p>
+        {user?.blockedUsers?.includes(peerId ?? '') && (
+          <button
+            type='button'
+            onClick={() => void toggleBlockPeer()}
+            disabled={blockBusy}
+            className='rounded-full bg-main-accent px-6 py-2 font-bold text-black disabled:opacity-60'
+          >
+            {blockBusy ? 'جارٍ التحديث...' : 'إلغاء الحظر'}
+          </button>
+        )}
         <Link href='/messages'>
           <a className='rounded-full bg-main-accent px-6 py-2 font-bold text-black'>
             العودة للرسائل
@@ -406,6 +430,17 @@ export default function Chat(): JSX.Element {
               </span>
             </a>
           </Link>
+        )}
+        {user && peerId && (
+          <button
+            type='button'
+            onClick={() => void toggleBlockPeer()}
+            disabled={blockBusy}
+            aria-label='حظر المستخدم'
+            className='ms-auto rounded-full p-2 text-light-secondary transition hover:bg-accent-red/10 hover:text-accent-red disabled:opacity-50 dark:text-dark-secondary'
+          >
+            <HeroIcon className='h-5 w-5' iconName='NoSymbolIcon' />
+          </button>
         )}
       </header>
 
@@ -485,6 +520,13 @@ export default function Chat(): JSX.Element {
             </p>
           </div>
         )}
+        {isBlockedConversation && (
+          <div className='mx-auto my-3 flex max-w-sm items-center gap-2 rounded-2xl border border-accent-red/20 bg-accent-red/10 px-4 py-3 text-center text-sm text-accent-red'>
+            <HeroIcon className='h-5 w-5 shrink-0' iconName='NoSymbolIcon' />
+            <span className='flex-1'>لقد حظرت هذا المستخدم. تبقى الرسائل مرئية لكن المراسلة متوقفة.</span>
+            <button type='button' onClick={() => void toggleBlockPeer()} className='shrink-0 font-bold underline' disabled={blockBusy}>إلغاء الحظر</button>
+          </div>
+        )}
         {/* مؤشر "يكتب الآن…" */}
         <AnimatePresence>
           {peerTyping && <TypingIndicator />}
@@ -508,7 +550,7 @@ export default function Chat(): JSX.Element {
 
       {/* مربع الكتابة */}
       <div className='border-t border-light-border dark:border-dark-border'>
-        {user && conversation && (
+        {user && conversation && !isBlockedConversation && (
           <ChatComposer
             sending={sending}
             replyingTo={

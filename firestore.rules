@@ -53,6 +53,12 @@ service cloud.firestore {
     function conversationParticipantsMatch() {
       return request.resource.data.participants == resource.data.participants;
     }
+    function blocks(userId, targetId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.get('blockedUsers', []).hasAny([targetId]);
+    }
+    function otherParticipant(participants) {
+      return participants[0] == request.auth.uid ? participants[1] : participants[0];
+    }
 
     match /tweets/{tweetId} {
       allow read: if signedIn();
@@ -115,6 +121,8 @@ service cloud.firestore {
           && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
           && request.resource.data.participants == get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
           && request.resource.data.senderId == request.auth.uid
+          && !blocks(request.auth.uid, otherParticipant(request.resource.data.participants))
+          && !blocks(otherParticipant(request.resource.data.participants), request.auth.uid)
           && validText(request.resource.data.text, 4000);
         allow update: if signedIn() && request.auth.uid in resource.data.participants
           && request.resource.data.senderId == resource.data.senderId
