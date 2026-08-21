@@ -470,18 +470,25 @@ export function MessageBubble({
           >
             <a
               className={cn(
-                'block min-w-[250px] max-w-[320px] overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl xs:min-w-[300px]',
+                'block w-[min(320px,calc(100vw-88px))] max-w-full overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl',
                 'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50'
               )}
               onClick={(event) => event.stopPropagation()}
             >
               {sharedPost.thumbnail ? (
-                <div className='relative h-40 overflow-hidden bg-slate-100 dark:bg-slate-900'>
-                  <img className='h-full w-full object-cover' src={sharedPost.thumbnail} alt='معاينة المحتوى' />
+                <div className={cn(
+                  'relative overflow-hidden bg-slate-100 dark:bg-slate-900',
+                  sharedPost.kind === 'reel' ? 'h-56 xs:h-64' : 'h-36'
+                )}>
+                  <img className='h-full w-full object-cover transition duration-500 hover:scale-105' src={sharedPost.thumbnail} alt='معاينة المحتوى' />
                   {sharedPost.kind === 'reel' && (
-                    <span className='absolute inset-0 flex items-center justify-center bg-black/15'>
-                      <HeroIcon className='h-12 w-12 rounded-full bg-black/55 p-3 text-white backdrop-blur-sm' iconName='PlayIcon' solid />
-                    </span>
+                    <>
+                      <span className='absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10' />
+                      <span className='absolute inset-0 flex items-center justify-center'>
+                        <HeroIcon className='h-14 w-14 rounded-full bg-black/60 p-3.5 text-white shadow-xl backdrop-blur-sm' iconName='PlayIcon' solid />
+                      </span>
+                      <span className='absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>ريل</span>
+                    </>
                   )}
                 </div>
               ) : (

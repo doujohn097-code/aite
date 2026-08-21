@@ -48,10 +48,31 @@
     outline: none;
   }
 
+  html {
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply hover-animation select-none bg-main-background font-aite text-light-primary dark:text-dark-primary;
     overscroll-behavior: none;
     overflow-x: hidden;
+    touch-action: manipulation;
+  }
+
+  a,
+  img,
+  video {
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable='true'] {
+    user-select: text;
+    -webkit-user-select: text;
   }
 }
 

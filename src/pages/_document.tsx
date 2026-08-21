@@ -6,7 +6,7 @@ export default function Document(): JSX.Element {
       <Head>
         <meta
           name='viewport'
-          content='width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-visual'
+          content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual'
         />
         <link rel='manifest' href='/manifest.json' />
         <meta name='theme-color' content='#000000' />
