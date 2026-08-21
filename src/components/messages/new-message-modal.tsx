@@ -57,7 +57,11 @@ export function NewMessageModal({
 
   const filtered = useMemo(() => {
     if (!people) return null;
-    const visible = people.filter((person) => !user?.blockedUsers?.includes(person.id));
+    const visible = people.filter(
+      (person) =>
+        !user?.blockedUsers?.includes(person.id) &&
+        !person.blockedUsers?.includes(user?.id ?? '')
+    );
     const term = search.trim().toLowerCase();
     if (!term) return visible;
     return visible.filter(

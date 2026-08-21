@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -75,6 +75,7 @@ export default function Chat(): JSX.Element {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
+  const initialScrollDoneRef = useRef(false);
   const mainRef = useRef<HTMLElement | null>(null);
   const previousBodyOverflow = useRef<string>('');
 
@@ -118,6 +119,7 @@ export default function Chat(): JSX.Element {
     setFirstUnreadId(null);
     setShowJumpToLatest(false);
     stickToBottomRef.current = true;
+    initialScrollDoneRef.current = false;
   }, [conversationId]);
 
   // إيقاف "يكتب الآن" عند مغادرة المحادثة
@@ -247,11 +249,18 @@ export default function Chat(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, conversationId, forbidden]);
 
-  // لا نسحب المستخدم إلى الأسفل بينما يقرأ رسائل أقدم. نلتصق بالنهاية فقط
-  // عندما يكون هناك أصلًا، أو عند إرسال رسالة منه.
+  // نصل لآخر الرسائل قبل الرسم الأول، فلا يرى المستخدم حركة تمرير طويلة من الأعلى.
+  useLayoutEffect(() => {
+    const element = scrollRef.current;
+    if (!element || messages === null || initialScrollDoneRef.current) return;
+    element.scrollTop = element.scrollHeight;
+    initialScrollDoneRef.current = true;
+  }, [messages]);
+
+  // بعد الدخول فقط، نحرّك بسلاسة عندما يكون المستخدم مثبتًا أصلًا عند النهاية.
   useEffect(() => {
     const element = scrollRef.current;
-    if (!element || !stickToBottomRef.current) return;
+    if (!element || !initialScrollDoneRef.current || !stickToBottomRef.current) return;
     element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
   }, [messages?.length, peerTyping]);
 

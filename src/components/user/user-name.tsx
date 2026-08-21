@@ -22,33 +22,36 @@ export function UserName({
   disableLink
 }: UserNameProps): JSX.Element {
   const CustomTag = tag ? tag : 'p';
+  // Snapshots can arrive before optional profile fields are populated.
+  const safeName = name?.trim() || 'مستخدم';
+  const safeUsername = username?.trim();
 
   const nameContent = (
     <span className='flex flex-col truncate'>
       <span className='flex items-center gap-1'>
-        <CustomTag className='truncate'>{name}</CustomTag>
+        <CustomTag className='truncate'>{safeName}</CustomTag>
         {verified && (
           <VerifiedBadge
             className={cn('shrink-0', iconClassName ?? 'h-4 w-4')}
           />
         )}
       </span>
-      {username && (
+      {safeUsername && (
         <span className='text-sm font-normal text-light-secondary dark:text-dark-secondary'>
-          @{username}
+          @{safeUsername}
         </span>
       )}
     </span>
   );
 
-  return disableLink || !username ? (
+  return disableLink || !safeUsername ? (
     <span
       className={cn('flex items-start gap-1 truncate font-bold', className)}
     >
       {nameContent}
     </span>
   ) : (
-    <Link href={`/user/${username}`}>
+    <Link href={`/user/${safeUsername}`}>
       <a
         className={cn(
           'flex items-start gap-1 truncate font-bold',
