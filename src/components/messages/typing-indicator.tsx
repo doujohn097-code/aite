@@ -13,8 +13,8 @@ export function TypingIndicator({ className }: TypingIndicatorProps): JSX.Elemen
       exit={{ opacity: 0, y: 6, scale: 0.9 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       className={cn(
-        'flex items-center gap-1.5 rounded-2xl rounded-bl-md border',
-        'border-black/10 bg-black/5 px-4 py-3',
+        'flex w-fit items-center gap-1 rounded-2xl rounded-bl-md border',
+        'border-black/10 bg-black/5 px-3 py-2',
         'dark:border-white/15 dark:bg-white/10',
         className
       )}

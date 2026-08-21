@@ -1,5 +1,6 @@
 import {
   doc,
+  deleteDoc,
   getDoc,
   setDoc,
   addDoc,
@@ -217,6 +218,16 @@ export async function setTyping(
   await updateDoc(doc(db, 'conversations', conversationId), {
     typing: userId
   });
+}
+
+/** حذف رسالة للطرفين — يحذف المستند نهائياً */
+export async function deleteMessage(
+  conversationId: string,
+  messageId: string
+): Promise<void> {
+  await deleteDoc(
+    doc(db, 'conversations', conversationId, 'messages', messageId)
+  );
 }
 
 export async function markConversationRead(

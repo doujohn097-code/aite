@@ -8,7 +8,6 @@ import {
   useTransform
 } from 'framer-motion';
 import { VoicePlayer } from './voice-player';
-import { ImagePreview } from '@components/input/image-preview';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { LinkifiedText } from '@components/ui/linkified-text';
 import type { Message, MessageType } from '@lib/types/message';
@@ -22,6 +21,8 @@ type MessageBubbleProps = {
   onReply?: (message: Message) => void;
   /** التفاعل بالإيموجي مع الرسالة (تمرير نفس الإيموجي يحذفه) */
   onReaction?: (message: Message, emoji: string) => void;
+  /** حذف الرسالة (للمرسل فقط) */
+  onDelete?: (message: Message) => void;
 };
 
 const SWIPE_THRESHOLD = 56;
@@ -48,7 +49,8 @@ export function MessageBubble({
   isOwn,
   viewerId,
   onReply,
-  onReaction
+  onReaction,
+  onDelete
 }: MessageBubbleProps): JSX.Element {
   const {
     type,
@@ -339,6 +341,21 @@ export function MessageBubble({
                 رد على الرسالة
               </button>
             )}
+            {/* حذف الرسالة (للمرسل فقط) */}
+            {isOwn && onDelete && (
+              <button
+                className='accent-tab flex w-full items-center gap-3 border-t border-light-border/60 p-3
+                           text-red-500 hover:bg-red-500/10 dark:border-dark-border/60'
+                onClick={() => {
+                  setPickerOpen(false);
+                  onDelete(message);
+                }}
+                type='button'
+              >
+                <HeroIcon className='h-5 w-5' iconName='TrashIcon' />
+                حذف الرسالة
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -368,18 +385,35 @@ export function MessageBubble({
         )}
 
         {(type === 'image' || type === 'video') && media && (
-          <div className='min-w-[230px] xs:min-w-[290px] md:min-w-[330px]'>
-            <ImagePreview
-              tweet
-              chat
-              imagesPreview={media.map((item, index) => ({
-                id: `${message.id}-${index}`,
-                src: item.src,
-                alt: item.alt || 'معاينة',
-                type: item.type || (type === 'video' ? 'video/mp4' : undefined)
-              }))}
-              previewCount={media.length}
-            />
+          <div className='w-fit max-w-[75vw] overflow-hidden rounded-2xl xs:max-w-[330px]'>
+            {media.map((item, index) =>
+              type === 'video' || item.type?.startsWith('video/') ? (
+                <video
+                  key={`${message.id}-${index}`}
+                  className='block h-auto w-full rounded-2xl'
+                  src={item.src}
+                  controls
+                  playsInline
+                  preload='metadata'
+                />
+              ) : (
+                <a
+                  key={`${message.id}-${index}`}
+                  href={item.src}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='block'
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    className='block h-auto w-full rounded-2xl object-contain'
+                    src={item.src}
+                    alt={item.alt || 'صورة'}
+                    loading='lazy'
+                  />
+                </a>
+              )
+            )}
           </div>
         )}
 

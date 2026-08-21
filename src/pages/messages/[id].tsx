@@ -15,7 +15,8 @@ import {
   markConversationRead,
   markMessageSeen,
   toggleMessageReaction,
-  setTyping
+  setTyping,
+  deleteMessage
 } from '@lib/messages';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -441,6 +442,13 @@ export default function Chat(): JSX.Element {
                   isOwn={message.senderId === user?.id}
                   viewerId={user?.id}
                   onReply={setReplyTarget}
+                  onDelete={(target) => {
+                    if (!conversationId) return;
+                    if (!window.confirm('حذف هذه الرسالة للطرفين؟')) return;
+                    void deleteMessage(conversationId, target.id).catch(() =>
+                      toast.error('تعذر حذف الرسالة')
+                    );
+                  }}
                   onReaction={(target, emoji) => {
                     if (!user || !conversationId) return;
                     void toggleMessageReaction(
