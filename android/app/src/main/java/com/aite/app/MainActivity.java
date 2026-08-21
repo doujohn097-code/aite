@@ -7,6 +7,7 @@ import android.net.NetworkCapabilities;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.view.View;
 import com.getcapacitor.BridgeActivity;
 
 /** Native shell for Aite: keeps the production UI intact while applying Android-only UX. */
@@ -30,6 +31,8 @@ public class MainActivity extends BridgeActivity {
     settings.setBuiltInZoomControls(false);
     settings.setDisplayZoomControls(false);
     settings.setTextZoom(100);
+    settings.setMediaPlaybackRequiresUserGesture(false);
+    webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
     webView.setLongClickable(false);
     webView.setHapticFeedbackEnabled(false);
   }

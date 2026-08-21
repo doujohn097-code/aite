@@ -125,6 +125,7 @@ export function CustomVideoPlayer({
         src={src}
         playsInline
         muted={muted}
+        preload='auto'
         className={cn('h-full w-full', videoClassName)}
         onPlay={() => {
           setPlaying(true);
