@@ -25,14 +25,11 @@ service cloud.firestore {
           && onlyCurrentUserChanged(resource.data.get('followers', []), request.resource.data.followers)));
     }
     function validTweetInteraction() {
+      // Only the interaction fields can change. Using affectedKeys instead of
+      // reading optional legacy fields (audio/replyTo/etc.) keeps likes working
+      // for older posts that do not contain every newer field.
       return signedIn()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userLikes', 'userRetweets', 'userReplies', 'updatedAt'])
-        && request.resource.data.createdBy == resource.data.createdBy
-        && request.resource.data.text == resource.data.text
-        && request.resource.data.images == resource.data.images
-        && request.resource.data.parent == resource.data.parent
-        && request.resource.data.replyTo == resource.data.replyTo
-        && request.resource.data.audio == resource.data.audio
         && ((request.resource.data.userLikes != resource.data.userLikes
              && onlyCurrentUserChanged(resource.data.userLikes, request.resource.data.userLikes))
             || (request.resource.data.userRetweets != resource.data.userRetweets
