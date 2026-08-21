@@ -40,7 +40,7 @@ export function ImageModal({
   const [indexes, setIndexes] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { src, alt, type } = imageData;
+  const { src, alt, type, thumbnail } = imageData;
 
   const isVideo = type?.includes('video');
   const saveMedia = async (): Promise<void> => {
@@ -144,6 +144,7 @@ export function ImageModal({
                   )}
                   videoClassName='max-h-[75vh] object-contain md:max-h-[80vh]'
                   src={src}
+                  poster={thumbnail}
                 />
               </div>
             ) : (

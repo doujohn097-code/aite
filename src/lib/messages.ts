@@ -118,10 +118,11 @@ export async function sendMessage(
     if (!payload.files.length) return;
     const uploaded = await uploadImages(senderId, payload.files);
     if (!uploaded?.length) throw new Error('تعذر رفع الوسائط');
-    media = uploaded.map(({ src, alt, type: mediaType }) => ({
+    media = uploaded.map(({ src, alt, type: mediaType, thumbnail }) => ({
       src,
       alt,
-      type: mediaType ?? ''
+      type: mediaType ?? '',
+      thumbnail: thumbnail ?? null
     }));
   }
 

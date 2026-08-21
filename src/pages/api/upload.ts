@@ -2,7 +2,8 @@ import { verifyIdToken } from '@lib/firebase-admin';
 import { getUploadUrl } from '@lib/r2';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const MAX_FILES = 4;
+// Four user-selected videos can include four generated JPEG posters.
+const MAX_FILES = 8;
 const MAX_FILE_NAME_LENGTH = 120;
 const ALLOWED_TYPES = new Set([
   'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif',

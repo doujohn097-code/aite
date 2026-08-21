@@ -112,7 +112,7 @@ export function ImagePreview({
         />
       </Modal>
       <AnimatePresence mode='popLayout'>
-        {imagesPreview.map(({ id, src, alt }, index) => {
+        {imagesPreview.map(({ id, src, alt, thumbnail }, index) => {
           const isVideo = imagesPreview[index].type?.includes('video');
 
           return (
@@ -145,6 +145,7 @@ export function ImagePreview({
                   </Button>
                   <CustomVideoPlayer
                     src={src}
+                    poster={thumbnail}
                     className={cn(
                       'h-full w-full cursor-pointer',
                       isTweet

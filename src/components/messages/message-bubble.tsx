@@ -433,7 +433,7 @@ export function MessageBubble({
             {media.map((item, index) =>
               type === 'video' || item.type?.startsWith('video/') ? (
                 <div key={`${message.id}-${index}`} className='group relative'>
-                  <video className='block max-h-[360px] w-full rounded-2xl object-contain bg-black' src={item.src} controls playsInline preload='metadata' />
+                  <video className='block max-h-[360px] w-full rounded-2xl object-contain bg-black' src={item.src} poster={item.thumbnail ?? undefined} controls playsInline preload='metadata' />
                   <button type='button' onClick={() => setSelectedMediaIndex(index)} aria-label='فتح معاينة الفيديو' className='absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white opacity-0 shadow-lg backdrop-blur transition group-hover:opacity-100'>
                     <HeroIcon className='h-5 w-5' iconName='ArrowsPointingOutIcon' />
                   </button>

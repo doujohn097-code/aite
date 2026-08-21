@@ -412,6 +412,7 @@ export function ReelCard({
             <video
               ref={videoRef}
               src={media.src}
+              poster={media.thumbnail ?? undefined}
               autoPlay={isActive}
               loop
               muted={isMuted}

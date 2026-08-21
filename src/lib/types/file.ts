@@ -2,6 +2,8 @@ export type ImageData = {
   src: string;
   alt: string;
   type?: string;
+  /** JPEG poster generated locally for video previews. */
+  thumbnail?: string | null;
 };
 
 export type ImagesPreview = (ImageData & {

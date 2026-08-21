@@ -9,6 +9,7 @@ type CustomVideoPlayerProps = {
   className?: string;
   /** Rounded corners etc. passed through to the <video> element */
   videoClassName?: string;
+  poster?: string | null;
   autoHideDelay?: number;
 };
 
@@ -21,6 +22,7 @@ export function CustomVideoPlayer({
   src,
   className,
   videoClassName,
+  poster,
   autoHideDelay = 2500
 }: CustomVideoPlayerProps): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -125,6 +127,7 @@ export function CustomVideoPlayer({
       <video
         ref={videoRef}
         src={src}
+        poster={poster ?? undefined}
         playsInline
         muted={muted}
         preload='metadata'

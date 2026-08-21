@@ -20,6 +20,7 @@ export type MessageMedia = {
   src: string;
   alt: string;
   type: string;
+  thumbnail?: string | null;
 };
 
 export type VoiceData = {
