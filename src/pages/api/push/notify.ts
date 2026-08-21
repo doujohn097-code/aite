@@ -200,6 +200,13 @@ export default async function handler(
 
     const response = await admin.messaging().sendEachForMulticast({
       tokens,
+      // إشعار نظام أصلي — يظهر حتى مع إغلاق تطبيق PWA ولا يحتاج service worker
+      notification: {
+        title: notification.title,
+        body: notification.body,
+        ...(senderPhoto ? { image: senderPhoto } : {})
+      },
+      // بيانات للمعالجة التفاعلية (الرابط، الأيقونة، …)
       data: {
         title: notification.title,
         body: notification.body,
@@ -208,7 +215,13 @@ export default async function handler(
         tag: notification.tag,
         ...(senderPhoto ? { image: senderPhoto } : {})
       },
-      android: { priority: 'high' }
+      android: { priority: 'high' },
+      // يجعل Web Push يظهر فوراً على مدار 24 ساعة ولا يُجمّع في الخلفية
+      apns: { headers: { 'apns-priority': '10' } },
+      webpush: {
+        headers: { Urgency: 'high' },
+        fcmOptions: { link: notification.url }
+      }
     });
 
     const invalidTokens: string[] = [];
