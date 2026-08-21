@@ -8,6 +8,8 @@ import {
   useTransform
 } from 'framer-motion';
 import { VoicePlayer } from './voice-player';
+import { Modal } from '@components/modal/modal';
+import { ImageModal } from '@components/modal/image-modal';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { LinkifiedText } from '@components/ui/linkified-text';
 import type { Message, MessageType } from '@lib/types/message';
@@ -28,6 +30,14 @@ type MessageBubbleProps = {
 const SWIPE_THRESHOLD = 56;
 
 const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
+const HEART_PARTICLES = [
+  { x: -42, y: -55, r: -25, s: 0.85, delay: 0 },
+  { x: 42, y: -52, r: 25, s: 0.82, delay: 0.03 },
+  { x: -58, y: 8, r: -40, s: 0.7, delay: 0.02 },
+  { x: 60, y: 12, r: 35, s: 0.85, delay: 0.04 },
+  { x: 0, y: -68, r: 0, s: 0.95, delay: 0.01 },
+  { x: 0, y: 58, r: 0, s: 0.68, delay: 0.06 }
+];
 
 const replyLabels: Record<Exclude<MessageType, 'text'>, string> = {
   image: 'صورة',
@@ -71,6 +81,8 @@ export function MessageBubble({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [swipeReady, setSwipeReady] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
+  const pressStart = useRef<{ x: number; y: number } | null>(null);
   // نخفي القلب تلقائيًا بعد فترة قصيرة حتى لا يلصق على الصفحة
   const heartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -123,6 +135,7 @@ export function MessageBubble({
   // نقر سريع مزدوج = قلب
   const tapRef = useRef<number>(0);
   const handlePointerUp = (): void => {
+    cancelPress();
     if (Math.abs(dragX.get()) > 12) return;
     const now = Date.now();
     if (now - tapRef.current < 300 && onReaction) {
@@ -139,15 +152,28 @@ export function MessageBubble({
     }
   };
 
-  // ضغطة مطوّلة تفتح منتقي التفاعلات (تلغى بأي حركة أفقية)
+  // منتقي التفاعل لا يعمل إلا مع ضغط ثابت. نلغي المؤقت فور السحب أو الرفع
+  // حتى لا يظهر أثناء التمرير أو بعد نقرتين متتاليتين.
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handlePointerDown = (): void => {
-    if (!onReaction) return;
-    pressTimer.current = setTimeout(() => setPickerOpen(true), 450);
-  };
   const cancelPress = (): void => {
     if (pressTimer.current) clearTimeout(pressTimer.current);
     pressTimer.current = null;
+    pressStart.current = null;
+  };
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>): void => {
+    if (!onReaction || event.pointerType === 'mouse' && event.button !== 0) return;
+    pressStart.current = { x: event.clientX, y: event.clientY };
+    pressTimer.current = setTimeout(() => {
+      pressTimer.current = null;
+      try { navigator.vibrate?.(12); } catch { /* optional */ }
+      setPickerOpen(true);
+    }, 620);
+  };
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>): void => {
+    const start = pressStart.current;
+    if (!start) return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10)
+      cancelPress();
   };
 
   const bubbleClass = cn(
@@ -254,36 +280,25 @@ export function MessageBubble({
             className='pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2'
           >
             <motion.span
-              className='block text-6xl drop-shadow-2xl'
-              initial={{ scale: 0, opacity: 0, rotate: -20 }}
+              className='relative block'
+              initial={{ scale: 0, rotate: -15, opacity: 0 }}
               animate={{
-                scale: [0, 1.7, 1.25],
-                opacity: [0, 1, 1],
-                rotate: [-20, 8, 0],
-                y: [0, -4, 0]
+                scale: [0, 1.35, 1, 1.15, 0], rotate: [-15, 8, -4, 0, 0],
+                y: [0, -10, -20, -35, -50], opacity: [0, 1, 1, 0.9, 0]
               }}
-              exit={{ opacity: 0, y: -32, scale: 0.3, filter: 'blur(2px)' }}
-              transition={{
-                scale: { type: 'spring', stiffness: 420, damping: 14 },
-                duration: 1.1
-              }}
+              transition={{ duration: 0.85, times: [0, 0.22, 0.45, 0.75, 1], ease: 'easeOut' }}
             >
-              ❤️
+              <HeroIcon className='h-24 w-24 text-rose-500 drop-shadow-[0_8px_24px_rgba(244,63,94,0.85)]' iconName='HeartIcon' solid />
             </motion.span>
-            {[-2, -1.2, -0.4, 0.4, 1.2, 2].map((turn, index) => (
+            {HEART_PARTICLES.map((particle, index) => (
               <motion.span
                 key={index}
-                className='absolute text-xs'
-                initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
-                animate={{
-                  scale: 1.1,
-                  opacity: 0,
-                  x: Math.cos(turn * Math.PI * 0.5) * 44,
-                  y: Math.sin(turn * Math.PI * 0.5) * 44
-                }}
-                transition={{ duration: 0.6, ease: 'easeOut' }}
+                className='absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2'
+                initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
+                animate={{ x: particle.x, y: [0, particle.y * 0.85, particle.y - 30], scale: [0, particle.s, particle.s * 0.9, 0], opacity: [0, 1, 0.85, 0], rotate: particle.r }}
+                transition={{ duration: 0.75, delay: particle.delay, ease: 'easeOut' }}
               >
-                ✨
+                <HeroIcon className='h-5 w-5 text-rose-400 drop-shadow-[0_4px_10px_rgba(244,63,94,0.7)]' iconName='HeartIcon' solid />
               </motion.span>
             ))}
           </motion.span>
@@ -372,7 +387,11 @@ export function MessageBubble({
         dir='auto'
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
-        onPointerMove={() => Math.abs(dragX.get()) > 8 && cancelPress()}
+        onPointerCancel={cancelPress}
+        onPointerMove={(event) => {
+          if (Math.abs(dragX.get()) > 8) cancelPress();
+          else handlePointerMove(event);
+        }}
       >
         {replyQuote}
 
@@ -395,30 +414,25 @@ export function MessageBubble({
           <div className='w-fit max-w-[75vw] overflow-hidden rounded-2xl xs:max-w-[330px]'>
             {media.map((item, index) =>
               type === 'video' || item.type?.startsWith('video/') ? (
-                <video
-                  key={`${message.id}-${index}`}
-                  className='block h-auto w-full rounded-2xl'
-                  src={item.src}
-                  controls
-                  playsInline
-                  preload='metadata'
-                />
+                <div key={`${message.id}-${index}`} className='group relative'>
+                  <video className='block h-auto w-full rounded-2xl' src={item.src} controls playsInline preload='metadata' />
+                  <button type='button' onClick={() => setSelectedMediaIndex(index)} aria-label='فتح معاينة الفيديو' className='absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white opacity-0 shadow-lg backdrop-blur transition group-hover:opacity-100'>
+                    <HeroIcon className='h-5 w-5' iconName='ArrowsPointingOutIcon' />
+                  </button>
+                </div>
               ) : (
-                <a
+                <button
                   key={`${message.id}-${index}`}
-                  href={item.src}
-                  target='_blank'
-                  rel='noreferrer'
-                  className='block'
+                  type='button'
+                  onClick={() => setSelectedMediaIndex(index)}
+                  className='group relative block cursor-zoom-in overflow-hidden rounded-2xl outline-none'
+                  aria-label='فتح معاينة الصورة'
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    className='block h-auto w-full rounded-2xl object-contain'
-                    src={item.src}
-                    alt={item.alt || 'صورة'}
-                    loading='lazy'
-                  />
-                </a>
+                  <img className='block h-auto w-full rounded-2xl object-contain transition duration-300 group-hover:scale-[1.02]' src={item.src} alt={item.alt || 'صورة'} loading='lazy' />
+                  <span className='absolute inset-0 bg-black/0 transition group-hover:bg-black/10' />
+                  <HeroIcon className='absolute left-3 top-3 h-5 w-5 rounded-full bg-black/45 p-1 text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100' iconName='ArrowsPointingOutIcon' />
+                </button>
               )
             )}
           </div>
@@ -540,6 +554,15 @@ export function MessageBubble({
           </span>
         ))}
       </div>
+      {selectedMediaIndex !== null && media?.[selectedMediaIndex] && (
+        <Modal
+          open
+          closeModal={() => setSelectedMediaIndex(null)}
+          modalClassName='relative flex h-full w-full items-center justify-center p-4'
+        >
+          <ImageModal imageData={media[selectedMediaIndex]} previewCount={media.length} />
+        </Modal>
+      )}
     </motion.div>
   );
 }

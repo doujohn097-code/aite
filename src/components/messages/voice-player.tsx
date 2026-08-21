@@ -12,12 +12,10 @@ type VoicePlayerProps = {
   tall?: boolean;
 };
 
-const BAR_COUNT = 30;
-
-function normalizePeaks(peaks: number[]): number[] {
+function normalizePeaks(peaks: number[], count: number): number[] {
   const bars = Array.from(
-    { length: BAR_COUNT },
-    (_, i) => peaks[Math.floor((i / BAR_COUNT) * peaks.length)] ?? 0
+    { length: count },
+    (_, i) => peaks[Math.floor((i / count) * peaks.length)] ?? 0
   );
   const max = Math.max(...bars, 0.01);
   return bars.map((bar) => Math.max(bar / max, 0.12));
@@ -54,9 +52,10 @@ export function VoicePlayer({
     if (audioRef.current) audioRef.current.playbackRate = next;
   };
 
+  const barCount = compact ? 18 : tall ? 34 : 26;
   const bars = useMemo(
-    () => normalizePeaks(peaks?.length ? peaks : [0.4, 0.7, 1, 0.5, 0.8]),
-    [peaks]
+    () => normalizePeaks(peaks?.length ? peaks : [0.4, 0.7, 1, 0.5, 0.8], barCount),
+    [peaks, barCount]
   );
 
   useEffect(() => {
@@ -101,7 +100,7 @@ export function VoicePlayer({
     if (!audio) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const ratio = Math.min(
-      Math.max((rect.right - event.clientX) / rect.width, 0),
+      Math.max((event.clientX - rect.left) / rect.width, 0),
       1
     );
     const total = audio.duration || duration || 0;
@@ -114,7 +113,7 @@ export function VoicePlayer({
   return (
     <div
       className={cn(
-        'flex min-w-0 items-center gap-3 overflow-visible',
+        'grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-hidden rounded-2xl',
         compact ? 'w-full' : 'w-52 xs:w-56'
       )}
       dir='ltr'
@@ -147,7 +146,7 @@ export function VoicePlayer({
         role='presentation'
       >
         {bars.map((height, index) => {
-          const played = index / BAR_COUNT <= progress;
+          const played = index / bars.length <= progress;
           return (
             <span
               key={index}
@@ -166,35 +165,29 @@ export function VoicePlayer({
           );
         })}
       </div>
-      <span
-        className={cn(
-          'w-auto min-w-[2.25rem] shrink-0 text-left text-xs tabular-nums',
-          isOwn
-            ? 'text-black/70'
-            : 'text-light-secondary dark:text-dark-secondary'
-        )}
-      >
-        {formatDuration(
-          playing || progress > 0 ? duration - current : duration
-        )}
-      </span>
-      <button
-        type='button'
-        aria-label='سرعة التشغيل'
-        onClick={cycleSpeed}
-        className={cn(
-          'shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums transition active:scale-90',
-          speed === 1
-            ? isOwn
-              ? 'text-black/50'
-              : 'text-light-secondary/60 dark:text-dark-secondary/60'
-            : isOwn
-            ? 'bg-black/15 text-black'
-            : 'bg-main-accent/15 text-main-accent'
-        )}
-      >
-        {speed}×
-      </button>
+      <div className='flex shrink-0 items-center gap-1'>
+        <span
+          className={cn(
+            'min-w-[2.25rem] text-left text-xs tabular-nums',
+            isOwn ? 'text-black/70' : 'text-light-secondary dark:text-dark-secondary'
+          )}
+        >
+          {formatDuration(playing || progress > 0 ? duration - current : duration)}
+        </span>
+        <button
+          type='button'
+          aria-label='سرعة التشغيل'
+          onClick={cycleSpeed}
+          className={cn(
+            'rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums transition active:scale-90',
+            speed === 1
+              ? isOwn ? 'text-black/50' : 'text-light-secondary/60 dark:text-dark-secondary/60'
+              : isOwn ? 'bg-black/15 text-black' : 'bg-main-accent/15 text-main-accent'
+          )}
+        >
+          {speed}×
+        </button>
+      </div>
     </div>
   );
 }
