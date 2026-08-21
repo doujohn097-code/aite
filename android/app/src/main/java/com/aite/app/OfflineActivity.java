@@ -11,6 +11,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ImageView;
 import android.graphics.drawable.GradientDrawable;
 
 /** Fully native offline experience. It never loads the website's fallback page. */
@@ -24,16 +25,15 @@ public class OfflineActivity extends Activity {
     root.setPadding(dp(28), dp(28), dp(28), dp(28));
     root.setBackgroundColor(Color.rgb(8, 11, 18));
 
-    TextView icon = new TextView(this);
-    icon.setText("◌");
-    icon.setTextSize(54);
-    icon.setTextColor(Color.WHITE);
-    icon.setGravity(Gravity.CENTER);
-    GradientDrawable iconBg = new GradientDrawable();
-    iconBg.setColor(Color.rgb(31, 41, 55));
-    iconBg.setCornerRadius(dp(26));
-    icon.setBackground(iconBg);
-    root.addView(icon, new LinearLayout.LayoutParams(dp(92), dp(92)));
+    ImageView logo = new ImageView(this);
+    logo.setImageResource(R.mipmap.ic_launcher);
+    logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+    GradientDrawable logoBg = new GradientDrawable();
+    logoBg.setColor(Color.WHITE);
+    logoBg.setCornerRadius(dp(30));
+    logo.setPadding(dp(5), dp(5), dp(5), dp(5));
+    logo.setBackground(logoBg);
+    root.addView(logo, new LinearLayout.LayoutParams(dp(116), dp(116)));
 
     TextView title = text("لا يوجد اتصال بالإنترنت", 23, Color.WHITE);
     LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-2, -2);

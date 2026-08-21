@@ -31,7 +31,6 @@ export function CustomVideoPlayer({
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
-  const previewFramePrepared = useRef(false);
 
   const scheduleHide = (): void => {
     if (hideTimer.current) clearTimeout(hideTimer.current);
@@ -90,26 +89,7 @@ export function CustomVideoPlayer({
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  useEffect(() => {
-    previewFramePrepared.current = false;
-    setProgress(0);
-  }, [src]);
-
-  // Decode a representative frame rather than exposing the often-black first
-  // keyframe that Android WebView shows for remote MP4/WebM files.
-  const preparePreviewFrame = (): void => {
-    const video = videoRef.current;
-    if (!video || previewFramePrepared.current || !Number.isFinite(video.duration) || video.duration <= 0) return;
-    previewFramePrepared.current = true;
-    const previewAt = Math.min(1, Math.max(0.25, video.duration * 0.18));
-    const finishPreview = (): void => {
-      video.removeEventListener('seeked', finishPreview);
-      video.pause();
-      setProgress((video.currentTime / video.duration) * 100);
-    };
-    video.addEventListener('seeked', finishPreview, { once: true });
-    video.currentTime = previewAt;
-  };
+  useEffect(() => setProgress(0), [src]);
 
   const controlButton = (
     icon: IconName,
@@ -147,8 +127,12 @@ export function CustomVideoPlayer({
         src={src}
         playsInline
         muted={muted}
-        preload='auto'
-        className={cn('h-full w-full', videoClassName)}
+        preload='metadata'
+        className={cn(
+          'h-full w-full bg-black transition-opacity duration-150',
+          playing ? 'opacity-100' : 'opacity-0',
+          videoClassName
+        )}
         onPlay={() => {
           setPlaying(true);
           scheduleHide();
@@ -157,10 +141,7 @@ export function CustomVideoPlayer({
           setPlaying(false);
           setShowControls(true);
         }}
-        onLoadedMetadata={() => {
-          setDuration(videoRef.current?.duration ?? 0);
-          preparePreviewFrame();
-        }}
+        onLoadedMetadata={() => setDuration(videoRef.current?.duration ?? 0)}
         onTimeUpdate={() => {
           const video = videoRef.current;
           if (video && video.duration)
