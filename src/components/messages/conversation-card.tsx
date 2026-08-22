@@ -131,7 +131,7 @@ export function ConversationCard({
             {unreadCount > 0 && (
               <span
                 className='flex h-5 min-w-[20px] shrink-0 items-center justify-center
-                           rounded-full bg-main-accent px-1.5 text-xs font-bold text-black'
+                           rounded-full bg-main-accent px-1.5 text-xs font-bold text-white dark:text-black'
               >
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>

@@ -120,7 +120,7 @@ export default function UserTweets(): JSX.Element {
             className={cn(
               'flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-bold transition-all',
               tab === tabId
-                ? 'bg-main-accent text-black shadow-sm'
+                ? 'bg-main-accent text-white shadow-sm dark:text-black'
                 : 'text-light-secondary hover:bg-light-line-reply/50 dark:text-dark-secondary dark:hover:bg-dark-line-reply/50'
             )}
           >

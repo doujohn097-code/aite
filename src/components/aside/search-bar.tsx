@@ -69,7 +69,7 @@ export function SearchBar(): JSX.Element {
           disabled={!inputValue}
         >
           <HeroIcon
-            className='h-3 w-3 text-light-primary dark:text-dark-primary'
+            className='h-3 w-3 text-white dark:text-black'
             iconName='XMarkIcon'
           />
         </Button>

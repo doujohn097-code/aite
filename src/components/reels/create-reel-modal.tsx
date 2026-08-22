@@ -401,7 +401,7 @@ export function CreateReelModal({
 
           <Button
             type='button'
-            className='flex items-center gap-2 rounded-full bg-main-accent px-6 py-2.5 font-bold text-black shadow-lg transition hover:brightness-95 active:scale-95 disabled:pointer-events-none disabled:opacity-50'
+            className='flex items-center gap-2 rounded-full bg-main-accent px-6 py-2.5 font-bold text-white dark:text-black shadow-lg transition hover:brightness-95 active:scale-95 disabled:pointer-events-none disabled:opacity-50'
             onClick={handleSubmit}
             loading={loading || computingDuration}
             disabled={!selectedVideos.length || loading || computingDuration}

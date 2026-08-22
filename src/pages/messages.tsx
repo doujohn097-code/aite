@@ -196,7 +196,7 @@ export default function Messages(): JSX.Element {
           <button
             type='button'
             onClick={openModal}
-            className='rounded-full bg-main-accent px-6 py-2.5 font-bold text-black
+            className='rounded-full bg-main-accent px-6 py-2.5 font-bold text-white dark:text-black
                        transition hover:brightness-90 active:brightness-75'
           >
             رسالة جديدة

@@ -335,7 +335,7 @@ export function ChatComposer({
                 aria-label='إرسال'
                 className={cn(
                   'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
-                  'bg-main-accent text-black transition hover:brightness-90 active:scale-90',
+                  'bg-main-accent text-white transition hover:brightness-90 active:scale-90 dark:text-black',
                   'disabled:opacity-50'
                 )}
               >

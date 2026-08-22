@@ -385,7 +385,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
           <div className='mt-6 flex items-center gap-3'>
             {authUser?.id === userId && (
               <Button
-                className='bg-main-accent px-5 py-2.5 font-bold text-black hover:bg-main-accent/90'
+                className='bg-main-accent px-5 py-2.5 font-bold text-white dark:text-black hover:bg-main-accent/90'
                 onClick={(): void => setCreateModalOpen(true)}
               >
                 + إنشاء قصة جديدة

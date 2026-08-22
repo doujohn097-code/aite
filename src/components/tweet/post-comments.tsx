@@ -734,7 +734,7 @@ export function PostComments({
               loading={sending}
               disabled={!comment.trim()}
               className='flex shrink-0 items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm
-                         font-bold text-black shadow-md transition hover:brightness-95 active:scale-95
+                         font-bold text-white dark:text-black shadow-md transition hover:brightness-95 active:scale-95
                          disabled:pointer-events-none disabled:opacity-40'
             >
               <span>إرسال</span>

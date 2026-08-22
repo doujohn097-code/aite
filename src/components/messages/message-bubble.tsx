@@ -346,7 +346,7 @@ export function MessageBubble({
         aria-hidden
         className={cn(
           'absolute top-1/2 flex h-10 -translate-y-1/2 items-center gap-1.5 rounded-full px-2',
-          'bg-main-accent text-black shadow-lg shadow-main-accent/40',
+          'bg-main-accent text-white shadow-lg shadow-main-accent/40 dark:text-black',
           swipeReady && 'ring-4 ring-main-accent/25',
           isOwn ? '-start-2' : '-end-2'
         )}
@@ -533,7 +533,7 @@ export function MessageBubble({
                       text={text}
                       linkClassName={
                         isOwn
-                          ? 'break-all font-semibold text-[#0b3d91] underline underline-offset-2'
+                          ? 'break-all font-semibold text-blue-100 underline underline-offset-2'
                           : undefined
                       }
                     />
@@ -700,21 +700,10 @@ export function MessageBubble({
 
               {text && type !== 'text' && (
                 <p
-                  className={cn(
-                    'mt-1 whitespace-pre-wrap break-words px-2 pb-1 text-[15px]',
-                    isOwn
-                      ? 'text-black'
-                      : 'text-light-primary dark:text-dark-primary'
-                  )}
+                  className='mt-1 whitespace-pre-wrap break-words px-2 pb-1
+                             text-[15px] text-light-primary dark:text-dark-primary'
                 >
-                  <LinkifiedText
-                    text={text}
-                    linkClassName={
-                      isOwn
-                        ? 'break-all font-semibold text-[#0b3d91] underline underline-offset-2'
-                        : undefined
-                    }
-                  />
+                  <LinkifiedText text={text} />
                 </p>
               )}
             </>

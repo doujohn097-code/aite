@@ -189,7 +189,7 @@ export default function Accounts(): JSX.Element {
             <Link href='/home'>
               <a className='w-full'>
                 <Button
-                  className='w-full bg-main-accent py-2.5 font-bold text-black transition
+                  className='w-full bg-main-accent py-2.5 font-bold text-white dark:text-black transition
                              hover:brightness-90 active:brightness-75'
                 >
                   العودة إلى الرئيسية

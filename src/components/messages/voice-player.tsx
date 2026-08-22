@@ -131,7 +131,7 @@ export function VoicePlayer({
           tall ? 'h-11 w-11' : 'h-9 w-9',
           isOwn
             ? 'bg-black/15 text-black hover:bg-black/25'
-            : 'bg-main-accent text-black hover:brightness-90'
+            : 'bg-main-accent text-white hover:brightness-90 dark:text-black'
         )}
       >
         <HeroIcon

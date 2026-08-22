@@ -50,7 +50,7 @@ export function SidebarLink({
             <span
               className={cn(
                 'absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold',
-                badgeClassName ?? 'bg-main-accent text-black'
+                badgeClassName ?? 'bg-main-accent text-white dark:text-black'
               )}
             >
               {badge > 99 ? '99+' : badge}

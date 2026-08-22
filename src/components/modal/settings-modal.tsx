@@ -324,7 +324,7 @@ export function SettingsModal({
           <Button
             type='submit'
             className='mt-1 bg-main-accent py-2.5 font-bold text-white transition
-                       hover:brightness-90 active:brightness-75'
+                       hover:brightness-90 active:brightness-75 dark:text-black'
             loading={loading}
             disabled={loading}
           >
