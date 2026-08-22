@@ -1,11 +1,11 @@
-import { getFirebase, getActiveProject } from '@lib/firebase/app';
+import { auth } from '@lib/firebase/app';
 
 export type PushContext = 'post' | 'reel' | 'story';
 
 /** إرسال إشعار فوري (FCM) عبر مسار الخادم — لا يعطّل الإجراء الأصلي أبدًا */
 export function sendPushNotification(payload: Record<string, unknown>): void {
   try {
-    const currentUser = getFirebase(getActiveProject()).auth.currentUser;
+    const currentUser = auth.currentUser;
     if (!currentUser) return;
 
     void currentUser

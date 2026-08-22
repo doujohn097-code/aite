@@ -4,8 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
 import { toast } from 'react-hot-toast';
 import { addDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { collectionsFor } from '@lib/firebase/collections';
-import { getActiveProject } from '@lib/firebase/app';
+import { tweetsCollection } from '@lib/firebase/collections';
 import {
   manageReply,
   manageTotalReplies,
@@ -148,7 +147,7 @@ export function Input({
       };
 
       const [tweetRef] = await Promise.all([
-        addDoc(collectionsFor(getActiveProject()).tweets, tweetData),
+        addDoc(tweetsCollection, tweetData),
         isReplying
           ? manageTotalReplies('increment', userId)
           : manageTotalTweets('increment', userId),

@@ -1,4 +1,4 @@
-import { verifyIdTokenAny } from '@lib/firebase-admin';
+import { verifyIdToken } from '@lib/firebase-admin';
 import { getUploadUrl } from '@lib/r2';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -71,8 +71,7 @@ export default async function uploadEndpoint(
   }
 
   try {
-    const { decoded: auth0 } = await verifyIdTokenAny(token);
-    const uid = auth0.uid;
+    const { uid } = await verifyIdToken(token);
     const { files } = req.body as { files?: UploadFile[] };
     if (
       !Array.isArray(files) ||

@@ -1,8 +1,8 @@
 import { AnimatePresence } from 'framer-motion';
 import { where, orderBy } from 'firebase/firestore';
 import { useWindow } from '@lib/context/window-context';
-import { useInfiniteScrollBoth } from '@lib/hooks/useInfiniteScroll';
-import { collectionsFor } from '@lib/firebase/collections';
+import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
+import { tweetsCollection } from '@lib/firebase/collections';
 import { HomeLayout, ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { SEO } from '@components/common/seo';
@@ -19,27 +19,10 @@ import type { ReactElement, ReactNode } from 'react';
 export default function Home(): JSX.Element {
   const { isMobile } = useWindow();
 
-  const { data, loading, LoadMore } = useInfiniteScrollBoth(
-    collectionsFor('a').tweets,
-    collectionsFor('b').tweets,
+  const { data, loading, LoadMore } = useInfiniteScroll(
+    tweetsCollection,
     [where('parent', '==', null), orderBy('createdAt', 'desc')],
-    { includeUser: true, allowNull: true, preserve: true },
-    {
-      fallback: {
-        a: {
-          collection: 'tweets',
-          where: { field: 'parent', op: 'isNull' },
-          orderBy: { field: 'createdAt', dir: 'desc' },
-          limit: 40
-        },
-        b: {
-          collection: 'tweets',
-          where: { field: 'parent', op: 'isNull' },
-          orderBy: { field: 'createdAt', dir: 'desc' },
-          limit: 40
-        }
-      }
-    }
+    { includeUser: true, allowNull: true, preserve: true }
   );
 
   return (

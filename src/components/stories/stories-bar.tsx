@@ -3,8 +3,8 @@ import { useRouter } from 'next/router';
 import { query, where, Timestamp } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import { useAuth } from '@lib/context/auth-context';
-import { collectionsFor } from '@lib/firebase/collections';
-import { useMergedCollection } from '@lib/dual';
+import { usersCollection } from '@lib/firebase/collections';
+import { useCollection } from '@lib/hooks/useCollection';
 import { getTimestampMillis } from '@lib/date';
 import { StoryAvatar } from './story-avatar';
 import { CreateStoryModal } from './create-story-modal';
@@ -17,32 +17,14 @@ export function StoriesBar(): JSX.Element {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const makeUsersQuery = (project: 'a' | 'b') => {
+  const usersQuery = useMemo(() => {
     const oneDayAgo = Timestamp.fromMillis(Date.now() - STORY_LIFETIME_MS);
-    return query(
-      collectionsFor(project).users,
-      where('lastStoryAt', '>', oneDayAgo)
-    );
-  };
+    return query(usersCollection, where('lastStoryAt', '>', oneDayAgo));
+  }, []);
 
-  const usersQueryA = useMemo(() => makeUsersQuery('a'), []);
-  const usersQueryB = useMemo(() => makeUsersQuery('b'), []);
-
-  const fallbackStories = {
-    collection: 'users' as const,
-    where: {
-      field: 'lastStoryAt',
-      op: '>' as const,
-      value: new Date(Date.now() - STORY_LIFETIME_MS).toISOString()
-    },
-    orderBy: { field: 'lastStoryAt', dir: 'desc' as const },
-    limit: 50
-  };
-  const { data: allUsers, loading } = useMergedCollection(
-    usersQueryA,
-    usersQueryB,
-    { allowNull: true, fallback: { a: fallbackStories, b: fallbackStories } }
-  );
+  const { data: allUsers, loading } = useCollection(usersQuery, {
+    allowNull: true
+  });
 
   const users = useMemo(() => {
     if (!allUsers) return [];

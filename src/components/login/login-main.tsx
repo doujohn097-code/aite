@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ChangeEvent } from 'react';
 import { useAuth } from '@lib/context/auth-context';
-import { getActiveAuthUser } from '@lib/firebase/app';
+import { auth } from '@lib/firebase/app';
 import { saveAccount } from '@lib/accounts';
 import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
@@ -48,7 +48,7 @@ export function LoginMain(): JSX.Element {
           throw new Error('يرجى إدخال اسم المستخدم وكلمة المرور');
         await signInWithUsername(cleanedUsername, password);
       }
-      const currentUser = getActiveAuthUser();
+      const currentUser = auth.currentUser;
       saveAccount({
         username: cleanedUsername,
         password,

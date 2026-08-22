@@ -34,9 +34,7 @@ export function formatDate(
   targetDate: Timestamp,
   mode: 'tweet' | 'message' | 'full' | 'joined'
 ): string {
-  // Accepts real Timestamps and proxy-serialized { seconds, nanoseconds }.
-  const millis = getTimestampMillis(targetDate);
-  const date = new Date(millis);
+  const date = targetDate.toDate();
 
   if (mode === 'full') return getFullTime(date);
   if (mode === 'tweet') return getPostTime(date);

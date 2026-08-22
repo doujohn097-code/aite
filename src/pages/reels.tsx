@@ -2,9 +2,8 @@ import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { query, where } from 'firebase/firestore';
 import { AnimatePresence } from 'framer-motion';
-import { collectionsFor } from '@lib/firebase/collections';
-import { useInfiniteScrollBoth } from '@lib/hooks/useInfiniteScroll';
-import { useMergedCollection } from '@lib/dual';
+import { storiesCollection, usersCollection } from '@lib/firebase/collections';
+import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 import { useCollection } from '@lib/hooks/useCollection';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -58,27 +57,11 @@ export default function Reels(): JSX.Element {
     data: rawReels,
     loading: reelsLoading,
     LoadMore
-  } = useInfiniteScrollBoth(
-    collectionsFor('a').stories,
-    collectionsFor('b').stories,
+  } = useInfiniteScroll(
+    storiesCollection,
     reelsConstraints,
     { allowNull: true },
-    {
-      initialSize: 50,
-      stepSize: 25,
-      fallback: {
-        a: {
-          collection: 'stories',
-          orderBy: { field: 'createdAt', dir: 'desc' },
-          limit: 50
-        },
-        b: {
-          collection: 'stories',
-          orderBy: { field: 'createdAt', dir: 'desc' },
-          limit: 50
-        }
-      }
-    }
+    { initialSize: 50, stepSize: 25 }
   );
 
   const reels = useMemo(() => {
@@ -130,23 +113,14 @@ export default function Reels(): JSX.Element {
     [reels]
   );
 
-  const ownersQueryA = useMemo(
+  const ownersQuery = useMemo(
     () =>
       ownerIds.length
-        ? query(collectionsFor('a').users, where('__name__', 'in', ownerIds))
+        ? query(usersCollection, where('__name__', 'in', ownerIds))
         : null,
     [ownerIds]
   );
-  const ownersQueryB = useMemo(
-    () =>
-      ownerIds.length
-        ? query(collectionsFor('b').users, where('__name__', 'in', ownerIds))
-        : null,
-    [ownerIds]
-  );
-  const { data: owners } = useMergedCollection(ownersQueryA, ownersQueryB, {
-    allowNull: true
-  });
+  const { data: owners } = useCollection(ownersQuery, { allowNull: true });
 
   const userById = useMemo(() => {
     const map = new Map<string, User>();

@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { usersCollection } from '@lib/firebase/collections';
-import { fetchUserAnywhere } from '@lib/dual';
 import type { CollectionReference } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
 
@@ -15,19 +14,19 @@ type DataWithUser<T> = UserArrayDocument<T & { user: User }>;
 
 export function useArrayDocument<T>(
   docsIds: string[],
-  collectionRef: CollectionReference<T> | null,
+  collectionRef: CollectionReference<T>,
   options?: { includeUser?: true; disabled?: boolean }
 ): DataWithUser<T>;
 
 export function useArrayDocument<T>(
   docsIds: string[],
-  collectionRef: CollectionReference<T> | null,
+  collectionRef: CollectionReference<T>,
   options?: { includeUser?: false; disabled?: boolean }
 ): UserArrayDocument<T>;
 
 export function useArrayDocument<T>(
   docsId: string[],
-  collection: CollectionReference<T> | null,
+  collection: CollectionReference<T>,
   options?: { includeUser?: boolean; disabled?: boolean }
 ): UserArrayDocument<T> | DataWithUser<T> {
   const [data, setData] = useState<T[] | null>(null);
@@ -41,23 +40,6 @@ export function useArrayDocument<T>(
     if (disabled) return;
 
     if (includeUser && !data) setLoading(true);
-
-    // When no collection is provided the ids are user uids that may live in
-    // either round-robin database — resolve each profile individually.
-    if (!collection) {
-      setLoading(true);
-      let cancelled = false;
-      void Promise.all(cachedDocsId.map((id) => fetchUserAnywhere(id))).then(
-        (users) => {
-          if (cancelled) return;
-          setData(users.filter((u): u is User => !!u) as unknown as T[]);
-          setLoading(false);
-        }
-      );
-      return () => {
-        cancelled = true;
-      };
-    }
 
     const populateUser = async (currentData: DataWithRef<T>): Promise<void> => {
       const dataWithUser = await Promise.all(

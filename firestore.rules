@@ -57,17 +57,6 @@ service cloud.firestore {
       return participants[0] == request.auth.uid ? participants[1] : participants[0];
     }
 
-    // Account router registry (dual-database round-robin): public read so any
-    // client can resolve which project a user lives on; writes are server-only.
-    match /userRegistry/{userId} {
-      allow read: if true;
-      allow create, update, delete: if false;
-    }
-    match /counters/{counterId} {
-      allow read: if true;
-      allow create, update, delete: if false;
-    }
-
     match /tweets/{tweetId} {
       allow read: if signedIn();
       allow create: if signedIn()

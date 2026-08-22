@@ -5,11 +5,9 @@ import { motion } from 'framer-motion';
 import { query, limit } from 'firebase/firestore';
 import { Loading } from '@components/ui/loading';
 import { useCollection } from './useCollection';
-import { useMergedCollection } from '@lib/dual';
 import type { UseCollectionOptions } from './useCollection';
 import type { Query, QueryConstraint } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
-import type { WithProject, ProxySpec } from '@lib/dual';
 
 type InfiniteScroll<T> = {
   data: T[] | null;
@@ -27,23 +25,23 @@ export function useInfiniteScroll<T>(
   collection: Query<T>,
   constraints: QueryConstraint[],
   fetchOptions: UseCollectionOptions & { includeUser: true },
-  options?: DualScrollOptions
+  options?: { initialSize?: number; stepSize?: number; marginBottom?: number }
 ): InfiniteScrollWithUser<T>;
 
 export function useInfiniteScroll<T>(
   collection: Query<T>,
   constraints: QueryConstraint[],
   fetchOptions?: UseCollectionOptions,
-  options?: DualScrollOptions
+  options?: { initialSize?: number; stepSize?: number; marginBottom?: number }
 ): InfiniteScroll<T>;
 
 export function useInfiniteScroll<T>(
   collection: Query<T>,
   queryConstraints?: QueryConstraint[],
   fetchOptions?: UseCollectionOptions,
-  options?: DualScrollOptions
+  options?: { initialSize?: number; stepSize?: number; marginBottom?: number }
 ): InfiniteScroll<T> | InfiniteScrollWithUser<T> {
-  const { initialSize, stepSize, marginBottom, fallback } = options ?? {};
+  const { initialSize, stepSize, marginBottom } = options ?? {};
 
   const [tweetsLimit, setTweetsLimit] = useState(initialSize ?? 20);
   const [reachedLimit, setReachedLimit] = useState(false);
@@ -53,110 +51,6 @@ export function useInfiniteScroll<T>(
   const { data, loading } = useCollection(
     query(collection, ...(queryConstraints ?? []), limit(tweetsLimit)),
     { ...fetchOptions, preserve: true }
-  );
-
-  useEffect(() => {
-    if (loading || data === null) return;
-    if (justIncreased.current) {
-      justIncreased.current = false;
-      return;
-    }
-    setReachedLimit(data.length < tweetsLimit);
-  }, [data, loading, tweetsLimit]);
-
-  useEffect(() => {
-    if (reachedLimit) return;
-    if (loadMoreInView) {
-      justIncreased.current = true;
-      setTweetsLimit(tweetsLimit + (stepSize ?? 20));
-    }
-  }, [loadMoreInView]);
-
-  const makeItInView = (): void => setLoadMoreInView(true);
-  const makeItNotInView = (): void => setLoadMoreInView(false);
-
-  const LoadMore = useCallback(
-    (): JSX.Element => (
-      <motion.div
-        className={reachedLimit || loading ? 'hidden' : 'block'}
-        viewport={{ margin: `0px 0px ${marginBottom ?? 1000}px` }}
-        onViewportEnter={makeItInView}
-        onViewportLeave={makeItNotInView}
-      >
-        <Loading className='mt-5' />
-      </motion.div>
-    ),
-    [reachedLimit, loading]
-  );
-
-  return { data, loading, LoadMore };
-}
-
-/**
- * Dual-database variant: runs the same query against both round-robin
- * projects, merges the results (deduplicated, newest first) and tags every
- * item with the project it lives in.
- */
-export type DualScrollOptions = {
-  initialSize?: number;
-  stepSize?: number;
-  marginBottom?: number;
-  fallback?: { a?: ProxySpec; b?: ProxySpec };
-};
-
-export function useInfiniteScrollBoth<
-  T extends { id: string; createdAt: unknown }
->(
-  collectionA: Query<T>,
-  collectionB: Query<T>,
-  queryConstraints: QueryConstraint[],
-  fetchOptions: UseCollectionOptions & { includeUser: true },
-  options?: DualScrollOptions
-): {
-  data: (WithProject<T> & { user: User })[] | null;
-  loading: boolean;
-  LoadMore: () => JSX.Element;
-};
-
-export function useInfiniteScrollBoth<
-  T extends { id: string; createdAt: unknown }
->(
-  collectionA: Query<T>,
-  collectionB: Query<T>,
-  queryConstraints?: QueryConstraint[],
-  fetchOptions?: UseCollectionOptions,
-  options?: DualScrollOptions
-): {
-  data: WithProject<T>[] | null;
-  loading: boolean;
-  LoadMore: () => JSX.Element;
-};
-
-export function useInfiniteScrollBoth<
-  T extends { id: string; createdAt: unknown }
->(
-  collectionA: Query<T>,
-  collectionB: Query<T>,
-  queryConstraints?: QueryConstraint[],
-  fetchOptions?: UseCollectionOptions,
-  options?: DualScrollOptions
-): {
-  data: (WithProject<T> & { user?: User })[] | null;
-  loading: boolean;
-  LoadMore: () => JSX.Element;
-} {
-  const { initialSize, stepSize, marginBottom, fallback } = options ?? {};
-
-  const [tweetsLimit, setTweetsLimit] = useState(initialSize ?? 20);
-  const [reachedLimit, setReachedLimit] = useState(false);
-  const [loadMoreInView, setLoadMoreInView] = useState(false);
-  const justIncreased = useRef(false);
-
-  const constraints = [...(queryConstraints ?? []), limit(tweetsLimit)];
-  const { data, loading } = useMergedCollection(
-    query(collectionA, ...constraints),
-    query(collectionB, ...constraints),
-    { ...fetchOptions, allowNull: true, fallback }
   );
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { onSnapshot, Timestamp } from 'firebase/firestore';
-import { fetchUserAnywhere, queryViaProxy } from '@lib/dual';
+import { getDoc, doc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { usersCollection } from '@lib/firebase/collections';
 import { useCacheRef } from './useCacheRef';
 import type { DocumentReference } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
@@ -75,10 +75,13 @@ export function useDocument<T>(
       }
 
       try {
-        // The author's profile may live in either round-robin database.
-        const user =
-          (await fetchUserAnywhere(currentData.createdBy)) ?? fallbackUser;
-        const dataWithUser = { ...currentData, user };
+        const userData = await getDoc(
+          doc(usersCollection, currentData.createdBy)
+        );
+        const dataWithUser = {
+          ...currentData,
+          user: userData.data() ?? fallbackUser
+        };
 
         setData(dataWithUser);
       } catch (error) {
@@ -86,50 +89,6 @@ export function useDocument<T>(
         setData({ ...currentData, user: fallbackUser });
       }
       setLoading(false);
-    };
-
-    let disposed = false;
-
-    /** Server-proxy fallback for blocked channels: reads the doc through our
-     * origin (admin SDK) when the live subscription cannot reach Firestore. */
-    const fetchViaProxy = async (): Promise<void> => {
-      const parts = cachedDocRef.path.split('/');
-      const collectionName = parts[0];
-      const docId = parts[1];
-      if (parts.length !== 2 || !docId) {
-        if (!disposed) setLoading(false);
-        return;
-      }
-      if (
-        !['tweets', 'stories', 'users', 'conversations'].includes(
-          collectionName
-        )
-      ) {
-        if (!disposed) setLoading(false);
-        return;
-      }
-      for (const project of ['a', 'b'] as const) {
-        const items = await queryViaProxy(project, {
-          collection: collectionName as
-            | 'tweets'
-            | 'stories'
-            | 'users'
-            | 'conversations',
-          ids: [docId],
-          limit: 1
-        });
-        if (disposed) return;
-        if (items?.length) {
-          const data = items[0].data as T;
-          if (includeUser) void populateUser(data as DataWithRef<T>);
-          else {
-            setData(data);
-            setLoading(false);
-          }
-          return;
-        }
-      }
-      if (!disposed) setLoading(false);
     };
 
     const unsubscribe = onSnapshot(
@@ -151,15 +110,12 @@ export function useDocument<T>(
       },
       (error) => {
         console.error('useDocument snapshot error:', error);
-        // The channel may be blocked — try the server-side proxy.
-        void fetchViaProxy();
+        setData(null);
+        setLoading(false);
       }
     );
 
-    return () => {
-      disposed = true;
-      unsubscribe();
-    };
+    return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cachedDocRef]);
 

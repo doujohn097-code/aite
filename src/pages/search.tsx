@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { query, where, orderBy, limit, documentId } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
-import { useMergedCollection } from '@lib/dual';
-import { collectionsFor } from '@lib/firebase/collections';
+import { useCollection } from '@lib/hooks/useCollection';
+import { usersCollection } from '@lib/firebase/collections';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { MainContainer } from '@components/home/main-container';
@@ -38,13 +38,12 @@ export default function Search(): JSX.Element {
 
   const trimmedQuery = inputValue.trim().toLowerCase();
 
-  const makeUsersQuery = (project: 'a' | 'b') => {
+  const usersQuery = useMemo(() => {
     if (!userId) return null;
-    const cols = collectionsFor(project);
 
     if (!trimmedQuery)
       return query(
-        cols.users,
+        usersCollection,
         where(documentId(), '!=', userId),
         orderBy(documentId()),
         limit(20)
@@ -53,43 +52,15 @@ export default function Search(): JSX.Element {
     const end = `${trimmedQuery}\uf8ff`;
 
     return query(
-      cols.users,
+      usersCollection,
       where('username', '>=', trimmedQuery),
       where('username', '<=', end),
       orderBy('username'),
       limit(20)
     );
-  };
+  }, [userId, trimmedQuery]);
 
-  const usersQueryA = useMemo(
-    () => makeUsersQuery('a'),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId, trimmedQuery]
-  );
-  const usersQueryB = useMemo(
-    () => makeUsersQuery('b'),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId, trimmedQuery]
-  );
-
-  const fallbackSearch = trimmedQuery
-    ? {
-        collection: 'users' as const,
-        where: {
-          field: 'username',
-          op: '>=' as const,
-          value: trimmedQuery
-        },
-        orderBy: { field: 'username', dir: 'asc' as const },
-        limit: 20
-      }
-    : undefined;
-  const { data, loading } = useMergedCollection(usersQueryA, usersQueryB, {
-    allowNull: true,
-    fallback: fallbackSearch
-      ? { a: fallbackSearch, b: fallbackSearch }
-      : undefined
-  });
+  const { data, loading } = useCollection(usersQuery, { allowNull: true });
 
   const results = data ?? [];
   const isSearching = trimmedQuery.length > 0;

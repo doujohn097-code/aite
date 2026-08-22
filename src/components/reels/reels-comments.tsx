@@ -14,8 +14,7 @@ import { toast } from 'react-hot-toast';
 import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
 import { useCollection } from '@lib/hooks/useCollection';
-import { collectionsFor } from '@lib/firebase/collections';
-import { resolveTweetProject, useMergedCollection } from '@lib/dual';
+import { tweetsCollection } from '@lib/firebase/collections';
 import { addReelComment, deleteReelComment } from '@lib/firebase/utils';
 import { formatDate } from '@lib/date';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -108,47 +107,19 @@ export function ReelsComments({
   };
 
   // Query comments belonging to this reel (only when modal is open and reelId exists)
-  const commentsQueryA = useMemo(
+  const commentsQuery = useMemo(
     () =>
       open && reelId
-        ? query(collectionsFor('a').tweets, where('parent.id', '==', reelId))
-        : null,
-    [open, reelId]
-  );
-  const commentsQueryB = useMemo(
-    () =>
-      open && reelId
-        ? query(collectionsFor('b').tweets, where('parent.id', '==', reelId))
+        ? query(tweetsCollection, where('parent.id', '==', reelId))
         : null,
     [open, reelId]
   );
 
-  const { data: rawComments, loading } = useMergedCollection(
-    commentsQueryA,
-    commentsQueryB,
-    {
-      includeUser: true,
-      allowNull: true,
-      disabled: !open || !reelId,
-      fallback:
-        open && reelId
-          ? {
-              a: {
-                collection: 'tweets',
-                where: { field: 'parent.id', op: '==', value: reelId },
-                orderBy: { field: 'createdAt', dir: 'desc' },
-                limit: 60
-              },
-              b: {
-                collection: 'tweets',
-                where: { field: 'parent.id', op: '==', value: reelId },
-                orderBy: { field: 'createdAt', dir: 'desc' },
-                limit: 60
-              }
-            }
-          : undefined
-    }
-  );
+  const { data: rawComments, loading } = useCollection(commentsQuery, {
+    includeUser: true,
+    allowNull: true,
+    disabled: !open || !reelId
+  });
 
   // Merge server comments with local optimistic comments cleanly without duplicate flash
   const allComments = useMemo(() => {
@@ -415,10 +386,7 @@ export function ReelsComments({
         setOptimisticLikes((prev) => ({ ...prev, [commentId]: updatedLikes }));
 
         try {
-          const commentRef = doc(
-            collectionsFor(await resolveTweetProject(commentId)).tweets,
-            commentId
-          );
+          const commentRef = doc(tweetsCollection, commentId);
           await updateDoc(commentRef, {
             userLikes: isLiked ? arrayRemove(user.id) : arrayUnion(user.id),
             updatedAt: serverTimestamp()

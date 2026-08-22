@@ -1,6 +1,5 @@
-import { registryCollection } from '@lib/auth-router';
 import admin from 'firebase-admin';
-import { adminAppForProject, verifyIdTokenAny } from '@lib/firebase-admin';
+import { verifyIdToken } from '@lib/firebase-admin';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 type NotifyBody = {
@@ -93,18 +92,6 @@ function buildActivityNotification(
   }
 }
 
-/** Resolves which project a user doc lives in (registry first, auth fallback). */
-async function resolveUserProject(uid: string): Promise<'a' | 'b'> {
-  try {
-    const snapshot = await registryCollection().doc(uid).get();
-    const project = snapshot.data()?.project as 'a' | 'b' | undefined;
-    if (project === 'a' || project === 'b') return project;
-  } catch {
-    // fall through
-  }
-  return 'a';
-}
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -121,25 +108,18 @@ export default async function handler(
       res.status(401).json({ error: 'unauthorized' });
       return;
     }
-    const { decoded } = await verifyIdTokenAny(idToken);
+    const decoded = await verifyIdToken(idToken);
     const senderId = decoded.uid;
 
     const body = req.body as NotifyBody;
     const kind = body.kind ?? 'activity';
 
-    const senderProject = await resolveUserProject(senderId);
-    const senderApp = adminAppForProject(senderProject);
-    if (!senderApp) {
-      res.status(200).json({ ok: true, sent: 0 });
-      return;
-    }
-    const senderFirestore = senderApp.firestore();
+    const firestore = admin.firestore();
 
     let recipientId: string | undefined;
-    let recipientProject: 'a' | 'b' = 'a';
     let notification: BuiltNotification | null = null;
 
-    const senderSnap = await senderFirestore.doc(`users/${senderId}`).get();
+    const senderSnap = await firestore.doc(`users/${senderId}`).get();
     const senderData = senderSnap.data() ?? {};
     const senderName =
       (senderData.name as string | undefined) ??
@@ -156,23 +136,10 @@ export default async function handler(
         return;
       }
 
-      // Conversations may live in either project.
-      let conversationSnap = await senderFirestore
+      const conversationSnap = await firestore
         .doc(`conversations/${conversationId}`)
-        .get()
-        .catch(() => null);
-      let conversationFirestore = senderFirestore;
-      if (!conversationSnap?.exists) {
-        const peerApp = adminAppForProject(senderProject === 'a' ? 'b' : 'a');
-        if (peerApp) {
-          conversationFirestore = peerApp.firestore();
-          conversationSnap = await conversationFirestore
-            .doc(`conversations/${conversationId}`)
-            .get()
-            .catch(() => null);
-        }
-      }
-      if (!conversationSnap?.exists) {
+        .get();
+      if (!conversationSnap.exists) {
         res.status(404).json({ error: 'not_found' });
         return;
       }
@@ -187,7 +154,6 @@ export default async function handler(
       recipientId = participants.find(
         (participant) => participant !== senderId
       );
-      if (recipientId) recipientProject = await resolveUserProject(recipientId);
 
       notification =
         kind === 'message'
@@ -211,7 +177,6 @@ export default async function handler(
         res.status(200).json({ ok: true, sent: 0 });
         return;
       }
-      recipientProject = await resolveUserProject(recipientId);
       notification = buildActivityNotification(
         body,
         senderName,
@@ -225,15 +190,7 @@ export default async function handler(
       return;
     }
 
-    const recipientApp = adminAppForProject(recipientProject);
-    if (!recipientApp) {
-      res.status(200).json({ ok: true, sent: 0 });
-      return;
-    }
-    const recipientSnap = await recipientApp
-      .firestore()
-      .doc(`users/${recipientId}`)
-      .get();
+    const recipientSnap = await firestore.doc(`users/${recipientId}`).get();
     const tokens =
       (recipientSnap.data()?.fcmTokens as string[] | undefined) ?? [];
     if (!tokens.length) {
@@ -241,20 +198,15 @@ export default async function handler(
       return;
     }
 
-    // FCM tokens are minted by the primary project's messaging (single web
-    // app + single Android build), so delivery always goes through it.
-    const primaryApp = adminAppForProject('a');
-    if (!primaryApp) {
-      res.status(200).json({ ok: true, sent: 0 });
-      return;
-    }
-    const response = await primaryApp.messaging().sendEachForMulticast({
+    const response = await admin.messaging().sendEachForMulticast({
       tokens,
+      // إشعار نظام أصلي — يظهر حتى مع إغلاق تطبيق PWA ولا يحتاج service worker
       notification: {
         title: notification.title,
         body: notification.body,
         ...(senderPhoto ? { image: senderPhoto } : {})
       },
+      // بيانات للمعالجة التفاعلية (الرابط، الأيقونة، …)
       data: {
         title: notification.title,
         body: notification.body,
@@ -264,6 +216,7 @@ export default async function handler(
         ...(senderPhoto ? { image: senderPhoto } : {})
       },
       android: { priority: 'high' },
+      // يجعل Web Push يظهر فوراً على مدار 24 ساعة ولا يُجمّع في الخلفية
       apns: { headers: { 'apns-priority': '10' } },
       webpush: {
         headers: { Urgency: 'high' },
@@ -283,8 +236,7 @@ export default async function handler(
     });
 
     if (invalidTokens.length)
-      await recipientApp
-        .firestore()
+      await firestore
         .doc(`users/${recipientId}`)
         .update({
           fcmTokens: admin.firestore.FieldValue.arrayRemove(...invalidTokens)
@@ -298,5 +250,3 @@ export default async function handler(
     res.status(500).json({ error: 'internal', message });
   }
 }
-
-export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };

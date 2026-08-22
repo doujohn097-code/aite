@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
-import { fetchUserAnywhere } from '@lib/dual';
+import { usersCollection } from '@lib/firebase/collections';
 import { useAuth } from '@lib/context/auth-context';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { Loading } from '@components/ui/loading';
@@ -41,8 +41,15 @@ export function NewMessageModal({
         new Set([...(user.following ?? []), ...(user.followers ?? [])])
       ).filter((id) => id !== user.id);
 
-      const users = await Promise.all(ids.map((id) => fetchUserAnywhere(id)));
-      setPeople(users.filter((u): u is User => !!u));
+      const docs = await Promise.all(
+        ids.map((id) => getDoc(doc(usersCollection, id)))
+      );
+      setPeople(
+        docs.flatMap((snapshot) => {
+          const data = snapshot.data();
+          return data ? [data] : [];
+        })
+      );
     };
 
     void load();

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { onSnapshot, Timestamp } from 'firebase/firestore';
-import { fetchUserAnywhere, queryViaProxy } from '@lib/dual';
+import { getDoc, doc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { usersCollection } from '@lib/firebase/collections';
 import { useCacheQuery } from './useCacheQuery';
 import type { Query } from 'firebase/firestore';
-import type { ProxySpec } from '@lib/dual';
 import type { User } from '@lib/types/user';
 
 type UseCollection<T> = {
@@ -19,8 +18,6 @@ export type UseCollectionOptions = {
   allowNull?: boolean;
   disabled?: boolean;
   preserve?: boolean;
-  /** Server-side read spec used when the live channel is blocked/slow. */
-  fallback?: ProxySpec;
 };
 
 export function useCollection<T>(
@@ -30,7 +27,6 @@ export function useCollection<T>(
     allowNull?: boolean;
     disabled?: boolean;
     preserve?: boolean;
-    fallback?: ProxySpec;
   }
 ): DataWithUser<T>;
 
@@ -48,8 +44,7 @@ export function useCollection<T>(
 
   const cachedQuery = useCacheQuery(query);
 
-  const { includeUser, allowNull, disabled, preserve, fallback } =
-    options ?? {};
+  const { includeUser, allowNull, disabled, preserve } = options ?? {};
 
   useEffect(() => {
     if (disabled || !cachedQuery) {
@@ -89,43 +84,16 @@ export function useCollection<T>(
           if (!currentData.createdBy)
             return { ...currentData, user: fallbackUser };
 
-          const user =
-            (await fetchUserAnywhere(currentData.createdBy)) ?? fallbackUser;
+          const userDoc = await getDoc(
+            doc(usersCollection, currentData.createdBy)
+          );
+          const user = userDoc.data() ?? fallbackUser;
           return { ...currentData, user };
         })
       );
       setData(dataWithUser);
       setLoading(false);
     };
-
-    let disposed = false;
-
-    const applyItems = (
-      items: { id: string; data: Record<string, unknown> }[]
-    ): void => {
-      if (disposed || !items.length) return;
-      const data = items.map((item) => item.data) as T[];
-      if (includeUser) void populateUser(data as DataWithRef<T>);
-      else {
-        setData(data);
-        setLoading(false);
-      }
-    };
-
-    /** Reads through OUR server when the WebChannel is blocked. */
-    const fetchViaProxy = (): void => {
-      if (!fallback || disposed) return;
-      void queryViaProxy('a', fallback).then((items) => {
-        if (items?.length) applyItems(items);
-        else if (!disposed) {
-          setData([]);
-          setLoading(false);
-        }
-      });
-    };
-
-    // Seed immediately — data appears even when the channel is blocked.
-    fetchViaProxy();
 
     const unsubscribe = onSnapshot(
       cachedQuery,
@@ -148,14 +116,12 @@ export function useCollection<T>(
       },
       (error) => {
         console.error('useCollection snapshot error:', error);
-        fetchViaProxy();
+        setData([]);
+        setLoading(false);
       }
     );
 
-    return () => {
-      disposed = true;
-      unsubscribe();
-    };
+    return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cachedQuery, disabled]);
 

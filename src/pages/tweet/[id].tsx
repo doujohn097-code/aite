@@ -1,8 +1,8 @@
 import { useRef } from 'react';
 import { useRouter } from 'next/router';
+import { doc } from 'firebase/firestore';
+import { tweetsCollection } from '@lib/firebase/collections';
 import { useDocument } from '@lib/hooks/useDocument';
-import { useAnywhereRef } from '@lib/dual';
-import type { Tweet } from '@lib/types/tweet';
 
 import { HomeLayout, ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -24,7 +24,7 @@ export default function TweetId(): JSX.Element {
 
   const tweetId = Array.isArray(id) ? id[0] : id;
 
-  const { ref: tweetRef } = useAnywhereRef<Tweet>('tweets', tweetId);
+  const tweetRef = tweetId ? doc(tweetsCollection, tweetId) : null;
 
   const { data: tweetData, loading: tweetLoading } = useDocument(tweetRef, {
     includeUser: true,

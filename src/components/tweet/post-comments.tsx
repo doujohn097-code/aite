@@ -14,8 +14,7 @@ import { toast } from 'react-hot-toast';
 import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
 import { useCollection } from '@lib/hooks/useCollection';
-import { collectionsFor } from '@lib/firebase/collections';
-import { resolveTweetProject, useMergedCollection } from '@lib/dual';
+import { tweetsCollection } from '@lib/firebase/collections';
 import { addReelComment, deleteReelComment } from '@lib/firebase/utils';
 import { formatDate } from '@lib/date';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -102,39 +101,16 @@ export function PostComments({
     }
   };
 
-  const commentsQueryA = useMemo(
-    () => query(collectionsFor('a').tweets, where('parent.id', '==', tweetId)),
-    [tweetId]
-  );
-  const commentsQueryB = useMemo(
-    () => query(collectionsFor('b').tweets, where('parent.id', '==', tweetId)),
+  const commentsQuery = useMemo(
+    () => query(tweetsCollection, where('parent.id', '==', tweetId)),
     [tweetId]
   );
 
-  const { data: rawComments, loading } = useMergedCollection(
-    tweetId ? commentsQueryA : null,
-    tweetId ? commentsQueryB : null,
-    {
-      includeUser: true,
-      allowNull: true,
-      fallback: tweetId
-        ? {
-            a: {
-              collection: 'tweets',
-              where: { field: 'parent.id', op: '==', value: tweetId },
-              orderBy: { field: 'createdAt', dir: 'desc' },
-              limit: 60
-            },
-            b: {
-              collection: 'tweets',
-              where: { field: 'parent.id', op: '==', value: tweetId },
-              orderBy: { field: 'createdAt', dir: 'desc' },
-              limit: 60
-            }
-          }
-        : undefined
-    }
-  );
+  const { data: rawComments, loading } = useCollection(commentsQuery, {
+    includeUser: true,
+    allowNull: true,
+    disabled: !tweetId
+  });
 
   const toMillis = (value: TweetWithUser['createdAt']): number =>
     typeof value?.toMillis === 'function'
@@ -355,10 +331,7 @@ export function PostComments({
         setOptimisticLikes((prev) => ({ ...prev, [commentId]: updatedLikes }));
 
         try {
-          const commentRef = doc(
-            collectionsFor(await resolveTweetProject(commentId)).tweets,
-            commentId
-          );
+          const commentRef = doc(tweetsCollection, commentId);
           await updateDoc(commentRef, {
             userLikes: isLiked ? arrayRemove(user.id) : arrayUnion(user.id),
             updatedAt: serverTimestamp()

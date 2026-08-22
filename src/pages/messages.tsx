@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
-import { collectionsFor } from '@lib/firebase/collections';
-import { fetchUserAnywhere, queryViaProxy } from '@lib/dual';
+import {
+  conversationsCollection,
+  usersCollection
+} from '@lib/firebase/collections';
 import { getOrCreateConversation } from '@lib/messages';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -35,136 +37,49 @@ export default function Messages(): JSX.Element {
   useEffect(() => {
     if (!user) return;
 
-    // Conversations may live in either round-robin database — subscribe to
-    // both and merge.
-    const conversationsQueryA = query(
-      collectionsFor('a').conversations,
-      where('participants', 'array-contains', user.id)
-    );
-    const conversationsQueryB = query(
-      collectionsFor('b').conversations,
+    const conversationsQuery = query(
+      conversationsCollection,
       where('participants', 'array-contains', user.id)
     );
 
-    const byId = new Map<string, Conversation>();
-    let loadedA = false;
-    let loadedB = false;
-    let anyDataArrived = false;
-    let disposed = false;
+    const unsubscribe = onSnapshot(
+      conversationsQuery,
+      (snapshot) => {
+        const data = snapshot.docs.map((docSnapshot) =>
+          docSnapshot.data({ serverTimestamps: 'estimate' })
+        );
 
-    const publish = (): void => {
-      if (disposed) return;
-      const data = Array.from(byId.values()).sort(
-        (a, b) =>
-          (b.updatedAt?.toMillis?.() ?? 0) - (a.updatedAt?.toMillis?.() ?? 0)
-      );
-      setConversations(data);
-      if (data.length) anyDataArrived = true;
+        data.sort(
+          (a, b) =>
+            (b.updatedAt?.toMillis?.() ?? 0) - (a.updatedAt?.toMillis?.() ?? 0)
+        );
+        setConversations(data);
 
-      const peerIds = data
-        .map((conversation) =>
-          conversation.participants.find(
-            (participant) => participant !== user.id
-          )
-        )
-        .filter((id): id is string => !!id);
-
-      if (!peerIds.length) return;
-      void Promise.all(
-        peerIds.map((id) =>
-          Promise.race([
-            fetchUserAnywhere(id),
-            new Promise<User | null>((resolve) =>
-              setTimeout(() => resolve(null), 4000)
+        const peerIds = data
+          .map((conversation) =>
+            conversation.participants.find(
+              (participant) => participant !== user.id
             )
-          ])
-        )
-      ).then((users) => {
-        if (disposed) return;
-        const fetched: Record<string, User> = {};
-        users.forEach((u) => {
-          if (u) fetched[u.id] = u;
-        });
-        setPeers((previous) => ({ ...previous, ...fetched }));
-      });
-    };
+          )
+          .filter((id): id is string => !!id);
 
-    const onSnapshotWrapper =
-      (loadedKey: 'loadedA' | 'loadedB') =>
-      (snapshot: {
-        docs: { id: string; data: () => Conversation }[];
-      }): void => {
-        snapshot.docs.forEach((docSnapshot) => {
-          byId.set(docSnapshot.id, docSnapshot.data());
+        void Promise.all(
+          peerIds.map((id) => getDoc(doc(usersCollection, id)))
+        ).then((docs) => {
+          const fetched: Record<string, User> = {};
+          docs.forEach((snapshot) => {
+            if (snapshot.exists()) fetched[snapshot.id] = snapshot.data();
+          });
+          setPeers((previous) => ({ ...previous, ...fetched }));
         });
-        if (loadedKey === 'loadedA') loadedA = true;
-        else loadedB = true;
-        // Publish as soon as EITHER project answers — never wait for both.
-        publish();
-      };
-
-    const unsubscribeA = onSnapshot(
-      conversationsQueryA,
-      onSnapshotWrapper('loadedA'),
-      () => {
-        loadedA = true;
-        publish();
-      }
-    );
-    const unsubscribeB = onSnapshot(
-      conversationsQueryB,
-      onSnapshotWrapper('loadedB'),
-      () => {
-        loadedB = true;
-        publish();
+      },
+      (error) => {
+        console.error('conversations snapshot error:', error);
+        setConversations([]);
       }
     );
 
-    /** Server-proxy seed/poll: shows conversations even when a project's
-     * WebChannel is blocked on this device. */
-    const seedViaProxy = (project: 'a' | 'b'): void => {
-      if (disposed) return;
-      void queryViaProxy(project, {
-        collection: 'conversations',
-        orderBy: { field: 'updatedAt', dir: 'desc' },
-        limit: 50
-      }).then((items) => {
-        if (disposed || !items) return;
-        let changed = false;
-        items.forEach(({ id, data }) => {
-          const conv = data as unknown as Conversation;
-          if (conv.participants?.includes(user.id)) {
-            byId.set(id, conv);
-            changed = true;
-          }
-        });
-        if (changed) {
-          anyDataArrived = true;
-          publish();
-        }
-      });
-    };
-    seedViaProxy('a');
-    seedViaProxy('b');
-    const proxyPoll = setInterval(() => {
-      if (disposed) return;
-      if (!loadedA) seedViaProxy('a');
-      if (!loadedB) seedViaProxy('b');
-    }, 15_000);
-
-    // Safety net: never leave the conversation list hanging because a
-    // project's channel is blocked.
-    const safety = setTimeout(() => {
-      if (!disposed && !anyDataArrived) publish();
-    }, 6000);
-
-    return () => {
-      disposed = true;
-      clearTimeout(safety);
-      clearInterval(proxyPoll);
-      unsubscribeA();
-      unsubscribeB();
-    };
+    return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 

@@ -8,10 +8,11 @@ import {
   Timestamp,
   increment
 } from 'firebase/firestore';
-import type { DocumentReference, DocumentData } from 'firebase/firestore';
-import { collectionsFor } from '@lib/firebase/collections';
-import { getFirebase, getActiveProject } from '@lib/firebase/app';
-import { resolveConversationProject } from '@lib/dual';
+import {
+  conversationsCollection,
+  conversationMessagesCollection
+} from '@lib/firebase/collections';
+import { db } from '@lib/firebase/app';
 import { uploadImages } from '@lib/firebase/utils';
 import { sendPushNotification } from '@lib/push';
 import { getRandomId } from '@lib/random';
@@ -26,16 +27,6 @@ import type {
   VoiceData
 } from '@lib/types/message';
 
-/** Resolves the project a conversation lives in and returns its collections. */
-async function colsOfConversation(
-  conversationId: string
-): Promise<ReturnType<typeof collectionsFor>> {
-  return collectionsFor(await resolveConversationProject(conversationId));
-}
-function activeCols(): ReturnType<typeof collectionsFor> {
-  return collectionsFor(getActiveProject());
-}
-
 export function getConversationId(userA: string, userB: string): string {
   return [userA, userB].sort().join('_');
 }
@@ -45,23 +36,16 @@ export async function getOrCreateConversation(
   targetId: string
 ): Promise<Conversation> {
   const id = getConversationId(userId, targetId);
-  const colsA = collectionsFor('a');
-  const colsB = collectionsFor('b');
+  const ref = doc(conversationsCollection, id);
 
-  // The conversation may have been created in either round-robin database
-  // (the id is deterministic, both participants compute the same one).
-  const [snapA, snapB] = await Promise.all([
-    Promise.race([
-      getDoc(doc(colsA.conversations, id)).catch(() => null),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500))
-    ]),
-    Promise.race([
-      getDoc(doc(colsB.conversations, id)).catch(() => null),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500))
-    ])
-  ]);
-  if (snapA?.exists()) return snapA.data();
-  if (snapB?.exists()) return snapB.data();
+  // قراءة مستند محادثة غير موجود تُرفض من قواعد الأمان (resource فارغ)،
+  // لذلك نتجاهل فشل القراءة وننتقل مباشرة إلى الإنشاء
+  try {
+    const snapshot = await getDoc(ref);
+    if (snapshot.exists()) return snapshot.data();
+  } catch {
+    /* المستند غير موجود أو القراءة مرفوضة — ننشئ أدناه */
+  }
 
   const conversation: Omit<Conversation, 'id'> = {
     participants: [userId, targetId],
@@ -71,9 +55,8 @@ export async function getOrCreateConversation(
     updatedAt: Timestamp.now()
   };
 
-  // New conversations are created in the initiator's round-robin database.
   try {
-    await setDoc(doc(activeCols().conversations, id), conversation);
+    await setDoc(ref, conversation);
   } catch {
     /* ربما أنشأها الطرف الآخر في نفس اللحظة */
   }
@@ -143,9 +126,7 @@ export async function sendMessage(
     }));
   }
 
-  const cols = await colsOfConversation(id);
-
-  await addDoc(cols.conversationMessages(id), {
+  await addDoc(conversationMessagesCollection(id), {
     id: '',
     senderId,
     type,
@@ -170,20 +151,17 @@ export async function sendMessage(
       {}
     );
 
-  await updateDoc(
-    doc(cols.conversations, id) as DocumentReference<DocumentData>,
-    {
-      lastMessage: {
-        text: type === 'text' ? (text as string) : lastMessageLabels[type],
-        type,
-        senderId,
-        createdAt: Timestamp.now()
-      },
-      updatedAt: serverTimestamp(),
-      [`unread.${senderId}`]: 0,
-      ...othersUnread
-    }
-  );
+  await updateDoc(doc(db, 'conversations', id), {
+    lastMessage: {
+      text: type === 'text' ? (text as string) : lastMessageLabels[type],
+      type,
+      senderId,
+      createdAt: Timestamp.now()
+    },
+    updatedAt: serverTimestamp(),
+    [`unread.${senderId}`]: 0,
+    ...othersUnread
+  });
 
   sendPushNotification({
     kind: 'message',
@@ -203,10 +181,8 @@ export async function toggleMessageReaction(
 ): Promise<void> {
   const removing = currentEmoji === emoji;
 
-  const cols = await colsOfConversation(conversationId);
-
   await updateDoc(
-    doc(cols.conversationMessages(conversationId), messageId),
+    doc(conversationMessagesCollection(conversationId), messageId),
     removing
       ? { [`reactions.${userId}`]: deleteField() }
       : { [`reactions.${userId}`]: emoji }
@@ -214,12 +190,14 @@ export async function toggleMessageReaction(
 
   if (removing) return;
 
-  const conversationDoc = await getDoc(doc(cols.conversations, conversationId));
+  const conversationDoc = await getDoc(
+    doc(conversationsCollection, conversationId)
+  );
   if (!conversationDoc.exists()) return;
 
   const peer = conversationDoc.data().participants.find((id) => id !== userId);
 
-  await updateDoc(doc(cols.conversations, conversationId), {
+  await updateDoc(doc(conversationsCollection, conversationId), {
     ...(peer ? { [`unread.${peer}`]: increment(1) } : {}),
     lastMessage: {
       senderId: userId,
@@ -237,8 +215,7 @@ export async function setTyping(
   conversationId: string,
   userId: string | null
 ): Promise<void> {
-  const cols = await colsOfConversation(conversationId);
-  await updateDoc(doc(cols.conversations, conversationId), {
+  await updateDoc(doc(db, 'conversations', conversationId), {
     typing: userId
   });
 }
@@ -248,14 +225,8 @@ export async function deleteMessage(
   conversationId: string,
   messageId: string
 ): Promise<void> {
-  const cols = await colsOfConversation(conversationId);
   await updateDoc(
-    doc(
-      cols.conversations,
-      conversationId,
-      'messages',
-      messageId
-    ) as DocumentReference<DocumentData>,
+    doc(db, 'conversations', conversationId, 'messages', messageId),
     {
       text: 'تم حذف هذه الرسالة',
       media: null,
@@ -272,8 +243,7 @@ export async function markConversationRead(
   conversationId: string,
   userId: string
 ): Promise<void> {
-  const cols = await colsOfConversation(conversationId);
-  await updateDoc(doc(cols.conversations, conversationId), {
+  await updateDoc(doc(db, 'conversations', conversationId), {
     [`unread.${userId}`]: 0
   });
 }
@@ -285,14 +255,8 @@ export async function markMessageSeen(
   seenBy: string[]
 ): Promise<void> {
   if (seenBy.includes(userId)) return;
-  const cols = await colsOfConversation(conversationId);
   await updateDoc(
-    doc(
-      cols.conversations,
-      conversationId,
-      'messages',
-      messageId
-    ) as DocumentReference<DocumentData>,
+    doc(db, `conversations/${conversationId}/messages`, messageId),
     { seenBy: [...seenBy, userId] }
   );
 }

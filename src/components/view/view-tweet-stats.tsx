@@ -2,12 +2,12 @@ import { useState } from 'react';
 import cn from 'clsx';
 import { useArrayDocument } from '@lib/hooks/useArrayDocument';
 import { useModal } from '@lib/hooks/useModal';
+import { usersCollection } from '@lib/firebase/collections';
 import { Modal } from '@components/modal/modal';
 import { TweetStatsModal } from '@components/modal/tweet-stats-modal';
 import { NumberStats } from '@components/tweet/number-stats';
 import { UserCards } from '@components/user/user-cards';
 import type { Tweet } from '@lib/types/tweet';
-import type { User } from '@lib/types/user';
 
 type viewTweetStats = Pick<Tweet, 'userRetweets' | 'userLikes'> & {
   likeMove: number;
@@ -38,14 +38,14 @@ export function ViewTweetStats({
 
   const { open, openModal, closeModal } = useModal();
 
-  const { data, loading } = useArrayDocument<User>(
+  const { data, loading } = useArrayDocument(
     statsType
       ? statsType === 'likes'
         ? userLikes ?? []
         : userRetweets ?? []
       : [],
-    null,
-    { includeUser: false, disabled: !statsType }
+    usersCollection,
+    { disabled: !statsType }
   );
 
   const handleOpen = (type: StatsType) => (): void => {

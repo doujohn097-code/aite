@@ -1,9 +1,9 @@
 import { useMemo, useEffect } from 'react';
+import { doc } from 'firebase/firestore';
 import { useDocument } from '@lib/hooks/useDocument';
-import { useAnywhereRef } from '@lib/dual';
+import { tweetsCollection } from '@lib/firebase/collections';
 import { getRandomId } from '@lib/random';
 import { Tweet } from './tweet';
-import type { Tweet as TweetType } from '@lib/types/tweet';
 import type { LoadedParents } from './tweet-with-parent';
 
 type TweetParentProps = {
@@ -23,8 +23,7 @@ export function TweetParent({
     (child) => child.childId === componentId
   );
 
-  const { ref: parentRef } = useAnywhereRef<TweetType>('tweets', parentId);
-  const { data, loading } = useDocument(parentRef, {
+  const { data, loading } = useDocument(doc(tweetsCollection, parentId), {
     includeUser: true,
     allowNull: true,
     disabled: isParentAlreadyLoaded

@@ -3,8 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { getFirebase } from '@lib/firebase/app';
-import { collectionsFor } from '@lib/firebase/collections';
-import { resolveUserProject } from '@lib/dual';
+import { usersCollection } from '@lib/firebase/collections';
 
 // مفتاح VAPID العام لإشعارات الويب (PWA)
 const VAPID_KEY =
@@ -44,14 +43,9 @@ async function registerNativePushToken(userId: string): Promise<void> {
   await PushNotifications.register();
   await PushNotifications.removeAllListeners();
   await PushNotifications.addListener('registration', ({ value }) => {
-    // The user's profile lives in their own round-robin database.
-    void resolveUserProject(userId)
-      .then((project) =>
-        updateDoc(doc(collectionsFor(project).users, userId), {
-          fcmTokens: arrayUnion(value)
-        })
-      )
-      .catch(() => undefined);
+    void updateDoc(doc(usersCollection, userId), {
+      fcmTokens: arrayUnion(value)
+    });
   });
   await PushNotifications.addListener(
     'pushNotificationActionPerformed',
@@ -80,7 +74,7 @@ export async function registerWebPushToken(userId: string): Promise<void> {
       { scope: '/' }
     );
 
-    const app = getFirebase('a').firebaseApp;
+    const app = getFirebase().firebaseApp;
     const messaging = getMessaging(app);
 
     const token = await getToken(messaging, {
@@ -89,15 +83,9 @@ export async function registerWebPushToken(userId: string): Promise<void> {
     });
 
     if (token) {
-      // The user's profile lives in their own round-robin database.
-      try {
-        const project = await resolveUserProject(userId);
-        await updateDoc(doc(collectionsFor(project).users, userId), {
-          fcmTokens: arrayUnion(token)
-        });
-      } catch {
-        /* best-effort */
-      }
+      await updateDoc(doc(usersCollection, userId), {
+        fcmTokens: arrayUnion(token)
+      });
       localStorage.setItem('aite:fcmToken', token);
     }
 

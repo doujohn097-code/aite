@@ -2,10 +2,10 @@ import Link from 'next/link';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { useDocument } from '@lib/hooks/useDocument';
-import { useAnywhereRef } from '@lib/dual';
-import type { User } from '@lib/types/user';
-import { collectionsFor } from '@lib/firebase/collections';
-import { resolveUserProject } from '@lib/dual';
+import {
+  usersCollection,
+  notificationsCollection
+} from '@lib/firebase/collections';
 import { formatDate } from '@lib/date';
 import { UserAvatar } from '@components/user/user-avatar';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -55,10 +55,9 @@ export function NotificationCard({
 }): JSX.Element {
   const { user: currentUser } = useAuth();
 
-  const { ref: fromUserRef } = useAnywhereRef<User>(
-    'users',
-    notification.fromUserId
-  );
+  const fromUserRef = notification.fromUserId
+    ? doc(usersCollection, notification.fromUserId)
+    : null;
 
   const { data: fromUser } = useDocument(fromUserRef, {
     allowNull: true,
@@ -81,17 +80,8 @@ export function NotificationCard({
 
   const markAsRead = async (): Promise<void> => {
     if (!currentUser) return;
-    try {
-      // Notifications live in the signed-in user's own round-robin database.
-      const project = await resolveUserProject(currentUser.id);
-      const ref = doc(
-        collectionsFor(project).notifications(currentUser.id),
-        notification.id
-      );
-      await updateDoc(ref, { read: true });
-    } catch {
-      /* best-effort */
-    }
+    const ref = doc(notificationsCollection(currentUser.id), notification.id);
+    await updateDoc(ref, { read: true });
   };
 
   const style = typeStyles[notification.type] ?? typeStyles.reply;
