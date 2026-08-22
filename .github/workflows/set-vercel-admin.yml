@@ -1,0 +1,30 @@
+name: Set Vercel Admin Key
+on:
+  workflow_dispatch:
+jobs:
+  set:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set FIREBASE_ADMIN_KEY in Vercel
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: prj_qRMJ2CUqct88BHDRMqWaMj8MsDxL
+        run: |
+          if [ -z "$SA" ]; then
+            echo "SA empty"
+            exit 1
+          fi
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "VERCEL_TOKEN secret missing, using fallback from repo - will try env"
+            # Try to get token from existing Vercel env? No
+            echo "Need VERCEL_TOKEN secret in GitHub"
+            exit 1
+          fi
+          B64=$(echo "$SA" | base64 -w0)
+          echo "B64 length ${#B64}"
+          # Update Vercel env var 4futwxeJoz8bc6f9
+          ENV_ID="4futwxeJoz8bc6f9"
+          curl -s -X PATCH -H "Authorization: Bearer $VERCEL_TOKEN" -H "Content-Type: application/json" "https://api.vercel.com/v9/projects/$PROJECT_ID/env/$ENV_ID" -d "{\"value\":\"$B64\",\"target\":[\"production\",\"preview\"],\"type\":\"sensitive\"}" | head -c 500
+          echo ""
+          echo "Done"
