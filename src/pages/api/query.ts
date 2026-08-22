@@ -203,7 +203,14 @@ export default async function queryHandler(
       envA: !!process.env.FIREBASE_ADMIN_KEY,
       envB: !!process.env.FIREBASE_ADMIN_KEY_B
     });
-    res.status(200).json({ items, v: 7, branch: 'ok' });
+    res.status(200).json({
+      items,
+      v: 8,
+      branch: 'ok',
+      adminProjectId: (app.options as { projectId?: string }).projectId ?? null,
+      envA: !!process.env.FIREBASE_ADMIN_KEY,
+      envB: !!process.env.FIREBASE_ADMIN_KEY_B
+    });
   } catch (error) {
     console.error('api/query failed:', error);
     res.status(200).json({
