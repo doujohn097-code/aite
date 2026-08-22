@@ -1,4 +1,4 @@
-import { existsSync, statSync } from 'fs';
+import { existsSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -19,7 +19,8 @@ export default function diagHandler(
     join(process.cwd(), 'node_modules', 'ffmpeg-static', 'ffmpeg'),
     join(__dirname, 'node_modules', 'ffmpeg-static', 'ffmpeg'),
     join('/var/task', 'node_modules', 'ffmpeg-static', 'ffmpeg'),
-    join('/var/task', 'server', 'node_modules', 'ffmpeg-static', 'ffmpeg')
+    join('/var/task', 'server', 'node_modules', 'ffmpeg-static', 'ffmpeg'),
+    join('/var/task', '.next', 'server', 'node_modules', 'ffmpeg-static', 'ffmpeg')
   ];
   for (const p of candidates) {
     if (!p) continue;
@@ -31,6 +32,13 @@ export default function diagHandler(
     } catch (error) {
       out[p] = String(error);
     }
+  }
+  // List what ffmpeg-static actually contains in the lambda.
+  const pkgDir = join('/var/task', 'node_modules', 'ffmpeg-static');
+  try {
+    out['pkgDir listing'] = readdirSync(pkgDir);
+  } catch (error) {
+    out['pkgDir listing'] = String(error);
   }
   res.status(200).json(out);
 }
