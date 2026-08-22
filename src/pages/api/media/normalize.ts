@@ -21,7 +21,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
  */
 export default async function normalizeMediaEndpoint(
   req: NextApiRequest,
-  res: NextApiResponse<{ src: string } | { error: string }>
+  res: NextApiResponse<Record<string, unknown>>
 ): Promise<void> {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
