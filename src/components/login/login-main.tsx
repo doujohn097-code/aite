@@ -16,10 +16,10 @@ export function LoginMain(): JSX.Element {
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
-
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const resetFields = (): void => {
     setName('');
@@ -30,36 +30,62 @@ export function LoginMain(): JSX.Element {
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setLoading(true);
 
     try {
       const cleanedUsername = username.trim().replace(/\s+/g, '').toLowerCase();
       if (isSignUp) {
-        if (!name.trim() || !cleanedUsername || !password) {
+        const cleanedName = name.trim();
+        if (!cleanedName || !cleanedUsername || !password) {
           throw new Error('يرجى ملء جميع الحقول');
         }
+        if (cleanedUsername.length < 3)
+          throw new Error('اسم المستخدم قصير جدًا (3 أحرف على الأقل)');
+        if (cleanedUsername.length > 15)
+          throw new Error('اسم المستخدم طويل جدًا (15 حرفًا كحد أقصى)');
+        if (!/^\w+$/i.test(cleanedUsername))
+          throw new Error(
+            "اسم المستخدم يمكن أن يحتوي فقط على أحرف وأرقام و '_'"
+          );
+        if (password.length < 6)
+          throw new Error('كلمة المرور ضعيفة (6 أحرف على الأقل)');
+
         await signUpWithUsername({
-          name: name.trim(),
+          name: cleanedName,
           username: cleanedUsername,
           password
         });
+        setSuccess('تم إنشاء الحساب بنجاح! جاري التوجيه...');
       } else {
         if (!cleanedUsername || !password)
           throw new Error('يرجى إدخال اسم المستخدم وكلمة المرور');
         await signInWithUsername(cleanedUsername, password);
+        setSuccess('تم تسجيل الدخول بنجاح!');
       }
+
+      // حفظ الحساب محليًا للتبديل السريع
       const currentUser = auth.currentUser;
-      saveAccount({
-        username: cleanedUsername,
-        password,
-        name:
-          (isSignUp ? name.trim() : currentUser?.displayName) ??
-          cleanedUsername,
-        photoURL: currentUser?.photoURL ?? null
-      });
-      resetFields();
+      try {
+        saveAccount({
+          username: cleanedUsername,
+          password,
+          name:
+            (isSignUp ? name.trim() : currentUser?.displayName) ??
+            cleanedUsername,
+          photoURL: currentUser?.photoURL ?? null
+        });
+      } catch {
+        // لا يؤثر على التسجيل
+      }
+
+      // لا نمسح الحقول فورًا عند النجاح حتى لا يفقد المستخدم الإحساس بالعملية
+      setTimeout(() => resetFields(), 500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ غير متوقع');
+      const msg =
+        err instanceof Error ? err.message : 'حدث خطأ غير متوقع';
+      console.error('login error', err);
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -144,6 +170,11 @@ export function LoginMain(): JSX.Element {
                 {error ?? authError?.message}
               </p>
             )}
+            {success && (
+              <p className='text-sm text-green-600 dark:text-green-400'>
+                {success}
+              </p>
+            )}
             <Button
               type='submit'
               className='bg-accent-blue text-black transition hover:brightness-90
@@ -161,11 +192,15 @@ export function LoginMain(): JSX.Element {
               onClick={(): void => {
                 setIsSignUp((prev) => !prev);
                 setError(null);
+                setSuccess(null);
               }}
               className='text-accent-blue hover:underline'
             >
               {isSignUp ? 'سجل الدخول' : 'سجل الآن'}
             </button>
+          </p>
+          <p className='text-center text-xs text-light-secondary dark:text-dark-secondary'>
+            التسجيل يستخدم Firebase - تأكد من أن نطاق Vercel مضاف في إعدادات Firebase
           </p>
         </div>
       </div>

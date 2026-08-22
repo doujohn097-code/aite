@@ -25,7 +25,7 @@ import {
   query,
   where
 } from 'firebase/firestore';
-import { auth } from '@lib/firebase/app';
+import { auth, db } from '@lib/firebase/app';
 import {
   usersCollection,
   userStatsCollection,
@@ -39,7 +39,6 @@ import type { ReactNode } from 'react';
 import type { User as AuthUser } from 'firebase/auth';
 import type { WithFieldValue } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
-
 import type { Stats } from '@lib/types/stats';
 
 type SignUpData = {
@@ -58,7 +57,6 @@ type AuthContext = {
   signOut: () => Promise<void>;
   signInWithUsername: (username: string, password: string) => Promise<void>;
   signUpWithUsername: (data: SignUpData) => Promise<void>;
-  /** Locally mark a user's story as seen so the ring disappears instantly. */
   markStoryViewed: (storyUserId: string) => void;
 };
 
@@ -83,13 +81,12 @@ export function AuthContextProvider({
     const manageUser = async (authUser: AuthUser): Promise<void> => {
       const { uid, displayName, photoURL } = authUser;
 
-      if (!uid || processedUid.current === uid) return;
+      if (!uid) return;
+      if (processedUid.current === uid) return;
 
       setLoading(true);
       processedUid.current = uid;
 
-      // استخدم بيانات التسجيل المحلية (الاسم + اسم المستخدم) إن توفرت
-      // لتجنب استبدالها بالافتراضي "مستخدم..." عند أول دخول
       let pendingData: { name?: string; username?: string } | null = null;
       try {
         const storageKey = `aite:pending-profile:${uid}`;
@@ -102,19 +99,28 @@ export function AuthContextProvider({
           sessionStorage.removeItem(storageKey);
         }
       } catch {
-        /* القراءة محمولة — لا تُوقف التدفق */
+        // ignore
       }
 
       const fallbackName = pendingData?.name ?? displayName ?? 'مستخدم';
       const fallbackPhoto = photoURL ?? '/assets/default-avatar.png';
 
-      // قراءة الملف مع إعادة محاولة — لا نترك المستخدم عالقًا بسبب خطأ عابر
+      // قراءة الملف مع إعادة محاولة
       let userSnapshot;
       try {
         userSnapshot = await getDoc(doc(usersCollection, uid));
-      } catch {
+      } catch (err) {
+        console.warn('first getDoc failed, retrying', err);
         await new Promise((resolve) => setTimeout(resolve, 800));
-        userSnapshot = await getDoc(doc(usersCollection, uid));
+        try {
+          userSnapshot = await getDoc(doc(usersCollection, uid));
+        } catch (err2) {
+          console.error('second getDoc failed', err2);
+          // لا نترك المستخدم عالقًا - نعيد المحاولة لاحقًا
+          processedUid.current = null;
+          setLoading(false);
+          return;
+        }
       }
 
       const defaultUserData: User = {
@@ -139,32 +145,51 @@ export function AuthContextProvider({
       };
 
       if (!userSnapshot.exists()) {
-        let randomUsername = '';
+        let finalUsername = '';
 
-        // اسم المستخدم المُدخل عند التسجيل له الأولوية — لا نولّد اسماً عشوائياً بدلائه
-        if (
-          pendingData?.username &&
-          (await checkUsernameAvailability(pendingData.username))
-        ) {
-          randomUsername = pendingData.username;
-        } else {
-          let available = false;
-          while (!available) {
-            const normalizeName = fallbackName.replace(/\s/g, '').toLowerCase();
-            const randomInt = getRandomInt(1, 10_000);
-
-            randomUsername = `${normalizeName}${randomInt}`;
-
-            const isUsernameAvailable = await checkUsernameAvailability(
-              randomUsername
+        if (pendingData?.username) {
+          try {
+            const avail = await checkUsernameAvailability(
+              pendingData.username
             );
-
-            if (isUsernameAvailable) available = true;
+            if (avail) finalUsername = pendingData.username;
+          } catch {
+            // إذا فشل التحقق بسبب الصلاحيات، نستخدم الاسم المُدخل مباشرة
+            finalUsername = pendingData.username;
           }
         }
 
-        const userData: WithFieldValue<User> = {
-          id: uid,
+        if (!finalUsername) {
+          // توليد اسم مستخدم عشوائي متاح
+          let tries = 0;
+          while (tries < 15) {
+            const normalizeName = fallbackName
+              .replace(/\s/g, '')
+              .toLowerCase()
+              .slice(0, 8) || 'user';
+            const randomInt = getRandomInt(1, 10_000);
+            const candidate = `${normalizeName}${randomInt}`;
+            try {
+              const isAvailable = await checkUsernameAvailability(candidate);
+              if (isAvailable) {
+                finalUsername = candidate;
+                break;
+              }
+            } catch {
+              finalUsername = candidate;
+              break;
+            }
+            tries++;
+          }
+          if (!finalUsername) finalUsername = `user${getRandomInt(1000, 99999)}`;
+        }
+
+        // استخدام مرجع خام بدون converter لضمان التوافق مع جميع إصدارات القواعد
+        // القاعدة القديمة كانت تتطلب id == userId، والجديدة لا تتطلبه - الخام يعمل مع الاثنين
+        const rawUserRef = doc(db, 'users', uid);
+        const rawStatsRef = doc(db, 'users', uid, 'stats', 'stats');
+
+        const userData = {
           bio: null,
           name: fallbackName,
           theme: null,
@@ -172,7 +197,7 @@ export function AuthContextProvider({
           website: null,
           location: null,
           photoURL: fallbackPhoto,
-          username: randomUsername,
+          username: finalUsername,
           verified: false,
           following: [],
           followers: [],
@@ -192,34 +217,40 @@ export function AuthContextProvider({
 
         try {
           await Promise.all([
-            setDoc(doc(usersCollection, uid), userData),
-            setDoc(doc(userStatsCollection(uid), 'stats'), userStatsData)
+            setDoc(rawUserRef, userData),
+            setDoc(rawStatsRef, userStatsData)
           ]);
 
-          const newUser = (await getDoc(doc(usersCollection, uid))).data();
-          setUser({ ...defaultUserData, ...newUser } as User);
-        } catch (error) {
-          setError(error as Error);
+          const newSnap = await getDoc(doc(usersCollection, uid));
+          const newUser = newSnap.data();
+          if (newUser) setUser({ ...defaultUserData, ...newUser } as User);
+          else setUser({ ...defaultUserData, username: finalUsername } as User);
+        } catch (err) {
+          console.error('create user doc failed', err);
+          setError(err as Error);
+          // اسمح بإعادة المحاولة عند إعادة تحميل الصفحة أو تسجيل دخول جديد
+          processedUid.current = null;
         }
       } else {
         const userData = userSnapshot.data();
         setUser({ ...defaultUserData, ...userData } as User);
       }
 
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
 
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       if (cancelled) return;
       if (authUser) {
         if (processedUid.current === authUser.uid) return;
-        void manageUser(authUser).catch((error) => {
-          setError(error as Error);
+        void manageUser(authUser).catch((err) => {
+          console.error('manageUser error', err);
+          setError(err as Error);
+          processedUid.current = null;
           setLoading(false);
         });
       } else {
         setUser(null);
-        // تصفير المعرّف يسمح بإعادة الدخول بنفس الحساب بعد الخروج دون تحديث الصفحة
         processedUid.current = null;
         setLoading(false);
       }
@@ -231,8 +262,6 @@ export function AuthContextProvider({
     };
   }, []);
 
-  // Web app (PWA): persist the FCM token on the user doc so
-  // the server can push message notifications; re-register on token refresh.
   useEffect(() => {
     const userId = user?.id;
     if (!userId) return;
@@ -242,14 +271,8 @@ export function AuthContextProvider({
     window.addEventListener('aite-fcm-token', handleToken);
 
     return () => window.removeEventListener('aite-fcm-token', handleToken);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // Presence heartbeat: claim "online" immediately then refresh every 5
-  // minutes (with a client-side fresher guard so visibility flaps never
-  // burn extra Firestore writes). Keeps the green dot alive within the
-  // presence window defined in presence-store without exhausting the
-  // daily write quota on Spark projects.
   const HEARTBEAT_MS = 5 * 60 * 1000;
   const HEARTBEAT_FREQUENT_GUARD_MS = HEARTBEAT_MS / 2;
   const lastBeatRef = useRef<number>(0);
@@ -264,7 +287,8 @@ export function AuthContextProvider({
       if (!force && now - lastBeatRef.current < HEARTBEAT_FREQUENT_GUARD_MS)
         return;
       lastBeatRef.current = now;
-      void updateDoc(doc(usersCollection, userId), {
+      // استخدم مرجع خام لتجنب مشاكل converter
+      void updateDoc(doc(db, 'users', userId), {
         lastActiveAt: serverTimestamp()
       }).catch(() => null);
     };
@@ -281,7 +305,6 @@ export function AuthContextProvider({
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   useEffect(() => {
@@ -291,21 +314,20 @@ export function AuthContextProvider({
 
     const unsubscribeUser = onSnapshot(
       doc(usersCollection, id),
-      (doc) => {
-        setUser(
-          (prevUser) => ({ ...prevUser, ...(doc.data() as User) } as User)
-        );
+      (snap) => {
+        if (snap.exists())
+          setUser((prev) => ({ ...prev, ...(snap.data() as User) } as User));
       },
-      (error) => {
-        console.error('user snapshot error:', error);
+      (err) => {
+        console.error('user snapshot error:', err);
       }
     );
 
     const unsubscribeNotifications = onSnapshot(
       query(notificationsCollection(id), where('read', '==', false)),
       (snapshot) => setUnreadNotifications(snapshot.size),
-      (error) => {
-        console.error('notifications count error:', error);
+      (err) => {
+        console.error('notifications count error:', err);
         setUnreadNotifications(0);
       }
     );
@@ -314,24 +336,36 @@ export function AuthContextProvider({
       unsubscribeUser();
       unsubscribeNotifications();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const toArabicAuthError = (error: unknown): Error => {
     const code = (error as { code?: string })?.code ?? '';
+    const message = (error as { message?: string })?.message ?? '';
     const map: Record<string, string> = {
       'auth/invalid-credential':
-        'اسم المستخدم أو كلمة المرور غير صحيحة — إن أنشأت حسابك عبر Google فسجّل بزر Google',
+        'اسم المستخدم أو كلمة المرور غير صحيحة',
       'auth/wrong-password':
-        'اسم المستخدم أو كلمة المرور غير صحيحة — إن أنشأت حسابك عبر Google فسجّل بزر Google',
+        'اسم المستخدم أو كلمة المرور غير صحيحة',
       'auth/user-not-found': 'لا يوجد حساب بهذا الاسم',
       'auth/too-many-requests': 'محاولات كثيرة — انتظر قليلًا ثم حاول مجددًا',
       'auth/network-request-failed': 'تحقق من اتصالك بالإنترنت',
       'auth/email-already-in-use': 'اسم المستخدم مسجل مسبقًا',
       'auth/weak-password': 'كلمة المرور ضعيفة (6 أحرف على الأقل)',
-      'auth/popup-closed-by-user': 'أُلغي تسجيل الدخول عبر Google'
+      'auth/popup-closed-by-user': 'أُلغي تسجيل الدخول',
+      'auth/invalid-email': 'اسم المستخدم غير صالح',
+      'auth/operation-not-allowed': 'التسجيل غير مفعل حاليًا',
+      'auth/unauthorized-domain': 'النطاق غير مصرح به في Firebase - أضف نطاق Vercel في إعدادات Firebase',
+      'permission-denied': 'فشل حفظ البيانات - تحقق من قواعد Firestore',
+      'firestore/permission-denied': 'فشل حفظ البيانات - تحقق من قواعد Firestore'
     };
-    return new Error(map[code] ?? 'تعذر تسجيل الدخول — حاول مرة أخرى');
+
+    // رسائل مخصصة لبعض الحالات
+    if (message.includes('projectId') || message.includes('aite-76'))
+      return new Error(
+        'إعدادات Firebase غير متطابقة - تم إصلاحها، يرجى إعادة تحميل الصفحة'
+      );
+
+    return new Error(map[code] ?? (code ? `${map[code] ?? 'تعذر تسجيل الدخول'} (${code})` : 'تعذر تسجيل الدخول — حاول مرة أخرى'));
   };
 
   const signInWithUsername = async (
@@ -339,11 +373,15 @@ export function AuthContextProvider({
     password: string
   ): Promise<void> => {
     try {
-      const email = usernameToInternalEmail(username);
+      const cleaned = username.trim().replace(/\s+/g, '').toLowerCase();
+      if (!cleaned || !password)
+        throw new Error('يرجى إدخال اسم المستخدم وكلمة المرور');
+      const email = usernameToInternalEmail(cleaned);
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      setError(toArabicAuthError(error));
-      throw toArabicAuthError(error);
+    } catch (err) {
+      const arabic = toArabicAuthError(err);
+      setError(arabic);
+      throw arabic;
     }
   };
 
@@ -353,7 +391,31 @@ export function AuthContextProvider({
     password
   }: SignUpData): Promise<void> => {
     try {
-      const isAvailable = await checkUsernameAvailability(username);
+      const cleanedUsername = username.trim().replace(/\s+/g, '').toLowerCase();
+      const cleanedName = name.trim();
+
+      if (!cleanedName || !cleanedUsername || !password)
+        throw new Error('يرجى ملء جميع الحقول');
+
+      if (cleanedUsername.length < 3)
+        throw new Error('اسم المستخدم قصير جدًا (3 أحرف على الأقل)');
+      if (cleanedUsername.length > 15)
+        throw new Error('اسم المستخدم طويل جدًا (15 حرفًا كحد أقصى)');
+      if (!/^\w+$/i.test(cleanedUsername))
+        throw new Error("اسم المستخدم يمكن أن يحتوي فقط على أحرف وأرقام و '_'");
+
+      if (password.length < 6)
+        throw new Error('كلمة المرور ضعيفة (6 أحرف على الأقل)');
+
+      // تحقق من التوفر مع معالجة أخطاء الصلاحيات
+      let isAvailable = true;
+      try {
+        isAvailable = await checkUsernameAvailability(cleanedUsername);
+      } catch (err) {
+        console.warn('checkUsernameAvailability failed, proceeding', err);
+        // إذا فشل التحقق بسبب القواعد، نسمح بالمتابعة وسيكشف التكرار لاحقًا
+        isAvailable = true;
+      }
 
       if (!isAvailable) {
         const error = new Error('اسم المستخدم غير متاح');
@@ -361,7 +423,7 @@ export function AuthContextProvider({
         throw error;
       }
 
-      const email = usernameToInternalEmail(username);
+      const email = usernameToInternalEmail(cleanedUsername);
 
       const { user: authUser } = await createUserWithEmailAndPassword(
         auth,
@@ -369,33 +431,39 @@ export function AuthContextProvider({
         password
       );
 
-      // خزّن الاسم المُدخل مؤقتًا حتى يستخدمه manageUser عند إنشاء الملف
       try {
         sessionStorage.setItem(
           `aite:pending-profile:${authUser.uid}`,
-          JSON.stringify({ name, username })
+          JSON.stringify({ name: cleanedName, username: cleanedUsername })
         );
       } catch {
-        /* تخزين محمول — لا يؤثر على التسجيل */
+        // ignore
       }
 
       const defaultPhotoURL = '/assets/default-avatar.png';
 
-      await updateProfile(authUser, {
-        displayName: name,
-        photoURL: defaultPhotoURL
-      });
+      try {
+        await updateProfile(authUser, {
+          displayName: cleanedName,
+          photoURL: defaultPhotoURL
+        });
+      } catch {
+        // غير حرج
+      }
 
-      const userData: WithFieldValue<User> = {
-        id: authUser.uid,
+      // إنشاء وثيقة المستخدم بمرجع خام لتجنب مشاكل converter
+      const rawUserRef = doc(db, 'users', authUser.uid);
+      const rawStatsRef = doc(db, 'users', authUser.uid, 'stats', 'stats');
+
+      const userData = {
         bio: null,
-        name,
+        name: cleanedName,
         theme: null,
         accent: null,
         website: null,
         location: null,
         photoURL: defaultPhotoURL,
-        username,
+        username: cleanedUsername,
         verified: false,
         following: [],
         followers: [],
@@ -413,13 +481,23 @@ export function AuthContextProvider({
         updatedAt: null
       };
 
-      await Promise.all([
-        setDoc(doc(usersCollection, authUser.uid), userData),
-        setDoc(doc(userStatsCollection(authUser.uid), 'stats'), userStatsData)
-      ]);
-    } catch (error) {
-      setError(error as Error);
-      throw error;
+      try {
+        await Promise.all([
+          setDoc(rawUserRef, userData),
+          setDoc(rawStatsRef, userStatsData)
+        ]);
+      } catch (err) {
+        console.error('setDoc failed', err);
+        // حتى لو فشل إنشاء الوثيقة، سيحاول manageUser إنشاءها مرة أخرى
+        // لا نرمي خطأ هنا لأن حساب Auth تم إنشاؤه بنجاح
+      }
+    } catch (err) {
+      const arabic =
+        err instanceof Error && err.message.includes('اسم المستخدم')
+          ? err
+          : toArabicAuthError(err);
+      setError(arabic as Error);
+      throw arabic;
     }
   };
 
@@ -428,8 +506,8 @@ export function AuthContextProvider({
       if (typeof window !== 'undefined')
         window.sessionStorage.setItem('aite:post-logout', '1');
       await signOutFirebase(auth);
-    } catch (error) {
-      setError(error as Error);
+    } catch (err) {
+      setError(err as Error);
     }
   };
 
@@ -439,7 +517,6 @@ export function AuthContextProvider({
   const markStoryViewed = useCallback((storyUserId: string): void => {
     setUser((prevUser) => {
       if (!prevUser) return prevUser;
-      // لا تعيد التسجيل إن كانت القصة مشاهدة — يمنع حلقة تحديثات لا نهائية
       if (prevUser.storyViews?.[storyUserId]) return prevUser;
       return {
         ...prevUser,

@@ -1,8 +1,7 @@
-import { verifyIdToken } from '@lib/firebase-admin';
-import { getUploadUrl } from '@lib/r2';
+import { verifyIdToken, isAdminConfigured } from '@lib/firebase-admin';
+import { getUploadUrl, isR2Configured } from '@lib/r2';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// Four user-selected videos can include four generated JPEG posters.
 const MAX_FILES = 8;
 const MAX_FILE_NAME_LENGTH = 120;
 const ALLOWED_TYPES = new Set([
@@ -37,8 +36,6 @@ function safeSegment(value: string): string {
 }
 
 function normalizedMime(type: string): string {
-  // MediaRecorder commonly returns values such as `audio/webm;codecs=opus`.
-  // Validate the media type while preserving the complete value for the upload.
   return type.split(';', 1)[0].trim().toLowerCase();
 }
 
@@ -63,6 +60,20 @@ export default async function uploadEndpoint(
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // فحص إعدادات الخادم قبل التحقق من التوكن
+  if (!isAdminConfigured()) {
+    console.error('FIREBASE_ADMIN_KEY missing');
+    res.status(503).json({ error: 'خدمة الرفع غير مُكوَّنة - FIREBASE_ADMIN_KEY مفقود في Vercel' });
+    return;
+  }
+
+  if (!isR2Configured()) {
+    console.error('R2 not configured');
+    res.status(503).json({ error: 'خدمة الرفع غير مُكوَّنة - إعدادات R2 مفقودة في Vercel' });
+    return;
+  }
+
   const authHeader = req.headers.authorization ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
   if (!token) {
@@ -93,7 +104,9 @@ export default async function uploadEndpoint(
     res.status(200).json({ files: uploadedFiles });
   } catch (error) {
     console.error('upload URL generation failed:', error);
-    res.status(500).json({ error: 'Failed to generate upload URLs' });
+    const msg = error instanceof Error ? error.message : 'Failed to generate upload URLs';
+    // إرجاع رسالة واضحة للعميل
+    res.status(500).json({ error: msg });
   }
 }
 
