@@ -22,7 +22,7 @@ const config = {
   measurementId:
     process.env.FIREBASE_MEASUREMENT_ID ||
     process.env.NEXT_PUBLIC_MEASUREMENT_ID ||
-    'G-CQRDWWEPFF',
+    'G-CQRDWWEPFF-CONFIG2026',
   storageBucket:
     process.env.FIREBASE_STORAGE_BUCKET ||
     process.env.NEXT_PUBLIC_STORAGE_BUCKET ||
