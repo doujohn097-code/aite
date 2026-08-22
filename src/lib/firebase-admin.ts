@@ -62,7 +62,7 @@ export async function verifyIdToken(
   token: string
 ): Promise<admin.auth.DecodedIdToken> {
   if (!adminAuth) {
-    throw new Error('FIREBASE_ADMIN_KEY غير مُكوَّن في الخادم - راجع إعدادات Vercel');
+    throw new Error('الخدمة غير متاحة حاليًا — حاول مجددًا لاحقًا');
   }
   return adminAuth.verifyIdToken(token);
 }

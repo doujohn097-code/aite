@@ -199,9 +199,6 @@ export function LoginMain(): JSX.Element {
               {isSignUp ? 'سجل الدخول' : 'سجل الآن'}
             </button>
           </p>
-          <p className='text-center text-xs text-light-secondary dark:text-dark-secondary'>
-            التسجيل يستخدم Firebase - تأكد من أن نطاق Vercel مضاف في إعدادات Firebase
-          </p>
         </div>
       </div>
     </main>

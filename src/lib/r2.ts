@@ -21,7 +21,7 @@ function getClient(): S3Client {
     !process.env.R2_ACCESS_KEY_ID ||
     !process.env.R2_SECRET_ACCESS_KEY
   )
-    throw new Error('R2 غير مُكوَّن - تحقق من متغيرات البيئة R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY');
+    throw new Error('خدمة التخزين غير متاحة حاليًا');
   return new S3Client({
     region: 'auto',
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
@@ -41,7 +41,7 @@ export async function getUploadUrl(
   contentType: string
 ): Promise<{ uploadUrl: string; publicUrl: string }> {
   if (!bucket || !publicBase)
-    throw new Error('R2_BUCKET_NAME أو R2_PUBLIC_URL غير مُكوَّن');
+    throw new Error('خدمة التخزين غير متاحة حاليًا');
   const command = new PutObjectCommand({
     Bucket: bucket,
     Key: key,

@@ -103,11 +103,12 @@ public class OfflineActivity extends Activity {
     root.addView(sep);
 
     // === أيقونة عدم الاتصال ===
-    TextView offlineEmoji = new TextView(this);
-    offlineEmoji.setText("📡");
-    offlineEmoji.setTextSize(42);
-    offlineEmoji.setGravity(Gravity.CENTER);
-    root.addView(offlineEmoji, new LinearLayout.LayoutParams(-2, -2));
+    ImageView offlineIcon = new ImageView(this);
+    offlineIcon.setImageResource(R.drawable.ic_offline);
+    offlineIcon.setAlpha(0.92f);
+    LinearLayout.LayoutParams offlineIconParams = new LinearLayout.LayoutParams(dp(64), dp(64));
+    offlineIcon.setLayoutParams(offlineIconParams);
+    root.addView(offlineIcon);
 
     // === عنوان ===
     TextView title = new TextView(this);

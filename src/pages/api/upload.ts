@@ -64,13 +64,13 @@ export default async function uploadEndpoint(
   // فحص إعدادات الخادم قبل التحقق من التوكن
   if (!isAdminConfigured()) {
     console.error('FIREBASE_ADMIN_KEY missing');
-    res.status(503).json({ error: 'خدمة الرفع غير مُكوَّنة - FIREBASE_ADMIN_KEY مفقود في Vercel' });
+    res.status(503).json({ error: 'خدمة الرفع غير متاحة حاليًا — حاول مجددًا لاحقًا' });
     return;
   }
 
   if (!isR2Configured()) {
     console.error('R2 not configured');
-    res.status(503).json({ error: 'خدمة الرفع غير مُكوَّنة - إعدادات R2 مفقودة في Vercel' });
+    res.status(503).json({ error: 'خدمة الرفع غير متاحة حاليًا — حاول مجددًا لاحقًا' });
     return;
   }
 

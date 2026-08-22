@@ -7,13 +7,16 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.Bundle;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.view.View;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebViewClient;
 
 /**
  * Native shell for Aite - يضمن عدم ظهور صفحة عدم الاتصال الافتراضية للمتصفح أبداً
@@ -23,20 +26,22 @@ import com.getcapacitor.BridgeActivity;
  */
 public class MainActivity extends BridgeActivity {
   private boolean isOfflineLaunched = false;
+  private boolean webViewConfigured = false;
   private ConnectivityManager.NetworkCallback networkCallback;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    // يجب استدعاء super.onCreate دائماً وإلا يتوقف التطبيق (SuperNotCalledException)
+    super.onCreate(savedInstanceState);
     if (!hasNetwork()) {
       launchOffline();
-      return;
     }
-    super.onCreate(savedInstanceState);
   }
 
   @Override
   public void onStart() {
     super.onStart();
+    if (webViewConfigured) return;
     try {
       WebView webView = getBridge().getWebView();
       WebSettings settings = webView.getSettings();
@@ -45,47 +50,45 @@ public class MainActivity extends BridgeActivity {
       settings.setDisplayZoomControls(false);
       settings.setTextZoom(100);
       settings.setMediaPlaybackRequiresUserGesture(false);
-      webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
       webView.setLongClickable(false);
       webView.setHapticFeedbackEnabled(false);
 
-      // اعتراض أخطاء التحميل لمنع صفحة المتصفح الافتراضية
-      WebViewClient originalClient = webView.getWebViewClient();
-      webView.setWebViewClient(new WebViewClient() {
+      // نمدّد عميل Capacitor الأصلي بدلاً من استبداله حتى لا ينكسر الجسر الأصلي
+      webView.setWebViewClient(new BridgeWebViewClient(getBridge()) {
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
           // فقط للأخطاء في الإطار الرئيسي وليس الموارد الفرعية
-          if (request.isForMainFrame()) {
-            if (!hasNetwork() || isNetworkError(error)) {
-              launchOffline();
-            }
+          if (request.isForMainFrame() && (!hasNetwork() || isNetworkError(error))) {
+            launchOffline();
+            return;
           }
-          // لا نستدعي super لمنع عرض صفحة الخطأ الافتراضية
+          super.onReceivedError(view, request, error);
         }
 
         @Override
-        public void onReceivedHttpError(WebView view, WebResourceRequest request, android.webkit.WebResourceResponse errorResponse) {
+        public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
           if (request.isForMainFrame() && !hasNetwork()) {
             launchOffline();
+            return;
           }
+          super.onReceivedHttpError(view, request, errorResponse);
         }
 
         @Override
-        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-          // دع العميل الأصلي يتعامل مع التنقل إذا كان موجوداً
-          if (originalClient != null) {
-            try {
-              return originalClient.shouldOverrideUrlLoading(view, request);
-            } catch (Exception e) {
-              // تجاهل
-            }
+        public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+          // انهيار محرك العرض: أعد إنشاء النشاط بدلاً من توقف التطبيق بالكامل
+          try {
+            recreate();
+          } catch (Exception e) {
+            e.printStackTrace();
           }
-          return false;
+          return true;
         }
       });
 
       // مراقبة الشبكة للعودة التلقائية
       registerNetworkCallback();
+      webViewConfigured = true;
     } catch (Exception e) {
       // في حالة فشل تهيئة WebView، لا نعرض صفحة خطأ
       e.printStackTrace();
@@ -93,9 +96,9 @@ public class MainActivity extends BridgeActivity {
   }
 
   @Override
-  public void onStop() {
-    super.onStop();
+  public void onDestroy() {
     unregisterNetworkCallback();
+    super.onDestroy();
   }
 
   @Override
@@ -147,10 +150,6 @@ public class MainActivity extends BridgeActivity {
               launchOffline();
             }
           });
-        }
-        @Override
-        public void onAvailable(Network network) {
-          // عند عودة الشبكة، لا نفعل شيئاً هنا لأن OfflineActivity ستراقب وتعود
         }
       };
       cm.registerNetworkCallback(request, networkCallback);

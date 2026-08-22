@@ -354,16 +354,14 @@ export function AuthContextProvider({
       'auth/popup-closed-by-user': 'أُلغي تسجيل الدخول',
       'auth/invalid-email': 'اسم المستخدم غير صالح',
       'auth/operation-not-allowed': 'التسجيل غير مفعل حاليًا',
-      'auth/unauthorized-domain': 'النطاق غير مصرح به في Firebase - أضف نطاق Vercel في إعدادات Firebase',
-      'permission-denied': 'فشل حفظ البيانات - تحقق من قواعد Firestore',
-      'firestore/permission-denied': 'فشل حفظ البيانات - تحقق من قواعد Firestore'
+      'auth/unauthorized-domain': 'حدث خطأ مؤقت — حاول مجددًا لاحقًا',
+      'permission-denied': 'تعذر حفظ البيانات — حاول مجددًا',
+      'firestore/permission-denied': 'تعذر حفظ البيانات — حاول مجددًا'
     };
 
     // رسائل مخصصة لبعض الحالات
     if (message.includes('projectId') || message.includes('aite-76'))
-      return new Error(
-        'إعدادات Firebase غير متطابقة - تم إصلاحها، يرجى إعادة تحميل الصفحة'
-      );
+      return new Error('حدث خطأ مؤقت — يرجى إعادة تحميل الصفحة');
 
     return new Error(map[code] ?? (code ? `${map[code] ?? 'تعذر تسجيل الدخول'} (${code})` : 'تعذر تسجيل الدخول — حاول مرة أخرى'));
   };

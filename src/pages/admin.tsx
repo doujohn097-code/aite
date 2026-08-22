@@ -106,8 +106,7 @@ export default function Admin(): JSX.Element {
         <div className='border-b border-light-border px-5 py-4 dark:border-dark-border'>
           <p className='font-bold'>إدارة المستخدمين</p>
           <p className='mt-1 text-sm text-light-secondary dark:text-dark-secondary'>
-            تتطلب هذه الصفحة Firebase Custom Claim باسم <code>admin: true</code>
-            .
+            هذه الصفحة مخصصة لمشرفي المنصة فقط.
           </p>
         </div>
         {loading ? (
