@@ -62,6 +62,7 @@ export default async function posterMediaEndpoint(
 
       // Try a frame 0.3 s in, then fall back to the very first frame.
       let posterOk = false;
+      let lastResult: Awaited<ReturnType<typeof execFfmpeg>> | null = null;
       for (const seek of ['0.3', '0']) {
         const args = [
           '-y',
@@ -77,13 +78,21 @@ export default async function posterMediaEndpoint(
           '3',
           outputPath
         ];
-        if ((await execFfmpeg(args)) && existsSync(outputPath)) {
+        lastResult = await execFfmpeg(args);
+        if (lastResult.ok && existsSync(outputPath)) {
           posterOk = true;
           break;
         }
       }
       if (!posterOk) {
-        res.status(200).json({ src: '' });
+        res.status(200).json({
+          src: '',
+          debug: {
+            ffmpegError: lastResult?.error ?? 'output missing',
+            binary: lastResult?.binary,
+            cwd: process.cwd()
+          }
+        });
         return;
       }
 

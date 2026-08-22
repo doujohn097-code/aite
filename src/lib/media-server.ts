@@ -48,27 +48,52 @@ export function getR2Client(): S3Client | null {
 }
 
 /**
- * The linux x64 ffmpeg binary is committed at src/pages/api/media/ffmpeg-bin
- * and referenced with literal paths so Next's file tracing (nft) packages it
- * into the serverless functions. Vercel blocks npm install scripts, so we
- * cannot rely on ffmpeg-static's postinstall download, and `includeFiles` is
- * ignored for Next.js functions — the nft trace is the packaging manifest.
- *
- * Both the existsSync anchor and the execFile call use the same literal
- * `join(__dirname, 'ffmpeg-bin', 'ffmpeg')` expression, which nft evaluates.
+ * Candidate locations for the linux x64 ffmpeg binary, in priority order:
+ * 1. committed binary (src/pages/api/media/ffmpeg-bin) next to the route
+ * 2. ffmpeg-static package (binary copied into the traced output by
+ *    scripts/copy-ffmpeg.mjs when the postinstall was allowed to run)
+ * 3. repo-relative fallbacks
  */
-export async function execFfmpeg(args: string[]): Promise<boolean> {
-  const ffmpegPath = join(__dirname, 'ffmpeg-bin', 'ffmpeg');
-  if (!existsSync(ffmpegPath)) return false;
+export function findFfmpegCandidates(): string[] {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const resolved = require('ffmpeg-static') as string | null;
+  return [
+    join(__dirname, 'ffmpeg-bin', 'ffmpeg'),
+    resolved,
+    join(
+      process.cwd(),
+      '.next',
+      'server',
+      'node_modules',
+      'ffmpeg-static',
+      'ffmpeg'
+    ),
+    join(process.cwd(), 'node_modules', 'ffmpeg-static', 'ffmpeg'),
+    join(__dirname, 'node_modules', 'ffmpeg-static', 'ffmpeg'),
+    join(process.cwd(), 'src', 'pages', 'api', 'media', 'ffmpeg-bin', 'ffmpeg')
+  ].filter((p): p is string => !!p);
+}
+
+export function findFfmpegPath(): string | null {
+  return findFfmpegCandidates().find((p) => existsSync(p)) ?? null;
+}
+
+export async function execFfmpeg(
+  args: string[]
+): Promise<{ ok: boolean; error?: string; binary?: string | null }> {
+  const ffmpegPath = findFfmpegPath();
+  if (!ffmpegPath) {
+    return { ok: false, error: 'no ffmpeg binary found', binary: null };
+  }
   try {
     await execFileAsync(ffmpegPath, args, {
       timeout: FFMPEG_TIMEOUT_MS,
       maxBuffer: 1024 * 1024,
       killSignal: 'SIGKILL'
     });
-    return true;
-  } catch {
-    return false;
+    return { ok: true, binary: ffmpegPath };
+  } catch (error) {
+    return { ok: false, error: String(error), binary: ffmpegPath };
   }
 }
 

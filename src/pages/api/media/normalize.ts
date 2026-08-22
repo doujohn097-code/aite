@@ -97,9 +97,17 @@ export default async function normalizeMediaEndpoint(
         '2',
         outputPath
       ];
-      const ok = (await execFfmpeg(args)) && existsSync(outputPath);
+      const result = await execFfmpeg(args);
+      const ok = result.ok && existsSync(outputPath);
       if (!ok) {
-        res.status(200).json({ src }); // graceful degradation
+        res.status(200).json({
+          src,
+          debug: {
+            ffmpegError: result.error ?? 'output missing',
+            binary: result.binary,
+            cwd: process.cwd()
+          }
+        }); // graceful degradation
         return;
       }
       const fixedSrc = await uploadBufferToR2(

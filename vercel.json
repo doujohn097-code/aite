@@ -1,6 +1,10 @@
 {
   "functions": {
-    "src/pages/api/media/diag.ts": {
+    "src/pages/api/media/normalize.ts": {
+      "maxDuration": 60,
+      "includeFiles": "**/ffmpeg*"
+    },
+    "src/pages/api/media/poster.ts": {
       "maxDuration": 60,
       "includeFiles": "**/ffmpeg*"
     }
