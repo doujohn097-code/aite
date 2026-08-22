@@ -18,6 +18,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, auth } from './app';
+import { normalizeVideo } from '@lib/media-normalize';
 import { sendPushNotification } from '@lib/push';
 import {
   usersCollection,
@@ -90,7 +91,8 @@ export async function manageBlock(
 ): Promise<void> {
   if (!userId || !targetUserId || userId === targetUserId) return;
   await updateDoc(doc(usersCollection, userId), {
-    blockedUsers: type === 'block' ? arrayUnion(targetUserId) : arrayRemove(targetUserId),
+    blockedUsers:
+      type === 'block' ? arrayUnion(targetUserId) : arrayRemove(targetUserId),
     updatedAt: serverTimestamp()
   });
 }
@@ -201,7 +203,9 @@ export type UploadProgressHandler = (percent: number) => void;
 type VideoThumbnail = { sourceId: string; file: File & { id: string } };
 
 /** Builds a real poster before upload so WebView never has to guess a video frame. */
-async function createVideoThumbnail(file: File & { id: string }): Promise<VideoThumbnail | null> {
+async function createVideoThumbnail(
+  file: File & { id: string }
+): Promise<VideoThumbnail | null> {
   if (!file.type.startsWith('video/')) return null;
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
@@ -209,21 +213,50 @@ async function createVideoThumbnail(file: File & { id: string }): Promise<VideoT
     video.muted = true;
     video.playsInline = true;
     video.preload = 'metadata';
-    const cleanup = (): void => { URL.revokeObjectURL(url); video.remove(); };
-    video.onloadedmetadata = () => { video.currentTime = Math.min(0.5, Math.max(0.1, video.duration * 0.1)); };
+    const cleanup = (): void => {
+      URL.revokeObjectURL(url);
+      video.remove();
+    };
+    video.onloadedmetadata = () => {
+      video.currentTime = Math.min(0.5, Math.max(0.1, video.duration * 0.1));
+    };
     video.onseeked = () => {
       try {
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth || 720;
         canvas.height = video.videoHeight || 1280;
-        canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => {
-          cleanup();
-          resolve(blob ? { sourceId: file.id, file: Object.assign(new File([blob], `poster-${file.id}.jpg`, { type: 'image/jpeg' }), { id: `poster-${file.id}` }) } : null);
-        }, 'image/jpeg', 0.86);
-      } catch { cleanup(); resolve(null); }
+        canvas
+          .getContext('2d')
+          ?.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            cleanup();
+            resolve(
+              blob
+                ? {
+                    sourceId: file.id,
+                    file: Object.assign(
+                      new File([blob], `poster-${file.id}.jpg`, {
+                        type: 'image/jpeg'
+                      }),
+                      { id: `poster-${file.id}` }
+                    )
+                  }
+                : null
+            );
+          },
+          'image/jpeg',
+          0.86
+        );
+      } catch {
+        cleanup();
+        resolve(null);
+      }
     };
-    video.onerror = () => { cleanup(); resolve(null); };
+    video.onerror = () => {
+      cleanup();
+      resolve(null);
+    };
     video.src = url;
   });
 }
@@ -235,14 +268,19 @@ export async function uploadImages(
 ): Promise<ImagesPreview | null> {
   if (!files.length) return null;
 
-  const thumbnails = (await Promise.all(files.map(createVideoThumbnail))).filter(
-    (item): item is VideoThumbnail => item !== null
-  );
-  const uploadInput = [...files, ...thumbnails.map(({ file }) => file)] as FilesWithId;
+  const thumbnails = (
+    await Promise.all(files.map(createVideoThumbnail))
+  ).filter((item): item is VideoThumbnail => item !== null);
+  const uploadInput = [
+    ...files,
+    ...thumbnails.map(({ file }) => file)
+  ] as FilesWithId;
   const perFile = new Array<number>(uploadInput.length).fill(0);
   const report = (index: number, percent: number): void => {
     perFile[index] = Math.min(Math.round(percent), 100);
-    onProgress?.(Math.round(perFile.reduce((acc, p) => acc + p, 0) / uploadInput.length));
+    onProgress?.(
+      Math.round(perFile.reduce((acc, p) => acc + p, 0) / uploadInput.length)
+    );
   };
 
   // Cloudflare R2 is the only media backend. A failed signed upload must be
@@ -256,32 +294,70 @@ export async function uploadImages(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${idToken}`
     },
-    body: JSON.stringify({ files: uploadInput.map(({ id, name, type }) => ({ id, name, type })) })
+    body: JSON.stringify({
+      files: uploadInput.map(({ id, name, type }) => ({ id, name, type }))
+    })
   });
   if (!response.ok) throw new Error('تعذر تجهيز رفع الوسائط');
 
   const { files: uploadFiles } = (await response.json()) as {
-    files: { id: string; alt: string; type: string; uploadUrl: string; publicUrl: string }[];
+    files: {
+      id: string;
+      alt: string;
+      type: string;
+      uploadUrl: string;
+      publicUrl: string;
+    }[];
   };
   if (!uploadFiles?.length || uploadFiles.length !== uploadInput.length)
     throw new Error('استجابة رفع الوسائط غير صالحة');
 
-  await Promise.all(uploadFiles.map(({ uploadUrl }, index) =>
-    fetch(uploadUrl, {
-      method: 'PUT', headers: { 'Content-Type': uploadInput[index].type }, body: uploadInput[index]
-    }).then((result) => {
-      if (!result.ok) throw new Error(`Failed to upload ${uploadInput[index].name}`);
-      report(index, 100);
-    })
-  ));
+  await Promise.all(
+    uploadFiles.map(({ uploadUrl }, index) =>
+      fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': uploadInput[index].type },
+        body: uploadInput[index]
+      }).then((result) => {
+        if (!result.ok)
+          throw new Error(`Failed to upload ${uploadInput[index].name}`);
+        report(index, 100);
+      })
+    )
+  );
 
   const uploadedById = new Map(uploadFiles.map((item) => [item.id, item]));
-  const posterBySource = new Map(thumbnails.map(({ sourceId, file }) => [sourceId, uploadedById.get(file.id)?.publicUrl ?? null]));
-  return files.map(({ id, name, type }) => {
+  const posterBySource = new Map(
+    thumbnails.map(({ sourceId, file }) => [
+      sourceId,
+      uploadedById.get(file.id)?.publicUrl ?? null
+    ])
+  );
+  const results = files.map(({ id, name, type }) => {
     const uploaded = uploadedById.get(id);
     if (!uploaded) throw new Error('ملف مفقود من استجابة الرفع');
-    return { id, src: uploaded.publicUrl, alt: name, type, thumbnail: posterBySource.get(id) ?? null };
+    return {
+      id,
+      src: uploaded.publicUrl,
+      alt: name,
+      type,
+      thumbnail: posterBySource.get(id) ?? null
+    };
   });
+
+  // Raw phone uploads (HEVC, H.264 High@L5.2, .mov, non-faststart MP4) decode
+  // fine on desktop Chrome but fail on Android WebView's hardware decoder,
+  // which caps at H.264 level 4.x — that is the gray box bug in the app.
+  // Re-encode every video server-side so all devices can play it.
+  const normalized = await Promise.all(
+    results.map(async (item) => {
+      if (!item.type?.startsWith('video/')) return item;
+      const fixed = await normalizeVideo(item.src);
+      return fixed ? { ...item, src: fixed } : item;
+    })
+  );
+
+  return normalized;
 }
 
 export async function manageReply(

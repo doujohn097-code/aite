@@ -13,6 +13,8 @@ import { Modal } from '@components/modal/modal';
 import { ImageModal } from '@components/modal/image-modal';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { LinkifiedText } from '@components/ui/linkified-text';
+import { useRepairableVideo } from '@lib/media-normalize';
+import type { ImageData } from '@lib/types/file';
 import type { Message, MessageType } from '@lib/types/message';
 
 type MessageBubbleProps = {
@@ -55,6 +57,53 @@ function formatTime(createdAt: Message['createdAt']): string {
   }).format(date);
 }
 
+type MessageVideoProps = {
+  item: ImageData;
+  messageId: string;
+  onExpand: () => void;
+};
+
+function MessageVideo({
+  item,
+  messageId,
+  onExpand
+}: MessageVideoProps): JSX.Element {
+  const { effectiveSrc, repairing, onError } = useRepairableVideo(item.src);
+  return (
+    <div className='group relative'>
+      <video
+        key={effectiveSrc}
+        className='block max-h-[360px] w-full rounded-2xl bg-black object-contain'
+        src={effectiveSrc}
+        poster={item.thumbnail ?? undefined}
+        controls
+        playsInline
+        preload='metadata'
+        onError={onError}
+      />
+      {repairing && (
+        <div className='absolute inset-x-0 top-3 z-10 flex justify-center'>
+          <div className='flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg backdrop-blur'>
+            <HeroIcon
+              className='h-3.5 w-3.5 animate-spin'
+              iconName='ArrowPathIcon'
+            />
+            جاري إصلاح الفيديو…
+          </div>
+        </div>
+      )}
+      <button
+        type='button'
+        onClick={onExpand}
+        aria-label='فتح معاينة الفيديو'
+        className='absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white opacity-0 shadow-lg backdrop-blur transition group-hover:opacity-100'
+      >
+        <HeroIcon className='h-5 w-5' iconName='ArrowsPointingOutIcon' />
+      </button>
+    </div>
+  );
+}
+
 export function MessageBubble({
   message,
   isOwn,
@@ -84,7 +133,9 @@ export function MessageBubble({
   const [pickerPosition, setPickerPosition] = useState({ left: 16, top: 16 });
   const [swipeReady, setSwipeReady] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
-  const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(
+    null
+  );
   const pressStart = useRef<{ x: number; y: number } | null>(null);
   // نخفي القلب تلقائيًا بعد فترة قصيرة حتى لا يلصق على الصفحة
   const heartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -163,30 +214,46 @@ export function MessageBubble({
     pressTimer.current = null;
     pressStart.current = null;
   };
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>): void => {
-    if (!onReaction || event.pointerType === 'mouse' && event.button !== 0) return;
+  const handlePointerDown = (
+    event: React.PointerEvent<HTMLDivElement>
+  ): void => {
+    if (!onReaction || (event.pointerType === 'mouse' && event.button !== 0))
+      return;
     pressStart.current = { x: event.clientX, y: event.clientY };
     pressTimer.current = setTimeout(() => {
       pressTimer.current = null;
       // Position the sheet in viewport coordinates so a scroll container never
       // clips it. Prefer below the touch, then above, and finally clamp safely.
-      const point = pressStart.current ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+      const point = pressStart.current ?? {
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2
+      };
       const width = Math.min(264, window.innerWidth - 24);
       const height = 210;
-      const left = Math.min(Math.max(12, point.x - width / 2), window.innerWidth - width - 12);
+      const left = Math.min(
+        Math.max(12, point.x - width / 2),
+        window.innerWidth - width - 12
+      );
       const below = point.y + 18;
       const above = point.y - height - 18;
-      const top = below + height <= window.innerHeight - 12
-        ? below
-        : above >= 12
-        ? above
-        : Math.max(12, Math.min(below, window.innerHeight - height - 12));
+      const top =
+        below + height <= window.innerHeight - 12
+          ? below
+          : above >= 12
+          ? above
+          : Math.max(12, Math.min(below, window.innerHeight - height - 12));
       setPickerPosition({ left, top });
-      try { navigator.vibrate?.(12); } catch { /* optional */ }
+      try {
+        navigator.vibrate?.(12);
+      } catch {
+        /* optional */
+      }
       setPickerOpen(true);
     }, 620);
   };
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>): void => {
+  const handlePointerMove = (
+    event: React.PointerEvent<HTMLDivElement>
+  ): void => {
     const start = pressStart.current;
     if (!start) return;
     if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10)
@@ -279,8 +346,14 @@ export function MessageBubble({
         )}
         style={{ scale: replyScale, opacity: replyOpacity }}
       >
-        <HeroIcon className='h-4 w-4 rotate-180' iconName='ArrowUturnLeftIcon' solid />
-        <span className='text-[10px] font-black'>{swipeReady ? 'حرّر للرد' : 'اسحب'}</span>
+        <HeroIcon
+          className='h-4 w-4 rotate-180'
+          iconName='ArrowUturnLeftIcon'
+          solid
+        />
+        <span className='text-[10px] font-black'>
+          {swipeReady ? 'حرّر للرد' : 'اسحب'}
+        </span>
       </motion.div>
 
       {/* انفجار القلب عند النقر المزدوج — قلب نابض مع بارتكلات حلقية */}
@@ -295,22 +368,46 @@ export function MessageBubble({
               className='relative block'
               initial={{ scale: 0, rotate: -15, opacity: 0 }}
               animate={{
-                scale: [0, 1.35, 1, 1.15, 0], rotate: [-15, 8, -4, 0, 0],
-                y: [0, -10, -20, -35, -50], opacity: [0, 1, 1, 0.9, 0]
+                scale: [0, 1.35, 1, 1.15, 0],
+                rotate: [-15, 8, -4, 0, 0],
+                y: [0, -10, -20, -35, -50],
+                opacity: [0, 1, 1, 0.9, 0]
               }}
-              transition={{ duration: 0.85, times: [0, 0.22, 0.45, 0.75, 1], ease: 'easeOut' }}
+              transition={{
+                duration: 0.85,
+                times: [0, 0.22, 0.45, 0.75, 1],
+                ease: 'easeOut'
+              }}
             >
-              <HeroIcon className='h-24 w-24 text-rose-500 drop-shadow-[0_8px_24px_rgba(244,63,94,0.85)]' iconName='HeartIcon' solid />
+              <HeroIcon
+                className='h-24 w-24 text-rose-500 drop-shadow-[0_8px_24px_rgba(244,63,94,0.85)]'
+                iconName='HeartIcon'
+                solid
+              />
             </motion.span>
             {HEART_PARTICLES.map((particle, index) => (
               <motion.span
                 key={index}
                 className='absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2'
                 initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
-                animate={{ x: particle.x, y: [0, particle.y * 0.85, particle.y - 30], scale: [0, particle.s, particle.s * 0.9, 0], opacity: [0, 1, 0.85, 0], rotate: particle.r }}
-                transition={{ duration: 0.75, delay: particle.delay, ease: 'easeOut' }}
+                animate={{
+                  x: particle.x,
+                  y: [0, particle.y * 0.85, particle.y - 30],
+                  scale: [0, particle.s, particle.s * 0.9, 0],
+                  opacity: [0, 1, 0.85, 0],
+                  rotate: particle.r
+                }}
+                transition={{
+                  duration: 0.75,
+                  delay: particle.delay,
+                  ease: 'easeOut'
+                }}
               >
-                <HeroIcon className='h-5 w-5 text-rose-400 drop-shadow-[0_4px_10px_rgba(244,63,94,0.7)]' iconName='HeartIcon' solid />
+                <HeroIcon
+                  className='h-5 w-5 text-rose-400 drop-shadow-[0_4px_10px_rgba(244,63,94,0.7)]'
+                  iconName='HeartIcon'
+                  solid
+                />
               </motion.span>
             ))}
           </motion.span>
@@ -318,80 +415,82 @@ export function MessageBubble({
       </AnimatePresence>
 
       {/* منتقي التفاعلات بالضغطة المطوّلة — تصميم يطابق قائمة المنشور (menu-container) */}
-      {pickerOpen && typeof document !== 'undefined' && createPortal(
-        <>
-          <button
-            className='fixed inset-0 z-[60] cursor-default'
-            aria-label='إغلاق المنتقي'
-            onClick={() => setPickerOpen(false)}
-            type='button'
-          />
-          <AnimatePresence>
-            {pickerOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 6 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 6 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className='fixed z-[70] w-[min(264px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-white/20 bg-main-background/95 shadow-2xl shadow-black/25 backdrop-blur-xl dark:border-white/10'
-            style={{ left: pickerPosition.left, top: pickerPosition.top }}
-          >
-            {/* شريط التفاعلات */}
-            <div className='flex items-center gap-0.5 px-2 py-1'>
-              {REACTION_EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  className={cn(
-                    'rounded-full p-1 text-xl transition hover:-translate-y-0.5 hover:scale-125',
-                    myReaction === emoji && 'bg-main-accent/20'
-                  )}
-                  onClick={() => react(emoji)}
-                  type='button'
+      {pickerOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <>
+            <button
+              className='fixed inset-0 z-[60] cursor-default'
+              aria-label='إغلاق المنتقي'
+              onClick={() => setPickerOpen(false)}
+              type='button'
+            />
+            <AnimatePresence>
+              {pickerOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 6 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  className='fixed z-[70] w-[min(264px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-white/20 bg-main-background/95 shadow-2xl shadow-black/25 backdrop-blur-xl dark:border-white/10'
+                  style={{ left: pickerPosition.left, top: pickerPosition.top }}
                 >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-            {/* رد — بأسلوب عناصر قائمة المنشور */}
-            {onReply && (
-              <button
-                className='accent-tab flex w-full items-center gap-3 border-t border-light-border/60 p-3
+                  {/* شريط التفاعلات */}
+                  <div className='flex items-center gap-0.5 px-2 py-1'>
+                    {REACTION_EMOJIS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        className={cn(
+                          'rounded-full p-1 text-xl transition hover:-translate-y-0.5 hover:scale-125',
+                          myReaction === emoji && 'bg-main-accent/20'
+                        )}
+                        onClick={() => react(emoji)}
+                        type='button'
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                  {/* رد — بأسلوب عناصر قائمة المنشور */}
+                  {onReply && (
+                    <button
+                      className='accent-tab flex w-full items-center gap-3 border-t border-light-border/60 p-3
                            text-light-primary hover:bg-main-sidebar-background dark:border-dark-border/60
                            dark:text-dark-primary'
-                onClick={() => {
-                  setPickerOpen(false);
-                  onReply(message);
-                }}
-                type='button'
-              >
-                <HeroIcon
-                  className='h-5 w-5 rotate-180'
-                  iconName='ArrowUturnLeftIcon'
-                />
-                رد على الرسالة
-              </button>
-            )}
-            {/* حذف الرسالة (للمرسل فقط) */}
-            {isOwn && onDelete && (
-              <button
-                className='accent-tab flex w-full items-center gap-3 border-t border-light-border/60 p-3
+                      onClick={() => {
+                        setPickerOpen(false);
+                        onReply(message);
+                      }}
+                      type='button'
+                    >
+                      <HeroIcon
+                        className='h-5 w-5 rotate-180'
+                        iconName='ArrowUturnLeftIcon'
+                      />
+                      رد على الرسالة
+                    </button>
+                  )}
+                  {/* حذف الرسالة (للمرسل فقط) */}
+                  {isOwn && onDelete && (
+                    <button
+                      className='accent-tab flex w-full items-center gap-3 border-t border-light-border/60 p-3
                            text-red-500 hover:bg-red-500/10 dark:border-dark-border/60'
-                onClick={() => {
-                  setPickerOpen(false);
-                  onDelete(message);
-                }}
-                type='button'
-              >
-                <HeroIcon className='h-5 w-5' iconName='TrashIcon' />
-                حذف الرسالة
-              </button>
-            )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </>,
-        document.body
-      )}
+                      onClick={() => {
+                        setPickerOpen(false);
+                        onDelete(message);
+                      }}
+                      type='button'
+                    >
+                      <HeroIcon className='h-5 w-5' iconName='TrashIcon' />
+                      حذف الرسالة
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>,
+          document.body
+        )}
 
       <div
         className={cn(bubbleClass, 'relative z-10')}
@@ -411,163 +510,188 @@ export function MessageBubble({
           </div>
         ) : (
           <>
-        {replyQuote}
+            {replyQuote}
 
-        {type === 'text' && (
-          <p className='whitespace-pre-wrap break-words'>
-            {text && (
-              <LinkifiedText
-                text={text}
-                linkClassName={
-                  isOwn
-                    ? 'break-all font-semibold text-[#0b3d91] underline underline-offset-2'
-                    : undefined
-                }
-              />
-            )}
-          </p>
-        )}
-
-        {(type === 'image' || type === 'video') && media && (
-          <div className='w-fit max-w-[75vw] overflow-hidden rounded-2xl xs:max-w-[330px]'>
-            {media.map((item, index) =>
-              type === 'video' || item.type?.startsWith('video/') ? (
-                <div key={`${message.id}-${index}`} className='group relative'>
-                  <video className='block max-h-[360px] w-full rounded-2xl object-contain bg-black' src={item.src} poster={item.thumbnail ?? undefined} controls playsInline preload='metadata' />
-                  <button type='button' onClick={() => setSelectedMediaIndex(index)} aria-label='فتح معاينة الفيديو' className='absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white opacity-0 shadow-lg backdrop-blur transition group-hover:opacity-100'>
-                    <HeroIcon className='h-5 w-5' iconName='ArrowsPointingOutIcon' />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  key={`${message.id}-${index}`}
-                  type='button'
-                  onClick={() => setSelectedMediaIndex(index)}
-                  className='group relative block cursor-zoom-in overflow-hidden rounded-2xl outline-none'
-                  aria-label='فتح معاينة الصورة'
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img className='block max-h-[360px] w-full rounded-2xl object-contain transition duration-300 group-hover:scale-[1.02]' src={item.src} alt={item.alt || 'صورة'} loading='lazy' />
-                  <span className='absolute inset-0 bg-black/0 transition group-hover:bg-black/10' />
-                  <HeroIcon className='absolute left-3 top-3 h-5 w-5 rounded-full bg-black/45 p-1 text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100' iconName='ArrowsPointingOutIcon' />
-                </button>
-              )
-            )}
-          </div>
-        )}
-
-        {type === 'audio' && audio && (
-          <TweetAudioPlayer audio={audio} />
-        )}
-
-        {type === 'shared' && sharedPost && (
-          <Link
-            href={
-              sharedPost.kind === 'reel'
-                ? `/reels?video=${sharedPost.id}`
-                : `/tweet/${sharedPost.id}`
-            }
-          >
-            <a
-              className={cn(
-                'block max-w-full overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl',
-                sharedPost.kind === 'reel'
-                  ? 'w-[min(220px,calc(100vw-140px))]'
-                  : 'w-[min(320px,calc(100vw-88px))]',
-                'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50'
-              )}
-              onClick={(event) => event.stopPropagation()}
-            >
-              {sharedPost.thumbnail ? (
-                <div className={cn(
-                  'relative overflow-hidden bg-slate-100 dark:bg-slate-900',
-                  sharedPost.kind === 'reel' ? 'aspect-[4/5]' : 'h-36'
-                )}>
-                  {sharedPost.kind === 'reel' ? (
-                    <video
-                      className='pointer-events-none h-full w-full object-contain bg-black'
-                      src={sharedPost.thumbnail}
-                      muted
-                      playsInline
-                      preload='metadata'
-                      aria-label='معاينة الريل'
-                    />
-                  ) : (
-                    <img
-                      className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
-                      src={sharedPost.thumbnail}
-                      alt='معاينة المنشور'
-                      draggable={false}
-                    />
-                  )}
-                  {sharedPost.kind === 'reel' && (
-                    <>
-                      <span className='absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10' />
-                      <span className='absolute inset-0 flex items-center justify-center'>
-                        <HeroIcon className='h-14 w-14 rounded-full bg-black/60 p-3.5 text-white shadow-xl backdrop-blur-sm' iconName='PlayIcon' solid />
-                      </span>
-                      <span className='absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>ريل</span>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className='flex h-24 items-center justify-center bg-gradient-to-br from-main-accent/20 to-main-accent/5 text-main-accent'>
-                  <HeroIcon className='h-9 w-9' iconName={sharedPost.kind === 'reel' ? 'FilmIcon' : 'DocumentTextIcon'} />
-                </div>
-              )}
-              <div className='flex items-center gap-2 px-3 pt-2.5'>
-                {sharedPost.authorPhoto && (
-                  <img
-                    className='h-7 w-7 rounded-full object-cover'
-                    src={sharedPost.authorPhoto}
-                    alt={sharedPost.authorName ?? ''}
+            {type === 'text' && (
+              <p className='whitespace-pre-wrap break-words'>
+                {text && (
+                  <LinkifiedText
+                    text={text}
+                    linkClassName={
+                      isOwn
+                        ? 'break-all font-semibold text-[#0b3d91] underline underline-offset-2'
+                        : undefined
+                    }
                   />
                 )}
-                <div className='min-w-0 flex-1 leading-tight'>
-                  <p className='truncate text-sm font-bold'>
-                    {sharedPost.authorName ?? 'مستخدم'}
-                  </p>
-                  {sharedPost.authorUsername && (
-                    <p className='truncate text-[11px] opacity-60'>
-                      @{sharedPost.authorUsername}
+              </p>
+            )}
+
+            {(type === 'image' || type === 'video') && media && (
+              <div className='w-fit max-w-[75vw] overflow-hidden rounded-2xl xs:max-w-[330px]'>
+                {media.map((item, index) =>
+                  type === 'video' || item.type?.startsWith('video/') ? (
+                    <MessageVideo
+                      key={`${message.id}-${index}`}
+                      item={item}
+                      messageId={message.id}
+                      onExpand={() => setSelectedMediaIndex(index)}
+                    />
+                  ) : (
+                    <button
+                      key={`${message.id}-${index}`}
+                      type='button'
+                      onClick={() => setSelectedMediaIndex(index)}
+                      className='group relative block cursor-zoom-in overflow-hidden rounded-2xl outline-none'
+                      aria-label='فتح معاينة الصورة'
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        className='block max-h-[360px] w-full rounded-2xl object-contain transition duration-300 group-hover:scale-[1.02]'
+                        src={item.src}
+                        alt={item.alt || 'صورة'}
+                        loading='lazy'
+                      />
+                      <span className='absolute inset-0 bg-black/0 transition group-hover:bg-black/10' />
+                      <HeroIcon
+                        className='absolute left-3 top-3 h-5 w-5 rounded-full bg-black/45 p-1 text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100'
+                        iconName='ArrowsPointingOutIcon'
+                      />
+                    </button>
+                  )
+                )}
+              </div>
+            )}
+
+            {type === 'audio' && audio && <TweetAudioPlayer audio={audio} />}
+
+            {type === 'shared' && sharedPost && (
+              <Link
+                href={
+                  sharedPost.kind === 'reel'
+                    ? `/reels?video=${sharedPost.id}`
+                    : `/tweet/${sharedPost.id}`
+                }
+              >
+                <a
+                  className={cn(
+                    'block max-w-full overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl',
+                    sharedPost.kind === 'reel'
+                      ? 'w-[min(220px,calc(100vw-140px))]'
+                      : 'w-[min(320px,calc(100vw-88px))]',
+                    'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50'
+                  )}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  {sharedPost.thumbnail ? (
+                    <div
+                      className={cn(
+                        'relative overflow-hidden bg-slate-100 dark:bg-slate-900',
+                        sharedPost.kind === 'reel' ? 'aspect-[4/5]' : 'h-36'
+                      )}
+                    >
+                      {sharedPost.kind === 'reel' ? (
+                        <video
+                          className='pointer-events-none h-full w-full bg-black object-contain'
+                          src={sharedPost.thumbnail}
+                          muted
+                          playsInline
+                          preload='metadata'
+                          aria-label='معاينة الريل'
+                        />
+                      ) : (
+                        <img
+                          className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
+                          src={sharedPost.thumbnail}
+                          alt='معاينة المنشور'
+                          draggable={false}
+                        />
+                      )}
+                      {sharedPost.kind === 'reel' && (
+                        <>
+                          <span className='absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10' />
+                          <span className='absolute inset-0 flex items-center justify-center'>
+                            <HeroIcon
+                              className='h-14 w-14 rounded-full bg-black/60 p-3.5 text-white shadow-xl backdrop-blur-sm'
+                              iconName='PlayIcon'
+                              solid
+                            />
+                          </span>
+                          <span className='absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
+                            ريل
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className='flex h-24 items-center justify-center bg-gradient-to-br from-main-accent/20 to-main-accent/5 text-main-accent'>
+                      <HeroIcon
+                        className='h-9 w-9'
+                        iconName={
+                          sharedPost.kind === 'reel'
+                            ? 'FilmIcon'
+                            : 'DocumentTextIcon'
+                        }
+                      />
+                    </div>
+                  )}
+                  <div className='flex items-center gap-2 px-3 pt-2.5'>
+                    {sharedPost.authorPhoto && (
+                      <img
+                        className='h-7 w-7 rounded-full object-cover'
+                        src={sharedPost.authorPhoto}
+                        alt={sharedPost.authorName ?? ''}
+                      />
+                    )}
+                    <div className='min-w-0 flex-1 leading-tight'>
+                      <p className='truncate text-sm font-bold'>
+                        {sharedPost.authorName ?? 'مستخدم'}
+                      </p>
+                      {sharedPost.authorUsername && (
+                        <p className='truncate text-[11px] opacity-60'>
+                          @{sharedPost.authorUsername}
+                        </p>
+                      )}
+                    </div>
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                        isOwn
+                          ? 'bg-black/15'
+                          : 'bg-main-accent/15 text-main-accent'
+                      )}
+                    >
+                      {sharedPost.kind === 'reel' ? 'ريل' : 'منشور'}
+                    </span>
+                  </div>
+                  {sharedPost.text && (
+                    <p className='line-clamp-2 px-3 pb-2.5 pt-1 text-[13px] opacity-80'>
+                      {sharedPost.text}
                     </p>
                   )}
-                </div>
-                <span
-                  className={cn(
-                    'rounded-full px-2 py-0.5 text-[10px] font-bold',
-                    isOwn ? 'bg-black/15' : 'bg-main-accent/15 text-main-accent'
-                  )}
-                >
-                  {sharedPost.kind === 'reel' ? 'ريل' : 'منشور'}
-                </span>
-              </div>
-              {sharedPost.text && (
-                <p className='line-clamp-2 px-3 pb-2.5 pt-1 text-[13px] opacity-80'>
-                  {sharedPost.text}
-                </p>
-              )}
-            </a>
-          </Link>
-        )}
-
-        {text && type !== 'text' && (
-          <p
-            className={cn(
-              'mt-1 whitespace-pre-wrap break-words px-2 pb-1 text-[15px]',
-              isOwn ? 'text-black' : 'text-light-primary dark:text-dark-primary'
+                </a>
+              </Link>
             )}
-          >
-            <LinkifiedText
-              text={text}
-              linkClassName={
-                isOwn
-                  ? 'break-all font-semibold text-[#0b3d91] underline underline-offset-2'
-                  : undefined
-              }
-            />
-          </p>
-        )}
+
+            {text && type !== 'text' && (
+              <p
+                className={cn(
+                  'mt-1 whitespace-pre-wrap break-words px-2 pb-1 text-[15px]',
+                  isOwn
+                    ? 'text-black'
+                    : 'text-light-primary dark:text-dark-primary'
+                )}
+              >
+                <LinkifiedText
+                  text={text}
+                  linkClassName={
+                    isOwn
+                      ? 'break-all font-semibold text-[#0b3d91] underline underline-offset-2'
+                      : undefined
+                  }
+                />
+              </p>
+            )}
           </>
         )}
       </div>
@@ -607,7 +731,11 @@ export function MessageBubble({
           closeModal={() => setSelectedMediaIndex(null)}
           modalClassName='relative flex w-full max-w-4xl items-center justify-center'
         >
-          <ImageModal imageData={media[selectedMediaIndex]} previewCount={media.length} onClose={() => setSelectedMediaIndex(null)} />
+          <ImageModal
+            imageData={media[selectedMediaIndex]}
+            previewCount={media.length}
+            onClose={() => setSelectedMediaIndex(null)}
+          />
         </Modal>
       )}
     </motion.div>

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 -H 0.0.0.0",
-    "build": "rm -rf .next node_modules/.cache && next build",
+    "build": "rm -rf .next node_modules/.cache && next build && node scripts/copy-ffmpeg.mjs",
     "start": "next start -p 3000 -H 0.0.0.0",
     "format": "prettier --check .",
     "lint": "next lint",
@@ -23,6 +23,7 @@
     "@headlessui/react": "^1.7.2",
     "@heroicons/react": "^2.0.11",
     "clsx": "^1.2.1",
+    "ffmpeg-static": "^5.3.0",
     "firebase": "^9.9.4",
     "firebase-admin": "^13.10.0",
     "framer-motion": "^7.2.1",

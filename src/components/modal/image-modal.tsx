@@ -84,8 +84,12 @@ export function ImageModal({
 
     const handleLoadingCompleted = (): void => setLoading(false);
 
-    if (isVideo) media.onloadeddata = handleLoadingCompleted;
-    else media.onload = handleLoadingCompleted;
+    if (isVideo) {
+      // onloadeddata never fires for videos Android WebView cannot decode;
+      // treat a load error as "loaded" so the player can repair the file.
+      media.onloadeddata = handleLoadingCompleted;
+      media.onerror = handleLoadingCompleted;
+    } else media.onload = handleLoadingCompleted;
   }, [...(tweet && previewCount > 1 ? [src] : [])]);
 
   useEffect(() => {
@@ -158,7 +162,10 @@ export function ImageModal({
                 />
               </picture>
             )}
-            <div className='absolute right-3 top-3 z-20 flex items-center gap-2' dir='ltr'>
+            <div
+              className='absolute right-3 top-3 z-20 flex items-center gap-2'
+              dir='ltr'
+            >
               <button
                 type='button'
                 aria-label='حفظ الوسيط على الجهاز'

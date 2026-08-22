@@ -1,4 +1,11 @@
-import { useRef, useState, useEffect, useCallback, useMemo, type MouseEvent } from 'react';
+import {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  type MouseEvent
+} from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Popover } from '@headlessui/react';
@@ -16,6 +23,7 @@ import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useDocument } from '@lib/hooks/useDocument';
+import { useRepairableVideo } from '@lib/media-normalize';
 import {
   tweetsCollection,
   storiesCollection,
@@ -101,6 +109,12 @@ export function ReelCard({
   const media = reel.images?.[0];
   const isVideo = media?.type?.startsWith('video/') ?? true;
 
+  // Android WebView cannot decode some phone uploads; swap in a server-side
+  // re-encoded copy when the original fails to load.
+  const { effectiveSrc, repairing, onError } = useRepairableVideo(
+    isVideo ? media?.src ?? '' : ''
+  );
+
   const isLiked = reel.likes?.includes(authUser?.id ?? '') ?? false;
   const isOwner = authUser?.id === reel.userId;
 
@@ -147,7 +161,8 @@ export function ReelCard({
       video.pause();
       setIsPlaying(false);
     }
-  }, [isActive]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive, effectiveSrc]);
 
   const toggleLike = useCallback(
     async (forceLike?: boolean): Promise<void> => {
@@ -403,20 +418,22 @@ export function ReelCard({
       ref={cardRef}
       onClick={handleCardClick}
       onContextMenu={(event) => event.preventDefault()}
-      className='relative h-full w-full cursor-pointer select-none snap-center overflow-hidden bg-black outline-none [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] touch-manipulation focus:outline-none focus:ring-0 focus-visible:outline-none'
+      className='relative h-full w-full cursor-pointer touch-manipulation select-none snap-center overflow-hidden bg-black outline-none [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] focus:outline-none focus:ring-0 focus-visible:outline-none'
     >
       {/* Media Layer */}
       <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
         {media &&
           (isVideo ? (
             <video
+              key={effectiveSrc}
               ref={videoRef}
-              src={media.src}
+              src={effectiveSrc}
               poster={media.thumbnail ?? undefined}
               autoPlay={isActive}
               loop
               muted={isMuted}
               playsInline
+              onError={onError}
               onTimeUpdate={handleVideoTimeUpdate}
               className='pointer-events-none h-full w-full object-contain outline-none'
             />
@@ -431,6 +448,19 @@ export function ReelCard({
         {/* Gradient overlays for contrast and readability */}
         <div className='pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85' />
       </div>
+
+      {/* Repairing an unsupported video (Android WebView fallback) */}
+      {repairing && (
+        <div className='absolute inset-x-0 top-16 z-20 flex justify-center'>
+          <div className='flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur'>
+            <HeroIcon
+              className='h-4 w-4 animate-spin'
+              iconName='ArrowPathIcon'
+            />
+            جاري إصلاح الفيديو…
+          </div>
+        </div>
+      )}
 
       {/* Center Animated Play / Pause Indicator */}
       <AnimatePresence>

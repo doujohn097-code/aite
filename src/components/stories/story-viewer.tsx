@@ -9,6 +9,7 @@ import { usersCollection, storiesCollection } from '@lib/firebase/collections';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useDocument } from '@lib/hooks/useDocument';
 import { useModal } from '@lib/hooks/useModal';
+import { useRepairableVideo } from '@lib/media-normalize';
 import { getTimestampMillis } from '@lib/date';
 import { viewStory, likeStory, deleteStory } from '@lib/firebase/utils';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -145,6 +146,12 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
   const currentStory = stories[index];
   const currentStoryId = currentStory?.id;
   const isCurrentVideo = currentStory?.images?.[0]?.type?.startsWith('video/');
+
+  // Android WebView cannot decode some phone uploads; swap in a server-side
+  // re-encoded copy when the original fails to load.
+  const { effectiveSrc, repairing, onError } = useRepairableVideo(
+    isCurrentVideo ? currentStory?.images?.[0]?.src ?? '' : ''
+  );
 
   const storyDuration =
     isCurrentVideo && currentStory?.duration
@@ -489,10 +496,12 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
               {currentMedia &&
                 (isVideo ? (
                   <video
-                    src={currentMedia.src}
+                    key={effectiveSrc}
+                    src={effectiveSrc}
                     autoPlay
                     muted
                     playsInline
+                    onError={onError}
                     onEnded={nextStory}
                     className='max-h-full max-w-full object-contain'
                   />
@@ -503,6 +512,17 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
                     className='max-h-full max-w-full object-contain'
                   />
                 ))}
+              {repairing && (
+                <div className='absolute top-6 z-20 flex justify-center'>
+                  <div className='flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur'>
+                    <HeroIcon
+                      className='h-4 w-4 animate-spin'
+                      iconName='ArrowPathIcon'
+                    />
+                    جاري إصلاح الفيديو…
+                  </div>
+                </div>
+              )}
               {currentStory.caption && (
                 <div className='absolute bottom-24 left-4 right-4 rounded-xl bg-black/50 p-3 text-center text-white backdrop-blur-sm'>
                   {currentStory.caption}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
 import { HeroIcon } from '@components/ui/hero-icon';
+import { useRepairableVideo } from '@lib/media-normalize';
 import type { IconName } from '@components/ui/hero-icon';
 
 type CustomVideoPlayerProps = {
@@ -27,6 +28,10 @@ export function CustomVideoPlayer({
 }: CustomVideoPlayerProps): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Android WebView cannot decode some phone uploads; swap in a server-side
+  // re-encoded copy when the original fails to load.
+  const { effectiveSrc, repairing, onError } = useRepairableVideo(src);
 
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -91,7 +96,7 @@ export function CustomVideoPlayer({
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  useEffect(() => setProgress(0), [src]);
+  useEffect(() => setProgress(0), [effectiveSrc]);
 
   const controlButton = (
     icon: IconName,
@@ -125,13 +130,15 @@ export function CustomVideoPlayer({
       }}
     >
       <video
+        key={effectiveSrc}
         ref={videoRef}
-        src={src}
+        src={effectiveSrc}
         poster={poster ?? undefined}
         playsInline
         muted={muted}
         preload='metadata'
         className={cn('h-full w-full bg-transparent', videoClassName)}
+        onError={onError}
         onPlay={() => {
           setPlaying(true);
           scheduleHide();
@@ -151,6 +158,19 @@ export function CustomVideoPlayer({
           setShowControls(true);
         }}
       />
+
+      {/* Repairing an unsupported video (Android WebView fallback) */}
+      {repairing && (
+        <div className='absolute inset-0 z-20 flex items-center justify-center bg-black/45'>
+          <div className='flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur'>
+            <HeroIcon
+              className='h-4 w-4 animate-spin'
+              iconName='ArrowPathIcon'
+            />
+            جاري إصلاح الفيديو…
+          </div>
+        </div>
+      )}
 
       {/* Big center play button — only while paused */}
       <AnimatePresence>

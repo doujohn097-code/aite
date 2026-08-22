@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/media/normalize.ts": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/ffmpeg-static/ffmpeg"
+    }
+  }
+}
