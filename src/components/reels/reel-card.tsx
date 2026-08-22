@@ -350,7 +350,8 @@ export function ReelCard({
     authorUsername: user.username ?? null,
     authorPhoto: user.photoURL ?? null,
     text: reel.caption ?? null,
-    thumbnail: media?.src ?? null
+    // للفيديو: استخدم صورة البوستر وليس ملف الفيديو الخام
+    thumbnail: media?.thumbnail ?? media?.src ?? null
   });
 
   const handleShareToChat = (e?: React.MouseEvent): void => {

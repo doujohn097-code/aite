@@ -230,7 +230,9 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                       authorUsername: username ?? null,
                       authorPhoto: photoURL ?? null,
                       text: text ?? null,
-                      thumbnail: images?.[0]?.src ?? null
+                      // للفيديو: استخدم صورة البوستر وليس ملف الفيديو الخام
+                      thumbnail:
+                        images?.[0]?.thumbnail ?? images?.[0]?.src ?? null
                     }}
                   />
                 )}

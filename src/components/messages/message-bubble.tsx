@@ -613,7 +613,14 @@ export function MessageBubble({
                               draggable={false}
                             />
                           ) : (
-                            <div className='flex h-full w-full items-center justify-center bg-slate-900' />
+                            // أثناء تجهيز البوستر: اعرض أول إطار من الفيديو نفسه
+                            <video
+                              className='pointer-events-none h-full w-full object-cover'
+                              src={`${sharedPost.thumbnail ?? ''}#t=0.1`}
+                              muted
+                              playsInline
+                              preload='metadata'
+                            />
                           )
                         ) : (
                           <img
@@ -623,7 +630,7 @@ export function MessageBubble({
                             draggable={false}
                           />
                         )}
-                        {sharedPost.kind === 'reel' && (
+                        {(sharedPost.kind === 'reel' || sharedIsVideo) && (
                           <>
                             <span className='absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10' />
                             <span className='absolute inset-0 flex items-center justify-center'>
@@ -633,9 +640,11 @@ export function MessageBubble({
                                 solid
                               />
                             </span>
-                            <span className='absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
-                              ريل
-                            </span>
+                            {sharedPost.kind === 'reel' && (
+                              <span className='absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
+                                ريل
+                              </span>
+                            )}
                           </>
                         )}
                       </div>
