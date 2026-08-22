@@ -19,7 +19,8 @@ export function isInstalledPwa(): boolean {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
     // iOS Safari
-    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+    (window.navigator as Navigator & { standalone?: boolean }).standalone ===
+      true
   );
 }
 
@@ -41,13 +42,18 @@ async function registerNativePushToken(userId: string): Promise<void> {
   if (permission.receive !== 'granted') return;
   await PushNotifications.register();
   await PushNotifications.removeAllListeners();
-  await PushNotifications.addListener('registration', async ({ value }) => {
-    await updateDoc(doc(usersCollection, userId), { fcmTokens: arrayUnion(value) });
+  await PushNotifications.addListener('registration', ({ value }) => {
+    void updateDoc(doc(usersCollection, userId), {
+      fcmTokens: arrayUnion(value)
+    });
   });
-  await PushNotifications.addListener('pushNotificationActionPerformed', (event) => {
-    const url = event.notification.data?.url as string | undefined;
-    if (url && typeof window !== 'undefined') window.location.assign(url);
-  });
+  await PushNotifications.addListener(
+    'pushNotificationActionPerformed',
+    (event) => {
+      const url = (event.notification.data as { url?: string } | null)?.url;
+      if (url && typeof window !== 'undefined') window.location.assign(url);
+    }
+  );
 }
 
 /** يسجّل توكن إشعارات FCM داخل التطبيق أو Web Push في المتصفح. */
@@ -85,7 +91,8 @@ export async function registerWebPushToken(userId: string): Promise<void> {
 
     // إشعارات أثناء فتح التطبيق (المقدمة)
     void onMessage(messaging, (payload) => {
-      const title = payload.notification?.title || payload.data?.title || 'Aite';
+      const title =
+        payload.notification?.title || payload.data?.title || 'Aite';
       const body = payload.notification?.body || payload.data?.body || '';
       const image = payload.data?.image;
       if (Notification.permission === 'granted') {

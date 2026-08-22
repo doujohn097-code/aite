@@ -44,7 +44,8 @@ function fallbackUser(userId: string): User {
 
 export default function Reels(): JSX.Element {
   const router = useRouter();
-  const deepLinkId = typeof router.query.video === 'string' ? router.query.video : null;
+  const deepLinkId =
+    typeof router.query.video === 'string' ? router.query.video : null;
   const [activeIndex, setActiveIndex] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
   const [deepLinkReady, setDeepLinkReady] = useState(!deepLinkId);

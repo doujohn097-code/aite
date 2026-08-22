@@ -5,7 +5,9 @@ type TypingIndicatorProps = {
   className?: string;
 };
 
-export function TypingIndicator({ className }: TypingIndicatorProps): JSX.Element {
+export function TypingIndicator({
+  className
+}: TypingIndicatorProps): JSX.Element {
   return (
     <motion.div
       initial={{ opacity: 0, y: 6, scale: 0.9 }}

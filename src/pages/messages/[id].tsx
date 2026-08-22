@@ -179,7 +179,8 @@ export default function Chat(): JSX.Element {
     return unsubscribe;
   }, [peerId]);
 
-  const isBlockedConversation = !!peerId && !!user?.blockedUsers?.includes(peerId);
+  const isBlockedConversation =
+    !!peerId && !!user?.blockedUsers?.includes(peerId);
   const peerTyping = !isBlockedConversation && conversation?.typing === peerId;
   const peerActiveMillis = peer?.lastActiveAt
     ? getTimestampMillis(peer.lastActiveAt)
@@ -259,7 +260,8 @@ export default function Chat(): JSX.Element {
   // بعد الدخول فقط، نحرّك بسلاسة عندما يكون المستخدم مثبتًا أصلًا عند النهاية.
   useEffect(() => {
     const element = scrollRef.current;
-    if (!element || !initialScrollDoneRef.current || !stickToBottomRef.current) return;
+    if (!element || !initialScrollDoneRef.current || !stickToBottomRef.current)
+      return;
     element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
   }, [messages?.length, peerTyping]);
 
@@ -288,7 +290,10 @@ export default function Chat(): JSX.Element {
 
   // لا نعرض الرسالة قبل أن تقبلها Firestore؛ هذا يمنع ظهور رسالة لم تُرسل فعليًا.
   const shownMessages = useMemo(
-    () => [...(messages ?? [])].sort((a, b) => toMillis(a.createdAt) - toMillis(b.createdAt)),
+    () =>
+      [...(messages ?? [])].sort(
+        (a, b) => toMillis(a.createdAt) - toMillis(b.createdAt)
+      ),
     [messages]
   );
 
@@ -522,14 +527,21 @@ export default function Chat(): JSX.Element {
         {isBlockedConversation && (
           <div className='mx-auto my-3 flex max-w-sm items-center gap-2 rounded-2xl border border-accent-red/20 bg-accent-red/10 px-4 py-3 text-center text-sm text-accent-red'>
             <HeroIcon className='h-5 w-5 shrink-0' iconName='NoSymbolIcon' />
-            <span className='flex-1'>لقد حظرت هذا المستخدم. تبقى الرسائل مرئية لكن المراسلة متوقفة.</span>
-            <button type='button' onClick={() => void toggleBlockPeer()} className='shrink-0 font-bold underline' disabled={blockBusy}>إلغاء الحظر</button>
+            <span className='flex-1'>
+              لقد حظرت هذا المستخدم. تبقى الرسائل مرئية لكن المراسلة متوقفة.
+            </span>
+            <button
+              type='button'
+              onClick={() => void toggleBlockPeer()}
+              className='shrink-0 font-bold underline'
+              disabled={blockBusy}
+            >
+              إلغاء الحظر
+            </button>
           </div>
         )}
         {/* مؤشر "يكتب الآن…" */}
-        <AnimatePresence>
-          {peerTyping && <TypingIndicator />}
-        </AnimatePresence>
+        <AnimatePresence>{peerTyping && <TypingIndicator />}</AnimatePresence>
         <AnimatePresence>
           {showJumpToLatest && (
             <motion.button

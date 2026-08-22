@@ -6,18 +6,13 @@
   "start_url": "/home",
   "scope": "/",
   "display": "standalone",
-  "display_override": [
-    "standalone",
-    "browser"
-  ],
+  "display_override": ["standalone", "browser"],
   "orientation": "portrait",
   "theme_color": "#000000",
   "background_color": "#000000",
   "dir": "rtl",
   "lang": "ar",
-  "categories": [
-    "social"
-  ],
+  "categories": ["social"],
   "icons": [
     {
       "src": "/logo192.png",

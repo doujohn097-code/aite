@@ -86,7 +86,9 @@ export default function Messages(): JSX.Element {
   const filtered = useMemo(() => {
     if (!conversations) return null;
     const visible = conversations.filter((conversation) => {
-      const peerId = conversation.participants.find((participant) => participant !== user?.id);
+      const peerId = conversation.participants.find(
+        (participant) => participant !== user?.id
+      );
       return !peerId || !user?.blockedUsers?.includes(peerId);
     });
     const term = search.trim().toLowerCase();

@@ -132,9 +132,14 @@ export default function UserTweets(): JSX.Element {
 
       {isBlocked ? (
         <div className='flex flex-col items-center gap-3 p-12 text-center'>
-          <HeroIcon className='h-10 w-10 text-light-secondary dark:text-dark-secondary' iconName='NoSymbolIcon' />
+          <HeroIcon
+            className='h-10 w-10 text-light-secondary dark:text-dark-secondary'
+            iconName='NoSymbolIcon'
+          />
           <p className='font-bold'>لقد حظرت هذا الحساب</p>
-          <p className='text-sm text-light-secondary dark:text-dark-secondary'>لن تظهر منشوراته أو محتواه في خلاصتك.</p>
+          <p className='text-sm text-light-secondary dark:text-dark-secondary'>
+            لن تظهر منشوراته أو محتواه في خلاصتك.
+          </p>
         </div>
       ) : loading ? (
         <Loading className='mt-5' />

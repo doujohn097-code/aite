@@ -34,7 +34,12 @@ function initialize(): Firebase {
   };
 }
 
-function connectToEmulator({ auth, firestore, functions, firebaseApp }: Firebase): Firebase {
+function connectToEmulator({
+  auth,
+  firestore,
+  functions,
+  firebaseApp
+}: Firebase): Firebase {
   connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
   connectFirestoreEmulator(firestore, 'localhost', 8080);
   connectFunctionsEmulator(functions, 'localhost', 5001);

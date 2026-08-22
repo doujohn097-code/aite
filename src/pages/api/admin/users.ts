@@ -31,7 +31,10 @@ export default async function handler(
     }
 
     if (req.method === 'PATCH') {
-      const { userId, verified } = req.body as { userId?: string; verified?: boolean };
+      const { userId, verified } = req.body as {
+        userId?: string;
+        verified?: boolean;
+      };
       if (!userId || typeof verified !== 'boolean') {
         res.status(400).json({ error: 'Invalid payload' });
         return;

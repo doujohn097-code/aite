@@ -56,7 +56,8 @@ export function VoicePlayer({
   // play button, timer or speed control on narrow chat bubbles.
   const barCount = compact ? 16 : tall ? 24 : 20;
   const bars = useMemo(
-    () => normalizePeaks(peaks?.length ? peaks : [0.4, 0.7, 1, 0.5, 0.8], barCount),
+    () =>
+      normalizePeaks(peaks?.length ? peaks : [0.4, 0.7, 1, 0.5, 0.8], barCount),
     [peaks, barCount]
   );
 
@@ -171,10 +172,14 @@ export function VoicePlayer({
         <span
           className={cn(
             'min-w-[2.25rem] text-left text-xs tabular-nums',
-            isOwn ? 'text-black/70' : 'text-light-secondary dark:text-dark-secondary'
+            isOwn
+              ? 'text-black/70'
+              : 'text-light-secondary dark:text-dark-secondary'
           )}
         >
-          {formatDuration(playing || progress > 0 ? duration - current : duration)}
+          {formatDuration(
+            playing || progress > 0 ? duration - current : duration
+          )}
         </span>
         <button
           type='button'
@@ -183,8 +188,12 @@ export function VoicePlayer({
           className={cn(
             'rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums transition active:scale-90',
             speed === 1
-              ? isOwn ? 'text-black/50' : 'text-light-secondary/60 dark:text-dark-secondary/60'
-              : isOwn ? 'bg-black/15 text-black' : 'bg-main-accent/15 text-main-accent'
+              ? isOwn
+                ? 'text-black/50'
+                : 'text-light-secondary/60 dark:text-dark-secondary/60'
+              : isOwn
+              ? 'bg-black/15 text-black'
+              : 'bg-main-accent/15 text-main-accent'
           )}
         >
           {speed}×

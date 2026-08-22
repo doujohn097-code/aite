@@ -306,8 +306,8 @@ export function ChatComposer({
               onClick={() => fileInputRef.current?.click()}
               aria-label='إرفاق صورة أو فيديو'
               disabled={sending}
-              className='custom-button disabled:cursor-not-allowed disabled:opacity-40 dark-bg-tab shrink-0 p-2 text-main-accent
-                         hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
+              className='custom-button dark-bg-tab shrink-0 p-2 text-main-accent hover:bg-light-primary/10 disabled:cursor-not-allowed
+                         disabled:opacity-40 dark:hover:bg-dark-primary/10'
             >
               <HeroIcon className='h-6 w-6' iconName='PhotoIcon' />
             </button>

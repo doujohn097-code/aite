@@ -23,7 +23,9 @@ export function UserShare({ username, userId }: UserShareProps): JSX.Element {
     if (!user || !userId || user.id === userId) return;
     await manageBlock(isBlocked ? 'unblock' : 'block', user.id, userId);
     closeMenu();
-    toast.success(isBlocked ? `تم إلغاء حظر @${username}` : `تم حظر @${username}`);
+    toast.success(
+      isBlocked ? `تم إلغاء حظر @${username}` : `تم حظر @${username}`
+    );
   };
   const handleCopy = (closeMenu: () => void) => async (): Promise<void> => {
     closeMenu();
@@ -70,7 +72,9 @@ export function UserShare({ username, userId }: UserShareProps): JSX.Element {
                     as={Button}
                     onClick={preventBubbling(() => handleBlock(close))}
                   >
-                    <HeroIcon iconName={isBlocked ? 'CheckCircleIcon' : 'NoSymbolIcon'} />
+                    <HeroIcon
+                      iconName={isBlocked ? 'CheckCircleIcon' : 'NoSymbolIcon'}
+                    />
                     {isBlocked ? `إلغاء حظر @${username}` : `حظر @${username}`}
                   </Popover.Button>
                 )}

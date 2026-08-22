@@ -225,15 +225,18 @@ export async function deleteMessage(
   conversationId: string,
   messageId: string
 ): Promise<void> {
-  await updateDoc(doc(db, 'conversations', conversationId, 'messages', messageId), {
-    text: 'تم حذف هذه الرسالة',
-    media: null,
-    audio: null,
-    replyTo: null,
-    sharedPost: null,
-    reactions: {},
-    deletedAt: serverTimestamp()
-  });
+  await updateDoc(
+    doc(db, 'conversations', conversationId, 'messages', messageId),
+    {
+      text: 'تم حذف هذه الرسالة',
+      media: null,
+      audio: null,
+      replyTo: null,
+      sharedPost: null,
+      reactions: {},
+      deletedAt: serverTimestamp()
+    }
+  );
 }
 
 export async function markConversationRead(

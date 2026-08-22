@@ -191,7 +191,10 @@ export function MobileSidebarModal({
             className='flex w-full items-center gap-3 rounded-xl p-3 font-semibold text-accent-red transition hover:bg-accent-red/10 active:bg-accent-red/20'
             onClick={openModal}
           >
-            <HeroIcon className='h-5 w-5 text-accent-red' iconName='ArrowRightOnRectangleIcon' />
+            <HeroIcon
+              className='h-5 w-5 text-accent-red'
+              iconName='ArrowRightOnRectangleIcon'
+            />
             <span>تسجيل الخروج</span>
           </Button>
         </div>
@@ -214,7 +217,6 @@ export function MobileSidebarModal({
         </nav>
 
         <div className='mx-4 border-t border-light-border/70 dark:border-dark-border/70' />
-
       </div>
     </>
   );
