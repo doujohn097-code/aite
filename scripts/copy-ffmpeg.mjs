@@ -38,16 +38,15 @@ async function ensureBinary() {
       console.warn(`[copy-ffmpeg] download failed: ${response.status}`);
       return null;
     }
-    await pipeline(
-      Readable.fromWeb(response.body),
-      createWriteStream(source)
-    );
+    await pipeline(Readable.fromWeb(response.body), createWriteStream(source));
     const size = statSync(source).size;
     if (size < 1_000_000) {
       console.warn('[copy-ffmpeg] downloaded binary looks wrong, skipping');
       return null;
     }
-    console.log(`[copy-ffmpeg] downloaded ${Math.round(size / 1024 / 1024)} MB`);
+    console.log(
+      `[copy-ffmpeg] downloaded ${Math.round(size / 1024 / 1024)} MB`
+    );
     return source;
   } catch (error) {
     console.warn('[copy-ffmpeg] download error:', String(error));
@@ -78,5 +77,7 @@ for (const target of targets) {
 }
 
 console.log(
-  `[copy-ffmpeg] copied binary into ${copied}/${targets.length} output dirs (${Math.round(statSync(binary).size / 1024 / 1024)} MB)`
+  `[copy-ffmpeg] copied binary into ${copied}/${
+    targets.length
+  } output dirs (${Math.round(statSync(binary).size / 1024 / 1024)} MB)`
 );
