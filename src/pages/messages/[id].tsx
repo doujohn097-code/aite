@@ -74,6 +74,8 @@ export default function Chat(): JSX.Element {
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Message | null>(null);
   const [blockBusy, setBlockBusy] = useState(false);
+  // حظر تفاؤلي فوري لإخفاء شريط الكتابة والمراسلة بدون انتظار Firestore
+  const [optimisticBlocked, setOptimisticBlocked] = useState<boolean | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
@@ -120,6 +122,7 @@ export default function Chat(): JSX.Element {
     setReplyTarget(null);
     setFirstUnreadId(null);
     setShowJumpToLatest(false);
+    setOptimisticBlocked(null);
     stickToBottomRef.current = true;
     initialScrollDoneRef.current = false;
   }, [conversationId]);
@@ -179,9 +182,22 @@ export default function Chat(): JSX.Element {
     return unsubscribe;
   }, [peerId]);
 
+  // حظر في الاتجاهين + حظر تفاؤلي فوري لإخفاء شريط الكتابة فوراً
+  const realBlockedByMe = !!peerId && !!user?.blockedUsers?.includes(peerId);
+  const realBlockedByPeer = !!peerId && !!peer?.blockedUsers?.includes(user?.id ?? '');
+  const realBlocked = realBlockedByMe || realBlockedByPeer;
   const isBlockedConversation =
-    !!peerId && !!user?.blockedUsers?.includes(peerId);
+    optimisticBlocked !== null ? optimisticBlocked : realBlocked;
+  // إخفاء مؤشر الكتابة فوراً عند الحظر - لا نعتمد على تأخير Firestore
   const peerTyping = !isBlockedConversation && conversation?.typing === peerId;
+
+  // عندما تتحدث بيانات Firestore الحقيقية، نمسح الحالة التفاؤلية
+  useEffect(() => {
+    if (optimisticBlocked !== null && optimisticBlocked === realBlocked) {
+      setOptimisticBlocked(null);
+    }
+  }, [realBlocked, optimisticBlocked]);
+
   const peerActiveMillis = peer?.lastActiveAt
     ? getTimestampMillis(peer.lastActiveAt)
     : null;
@@ -331,11 +347,25 @@ export default function Chat(): JSX.Element {
   const toggleBlockPeer = async (): Promise<void> => {
     if (!user || !peerId || blockBusy) return;
     const blocked = user.blockedUsers?.includes(peerId) ?? false;
+    const willBlock = !blocked;
+
+    // إخفاء فوري لشريط الكتابة والمؤشر قبل حتى طلب الشبكة
+    setOptimisticBlocked(willBlock);
+    // إيقاف حالة الكتابة فوراً في المحادثة محلياً وعلى الخادم
+    setConversation((prev) => (prev ? { ...prev, typing: null } : prev));
+    if (conversationId) {
+      void setTyping(conversationId, null).catch(() => undefined);
+    }
+
     setBlockBusy(true);
     try {
       await manageBlock(blocked ? 'unblock' : 'block', user.id, peerId);
+      // عند نجاح العملية، نمسح الحالة التفاؤلية ليعتمد على البيانات الحقيقية
+      setOptimisticBlocked(null);
       toast.success(blocked ? 'تم إلغاء الحظر' : 'تم حظر المستخدم');
     } catch {
+      // في حالة الفشل، نعيد الحالة
+      setOptimisticBlocked(null);
       toast.error('تعذر تحديث الحظر');
     } finally {
       setBlockBusy(false);
