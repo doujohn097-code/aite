@@ -1,7 +1,8 @@
-import { adminAuth, adminFirestore } from '@lib/firebase-admin';
+import { adminAuth, adminFirestore, isAdminConfigured } from '@lib/firebase-admin';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 async function requireAdmin(req: NextApiRequest): Promise<boolean> {
+  if (!isAdminConfigured() || !adminAuth) return false;
   const header = req.headers.authorization ?? '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
   if (!token) return false;
@@ -14,6 +15,11 @@ export default async function handler(
   res: NextApiResponse
 ): Promise<void> {
   try {
+    if (!isAdminConfigured() || !adminFirestore || !adminAuth) {
+      res.status(503).json({ error: 'Admin service not configured - FIREBASE_ADMIN_KEY missing' });
+      return;
+    }
+
     if (!(await requireAdmin(req))) {
       res.status(403).json({ error: 'Admin access is required' });
       return;
@@ -59,7 +65,6 @@ export default async function handler(
     res.setHeader('Allow', 'GET, PATCH, DELETE');
     res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
-    // Avoid leaking Firebase internals or token parsing details to clients.
     console.error('admin api error:', error);
     res.status(401).json({ error: 'Unauthorized' });
   }
