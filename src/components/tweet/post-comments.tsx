@@ -116,7 +116,23 @@ export function PostComments({
     tweetId ? commentsQueryB : null,
     {
       includeUser: true,
-      allowNull: true
+      allowNull: true,
+      fallback: tweetId
+        ? {
+            a: {
+              collection: 'tweets',
+              where: { field: 'parent.id', op: '==', value: tweetId },
+              orderBy: { field: 'createdAt', dir: 'desc' },
+              limit: 60
+            },
+            b: {
+              collection: 'tweets',
+              where: { field: 'parent.id', op: '==', value: tweetId },
+              orderBy: { field: 'createdAt', dir: 'desc' },
+              limit: 60
+            }
+          }
+        : undefined
     }
   );
 

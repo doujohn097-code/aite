@@ -28,10 +28,20 @@ export function StoriesBar(): JSX.Element {
   const usersQueryA = useMemo(() => makeUsersQuery('a'), []);
   const usersQueryB = useMemo(() => makeUsersQuery('b'), []);
 
+  const fallbackStories = {
+    collection: 'users' as const,
+    where: {
+      field: 'lastStoryAt',
+      op: '>' as const,
+      value: new Date(Date.now() - STORY_LIFETIME_MS).toISOString()
+    },
+    orderBy: { field: 'lastStoryAt', dir: 'desc' as const },
+    limit: 50
+  };
   const { data: allUsers, loading } = useMergedCollection(
     usersQueryA,
     usersQueryB,
-    { allowNull: true }
+    { allowNull: true, fallback: { a: fallbackStories, b: fallbackStories } }
   );
 
   const users = useMemo(() => {

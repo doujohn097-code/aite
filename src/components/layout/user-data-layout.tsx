@@ -37,7 +37,21 @@ export function UserDataLayout({ children }: LayoutProps): JSX.Element {
     userQueryB,
     {
       allowNull: true,
-      disabled: !username
+      disabled: !username,
+      fallback: username
+        ? {
+            a: {
+              collection: 'users',
+              where: { field: 'username', op: '==', value: username },
+              limit: 1
+            },
+            b: {
+              collection: 'users',
+              where: { field: 'username', op: '==', value: username },
+              limit: 1
+            }
+          }
+        : undefined
     }
   );
 

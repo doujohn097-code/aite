@@ -63,7 +63,22 @@ export default function Reels(): JSX.Element {
     collectionsFor('b').stories,
     reelsConstraints,
     { allowNull: true },
-    { initialSize: 50, stepSize: 25 }
+    {
+      initialSize: 50,
+      stepSize: 25,
+      fallback: {
+        a: {
+          collection: 'stories',
+          orderBy: { field: 'createdAt', dir: 'desc' },
+          limit: 50
+        },
+        b: {
+          collection: 'stories',
+          orderBy: { field: 'createdAt', dir: 'desc' },
+          limit: 50
+        }
+      }
+    }
   );
 
   const reels = useMemo(() => {

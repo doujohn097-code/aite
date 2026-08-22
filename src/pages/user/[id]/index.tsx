@@ -73,7 +73,19 @@ export default function UserTweets(): JSX.Element {
 
   const { data: ownerTweets, loading: ownerLoading } = useCollection(
     ownerTweetsQuery,
-    { includeUser: true, allowNull: true, disabled: !id || !userProject }
+    {
+      includeUser: true,
+      allowNull: true,
+      disabled: !id || !userProject,
+      fallback: id
+        ? {
+            collection: 'tweets',
+            where: { field: 'createdBy', op: '==', value: id },
+            orderBy: { field: 'createdAt', dir: 'desc' },
+            limit: 40
+          }
+        : undefined
+    }
   );
 
   const peopleTweetsQueryA = id
@@ -92,7 +104,27 @@ export default function UserTweets(): JSX.Element {
   const { data: peopleTweets, loading: peopleLoading } = useMergedCollection(
     peopleTweetsQueryA,
     peopleTweetsQueryB,
-    { includeUser: true, allowNull: true, disabled: !id }
+    {
+      includeUser: true,
+      allowNull: true,
+      disabled: !id,
+      fallback: id
+        ? {
+            a: {
+              collection: 'tweets',
+              where: { field: 'userRetweets', op: 'array-contains', value: id },
+              orderBy: { field: 'createdAt', dir: 'desc' },
+              limit: 40
+            },
+            b: {
+              collection: 'tweets',
+              where: { field: 'userRetweets', op: 'array-contains', value: id },
+              orderBy: { field: 'createdAt', dir: 'desc' },
+              limit: 40
+            }
+          }
+        : undefined
+    }
   );
 
   // Reel retweets live on the owner's stats doc (story doc updates are
@@ -126,7 +158,16 @@ export default function UserTweets(): JSX.Element {
   const { data: repostedReels, loading: reelsLoading } = useMergedCollection(
     repostedReelsQueryA,
     repostedReelsQueryB,
-    { allowNull: true, disabled: !id || !reelIds?.length }
+    {
+      allowNull: true,
+      disabled: !id || !reelIds?.length,
+      fallback: reelIds?.length
+        ? {
+            a: { collection: 'stories', ids: reelIds.slice(0, 30), limit: 30 },
+            b: { collection: 'stories', ids: reelIds.slice(0, 30), limit: 30 }
+          }
+        : undefined
+    }
   );
 
   const ownerOnlyTweets = ownerTweets?.filter((tweet) => !tweet.parent) ?? null;

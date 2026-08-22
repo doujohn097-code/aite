@@ -129,7 +129,24 @@ export function ReelsComments({
     {
       includeUser: true,
       allowNull: true,
-      disabled: !open || !reelId
+      disabled: !open || !reelId,
+      fallback:
+        open && reelId
+          ? {
+              a: {
+                collection: 'tweets',
+                where: { field: 'parent.id', op: '==', value: reelId },
+                orderBy: { field: 'createdAt', dir: 'desc' },
+                limit: 60
+              },
+              b: {
+                collection: 'tweets',
+                where: { field: 'parent.id', op: '==', value: reelId },
+                orderBy: { field: 'createdAt', dir: 'desc' },
+                limit: 60
+              }
+            }
+          : undefined
     }
   );
 

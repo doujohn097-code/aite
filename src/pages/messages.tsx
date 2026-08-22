@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { collectionsFor } from '@lib/firebase/collections';
-import { fetchUserAnywhere } from '@lib/dual';
+import { fetchUserAnywhere, queryViaProxy } from '@lib/dual';
 import { getOrCreateConversation } from '@lib/messages';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -120,6 +120,38 @@ export default function Messages(): JSX.Element {
       }
     );
 
+    /** Server-proxy seed/poll: shows conversations even when a project's
+     * WebChannel is blocked on this device. */
+    const seedViaProxy = (project: 'a' | 'b'): void => {
+      if (disposed) return;
+      void queryViaProxy(project, {
+        collection: 'conversations',
+        orderBy: { field: 'updatedAt', dir: 'desc' },
+        limit: 50
+      }).then((items) => {
+        if (disposed || !items) return;
+        let changed = false;
+        items.forEach(({ id, data }) => {
+          const conv = data as unknown as Conversation;
+          if (conv.participants?.includes(user.id)) {
+            byId.set(id, conv);
+            changed = true;
+          }
+        });
+        if (changed) {
+          anyDataArrived = true;
+          publish();
+        }
+      });
+    };
+    seedViaProxy('a');
+    seedViaProxy('b');
+    const proxyPoll = setInterval(() => {
+      if (disposed) return;
+      if (!loadedA) seedViaProxy('a');
+      if (!loadedB) seedViaProxy('b');
+    }, 15_000);
+
     // Safety net: never leave the conversation list hanging because a
     // project's channel is blocked.
     const safety = setTimeout(() => {
@@ -129,6 +161,7 @@ export default function Messages(): JSX.Element {
     return () => {
       disposed = true;
       clearTimeout(safety);
+      clearInterval(proxyPoll);
       unsubscribeA();
       unsubscribeB();
     };

@@ -72,8 +72,23 @@ export default function Search(): JSX.Element {
     [userId, trimmedQuery]
   );
 
+  const fallbackSearch = trimmedQuery
+    ? {
+        collection: 'users' as const,
+        where: {
+          field: 'username',
+          op: '>=' as const,
+          value: trimmedQuery
+        },
+        orderBy: { field: 'username', dir: 'asc' as const },
+        limit: 20
+      }
+    : undefined;
   const { data, loading } = useMergedCollection(usersQueryA, usersQueryB, {
-    allowNull: true
+    allowNull: true,
+    fallback: fallbackSearch
+      ? { a: fallbackSearch, b: fallbackSearch }
+      : undefined
   });
 
   const results = data ?? [];

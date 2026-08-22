@@ -23,7 +23,23 @@ export default function Home(): JSX.Element {
     collectionsFor('a').tweets,
     collectionsFor('b').tweets,
     [where('parent', '==', null), orderBy('createdAt', 'desc')],
-    { includeUser: true, allowNull: true, preserve: true }
+    { includeUser: true, allowNull: true, preserve: true },
+    {
+      fallback: {
+        a: {
+          collection: 'tweets',
+          where: { field: 'parent', op: 'isNull' },
+          orderBy: { field: 'createdAt', dir: 'desc' },
+          limit: 40
+        },
+        b: {
+          collection: 'tweets',
+          where: { field: 'parent', op: 'isNull' },
+          orderBy: { field: 'createdAt', dir: 'desc' },
+          limit: 40
+        }
+      }
+    }
   );
 
   return (

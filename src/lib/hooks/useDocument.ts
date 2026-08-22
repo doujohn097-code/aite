@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { onSnapshot, Timestamp } from 'firebase/firestore';
-import { fetchUserAnywhere } from '@lib/dual';
+import { fetchUserAnywhere, queryViaProxy } from '@lib/dual';
 import { useCacheRef } from './useCacheRef';
 import type { DocumentReference } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
@@ -88,6 +88,50 @@ export function useDocument<T>(
       setLoading(false);
     };
 
+    let disposed = false;
+
+    /** Server-proxy fallback for blocked channels: reads the doc through our
+     * origin (admin SDK) when the live subscription cannot reach Firestore. */
+    const fetchViaProxy = async (): Promise<void> => {
+      const parts = cachedDocRef.path.split('/');
+      const collectionName = parts[0];
+      const docId = parts[1];
+      if (parts.length !== 2 || !docId) {
+        if (!disposed) setLoading(false);
+        return;
+      }
+      if (
+        !['tweets', 'stories', 'users', 'conversations'].includes(
+          collectionName
+        )
+      ) {
+        if (!disposed) setLoading(false);
+        return;
+      }
+      for (const project of ['a', 'b'] as const) {
+        const items = await queryViaProxy(project, {
+          collection: collectionName as
+            | 'tweets'
+            | 'stories'
+            | 'users'
+            | 'conversations',
+          ids: [docId],
+          limit: 1
+        });
+        if (disposed) return;
+        if (items?.length) {
+          const data = items[0].data as T;
+          if (includeUser) void populateUser(data as DataWithRef<T>);
+          else {
+            setData(data);
+            setLoading(false);
+          }
+          return;
+        }
+      }
+      if (!disposed) setLoading(false);
+    };
+
     const unsubscribe = onSnapshot(
       cachedDocRef,
       (snapshot) => {
@@ -107,12 +151,15 @@ export function useDocument<T>(
       },
       (error) => {
         console.error('useDocument snapshot error:', error);
-        setData(null);
-        setLoading(false);
+        // The channel may be blocked — try the server-side proxy.
+        void fetchViaProxy();
       }
     );
 
-    return unsubscribe;
+    return () => {
+      disposed = true;
+      unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cachedDocRef]);
 
