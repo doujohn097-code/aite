@@ -200,13 +200,8 @@ export default async function handler(
 
     const response = await admin.messaging().sendEachForMulticast({
       tokens,
-      // إشعار نظام أصلي — يظهر حتى مع إغلاق تطبيق PWA ولا يحتاج service worker
-      notification: {
-        title: notification.title,
-        body: notification.body,
-        ...(senderPhoto ? { image: senderPhoto } : {})
-      },
-      // بيانات للمعالجة التفاعلية (الرابط، الأيقونة، …)
+      // رسالة data-only: على أندرويد تعالجها خدمة AiteFirebaseMessagingService
+      // لعرض إشعار احترافي بصورة المرسل الدائرية وبادج شعار Aite (مثل انستغرام)
       data: {
         title: notification.title,
         body: notification.body,

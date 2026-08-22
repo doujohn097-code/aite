@@ -98,9 +98,9 @@ export async function registerWebPushToken(userId: string): Promise<void> {
       if (Notification.permission === 'granted') {
         void registration.showNotification(title, {
           body,
+          // صورة المرسل كأيقونة + بادج شعار Aite (مثل انستغرام)
           icon: image || '/logo192.png',
-          badge: '/logo192.png',
-          image: image || undefined,
+          badge: '/badge.png',
           tag: payload.data?.tag || 'aite',
           data: { url: payload.data?.url || '/notifications' },
           dir: 'rtl',

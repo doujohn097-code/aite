@@ -9,6 +9,26 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- خدمة إشعارات Aite الاحترافية (صورة المرسل + بادج الشعار) -->
+        <service
+            android:name=".AiteFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- أيقونة ولون الإشعارات الافتراضية -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_aite" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_accent" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="aite_social" />
+
         <activity
             android:name=".OfflineActivity"
             android:exported="false"

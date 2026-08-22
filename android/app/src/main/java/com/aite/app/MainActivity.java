@@ -35,6 +35,33 @@ public class MainActivity extends BridgeActivity {
     super.onCreate(savedInstanceState);
     if (!hasNetwork()) {
       launchOffline();
+      return;
+    }
+    handlePushIntent(getIntent());
+  }
+
+  @Override
+  public void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+    handlePushIntent(intent);
+  }
+
+  /** فتح الصفحة المطلوبة عند الضغط على إشعار */
+  private void handlePushIntent(Intent intent) {
+    try {
+      if (intent == null) return;
+      String pushUrl = intent.getStringExtra("pushUrl");
+      if (pushUrl == null || pushUrl.isEmpty()) return;
+      intent.removeExtra("pushUrl");
+      final String target = pushUrl.startsWith("http")
+          ? pushUrl
+          : "https://aite-app-one.vercel.app" + (pushUrl.startsWith("/") ? pushUrl : "/" + pushUrl);
+      WebView webView = getBridge() != null ? getBridge().getWebView() : null;
+      if (webView != null) {
+        webView.post(() -> webView.loadUrl(target));
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 

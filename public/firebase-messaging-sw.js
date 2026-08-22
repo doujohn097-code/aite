@@ -31,9 +31,9 @@ messaging.onBackgroundMessage((payload) => {
 
   self.registration.showNotification(title, {
     body,
+    // صورة المرسل كأيقونة رئيسية + بادج شعار Aite (مثل انستغرام)
     icon: data.image || '/logo192.png',
-    badge: '/logo192.png',
-    image: data.image || undefined,
+    badge: '/badge.png',
     tag: data.tag || 'aite',
     renotify: true,
     data: { url },
