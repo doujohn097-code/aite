@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
 import { HeroIcon } from '@components/ui/hero-icon';
-import { useRepairableVideo } from '@lib/media-normalize';
+import { useRepairableVideo, useVideoPoster } from '@lib/media-normalize';
 import type { IconName } from '@components/ui/hero-icon';
 
 type CustomVideoPlayerProps = {
@@ -32,6 +32,10 @@ export function CustomVideoPlayer({
   // Android WebView cannot decode some phone uploads; swap in a server-side
   // re-encoded copy when the original fails to load.
   const { effectiveSrc, repairing, onError } = useRepairableVideo(src);
+
+  // Show a real frame from the video instead of a black box while paused or
+  // when the poster was never generated (legacy uploads).
+  const posterUrl = useVideoPoster(src, poster ?? null);
 
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -133,7 +137,7 @@ export function CustomVideoPlayer({
         key={effectiveSrc}
         ref={videoRef}
         src={effectiveSrc}
-        poster={poster ?? undefined}
+        poster={posterUrl ?? undefined}
         playsInline
         muted={muted}
         preload='metadata'

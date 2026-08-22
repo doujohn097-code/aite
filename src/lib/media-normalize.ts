@@ -48,6 +48,80 @@ export async function normalizeVideo(src: string): Promise<string | null> {
   return task;
 }
 
+/** True when a URL points at a video file rather than a static image. */
+export function isVideoUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return /\.(mp4|m4v|mov|webm|mkv|3gp|avi|ogv)([?#]|$)/i.test(url);
+}
+
+const posterCache = new Map<string, Promise<string | null>>();
+
+/**
+ * Requests a JPEG frame (near the beginning) of a video from the server so
+ * previews can show a real picture of the video on every device.
+ */
+export async function getVideoPoster(src: string): Promise<string | null> {
+  if (!src || !isVideoUrl(src)) return null;
+  const cached = posterCache.get(src);
+  if (cached) return cached;
+
+  const task = (async (): Promise<string | null> => {
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) return null;
+      const response = await fetch('/api/media/poster', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ src })
+      });
+      if (!response.ok) return null;
+      const data = (await response.json()) as { src?: string };
+      return data.src || null;
+    } catch {
+      return null;
+    }
+  })();
+
+  posterCache.set(src, task);
+  return task;
+}
+
+/**
+ * Poster for a video element: uses the existing thumbnail when it is a real
+ * image, otherwise asks the server to extract a frame from the video.
+ */
+export function useVideoPoster(
+  videoSrc: string,
+  existingPoster?: string | null
+): string | null {
+  const [poster, setPoster] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!videoSrc) {
+      setPoster(null);
+      return;
+    }
+    if (existingPoster && !isVideoUrl(existingPoster)) {
+      setPoster(existingPoster);
+      return;
+    }
+    setPoster(null);
+    void getVideoPoster(videoSrc).then((p) => {
+      if (!cancelled) setPoster(p);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoSrc, existingPoster]);
+
+  return poster;
+}
+
 type RepairableVideo = {
   /** Src to render — the original until a repair swaps it for a fixed file. */
   effectiveSrc: string;

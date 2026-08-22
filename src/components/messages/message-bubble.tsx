@@ -13,7 +13,11 @@ import { Modal } from '@components/modal/modal';
 import { ImageModal } from '@components/modal/image-modal';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { LinkifiedText } from '@components/ui/linkified-text';
-import { useRepairableVideo } from '@lib/media-normalize';
+import {
+  isVideoUrl,
+  useRepairableVideo,
+  useVideoPoster
+} from '@lib/media-normalize';
 import type { ImageData } from '@lib/types/file';
 import type { Message, MessageType } from '@lib/types/message';
 
@@ -125,6 +129,12 @@ export function MessageBubble({
   } = message;
   const seen = seenBy?.length > 1;
   const isDeleted = !!message.deletedAt;
+
+  // Shared cards carry the raw video URL as "thumbnail", which Android's
+  // WebView cannot decode — render a server-extracted frame instead.
+  const sharedThumb = sharedPost?.thumbnail ?? null;
+  const sharedPoster = useVideoPoster(sharedThumb ?? '', sharedThumb);
+  const sharedIsVideo = isVideoUrl(sharedThumb);
 
   // سحب أفقي انسيابي — الفقاعة تميل وتتوهج ويكشف زر الرد خلفها
   const dragX = useMotionValue(0);
@@ -590,19 +600,24 @@ export function MessageBubble({
                         sharedPost.kind === 'reel' ? 'aspect-[4/5]' : 'h-36'
                       )}
                     >
-                      {sharedPost.kind === 'reel' ? (
-                        <video
-                          className='pointer-events-none h-full w-full bg-black object-contain'
-                          src={sharedPost.thumbnail}
-                          muted
-                          playsInline
-                          preload='metadata'
-                          aria-label='معاينة الريل'
-                        />
+                      {sharedIsVideo ? (
+                        sharedPoster ? (
+                          // A real frame extracted from the video — identical
+                          // on web and Android, never a gray/black box.
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
+                            src={sharedPoster}
+                            alt='معاينة الفيديو'
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className='flex h-full w-full items-center justify-center bg-slate-900' />
+                        )
                       ) : (
                         <img
                           className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
-                          src={sharedPost.thumbnail}
+                          src={sharedPost.thumbnail ?? ''}
                           alt='معاينة المنشور'
                           draggable={false}
                         />

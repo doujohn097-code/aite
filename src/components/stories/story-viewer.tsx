@@ -9,7 +9,7 @@ import { usersCollection, storiesCollection } from '@lib/firebase/collections';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useDocument } from '@lib/hooks/useDocument';
 import { useModal } from '@lib/hooks/useModal';
-import { useRepairableVideo } from '@lib/media-normalize';
+import { useRepairableVideo, useVideoPoster } from '@lib/media-normalize';
 import { getTimestampMillis } from '@lib/date';
 import { viewStory, likeStory, deleteStory } from '@lib/firebase/utils';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -151,6 +151,12 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
   // re-encoded copy when the original fails to load.
   const { effectiveSrc, repairing, onError } = useRepairableVideo(
     isCurrentVideo ? currentStory?.images?.[0]?.src ?? '' : ''
+  );
+
+  // Show a real frame from the video while loading — never a gray box.
+  const posterUrl = useVideoPoster(
+    isCurrentVideo ? currentStory?.images?.[0]?.src ?? '' : '',
+    isCurrentVideo ? currentStory?.images?.[0]?.thumbnail ?? null : null
   );
 
   const storyDuration =
@@ -498,6 +504,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
                   <video
                     key={effectiveSrc}
                     src={effectiveSrc}
+                    poster={posterUrl ?? undefined}
                     autoPlay
                     muted
                     playsInline

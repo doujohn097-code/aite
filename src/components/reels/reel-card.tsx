@@ -23,7 +23,7 @@ import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useDocument } from '@lib/hooks/useDocument';
-import { useRepairableVideo } from '@lib/media-normalize';
+import { useRepairableVideo, useVideoPoster } from '@lib/media-normalize';
 import {
   tweetsCollection,
   storiesCollection,
@@ -113,6 +113,12 @@ export function ReelCard({
   // re-encoded copy when the original fails to load.
   const { effectiveSrc, repairing, onError } = useRepairableVideo(
     isVideo ? media?.src ?? '' : ''
+  );
+
+  // Show a real frame from the video while loading/paused — never a gray box.
+  const posterUrl = useVideoPoster(
+    isVideo ? media?.src ?? '' : '',
+    isVideo ? media?.thumbnail ?? null : null
   );
 
   const isLiked = reel.likes?.includes(authUser?.id ?? '') ?? false;
@@ -428,7 +434,7 @@ export function ReelCard({
               key={effectiveSrc}
               ref={videoRef}
               src={effectiveSrc}
-              poster={media.thumbnail ?? undefined}
+              poster={posterUrl ?? undefined}
               autoPlay={isActive}
               loop
               muted={isMuted}

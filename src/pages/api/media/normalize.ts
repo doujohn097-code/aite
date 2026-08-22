@@ -1,208 +1,24 @@
-import { createHash } from 'crypto';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import {
-  createWriteStream,
-  existsSync,
-  mkdtempSync,
-  rmSync,
-  readFileSync
-} from 'fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { Readable } from 'stream';
-import { pipeline } from 'stream/promises';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import admin from 'firebase-admin';
 import { verifyIdToken } from '@lib/firebase-admin';
+import {
+  downloadToFile,
+  execFfmpeg,
+  isAllowedSource,
+  readMediaCache,
+  sha256Hex,
+  uploadBufferToR2,
+  writeMediaCache
+} from '@lib/media-server';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const execFileAsync = promisify(execFile);
-
-const MAX_INPUT_BYTES = 250 * 1024 * 1024; // /tmp on Vercel is 500 MB
-const TRANSCODE_TIMEOUT_MS = 50_000; // function itself allows up to 60 s
-
-const accountId = process.env.R2_ACCOUNT_ID;
-const bucket = process.env.R2_BUCKET_NAME;
-const publicBase = process.env.R2_PUBLIC_URL?.replace(/\/$/, '');
-
-function getR2Client(): S3Client | null {
-  if (
-    !accountId ||
-    !bucket ||
-    !process.env.R2_ACCESS_KEY_ID ||
-    !process.env.R2_SECRET_ACCESS_KEY
-  )
-    return null;
-  return new S3Client({
-    region: 'auto',
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY
-    }
-  });
-}
-
-/** Only ever fetch media from the app's own R2 bucket. */
-function isAllowedSource(src: string): boolean {
-  if (!src || typeof src !== 'string' || src.length > 500) return false;
-  if (publicBase && src.startsWith(`${publicBase}/`)) return true;
-  // e.g. https://pub-ac6ca2c23fe44a8c93e7a74791c80260.r2.dev/media/...
-  return /^https:\/\/pub-[a-f0-9]{32}\.r2\.dev\//.test(src);
-}
-
-type CacheDoc = {
-  original: string;
-  src: string;
-  createdAt: admin.firestore.FieldValue;
-};
-
-function cacheRef(src: string): admin.firestore.DocumentReference {
-  const key = createHash('sha256').update(src).digest('hex').slice(0, 48);
-  return admin.firestore().collection('mediaCache').doc(key);
-}
-
-async function readCache(src: string): Promise<string | null> {
-  try {
-    const snapshot = await cacheRef(src).get();
-    const data = snapshot.data() as Partial<CacheDoc> | undefined;
-    if (data?.src && data.original === src) return data.src;
-  } catch {
-    // Cache is best-effort; never block playback on it.
-  }
-  return null;
-}
-
-async function writeCache(src: string, fixedSrc: string): Promise<void> {
-  try {
-    const cacheDoc: CacheDoc = {
-      original: src,
-      src: fixedSrc,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
-    };
-    await cacheRef(src).set(cacheDoc);
-  } catch {
-    // Best-effort.
-  }
-}
-
-async function downloadToFile(url: string, filePath: string): Promise<void> {
-  const response = await fetch(url, {
-    headers: { Range: 'bytes=0-' }
-  });
-  if (!response.ok && response.status !== 206) {
-    throw new Error(`download failed: ${response.status}`);
-  }
-  const contentLength = Number(response.headers.get('content-length') ?? 0);
-  if (contentLength > MAX_INPUT_BYTES) throw new Error('file too large');
-  const body = response.body;
-  if (!body) throw new Error('empty response body');
-  await pipeline(Readable.fromWeb(body as never), createWriteStream(filePath));
-  const size = existsSync(filePath)
-    ? (await import('fs/promises')).stat(filePath).then((s) => s.size)
-    : 0;
-  if (size > MAX_INPUT_BYTES) throw new Error('file too large');
-}
-
-type TranscodeResult = { ok: boolean; filePath?: string };
-
-async function runFfmpeg(
-  inputPath: string,
-  outputPath: string
-): Promise<TranscodeResult> {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const resolved = require('ffmpeg-static') as string | null;
-  const candidates = [
-    resolved,
-    join(process.cwd(), 'node_modules', 'ffmpeg-static', 'ffmpeg'),
-    join(__dirname, 'node_modules', 'ffmpeg-static', 'ffmpeg')
-  ];
-  const ffmpegPath = candidates.find((p) => !!p && existsSync(p)) ?? null;
-  if (!ffmpegPath) return { ok: false };
-
-  const args = [
-    '-y',
-    '-i',
-    inputPath,
-    '-map',
-    '0:v:0',
-    '-map',
-    '0:a?',
-    '-c:v',
-    'libx264',
-    '-profile:v',
-    'high',
-    '-level',
-    '4.0',
-    '-preset',
-    'veryfast',
-    '-crf',
-    '23',
-    '-pix_fmt',
-    'yuv420p',
-    '-r',
-    '30',
-    '-vf',
-    "scale='min(1920,iw)':-2",
-    '-maxrate',
-    '8M',
-    '-bufsize',
-    '16M',
-    '-movflags',
-    '+faststart',
-    '-c:a',
-    'aac',
-    '-b:a',
-    '128k',
-    '-ac',
-    '2',
-    outputPath
-  ];
-
-  try {
-    await execFileAsync(ffmpegPath, args, {
-      timeout: TRANSCODE_TIMEOUT_MS,
-      maxBuffer: 1024 * 1024,
-      killSignal: 'SIGKILL'
-    });
-    return existsSync(outputPath)
-      ? { ok: true, filePath: outputPath }
-      : { ok: false };
-  } catch {
-    return { ok: false };
-  }
-}
-
-async function uploadToR2(
-  client: S3Client,
-  uid: string,
-  filePath: string,
-  originalSrc: string
-): Promise<string | null> {
-  const sha = createHash('sha256')
-    .update(originalSrc)
-    .digest('hex')
-    .slice(0, 20);
-  const key = `media/normalized/${uid}/${sha}.mp4`;
-  const publicKey = key.split('/').map(encodeURIComponent).join('/');
-  try {
-    if (!publicBase) return null;
-    await client.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        ContentType: 'video/mp4',
-        Body: readFileSync(filePath),
-        CacheControl: 'public, max-age=31536000, immutable'
-      })
-    );
-    return `${publicBase}/${publicKey}`;
-  } catch {
-    return null;
-  }
-}
-
+/**
+ * Re-encodes raw phone uploads (HEVC, H.264 High@L5.2, .mov, non-faststart
+ * MP4) into a universally playable MP4 — H.264 High@L4.0, faststart, AAC.
+ * Desktop Chrome software-decodes the originals, but Android WebView's
+ * hardware decoder caps at H.264 level 4.x, which is the gray box bug.
+ */
 export default async function normalizeMediaEndpoint(
   req: NextApiRequest,
   res: NextApiResponse<{ src: string } | { error: string }>
@@ -231,15 +47,10 @@ export default async function normalizeMediaEndpoint(
     const { uid } = await verifyIdToken(token);
 
     // Already normalized? Serve the cached result without re-encoding.
-    const cached = await readCache(src);
+    const cacheKey = `norm-${sha256Hex(src).slice(0, 48)}`;
+    const cached = await readMediaCache(cacheKey, src);
     if (cached) {
       res.status(200).json({ src: cached });
-      return;
-    }
-
-    const client = getR2Client();
-    if (!client) {
-      res.status(200).json({ src }); // graceful degradation
       return;
     }
 
@@ -248,17 +59,59 @@ export default async function normalizeMediaEndpoint(
     const outputPath = join(workDir, 'fixed.mp4');
     try {
       await downloadToFile(src, inputPath);
-      const transcode = await runFfmpeg(inputPath, outputPath);
-      if (!transcode.ok || !transcode.filePath) {
-        res.status(200).json({ src });
+      const args = [
+        '-y',
+        '-i',
+        inputPath,
+        '-map',
+        '0:v:0',
+        '-map',
+        '0:a?',
+        '-c:v',
+        'libx264',
+        '-profile:v',
+        'high',
+        '-level',
+        '4.0',
+        '-preset',
+        'veryfast',
+        '-crf',
+        '23',
+        '-pix_fmt',
+        'yuv420p',
+        '-r',
+        '30',
+        '-vf',
+        "scale='min(1920,iw)':-2",
+        '-maxrate',
+        '8M',
+        '-bufsize',
+        '16M',
+        '-movflags',
+        '+faststart',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '128k',
+        '-ac',
+        '2',
+        outputPath
+      ];
+      const ok = (await execFfmpeg(args)) && existsSync(outputPath);
+      if (!ok) {
+        res.status(200).json({ src }); // graceful degradation
         return;
       }
-      const fixedSrc = await uploadToR2(client, uid, transcode.filePath, src);
+      const fixedSrc = await uploadBufferToR2(
+        `media/normalized/${uid}/${sha256Hex(src).slice(0, 20)}.mp4`,
+        'video/mp4',
+        readFileSync(outputPath)
+      );
       if (!fixedSrc) {
         res.status(200).json({ src });
         return;
       }
-      await writeCache(src, fixedSrc);
+      await writeMediaCache(cacheKey, src, fixedSrc);
       res.status(200).json({ src: fixedSrc });
     } finally {
       rmSync(workDir, { recursive: true, force: true });

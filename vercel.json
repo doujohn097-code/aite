@@ -3,6 +3,10 @@
     "src/pages/api/media/normalize.ts": {
       "maxDuration": 60,
       "includeFiles": "node_modules/ffmpeg-static/ffmpeg"
+    },
+    "src/pages/api/media/poster.ts": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/ffmpeg-static/ffmpeg"
     }
   }
 }
