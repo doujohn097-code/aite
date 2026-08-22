@@ -73,8 +73,9 @@ service cloud.firestore {
       // Keep that unauthenticated query strictly limited to one result; bulk
       // discovery still requires login.
       allow get, list: if signedIn() || request.query.limit <= 1;
+      // The client converter derives `id` from the document path and does not
+      // store a duplicate id field in the profile document.
       allow create: if isOwner(userId)
-        && request.resource.data.id == userId
         && !request.resource.data.keys().hasAny(['admin']);
       // Admin/verified fields are deliberately absent from this allow-list.
       allow update: if isAdmin()
