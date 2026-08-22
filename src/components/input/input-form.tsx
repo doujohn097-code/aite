@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import TextArea from 'react-textarea-autosize';
-import { motion } from 'framer-motion';
 import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';

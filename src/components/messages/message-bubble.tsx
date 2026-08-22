@@ -63,15 +63,10 @@ function formatTime(createdAt: Message['createdAt']): string {
 
 type MessageVideoProps = {
   item: ImageData;
-  messageId: string;
   onExpand: () => void;
 };
 
-function MessageVideo({
-  item,
-  messageId,
-  onExpand
-}: MessageVideoProps): JSX.Element {
+function MessageVideo({ item, onExpand }: MessageVideoProps): JSX.Element {
   const { effectiveSrc, repairing, onError } = useRepairableVideo(item.src);
   const posterUrl = useVideoPoster(item.src, item.thumbnail ?? null);
   return (
@@ -545,7 +540,6 @@ export function MessageBubble({
                     <MessageVideo
                       key={`${message.id}-${index}`}
                       item={item}
-                      messageId={message.id}
                       onExpand={() => setSelectedMediaIndex(index)}
                     />
                   ) : (

@@ -2,7 +2,7 @@
 
 # Aite
 
-منصة تواصل اجتماعي عربية مبنية بـ Next.js و TypeScript و Firebase
+منصة تواصل اجتماعي عربية مبنية بـ Next.js و TypeScript و Firebase (قاعدة Firestore واحدة)
 
 </div>
 
@@ -40,10 +40,12 @@
    npm install
    ```
 
-1. إنشاء مشروع Firebase وتفعيل الخدمات التالية:
+1. إنشاء مشروع Firebase واحد فقط (الإصدار المستعاد يستخدم `myapp-5a04d` افتراضياً) وتفعيل الخدمات التالية:
 
    - **Authentication** — تفعيل طريقة Google
-   - **Cloud Firestore** — إنشاء قاعدة بيانات
+   - **Cloud Firestore** — إنشاء قاعدة بيانات واحدة
+
+   لا يوجد في هذا الإصدار توجيه أو مزامنة بين مشروعين. إذا استخدمت مشروعاً آخر، غيّر قيم `FIREBASE_*` ومشروع Firebase CLI إلى نفس المعرّف.
 
 1. نسخ ملف البيئة وتعبئة القيم:
 
@@ -58,7 +60,7 @@
    ```bash
    npm i -g firebase-tools
    firebase login
-   firebase use your-project-id
+   firebase use myapp-5a04d
    firebase deploy --only firestore:rules,firestore:indexes
    ```
 

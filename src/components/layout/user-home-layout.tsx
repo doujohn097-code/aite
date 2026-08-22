@@ -6,7 +6,6 @@ import { useAuth } from '@lib/context/auth-context';
 import { useUser } from '@lib/context/user-context';
 import { getOrCreateConversation } from '@lib/messages';
 import { SEO } from '@components/common/seo';
-import { HeroIcon } from '@components/ui/hero-icon';
 import { Button } from '@components/ui/button';
 import { UserHomeCover } from '@components/user/user-home-cover';
 import { UserHomeAvatar } from '@components/user/user-home-avatar';

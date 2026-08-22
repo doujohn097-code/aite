@@ -1,43 +1,55 @@
 import admin from 'firebase-admin';
 
 type ServiceAccountJson = {
-  type: string;
   project_id: string;
-  private_key_id: string;
   private_key: string;
   client_email: string;
-  client_id: string;
-  auth_uri: string;
-  token_uri: string;
 };
 
-const base64ServiceAccount = process.env.FIREBASE_ADMIN_KEY;
+function getServiceAccount(): admin.ServiceAccount {
+  const encoded = process.env.FIREBASE_ADMIN_KEY;
+  if (!encoded) throw new Error('FIREBASE_ADMIN_KEY is missing');
 
-if (!base64ServiceAccount) {
-  throw new Error('Missing FIREBASE_ADMIN_KEY environment variable');
+  let parsed: ServiceAccountJson;
+  try {
+    parsed = JSON.parse(
+      Buffer.from(encoded, 'base64').toString('utf8')
+    ) as ServiceAccountJson;
+  } catch {
+    throw new Error('FIREBASE_ADMIN_KEY is not valid base64 JSON');
+  }
+
+  if (!parsed.project_id || !parsed.private_key || !parsed.client_email) {
+    throw new Error('FIREBASE_ADMIN_KEY is missing required fields');
+  }
+
+  return {
+    projectId: parsed.project_id,
+    clientEmail: parsed.client_email,
+    privateKey: parsed.private_key
+  };
 }
 
-const serviceAccountJson = Buffer.from(base64ServiceAccount, 'base64').toString(
-  'utf8'
-);
-const parsed = JSON.parse(serviceAccountJson) as ServiceAccountJson;
+function getAdminApp(): admin.app.App {
+  if (admin.apps.length > 0) return admin.app();
 
-const serviceAccount: admin.ServiceAccount = {
-  projectId: parsed.project_id,
-  clientEmail: parsed.client_email,
-  privateKey: parsed.private_key
-};
-
-if (!admin.apps.length)
-  admin.initializeApp({
+  const serviceAccount = getServiceAccount();
+  return admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     projectId: serviceAccount.projectId
   });
+}
 
-export const authAdmin = admin.auth();
+// This is the only server-side Firebase Admin entry point. It deliberately
+// uses the same service account/project as the client Firebase app so all API
+// routes and background helpers stay on the single Firestore database.
+const firebaseAdmin = getAdminApp();
+
+export const adminAuth = firebaseAdmin.auth();
+export const adminFirestore = firebaseAdmin.firestore();
 
 export async function verifyIdToken(
   token: string
 ): Promise<admin.auth.DecodedIdToken> {
-  return authAdmin.verifyIdToken(token);
+  return adminAuth.verifyIdToken(token);
 }

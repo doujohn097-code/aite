@@ -2,14 +2,14 @@
 
 ## 1. البيئة
 
-انسخ `.env.example` إلى `.env.local` وأدخل إعدادات Firebase وR2. لا ترفع `.env.local` أو مفتاح حساب الخدمة إلى GitHub.
+انسخ `.env.example` إلى `.env.local` وأدخل إعدادات مشروع Firebase الواحد وR2. يجب أن يطابق `FIREBASE_PROJECT_ID` المشروع المحدد في Firebase CLI (`myapp-5a04d` في النسخة المستعادة). لا ترفع `.env.local` أو مفتاح حساب الخدمة إلى GitHub.
 
 ## 2. قواعد Firebase
 
 ```bash
 npm i -g firebase-tools
 firebase login
-firebase use YOUR_PROJECT_ID
+firebase use myapp-5a04d
 firebase deploy --only firestore:rules,firestore:indexes
 ```
 

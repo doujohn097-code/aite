@@ -1,4 +1,4 @@
-import { adminAuth, adminFirestore } from '@lib/firebase/admin';
+import { adminAuth, adminFirestore } from '@lib/firebase-admin';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 async function requireAdmin(req: NextApiRequest): Promise<boolean> {

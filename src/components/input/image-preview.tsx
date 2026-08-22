@@ -61,7 +61,7 @@ export function ImagePreview({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIndex]);
 
-  const handleSelectedImage = (index: number, _isVideo?: boolean) => () => {
+  const handleSelectedImage = (index: number) => () => {
     setSelectedIndex(index);
     openModal();
   };
@@ -130,7 +130,7 @@ export function ImagePreview({
                 }
               )}
               {...variants}
-              onClick={preventBubbling(handleSelectedImage(index, isVideo))}
+              onClick={preventBubbling(handleSelectedImage(index))}
               layout={!isTweet ? true : false}
               key={id}
             >

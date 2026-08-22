@@ -10,6 +10,7 @@
     "lint": "next lint",
     "test": "jest",
     "test:ci": "jest --runInBand --ci",
+    "functions:build": "npm --prefix functions run build",
     "android:sync": "cap sync android",
     "android:open": "cap open android",
     "android:apk": "cap sync android && cd android && ./gradlew assembleDebug"

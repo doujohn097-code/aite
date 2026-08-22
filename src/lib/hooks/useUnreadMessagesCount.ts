@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { onSnapshot, query, where } from 'firebase/firestore';
 import { conversationsCollection } from '@lib/firebase/collections';
 import { useAuth } from '@lib/context/auth-context';
-import type { Conversation } from '@lib/types/message';
 
 export function useUnreadMessagesCount(): number {
   const { user } = useAuth();

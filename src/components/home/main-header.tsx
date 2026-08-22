@@ -1,7 +1,6 @@
 import cn from 'clsx';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
-import { CustomIcon } from '@components/ui/custom-icon';
 import { ToolTip } from '@components/ui/tooltip';
 import { MobileSidebar } from '@components/sidebar/mobile-sidebar';
 import { AiteWordmark } from '@components/ui/aite-logo';

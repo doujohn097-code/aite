@@ -1,5 +1,8 @@
 import type { Theme, Accent } from './theme';
-import type { Timestamp, FirestoreDataConverter } from 'firebase/firestore';
+import type {
+  Timestamp,
+  FirestoreDataConverter
+} from 'firebase-admin/firestore';
 
 export type User = {
   id: string;
@@ -33,8 +36,8 @@ export const userConverter: FirestoreDataConverter<User> = {
   toFirestore(user) {
     return { ...user };
   },
-  fromFirestore(snapshot, options) {
-    const data = snapshot.data(options);
+  fromFirestore(snapshot) {
+    const data = snapshot.data();
     return { ...data } as User;
   }
 };
