@@ -104,14 +104,14 @@ export default async function queryHandler(
 ): Promise<void> {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
-    res.status(405).json({ error: 'method_not_allowed' });
+    res.status(405).json({ error: 'method_not_allowed', v: 7 });
     return;
   }
 
   const authHeader = req.headers.authorization ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
   if (!token) {
-    res.status(401).json({ error: 'unauthorized' });
+    res.status(401).json({ error: 'unauthorized', v: 7 });
     return;
   }
 
@@ -123,14 +123,14 @@ export default async function queryHandler(
     const project = body?.project === 'b' ? 'b' : 'a';
     const rawQ = body?.q as ProxySpec | null | undefined;
     if (!rawQ || typeof rawQ !== 'object') {
-      res.status(400).json({ error: 'invalid_query' });
+      res.status(400).json({ error: 'invalid_query', v: 7 });
       return;
     }
 
     const collectionName = rawQ.collection;
     const allow = ALLOWED[collectionName];
     if (!allow) {
-      res.status(400).json({ error: 'invalid_collection' });
+      res.status(400).json({ error: 'invalid_collection', v: 7 });
       return;
     }
 
@@ -149,7 +149,7 @@ export default async function queryHandler(
 
     if (rawQ.ids?.length) {
       if (!allow.ids) {
-        res.status(400).json({ error: 'invalid_ids' });
+        res.status(400).json({ error: 'invalid_ids', v: 7 });
         return;
       }
       query = query.where(
@@ -160,11 +160,11 @@ export default async function queryHandler(
     } else if (rawQ.where) {
       const w = rawQ.where;
       if (!allow.fields.includes(w.field) || !OPS.has(w.op)) {
-        res.status(400).json({ error: 'invalid_where' });
+        res.status(400).json({ error: 'invalid_where', v: 7 });
         return;
       }
       if (w.op !== 'isNull' && !isPlainValue(w.value)) {
-        res.status(400).json({ error: 'invalid_value' });
+        res.status(400).json({ error: 'invalid_value', v: 7 });
         return;
       }
       if (w.field === 'lastStoryAt' && typeof w.value === 'string') {
@@ -203,11 +203,13 @@ export default async function queryHandler(
       envA: !!process.env.FIREBASE_ADMIN_KEY,
       envB: !!process.env.FIREBASE_ADMIN_KEY_B
     });
-    res.status(200).json({ items });
+    res.status(200).json({ items, v: 7, branch: 'ok' });
   } catch (error) {
     console.error('api/query failed:', error);
     res.status(200).json({
       items: [],
+      v: 7,
+      branch: 'error',
       debug: error instanceof Error ? error.message : String(error)
     }); // never break the UI on proxy errors
   }
