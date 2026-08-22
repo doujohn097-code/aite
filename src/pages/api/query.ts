@@ -196,8 +196,12 @@ export default async function queryHandler(
     }));
 
     res.status(200).json({ items });
-  } catch {
-    res.status(200).json({ items: [] }); // never break the UI on proxy errors
+  } catch (error) {
+    console.error('api/query failed:', error);
+    res.status(200).json({
+      items: [],
+      debug: error instanceof Error ? error.message : String(error)
+    }); // never break the UI on proxy errors
   }
 }
 
