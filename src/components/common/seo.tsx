@@ -8,6 +8,8 @@ type MainLayoutProps = {
   description?: string;
 };
 
+const AITE_SINGLE_DB_V2 = 'on';
+
 export function SEO({
   title,
   image,
