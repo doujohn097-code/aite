@@ -73,13 +73,14 @@ function MessageVideo({
   onExpand
 }: MessageVideoProps): JSX.Element {
   const { effectiveSrc, repairing, onError } = useRepairableVideo(item.src);
+  const posterUrl = useVideoPoster(item.src, item.thumbnail ?? null);
   return (
     <div className='group relative'>
       <video
         key={effectiveSrc}
         className='block max-h-[360px] w-full rounded-2xl bg-black object-contain'
         src={effectiveSrc}
-        poster={item.thumbnail ?? undefined}
+        poster={posterUrl ?? undefined}
         controls
         playsInline
         preload='metadata'
