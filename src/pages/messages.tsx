@@ -49,14 +49,17 @@ export default function Messages(): JSX.Element {
     const byId = new Map<string, Conversation>();
     let loadedA = false;
     let loadedB = false;
+    let anyDataArrived = false;
+    let disposed = false;
 
     const publish = (): void => {
-      if (!loadedA || !loadedB) return;
+      if (disposed) return;
       const data = Array.from(byId.values()).sort(
         (a, b) =>
           (b.updatedAt?.toMillis?.() ?? 0) - (a.updatedAt?.toMillis?.() ?? 0)
       );
       setConversations(data);
+      if (data.length) anyDataArrived = true;
 
       const peerIds = data
         .map((conversation) =>
@@ -66,15 +69,24 @@ export default function Messages(): JSX.Element {
         )
         .filter((id): id is string => !!id);
 
-      void Promise.all(peerIds.map((id) => fetchUserAnywhere(id))).then(
-        (users) => {
-          const fetched: Record<string, User> = {};
-          users.forEach((u) => {
-            if (u) fetched[u.id] = u;
-          });
-          setPeers((previous) => ({ ...previous, ...fetched }));
-        }
-      );
+      if (!peerIds.length) return;
+      void Promise.all(
+        peerIds.map((id) =>
+          Promise.race([
+            fetchUserAnywhere(id),
+            new Promise<User | null>((resolve) =>
+              setTimeout(() => resolve(null), 4000)
+            )
+          ])
+        )
+      ).then((users) => {
+        if (disposed) return;
+        const fetched: Record<string, User> = {};
+        users.forEach((u) => {
+          if (u) fetched[u.id] = u;
+        });
+        setPeers((previous) => ({ ...previous, ...fetched }));
+      });
     };
 
     const onSnapshotWrapper =
@@ -87,6 +99,7 @@ export default function Messages(): JSX.Element {
         });
         if (loadedKey === 'loadedA') loadedA = true;
         else loadedB = true;
+        // Publish as soon as EITHER project answers — never wait for both.
         publish();
       };
 
@@ -107,7 +120,15 @@ export default function Messages(): JSX.Element {
       }
     );
 
+    // Safety net: never leave the conversation list hanging because a
+    // project's channel is blocked.
+    const safety = setTimeout(() => {
+      if (!disposed && !anyDataArrived) publish();
+    }, 6000);
+
     return () => {
+      disposed = true;
+      clearTimeout(safety);
       unsubscribeA();
       unsubscribeB();
     };

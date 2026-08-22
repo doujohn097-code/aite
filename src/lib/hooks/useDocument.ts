@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getDoc, doc, onSnapshot, Timestamp } from 'firebase/firestore';
-import { usersCollection } from '@lib/firebase/collections';
+import { onSnapshot, Timestamp } from 'firebase/firestore';
+import { fetchUserAnywhere } from '@lib/dual';
 import { useCacheRef } from './useCacheRef';
 import type { DocumentReference } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
@@ -75,13 +75,10 @@ export function useDocument<T>(
       }
 
       try {
-        const userData = await getDoc(
-          doc(usersCollection, currentData.createdBy)
-        );
-        const dataWithUser = {
-          ...currentData,
-          user: userData.data() ?? fallbackUser
-        };
+        // The author's profile may live in either round-robin database.
+        const user =
+          (await fetchUserAnywhere(currentData.createdBy)) ?? fallbackUser;
+        const dataWithUser = { ...currentData, user };
 
         setData(dataWithUser);
       } catch (error) {

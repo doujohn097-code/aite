@@ -77,15 +77,18 @@ export async function checkUsernameAvailability(
 ): Promise<boolean> {
   const checks = await Promise.all(
     (['a', 'b'] as const).map((project) =>
-      getDocs(
-        query(
-          collectionsFor(project).users,
-          where('username', '==', username),
-          limit(1)
+      Promise.race([
+        getDocs(
+          query(
+            collectionsFor(project).users,
+            where('username', '==', username),
+            limit(1)
+          )
         )
-      )
-        .then((snapshot) => snapshot.empty)
-        .catch(() => true)
+          .then((snapshot) => snapshot.empty)
+          .catch(() => true),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(true), 5000))
+      ])
     )
   );
   return checks.every(Boolean);

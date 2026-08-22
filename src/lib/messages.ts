@@ -51,8 +51,14 @@ export async function getOrCreateConversation(
   // The conversation may have been created in either round-robin database
   // (the id is deterministic, both participants compute the same one).
   const [snapA, snapB] = await Promise.all([
-    getDoc(doc(colsA.conversations, id)).catch(() => null),
-    getDoc(doc(colsB.conversations, id)).catch(() => null)
+    Promise.race([
+      getDoc(doc(colsA.conversations, id)).catch(() => null),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500))
+    ]),
+    Promise.race([
+      getDoc(doc(colsB.conversations, id)).catch(() => null),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500))
+    ])
   ]);
   if (snapA?.exists()) return snapA.data();
   if (snapB?.exists()) return snapB.data();
