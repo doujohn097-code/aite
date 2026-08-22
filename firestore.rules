@@ -69,9 +69,10 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Profiles are intentionally public one document at a time; bulk discovery requires login.
-      allow get: if signedIn() || request.query.limit <= 1;
-      allow list: if signedIn();
+      // The signup form must check one username before the user is signed in.
+      // Keep that unauthenticated query strictly limited to one result; bulk
+      // discovery still requires login.
+      allow get, list: if signedIn() || request.query.limit <= 1;
       allow create: if isOwner(userId)
         && request.resource.data.id == userId
         && !request.resource.data.keys().hasAny(['admin']);
