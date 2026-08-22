@@ -5,6 +5,7 @@ import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
+import { SettingsModal } from '@components/modal/settings-modal';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { CustomIcon } from '@components/ui/custom-icon';
@@ -16,6 +17,11 @@ import type { User } from '@lib/types/user';
 export function SidebarProfile(): JSX.Element {
   const { user, signOut } = useAuth();
   const { open, openModal, closeModal } = useModal();
+  const {
+    open: settingsOpen,
+    openModal: openSettingsModal,
+    closeModal: closeSettingsModal
+  } = useModal();
 
   const { name, username, verified, photoURL } = user as User;
 
@@ -35,6 +41,13 @@ export function SidebarProfile(): JSX.Element {
           action={signOut}
           closeModal={closeModal}
         />
+      </Modal>
+      <Modal
+        modalClassName='max-w-md bg-main-background w-full p-6 rounded-2xl max-h-[85vh] overflow-y-auto'
+        open={settingsOpen}
+        closeModal={closeSettingsModal}
+      >
+        <SettingsModal closeModal={closeSettingsModal} />
       </Modal>
       <Menu className='relative' as='section'>
         {({ open }): JSX.Element => (
@@ -94,6 +107,20 @@ export function SidebarProfile(): JSX.Element {
                         iconName='CheckIcon'
                       />
                     </i>
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }): JSX.Element => (
+                      <Button
+                        className={cn(
+                          'flex w-full gap-3 rounded-none p-4',
+                          active && 'bg-main-sidebar-background'
+                        )}
+                        onClick={openSettingsModal}
+                      >
+                        <HeroIcon iconName='Cog6ToothIcon' />
+                        الإعدادات
+                      </Button>
+                    )}
                   </Menu.Item>
                   <Menu.Item>
                     {({ active }): JSX.Element => (

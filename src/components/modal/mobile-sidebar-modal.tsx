@@ -10,6 +10,7 @@ import { MobileSidebarLink } from '@components/sidebar/mobile-sidebar-link';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { Modal } from './modal';
 import { ActionModal } from './action-modal';
+import { SettingsModal } from './settings-modal';
 import type { NavLink } from '@components/sidebar/sidebar';
 import type { User } from '@lib/types/user';
 
@@ -67,6 +68,11 @@ export function MobileSidebarModal({
 }: MobileSidebarModalProps): JSX.Element {
   const { signOut } = useAuth();
   const { open, openModal, closeModal: closeLogOutModal } = useModal();
+  const {
+    open: settingsOpen,
+    openModal: openSettingsModal,
+    closeModal: closeSettingsModal
+  } = useModal();
 
   const allStats: Readonly<Stats[]> = [
     ['following', 'يتابع', following.length],
@@ -91,6 +97,14 @@ export function MobileSidebarModal({
           action={signOut}
           closeModal={closeLogOutModal}
         />
+      </Modal>
+
+      <Modal
+        modalClassName='max-w-md bg-main-background w-full p-6 rounded-2xl max-h-[85vh] overflow-y-auto'
+        open={settingsOpen}
+        closeModal={closeSettingsModal}
+      >
+        <SettingsModal closeModal={closeSettingsModal} />
       </Modal>
 
       <div className='flex h-full flex-col overflow-y-auto bg-main-background'>
@@ -185,8 +199,17 @@ export function MobileSidebarModal({
 
         <div className='mx-4 border-t border-light-border/70 dark:border-dark-border/70' />
 
-        {/* Always visible account action — navigation alone scrolls on short phones. */}
+        {/* Always visible account actions — navigation alone scrolls on short phones. */}
         <div className='shrink-0 border-y border-light-border/70 bg-main-background px-3 py-2 dark:border-dark-border/70'>
+          <Button
+            className='flex w-full items-center gap-3 rounded-xl p-3 font-semibold transition
+                       hover:bg-light-primary/10 active:bg-light-primary/20
+                       dark:hover:bg-dark-primary/10 dark:active:bg-dark-primary/20'
+            onClick={openSettingsModal}
+          >
+            <HeroIcon className='h-5 w-5' iconName='Cog6ToothIcon' />
+            <span>الإعدادات</span>
+          </Button>
           <Button
             className='flex w-full items-center gap-3 rounded-xl p-3 font-semibold text-accent-red transition hover:bg-accent-red/10 active:bg-accent-red/20'
             onClick={openModal}
