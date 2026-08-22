@@ -498,29 +498,206 @@ export function MessageBubble({
           document.body
         )}
 
+      {/* حاوية الفقاعة + التفاعلات - التفاعل ملتصق بالفقاعة */}
       <div
-        className={cn(bubbleClass, 'relative z-10')}
-        dir='auto'
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={cancelPress}
-        onPointerMove={(event) => {
-          if (Math.abs(dragX.get()) > 8) cancelPress();
-          else handlePointerMove(event);
-        }}
+        className={cn(
+          'relative z-10 flex flex-col',
+          'max-w-[78%] xs:max-w-[70%]',
+          isOwn ? 'ml-auto mr-0 self-end items-end' : 'mr-auto ml-0 self-start items-start'
+        )}
       >
-        {isDeleted ? (
-          <div className='flex items-center gap-2 px-1 py-1 text-sm italic opacity-65'>
-            <HeroIcon className='h-4 w-4' iconName='NoSymbolIcon' />
-            تم حذف هذه الرسالة
-          </div>
-        ) : (
-          <>
-            {replyQuote}
+        <div
+          className={cn(bubbleClass, 'relative w-full !max-w-full !ml-0 !mr-0 !self-auto')}
+          dir='auto'
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={cancelPress}
+          onPointerMove={(event) => {
+            if (Math.abs(dragX.get()) > 8) cancelPress();
+            else handlePointerMove(event);
+          }}
+        >
+          {isDeleted ? (
+            <div className='flex items-center gap-2 px-1 py-1 text-sm italic opacity-65'>
+              <HeroIcon className='h-4 w-4' iconName='NoSymbolIcon' />
+              تم حذف هذه الرسالة
+            </div>
+          ) : (
+            <>
+              {replyQuote}
 
-            {type === 'text' && (
-              <p className='whitespace-pre-wrap break-words'>
-                {text && (
+              {type === 'text' && (
+                <p className='whitespace-pre-wrap break-words'>
+                  {text && (
+                    <LinkifiedText
+                      text={text}
+                      linkClassName={
+                        isOwn
+                          ? 'break-all font-semibold text-[#0b3d91] underline underline-offset-2'
+                          : undefined
+                      }
+                    />
+                  )}
+                </p>
+              )}
+
+              {(type === 'image' || type === 'video') && media && (
+                <div className='w-fit max-w-[75vw] overflow-hidden rounded-2xl xs:max-w-[330px]'>
+                  {media.map((item, index) =>
+                    type === 'video' || item.type?.startsWith('video/') ? (
+                      <MessageVideo
+                        key={`${message.id}-${index}`}
+                        item={item}
+                        onExpand={() => setSelectedMediaIndex(index)}
+                      />
+                    ) : (
+                      <button
+                        key={`${message.id}-${index}`}
+                        type='button'
+                        onClick={() => setSelectedMediaIndex(index)}
+                        className='group relative block cursor-zoom-in overflow-hidden rounded-2xl outline-none'
+                        aria-label='فتح معاينة الصورة'
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          className='block max-h-[360px] w-full rounded-2xl object-contain transition duration-300 group-hover:scale-[1.02]'
+                          src={item.src}
+                          alt={item.alt || 'صورة'}
+                          loading='lazy'
+                        />
+                        <span className='absolute inset-0 bg-black/0 transition group-hover:bg-black/10' />
+                        <HeroIcon
+                          className='absolute left-3 top-3 h-5 w-5 rounded-full bg-black/45 p-1 text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100'
+                          iconName='ArrowsPointingOutIcon'
+                        />
+                      </button>
+                    )
+                  )}
+                </div>
+              )}
+
+              {type === 'audio' && audio && <TweetAudioPlayer audio={audio} />}
+
+              {type === 'shared' && sharedPost && (
+                <Link
+                  href={
+                    sharedPost.kind === 'reel'
+                      ? `/reels?video=${sharedPost.id}`
+                      : `/tweet/${sharedPost.id}`
+                  }
+                >
+                  <a
+                    className={cn(
+                      'block max-w-full overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl',
+                      sharedPost.kind === 'reel'
+                        ? 'w-[min(220px,calc(100vw-140px))]'
+                        : 'w-[min(320px,calc(100vw-88px))]',
+                      'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50'
+                    )}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    {sharedPost.thumbnail ? (
+                      <div
+                        className={cn(
+                          'relative overflow-hidden bg-slate-100 dark:bg-slate-900',
+                          sharedPost.kind === 'reel' ? 'aspect-[4/5]' : 'h-36'
+                        )}
+                      >
+                        {sharedIsVideo ? (
+                          sharedPoster ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
+                              src={sharedPoster}
+                              alt='معاينة الفيديو'
+                              draggable={false}
+                            />
+                          ) : (
+                            <div className='flex h-full w-full items-center justify-center bg-slate-900' />
+                          )
+                        ) : (
+                          <img
+                            className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
+                            src={sharedPost.thumbnail ?? ''}
+                            alt='معاينة المنشور'
+                            draggable={false}
+                          />
+                        )}
+                        {sharedPost.kind === 'reel' && (
+                          <>
+                            <span className='absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10' />
+                            <span className='absolute inset-0 flex items-center justify-center'>
+                              <HeroIcon
+                                className='h-14 w-14 rounded-full bg-black/60 p-3.5 text-white shadow-xl backdrop-blur-sm'
+                                iconName='PlayIcon'
+                                solid
+                              />
+                            </span>
+                            <span className='absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
+                              ريل
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className='flex h-24 items-center justify-center bg-gradient-to-br from-main-accent/20 to-main-accent/5 text-main-accent'>
+                        <HeroIcon
+                          className='h-9 w-9'
+                          iconName={
+                            sharedPost.kind === 'reel'
+                              ? 'FilmIcon'
+                              : 'DocumentTextIcon'
+                          }
+                        />
+                      </div>
+                    )}
+                    <div className='flex items-center gap-2 px-3 pt-2.5'>
+                      {sharedPost.authorPhoto && (
+                        <img
+                          className='h-7 w-7 rounded-full object-cover'
+                          src={sharedPost.authorPhoto}
+                          alt={sharedPost.authorName ?? ''}
+                        />
+                      )}
+                      <div className='min-w-0 flex-1 leading-tight'>
+                        <p className='truncate text-sm font-bold'>
+                          {sharedPost.authorName ?? 'مستخدم'}
+                        </p>
+                        {sharedPost.authorUsername && (
+                          <p className='truncate text-[11px] opacity-60'>
+                            @{sharedPost.authorUsername}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={cn(
+                          'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                          isOwn
+                            ? 'bg-black/15'
+                            : 'bg-main-accent/15 text-main-accent'
+                        )}
+                      >
+                        {sharedPost.kind === 'reel' ? 'ريل' : 'منشور'}
+                      </span>
+                    </div>
+                    {sharedPost.text && (
+                      <p className='line-clamp-2 px-3 pb-2.5 pt-1 text-[13px] opacity-80'>
+                        {sharedPost.text}
+                      </p>
+                    )}
+                  </a>
+                </Link>
+              )}
+
+              {text && type !== 'text' && (
+                <p
+                  className={cn(
+                    'mt-1 whitespace-pre-wrap break-words px-2 pb-1 text-[15px]',
+                    isOwn
+                      ? 'text-black'
+                      : 'text-light-primary dark:text-dark-primary'
+                  )}
+                >
                   <LinkifiedText
                     text={text}
                     linkClassName={
@@ -529,187 +706,44 @@ export function MessageBubble({
                         : undefined
                     }
                   />
-                )}
-              </p>
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* التفاعلات ملتصقة بفقاعة الرسالة - تصحيح الموضع */}
+        {Object.keys(reactionGroups).length > 0 && (
+          <div
+            className={cn(
+              'absolute z-20 flex items-center gap-0.5 rounded-full border border-light-border bg-main-background px-1.5 py-0.5 shadow-md backdrop-blur-sm dark:border-dark-border dark:bg-slate-800',
+              'bottom-0 translate-y-1/2',
+              isOwn
+                ? 'left-0 -translate-x-1.5' // رسائلي على اليمين -> التفاعل على يسار الفقاعة من الأسفل
+                : 'right-0 translate-x-1.5' // رسائل الآخر على اليسار -> التفاعل على يمين الفقاعة من الأسفل
             )}
-
-            {(type === 'image' || type === 'video') && media && (
-              <div className='w-fit max-w-[75vw] overflow-hidden rounded-2xl xs:max-w-[330px]'>
-                {media.map((item, index) =>
-                  type === 'video' || item.type?.startsWith('video/') ? (
-                    <MessageVideo
-                      key={`${message.id}-${index}`}
-                      item={item}
-                      onExpand={() => setSelectedMediaIndex(index)}
-                    />
-                  ) : (
-                    <button
-                      key={`${message.id}-${index}`}
-                      type='button'
-                      onClick={() => setSelectedMediaIndex(index)}
-                      className='group relative block cursor-zoom-in overflow-hidden rounded-2xl outline-none'
-                      aria-label='فتح معاينة الصورة'
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        className='block max-h-[360px] w-full rounded-2xl object-contain transition duration-300 group-hover:scale-[1.02]'
-                        src={item.src}
-                        alt={item.alt || 'صورة'}
-                        loading='lazy'
-                      />
-                      <span className='absolute inset-0 bg-black/0 transition group-hover:bg-black/10' />
-                      <HeroIcon
-                        className='absolute left-3 top-3 h-5 w-5 rounded-full bg-black/45 p-1 text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100'
-                        iconName='ArrowsPointingOutIcon'
-                      />
-                    </button>
-                  )
-                )}
-              </div>
-            )}
-
-            {type === 'audio' && audio && <TweetAudioPlayer audio={audio} />}
-
-            {type === 'shared' && sharedPost && (
-              <Link
-                href={
-                  sharedPost.kind === 'reel'
-                    ? `/reels?video=${sharedPost.id}`
-                    : `/tweet/${sharedPost.id}`
-                }
+          >
+            {Object.entries(reactionGroups).map(([emoji, count]) => (
+              <span
+                key={emoji}
+                className='flex items-center gap-0.5 text-[12px] leading-none'
               >
-                <a
-                  className={cn(
-                    'block max-w-full overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl',
-                    sharedPost.kind === 'reel'
-                      ? 'w-[min(220px,calc(100vw-140px))]'
-                      : 'w-[min(320px,calc(100vw-88px))]',
-                    'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50'
-                  )}
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  {sharedPost.thumbnail ? (
-                    <div
-                      className={cn(
-                        'relative overflow-hidden bg-slate-100 dark:bg-slate-900',
-                        sharedPost.kind === 'reel' ? 'aspect-[4/5]' : 'h-36'
-                      )}
-                    >
-                      {sharedIsVideo ? (
-                        sharedPoster ? (
-                          // A real frame extracted from the video — identical
-                          // on web and Android, never a gray/black box.
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
-                            src={sharedPoster}
-                            alt='معاينة الفيديو'
-                            draggable={false}
-                          />
-                        ) : (
-                          <div className='flex h-full w-full items-center justify-center bg-slate-900' />
-                        )
-                      ) : (
-                        <img
-                          className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
-                          src={sharedPost.thumbnail ?? ''}
-                          alt='معاينة المنشور'
-                          draggable={false}
-                        />
-                      )}
-                      {sharedPost.kind === 'reel' && (
-                        <>
-                          <span className='absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10' />
-                          <span className='absolute inset-0 flex items-center justify-center'>
-                            <HeroIcon
-                              className='h-14 w-14 rounded-full bg-black/60 p-3.5 text-white shadow-xl backdrop-blur-sm'
-                              iconName='PlayIcon'
-                              solid
-                            />
-                          </span>
-                          <span className='absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
-                            ريل
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <div className='flex h-24 items-center justify-center bg-gradient-to-br from-main-accent/20 to-main-accent/5 text-main-accent'>
-                      <HeroIcon
-                        className='h-9 w-9'
-                        iconName={
-                          sharedPost.kind === 'reel'
-                            ? 'FilmIcon'
-                            : 'DocumentTextIcon'
-                        }
-                      />
-                    </div>
-                  )}
-                  <div className='flex items-center gap-2 px-3 pt-2.5'>
-                    {sharedPost.authorPhoto && (
-                      <img
-                        className='h-7 w-7 rounded-full object-cover'
-                        src={sharedPost.authorPhoto}
-                        alt={sharedPost.authorName ?? ''}
-                      />
-                    )}
-                    <div className='min-w-0 flex-1 leading-tight'>
-                      <p className='truncate text-sm font-bold'>
-                        {sharedPost.authorName ?? 'مستخدم'}
-                      </p>
-                      {sharedPost.authorUsername && (
-                        <p className='truncate text-[11px] opacity-60'>
-                          @{sharedPost.authorUsername}
-                        </p>
-                      )}
-                    </div>
-                    <span
-                      className={cn(
-                        'rounded-full px-2 py-0.5 text-[10px] font-bold',
-                        isOwn
-                          ? 'bg-black/15'
-                          : 'bg-main-accent/15 text-main-accent'
-                      )}
-                    >
-                      {sharedPost.kind === 'reel' ? 'ريل' : 'منشور'}
-                    </span>
-                  </div>
-                  {sharedPost.text && (
-                    <p className='line-clamp-2 px-3 pb-2.5 pt-1 text-[13px] opacity-80'>
-                      {sharedPost.text}
-                    </p>
-                  )}
-                </a>
-              </Link>
-            )}
-
-            {text && type !== 'text' && (
-              <p
-                className={cn(
-                  'mt-1 whitespace-pre-wrap break-words px-2 pb-1 text-[15px]',
-                  isOwn
-                    ? 'text-black'
-                    : 'text-light-primary dark:text-dark-primary'
+                <span>{emoji}</span>
+                {count > 1 && (
+                  <span className='text-[10px] font-bold'>{count}</span>
                 )}
-              >
-                <LinkifiedText
-                  text={text}
-                  linkClassName={
-                    isOwn
-                      ? 'break-all font-semibold text-[#0b3d91] underline underline-offset-2'
-                      : undefined
-                  }
-                />
-              </p>
-            )}
-          </>
+              </span>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* تفاعلات الرسالة + الوقت ومؤشر القراءة */}
+      {/* الوقت ومؤشر القراءة - منفصل عن التفاعلات */}
       <div
         className={cn(
-          'relative -mt-1 flex min-h-4 items-center gap-1.5 px-1 text-[11px] text-light-secondary dark:text-dark-secondary',
+          'flex min-h-4 items-center gap-1.5 px-1 text-[11px] text-light-secondary dark:text-dark-secondary',
+          'mt-1',
+          isOwn ? 'self-end' : 'self-start',
           isOwn ? 'flex-row-reverse' : 'flex-row'
         )}
       >
@@ -721,19 +755,6 @@ export function MessageBubble({
             solid={seen}
           />
         )}
-        {Object.entries(reactionGroups).map(([emoji, count]) => (
-          <span
-            key={emoji}
-            className='relative -top-3 flex items-center gap-0.5 rounded-full border border-light-border
-                       bg-main-background px-1.5 py-0.5 text-[11px] leading-none shadow-sm
-                       dark:border-dark-border dark:bg-slate-800'
-          >
-            {emoji}
-            {count > 1 && (
-              <span className='text-[10px] font-bold'>{count}</span>
-            )}
-          </span>
-        ))}
       </div>
       {selectedMediaIndex !== null && media?.[selectedMediaIndex] && (
         <Modal
