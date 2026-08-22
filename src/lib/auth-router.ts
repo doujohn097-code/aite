@@ -161,12 +161,13 @@ export async function createAccount(
   const uid = randomBytes(18).toString('base64url');
   const photoURL = '/assets/default-avatar.png';
 
+  // photoURL must be an absolute URL in Firebase Auth; the profile document
+  // keeps the app's relative default avatar instead.
   await app.auth().createUser({
     uid,
     email,
     password: payload.password,
-    displayName: name,
-    photoURL
+    displayName: name
   });
 
   const projectFirestore = app.firestore();
