@@ -9,12 +9,12 @@ importScripts(
 );
 
 firebase.initializeApp({
-  apiKey: 'AIzaSyAceIDZarR6VUAxhOJHn2hNa_MYPSLUQzg',
-  authDomain: 'myapp-5a04d.firebaseapp.com',
-  projectId: 'myapp-5a04d',
-  storageBucket: 'myapp-5a04d.firebasestorage.app',
-  messagingSenderId: '143118795591',
-  appId: '1:143118795591:web:e01c3b800cd15afe018262'
+  apiKey: 'AIzaSyAVCxXk6KQM9m--c5B973RJv-f1dlqVTJw',
+  authDomain: 'aite-76.firebaseapp.com',
+  projectId: 'aite-76',
+  storageBucket: 'aite-76.firebasestorage.app',
+  messagingSenderId: '260079907658',
+  appId: '1:260079907658:web:17e5a988e4614c1424c7b3'
 });
 
 const messaging = firebase.messaging();
