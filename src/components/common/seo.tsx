@@ -20,6 +20,7 @@ export function SEO({
   return (
     <Head>
       <title>{title}</title>
+      <meta name='build-tag' content='AITE_SINGLE_DB_V2' />
       <meta name='og:title' content={title} />
       {description && <meta name='description' content={description} />}
       {description && <meta name='og:description' content={description} />}
