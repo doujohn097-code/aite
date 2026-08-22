@@ -2,7 +2,7 @@
   "functions": {
     "src/pages/api/media/diag.ts": {
       "maxDuration": 60,
-      "includeFiles": ["**/ffmpeg-static/ffmpeg", "**/ffmpeg*"]
+      "includeFiles": "**/ffmpeg*"
     }
   }
 }
