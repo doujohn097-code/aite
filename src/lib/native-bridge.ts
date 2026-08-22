@@ -4,7 +4,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { getFirebase } from '@lib/firebase/app';
 import { collectionsFor } from '@lib/firebase/collections';
-import { getActiveProject } from '@lib/firebase/app';
+import { resolveUserProject } from '@lib/dual';
 
 // مفتاح VAPID العام لإشعارات الويب (PWA)
 const VAPID_KEY =
@@ -44,9 +44,14 @@ async function registerNativePushToken(userId: string): Promise<void> {
   await PushNotifications.register();
   await PushNotifications.removeAllListeners();
   await PushNotifications.addListener('registration', ({ value }) => {
-    void updateDoc(doc(collectionsFor(getActiveProject()).users, userId), {
-      fcmTokens: arrayUnion(value)
-    });
+    // The user's profile lives in their own round-robin database.
+    void resolveUserProject(userId)
+      .then((project) =>
+        updateDoc(doc(collectionsFor(project).users, userId), {
+          fcmTokens: arrayUnion(value)
+        })
+      )
+      .catch(() => undefined);
   });
   await PushNotifications.addListener(
     'pushNotificationActionPerformed',
@@ -84,9 +89,15 @@ export async function registerWebPushToken(userId: string): Promise<void> {
     });
 
     if (token) {
-      await updateDoc(doc(collectionsFor(getActiveProject()).users, userId), {
-        fcmTokens: arrayUnion(token)
-      });
+      // The user's profile lives in their own round-robin database.
+      try {
+        const project = await resolveUserProject(userId);
+        await updateDoc(doc(collectionsFor(project).users, userId), {
+          fcmTokens: arrayUnion(token)
+        });
+      } catch {
+        /* best-effort */
+      }
       localStorage.setItem('aite:fcmToken', token);
     }
 

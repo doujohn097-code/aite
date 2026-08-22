@@ -33,6 +33,7 @@ import {
   readStoredProject
 } from '@lib/firebase/app';
 import { collectionsFor } from '@lib/firebase/collections';
+import { resolveUserProject } from '@lib/dual';
 import { getRandomId, getRandomInt } from '@lib/random';
 import { checkUsernameAvailability } from '@lib/firebase/utils';
 import { usernameToInternalEmail } from '@lib/utils';
@@ -298,30 +299,41 @@ export function AuthContextProvider({
   useEffect(() => {
     const userId = user?.id;
     if (!userId) return;
+    let cancelled = false;
+    const beatRef: { current: ((force?: boolean) => void) | null } = {
+      current: null
+    };
     lastBeatRef.current = 0;
 
-    const cols = collectionsFor(project);
-    const beat = (force = false): void => {
-      const now = Date.now();
-      if (!force && now - lastBeatRef.current < HEARTBEAT_FREQUENT_GUARD_MS)
-        return;
-      lastBeatRef.current = now;
-      void updateDoc(doc(cols.users, userId), {
-        lastActiveAt: serverTimestamp()
-      }).catch(() => null);
-    };
+    // Write the heartbeat to the user's OWN round-robin database (resolved
+    // via the public registry), never the default project.
+    void resolveUserProject(userId).then((userProject) => {
+      if (cancelled) return;
+      const cols = collectionsFor(userProject);
+      beatRef.current = (force = false): void => {
+        const now = Date.now();
+        if (!force && now - lastBeatRef.current < HEARTBEAT_FREQUENT_GUARD_MS)
+          return;
+        lastBeatRef.current = now;
+        void updateDoc(doc(cols.users, userId), {
+          lastActiveAt: serverTimestamp()
+        }).catch(() => null);
+      };
+      if (userProject) beatRef.current(true);
+    });
 
-    const handleVisibility = (): void => {
-      if (document.visibilityState === 'visible') beat();
+    const beat = (force = false): void => beatRef.current?.(force);
+    const handleVisibilityBeat = (): void => {
+      if (document.visibilityState === 'visible') beatRef.current?.(true);
     };
-
     beat(true);
-    document.addEventListener('visibilitychange', handleVisibility);
-    const interval = setInterval(beat, HEARTBEAT_MS);
+    document.addEventListener('visibilitychange', handleVisibilityBeat);
+    const interval = setInterval(() => beatRef.current?.(), HEARTBEAT_MS);
 
     return () => {
+      cancelled = true;
       clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibility);
+      document.removeEventListener('visibilitychange', handleVisibilityBeat);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);

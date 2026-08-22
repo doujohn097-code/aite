@@ -16,6 +16,42 @@ import type {
 export type WithProject<T> = T & { project: ProjectId };
 
 /**
+ * The server proxy serializes Firestore Timestamps as { seconds, nanoseconds }
+ * plain objects. Converting them back into real Timestamp instances at the
+ * proxy boundary keeps every downstream `.toDate()` / `.toMillis()` call
+ * working exactly like SDK-fetched data.
+ */
+function hydrateValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(hydrateValue);
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    if (
+      typeof record.seconds === 'number' &&
+      typeof record.nanoseconds === 'number' &&
+      Object.keys(record).length === 2
+    ) {
+      try {
+        return new Timestamp(record.seconds, record.nanoseconds);
+      } catch {
+        return value;
+      }
+    }
+    const out: Record<string, unknown> = {};
+    for (const key of Object.keys(record)) out[key] = hydrateValue(record[key]);
+    return out;
+  }
+  return value;
+}
+
+function hydrateProxyItems(items: ProxyItem[] | null): ProxyItem[] | null {
+  if (!items) return null;
+  return items.map((item) => ({
+    id: item.id,
+    data: hydrateValue(item.data) as Record<string, unknown>
+  }));
+}
+
+/**
  * Bounded wait: never let a blocked/slow database hang the UI. Falls back to
  * `fallback` after `ms` milliseconds.
  */
@@ -104,7 +140,7 @@ export function queryViaProxy(
         });
         if (!response.ok) return null;
         const data = (await response.json()) as { items?: ProxyItem[] };
-        return data.items ?? null;
+        return hydrateProxyItems(data.items ?? null);
       } finally {
         clearTimeout(timer);
       }
