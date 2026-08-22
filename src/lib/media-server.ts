@@ -48,23 +48,18 @@ export function getR2Client(): S3Client | null {
 }
 
 /**
- * ffmpeg-static is bundled next to the lambda's node_modules by
- * scripts/copy-ffmpeg.mjs + vercel.json includeFiles.
+ * The linux x64 ffmpeg binary is committed at src/pages/api/media/ffmpeg-bin
+ * and referenced with literal paths so Next's file tracing (nft) packages it
+ * into the serverless functions. Vercel blocks npm install scripts, so we
+ * cannot rely on ffmpeg-static's postinstall download, and `includeFiles` is
+ * ignored for Next.js functions — the nft trace is the packaging manifest.
+ *
+ * Both the existsSync anchor and the execFile call use the same literal
+ * `join(__dirname, 'ffmpeg-bin', 'ffmpeg')` expression, which nft evaluates.
  */
-export function findFfmpegPath(): string | null {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const resolved = require('ffmpeg-static') as string | null;
-  const candidates = [
-    resolved,
-    join(process.cwd(), 'node_modules', 'ffmpeg-static', 'ffmpeg'),
-    join(__dirname, 'node_modules', 'ffmpeg-static', 'ffmpeg')
-  ];
-  return candidates.find((p) => !!p && existsSync(p)) ?? null;
-}
-
 export async function execFfmpeg(args: string[]): Promise<boolean> {
-  const ffmpegPath = findFfmpegPath();
-  if (!ffmpegPath) return false;
+  const ffmpegPath = join(__dirname, 'ffmpeg-bin', 'ffmpeg');
+  if (!existsSync(ffmpegPath)) return false;
   try {
     await execFileAsync(ffmpegPath, args, {
       timeout: FFMPEG_TIMEOUT_MS,
