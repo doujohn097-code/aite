@@ -100,11 +100,7 @@ function serialize(value: unknown): unknown {
 
 export default async function queryHandler(
   req: NextApiRequest,
-  res: NextApiResponse<
-    | { items: { id: string; data: Record<string, unknown> }[] }
-    | { items: []; debug: string }
-    | { error: string }
-  >
+  res: NextApiResponse<Record<string, unknown>>
 ): Promise<void> {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -141,7 +137,11 @@ export default async function queryHandler(
     const limitN = Math.min(Math.max(rawQ.limit ?? 30, 1), 60);
     const app = adminAppForProject(project);
     if (!app) {
-      res.status(200).json({ items: [] });
+      res.status(200).json({
+        items: [],
+        debug: `no app for project=${project} (adminB=${!!process.env
+          .FIREBASE_ADMIN_KEY_B}, adminA=${!!process.env.FIREBASE_ADMIN_KEY})`
+      });
       return;
     }
     const firestore = app.firestore();
@@ -196,6 +196,13 @@ export default async function queryHandler(
       data: serialize(doc.data()) as Record<string, unknown>
     }));
 
+    console.log('api/query ok:', {
+      project,
+      collection: collectionName,
+      count: items.length,
+      envA: !!process.env.FIREBASE_ADMIN_KEY,
+      envB: !!process.env.FIREBASE_ADMIN_KEY_B
+    });
     res.status(200).json({ items });
   } catch (error) {
     console.error('api/query failed:', error);
