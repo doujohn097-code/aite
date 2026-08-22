@@ -102,6 +102,7 @@ export default async function queryHandler(
   req: NextApiRequest,
   res: NextApiResponse<
     | { items: { id: string; data: Record<string, unknown> }[] }
+    | { items: []; debug: string }
     | { error: string }
   >
 ): Promise<void> {
