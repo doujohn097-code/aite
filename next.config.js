@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Bumped for single-database (aite-76) rebuild — invalidates Vercel's
+  // build cache which was serving a stale bundle.
+  poweredByHeader: false,
   reactStrictMode: true,
   swcMinify: true,
   output: 'standalone',
