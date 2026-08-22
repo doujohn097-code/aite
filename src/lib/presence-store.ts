@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { onSnapshot, query, where, Timestamp } from 'firebase/firestore';
-import { usersCollection } from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
 
 // Must comfortably exceed the heartbeat interval in auth-context so dots
 // never flicker offline between beats; a 12-minute window pairs with the
@@ -33,26 +33,50 @@ function ensureListener(): void {
   if (unsubscribe) return;
 
   const cutoff = Timestamp.fromMillis(Date.now() - ONLINE_WINDOW_MS);
-  unsubscribe = onSnapshot(
-    query(usersCollection, where('lastActiveAt', '>', cutoff)),
+
+  const merge = (next: Record<string, number>): void => {
+    const merged: Record<string, number> = { ...online, ...next };
+    online = merged;
+    listeners.forEach((listener) => listener());
+  };
+
+  // Listen on BOTH round-robin databases so presence from either project
+  // shows up. Errors leave the other side working.
+  const unsubA = onSnapshot(
+    query(collectionsFor('a').users, where('lastActiveAt', '>', cutoff)),
     (snapshot) => {
       const next: Record<string, number> = {};
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        const stamp = data.lastActiveAt;
-        const millis = stamp?.toMillis?.() ?? 0;
-        // Key by both id and username — components know one or the other
+        const millis = data.lastActiveAt?.toMillis?.() ?? 0;
         next[docSnap.id] = millis;
         const username = data.username as string | undefined;
         if (username) next[username] = millis;
       });
-      online = next;
-      listeners.forEach((listener) => listener());
+      merge(next);
     },
-    () => {
-      online = {};
-    }
+    () => undefined
   );
+  const unsubB = onSnapshot(
+    query(collectionsFor('b').users, where('lastActiveAt', '>', cutoff)),
+    (snapshot) => {
+      const next: Record<string, number> = {};
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const millis = data.lastActiveAt?.toMillis?.() ?? 0;
+        next[docSnap.id] = millis;
+        const username = data.username as string | undefined;
+        if (username) next[username] = millis;
+      });
+      merge(next);
+    },
+    () => undefined
+  );
+
+  unsubscribe = (): void => {
+    unsubA();
+    unsubB();
+  };
 
   pruneTimer = setInterval(prune, 30_000);
 }

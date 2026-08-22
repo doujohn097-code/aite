@@ -4,7 +4,8 @@ import { useAuth } from '@lib/context/auth-context';
 import { useDocument } from '@lib/hooks/useDocument';
 import { useAnywhereRef } from '@lib/dual';
 import type { User } from '@lib/types/user';
-import { notificationsCollection } from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
+import { resolveUserProject } from '@lib/dual';
 import { formatDate } from '@lib/date';
 import { UserAvatar } from '@components/user/user-avatar';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -80,8 +81,17 @@ export function NotificationCard({
 
   const markAsRead = async (): Promise<void> => {
     if (!currentUser) return;
-    const ref = doc(notificationsCollection(currentUser.id), notification.id);
-    await updateDoc(ref, { read: true });
+    try {
+      // Notifications live in the signed-in user's own round-robin database.
+      const project = await resolveUserProject(currentUser.id);
+      const ref = doc(
+        collectionsFor(project).notifications(currentUser.id),
+        notification.id
+      );
+      await updateDoc(ref, { read: true });
+    } catch {
+      /* best-effort */
+    }
   };
 
   const style = typeStyles[notification.type] ?? typeStyles.reply;

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { onSnapshot, query, where, Timestamp } from 'firebase/firestore';
-import { usersCollection } from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
 
 type RingInfo = {
   lastStoryAt: Timestamp;
@@ -23,8 +23,16 @@ function ensureListener(): void {
   if (unsubscribe) return;
 
   const oneDayAgo = Timestamp.fromMillis(Date.now() - STORY_LIFETIME_MS);
-  unsubscribe = onSnapshot(
-    query(usersCollection, where('lastStoryAt', '>', oneDayAgo)),
+
+  const merge = (next: Record<string, RingInfo>): void => {
+    cache = { ...cache, ...next };
+    listeners.forEach((listener) => listener());
+  };
+
+  // Listen on BOTH round-robin databases so story rings from either
+  // project show up; errors leave the other side working.
+  const unsubA = onSnapshot(
+    query(collectionsFor('a').users, where('lastStoryAt', '>', oneDayAgo)),
     (snapshot) => {
       const next: Record<string, RingInfo> = {};
       snapshot.forEach((docSnap) => {
@@ -35,14 +43,31 @@ function ensureListener(): void {
             storyColor: (data.storyColor as string | null) ?? null
           };
       });
-      cache = next;
-      listeners.forEach((listener) => listener());
+      merge(next);
     },
-    () => {
-      // Permission errors (logged out) just leave the cache empty
-      cache = {};
-    }
+    () => undefined
   );
+  const unsubB = onSnapshot(
+    query(collectionsFor('b').users, where('lastStoryAt', '>', oneDayAgo)),
+    (snapshot) => {
+      const next: Record<string, RingInfo> = {};
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data.lastStoryAt)
+          next[docSnap.id] = {
+            lastStoryAt: data.lastStoryAt,
+            storyColor: (data.storyColor as string | null) ?? null
+          };
+      });
+      merge(next);
+    },
+    () => undefined
+  );
+
+  unsubscribe = (): void => {
+    unsubA();
+    unsubB();
+  };
 }
 
 function subscribe(listener: () => void): () => void {

@@ -125,7 +125,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
       userData?.lastStoryAt
     ) {
       if (authUser?.id === userId && userRef) {
-        void updateDoc(userRef, { lastStoryAt: null });
+        void updateDoc(userRef, { lastStoryAt: null }).catch(() => undefined);
       }
     }
   }, [

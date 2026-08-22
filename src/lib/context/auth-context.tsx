@@ -111,10 +111,26 @@ export function AuthContextProvider({
   };
 
   // The auth subscription follows the active project (round-robin database).
-  const authInstance = getFirebase(project).auth;
+  // We listen to BOTH projects' auth so a session that lives on the other
+  // database is still picked up, then auto-correct the stored project.
+  const authA = getFirebase('a').auth;
+  const authB = getFirebase('b').auth;
 
   useEffect(() => {
     let cancelled = false;
+
+    const activateProjectFor = (authUser: AuthUser): void => {
+      // If the signed-in user belongs to the other project (checked via the
+      // registry), switch the whole app to that project.
+      const current = readStoredProject();
+      void resolveUserProject(authUser.uid).then((resolved) => {
+        if (cancelled) return;
+        if (resolved && resolved !== current) {
+          storeProject(resolved);
+          setProjectState(resolved);
+        }
+      });
+    };
 
     const manageUser = async (authUser: AuthUser): Promise<void> => {
       const { uid, displayName, photoURL } = authUser;
@@ -144,7 +160,10 @@ export function AuthContextProvider({
       const fallbackName = pendingData?.name ?? displayName ?? 'مستخدم';
       const fallbackPhoto = photoURL ?? '/assets/default-avatar.png';
 
-      const cols = collectionsFor(project);
+      // Always use the user's REAL round-robin project (registry -> probes ->
+      // proxy), never the possibly-stale stored project.
+      const userProject = await resolveUserProject(uid);
+      const cols = collectionsFor(userProject);
 
       // قراءة الملف مع إعادة محاولة — لا نترك المستخدم عالقًا بسبب خطأ عابر
       let userSnapshot;
@@ -247,25 +266,40 @@ export function AuthContextProvider({
       setLoading(false);
     };
 
-    const unsubscribe = onAuthStateChanged(authInstance, (authUser) => {
+    const handleAuthUser = (
+      source: typeof authA,
+      authUser: AuthUser | null
+    ): void => {
       if (cancelled) return;
       if (authUser) {
         if (processedUid.current === authUser.uid) return;
+        activateProjectFor(authUser);
         void manageUser(authUser).catch((error) => {
           setError(error as Error);
           setLoading(false);
         });
       } else {
+        // Only clear when BOTH auths report no user.
+        const other = source === authA ? authB : authA;
+        if (other.currentUser != null) return;
         setUser(null);
         // تصفير المعرّف يسمح بإعادة الدخول بنفس الحساب بعد الخروج دون تحديث الصفحة
         processedUid.current = null;
         setLoading(false);
       }
-    });
+    };
+
+    const unsubscribeA = onAuthStateChanged(authA, (u) =>
+      handleAuthUser(authA, u)
+    );
+    const unsubscribeB = onAuthStateChanged(authB, (u) =>
+      handleAuthUser(authB, u)
+    );
 
     return () => {
       cancelled = true;
-      unsubscribe();
+      unsubscribeA();
+      unsubscribeB();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project]);

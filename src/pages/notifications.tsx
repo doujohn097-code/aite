@@ -8,11 +8,9 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
-import { db } from '@lib/firebase/app';
-import {
-  collectionsFor,
-  notificationsCollection
-} from '@lib/firebase/collections';
+import { db, getFirebase } from '@lib/firebase/app';
+import { collectionsFor } from '@lib/firebase/collections';
+import { resolveUserProject } from '@lib/dual';
 import { getActiveProject } from '@lib/firebase/app';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -35,46 +33,61 @@ export default function Notifications(): JSX.Element {
   useEffect(() => {
     if (!user) return;
 
-    const notificationsQuery = query(
-      collectionsFor(getActiveProject()).notifications(user.id),
-      orderBy('createdAt', 'desc')
-    );
+    // Notifications live in the user's OWN round-robin database — resolve it
+    // (registry -> proxy fallback) so users on either project see theirs.
+    let unsubscribe: (() => void) | null = null;
+    let disposed = false;
 
-    const unsubscribe = onSnapshot(
-      notificationsQuery,
-      (snapshot) => {
-        const data = snapshot.docs.map((docSnapshot) =>
-          docSnapshot.data({ serverTimestamps: 'estimate' })
-        );
-        setNotifications(data);
-      },
-      (error) => {
-        console.error('notifications snapshot error:', error);
-        setNotifications([]);
-      }
-    );
+    void resolveUserProject(user.id).then((userProject) => {
+      if (disposed) return;
+      const notificationsQuery = query(
+        collectionsFor(userProject).notifications(user.id),
+        orderBy('createdAt', 'desc')
+      );
+      unsubscribe = onSnapshot(
+        notificationsQuery,
+        (snapshot) => {
+          const data = snapshot.docs.map((docSnapshot) =>
+            docSnapshot.data({ serverTimestamps: 'estimate' })
+          );
+          setNotifications(data);
+        },
+        (error) => {
+          console.error('notifications snapshot error:', error);
+          setNotifications([]);
+        }
+      );
+    });
 
-    return unsubscribe;
+    return () => {
+      disposed = true;
+      unsubscribe?.();
+    };
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
 
     const markRead = async (): Promise<void> => {
-      const unreadQuery = query(
-        collectionsFor(getActiveProject()).notifications(user.id),
-        where('read', '==', false)
-      );
+      try {
+        const userProject = await resolveUserProject(user.id);
+        const unreadQuery = query(
+          collectionsFor(userProject).notifications(user.id),
+          where('read', '==', false)
+        );
 
-      const snapshot = await getDocs(unreadQuery);
-      if (snapshot.empty) return;
+        const snapshot = await getDocs(unreadQuery);
+        if (snapshot.empty) return;
 
-      const batch = writeBatch(db);
-      snapshot.docs.forEach((docSnapshot) => {
-        batch.update(docSnapshot.ref, { read: true });
-      });
+        const batch = writeBatch(getFirebase(userProject).firestore);
+        snapshot.docs.forEach((docSnapshot) => {
+          batch.update(docSnapshot.ref, { read: true });
+        });
 
-      await batch.commit();
+        await batch.commit();
+      } catch {
+        /* best-effort */
+      }
     };
 
     void markRead();

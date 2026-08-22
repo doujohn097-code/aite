@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { doc, getDoc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { useCacheQuery } from '@lib/hooks/useCacheQuery';
 import { getFirebase, getActiveProject } from '@lib/firebase/app';
 import { collectionsFor } from '@lib/firebase/collections';
 import { otherProject } from '@lib/project-types';
@@ -221,19 +222,25 @@ async function registryProject(uid: string): Promise<ProjectId | null> {
   return null;
 }
 
-/** Checks both projects via the server proxy for a doc id. */
+/** Checks both projects via the server proxy IN PARALLEL for a doc id. */
 async function resolveDocProjectViaProxy(
   kind: 'users' | 'tweets' | 'stories' | 'conversations',
   id: string
 ): Promise<ProjectId | null> {
-  for (const project of ['a', 'b'] as const) {
-    const items = await withTimeout(
-      queryViaProxy(project, { collection: kind, ids: [id], limit: 1 }),
-      9000,
+  const [inA, inB] = await Promise.all([
+    withTimeout(
+      queryViaProxy('a', { collection: kind, ids: [id], limit: 1 }),
+      6000,
       null
-    );
-    if (items?.length) return project;
-  }
+    ),
+    withTimeout(
+      queryViaProxy('b', { collection: kind, ids: [id], limit: 1 }),
+      6000,
+      null
+    )
+  ]);
+  if (inA?.length) return 'a';
+  if (inB?.length) return 'b';
   return null;
 }
 
@@ -246,27 +253,35 @@ async function resolveProjectWith(
   const cached = cache.get(id);
   if (cached) return cached;
 
+  // Direct probes and the server proxy run CONCURRENTLY — when the client's
+  // WebChannel is blocked, the proxy answers first; when it's healthy, the
+  // direct probe wins. Never sequential.
   const results = await Promise.all([
     withTimeout(direct('a'), PROBE_TIMEOUT_MS, false),
-    withTimeout(direct('b'), PROBE_TIMEOUT_MS, false)
+    withTimeout(direct('b'), PROBE_TIMEOUT_MS, false),
+    resolveDocProjectViaProxy(kind, id)
   ]);
   let project: ProjectId;
   if (results[0]) project = 'a';
   else if (results[1]) project = 'b';
-  else {
-    const viaProxy = await resolveDocProjectViaProxy(kind, id);
-    project = viaProxy ?? 'a';
-  }
+  else if (results[2]) project = results[2];
+  else project = 'a';
   cache.set(id, project);
   return project;
 }
 
 /** Resolves which project a user's profile lives in (cached, bounded). */
 export async function resolveUserProject(uid: string): Promise<ProjectId> {
-  const registered = await registryProject(uid);
-  if (registered) {
-    userProjectCache.set(uid, registered);
-    return registered;
+  // Registry read + proxy probe run CONCURRENTLY so a blocked WebChannel
+  // never delays project resolution.
+  const [registered, viaProxy] = await Promise.all([
+    registryProject(uid),
+    resolveDocProjectViaProxy('users', uid)
+  ]);
+  const project = registered ?? viaProxy;
+  if (project) {
+    userProjectCache.set(uid, project);
+    return project;
   }
   return resolveProjectWith(
     uid,
@@ -443,6 +458,12 @@ export function useMergedCollection<
   const cancelled = useRef(false);
   const { includeUser, allowNull, disabled, fallback } = options ?? {};
 
+  // Stable identities: the callers rebuild their Query objects on every
+  // render, which would restart this effect (and wipe the merged results)
+  // continuously. queryEqual keeps one stable Query per distinct shape.
+  const cachedQueryA = useCacheQuery(queryA);
+  const cachedQueryB = useCacheQuery(queryB);
+
   useEffect(() => {
     cancelled.current = false;
     if (disabled) {
@@ -451,8 +472,8 @@ export function useMergedCollection<
       return;
     }
 
-    const effA = queryA && !isProjectSkipped('a') ? queryA : null;
-    const effB = queryB && !isProjectSkipped('b') ? queryB : null;
+    const effA = cachedQueryA && !isProjectSkipped('a') ? cachedQueryA : null;
+    const effB = cachedQueryB && !isProjectSkipped('b') ? cachedQueryB : null;
 
     if (!effA && !effB && !fallback?.a && !fallback?.b) {
       setData(allowNull ? [] : null);
@@ -476,24 +497,41 @@ export function useMergedCollection<
       );
 
       if (includeUser) {
+        // Show items IMMEDIATELY with fallback users, then upgrade the
+        // names as profiles resolve — no blank feeds while loading users.
+        setData(
+          sorted.map((item) => {
+            const createdBy = (item as unknown as { createdBy?: string })
+              .createdBy;
+            return {
+              ...item,
+              user: fallbackUser(createdBy ?? '')
+            } as WithProject<T> & { user: User };
+          })
+        );
+        setLoading(false);
+
         void Promise.all(
           sorted.map(async (item) => {
             const createdBy = (item as unknown as { createdBy?: string })
               .createdBy;
-            const user = createdBy
-              ? (await withTimeout(
-                  fetchUserAnywhere(createdBy),
-                  USER_FETCH_TIMEOUT_MS,
-                  null
-                )) ?? fallbackUser(createdBy)
-              : fallbackUser('');
-            return { ...item, user } as WithProject<T> & { user: User };
+            if (!createdBy) return null;
+            return fetchUserAnywhere(createdBy).then((user) =>
+              user ? { id: item.id, user } : null
+            );
           })
-        ).then((withUsers) => {
-          if (!cancelled.current) {
-            setData(withUsers);
-            setLoading(false);
-          }
+        ).then((resolvedUsers) => {
+          if (cancelled.current) return;
+          setData((prev) =>
+            (prev ?? []).map((item) => {
+              const found = resolvedUsers.find((r) => r?.id === item.id);
+              return found?.user
+                ? ({ ...item, user: found.user } as WithProject<T> & {
+                    user: User;
+                  })
+                : item;
+            })
+          );
         });
       } else {
         setData(sorted);
@@ -584,7 +622,7 @@ export function useMergedCollection<
       unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryA, queryB, includeUser, allowNull, disabled]);
+  }, [cachedQueryA, cachedQueryB, includeUser, allowNull, disabled]);
 
   return { data, loading };
 }
