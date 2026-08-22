@@ -55,8 +55,13 @@ export function getR2Client(): S3Client | null {
  * 3. repo-relative fallbacks
  */
 export function findFfmpegCandidates(): string[] {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const resolved = require('ffmpeg-static') as string | null;
+  let resolved: string | null = null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    resolved = require('ffmpeg-static') as string | null;
+  } catch {
+    // The package may not be installed; the committed binary covers us.
+  }
   return [
     join(__dirname, 'ffmpeg-bin', 'ffmpeg'),
     resolved,
