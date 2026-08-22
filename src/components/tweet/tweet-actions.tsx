@@ -7,7 +7,8 @@ import cn from 'clsx';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
-import { tweetsCollection } from '@lib/firebase/collections';
+import { resolveTweetProject } from '@lib/dual';
+import { collectionsFor } from '@lib/firebase/collections';
 import {
   removeTweet,
   manageReply,
@@ -104,7 +105,12 @@ export function TweetActions({
   const handleRemove = async (): Promise<void> => {
     if (viewTweet)
       if (parentId) {
-        const parentSnapshot = await getDoc(doc(tweetsCollection, parentId));
+        const parentSnapshot = await getDoc(
+          doc(
+            collectionsFor(await resolveTweetProject(parentId)).tweets,
+            parentId
+          )
+        );
         if (parentSnapshot.exists()) {
           await push(`/tweet/${parentId}`, undefined, { scroll: false });
           delayScroll(200)();

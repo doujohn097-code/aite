@@ -1,8 +1,8 @@
 import { AnimatePresence } from 'framer-motion';
 import { where, orderBy } from 'firebase/firestore';
 import { useWindow } from '@lib/context/window-context';
-import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
-import { tweetsCollection } from '@lib/firebase/collections';
+import { useInfiniteScrollBoth } from '@lib/hooks/useInfiniteScroll';
+import { collectionsFor } from '@lib/firebase/collections';
 import { HomeLayout, ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { SEO } from '@components/common/seo';
@@ -19,8 +19,9 @@ import type { ReactElement, ReactNode } from 'react';
 export default function Home(): JSX.Element {
   const { isMobile } = useWindow();
 
-  const { data, loading, LoadMore } = useInfiniteScroll(
-    tweetsCollection,
+  const { data, loading, LoadMore } = useInfiniteScrollBoth(
+    collectionsFor('a').tweets,
+    collectionsFor('b').tweets,
     [where('parent', '==', null), orderBy('createdAt', 'desc')],
     { includeUser: true, allowNull: true, preserve: true }
   );

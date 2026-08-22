@@ -1,4 +1,4 @@
-import { verifyIdToken } from '@lib/firebase-admin';
+import { verifyIdTokenAny } from '@lib/firebase-admin';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export type MusicTrack = {
@@ -43,7 +43,7 @@ export default async function musicEndpoint(
   }
 
   try {
-    await verifyIdToken(token);
+    await verifyIdTokenAny(token);
   } catch {
     res.status(401).json({ error: 'Unauthorized' });
     return;

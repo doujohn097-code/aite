@@ -5,7 +5,12 @@ import { doc, query, where, Timestamp, updateDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
-import { usersCollection, storiesCollection } from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
+import {
+  resolveUserProject,
+  useAnywhereRef,
+  useMergedCollection
+} from '@lib/dual';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useDocument } from '@lib/hooks/useDocument';
 import { useModal } from '@lib/hooks/useModal';
@@ -20,6 +25,7 @@ import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { CreateStoryModal } from './create-story-modal';
 import type { Story } from '@lib/types/story';
+import type { User } from '@lib/types/user';
 
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_STORY_DURATION_MS = 15000;
@@ -46,19 +52,40 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const userRef = doc(usersCollection, userId);
+  const { ref: userRef } = useAnywhereRef<User>('users', userId);
   const { data: userData, loading: userLoading } = useDocument(userRef, {
     allowNull: true
   });
 
+  // Stories live in the author's round-robin project — resolve it first.
+  const [storyOwnerProject, setStoryOwnerProject] = useState<'a' | 'b' | null>(
+    null
+  );
+  useEffect(() => {
+    let cancelled = false;
+    setStoryOwnerProject(null);
+    void resolveUserProject(userId).then((project) => {
+      if (!cancelled) setStoryOwnerProject(project);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
   const storiesQuery = useMemo(
-    () => query(storiesCollection, where('userId', '==', userId)),
-    [userId]
+    () =>
+      storyOwnerProject
+        ? query(
+            collectionsFor(storyOwnerProject).stories,
+            where('userId', '==', userId)
+          )
+        : null,
+    [userId, storyOwnerProject]
   );
 
   const { data: rawStories, loading: storiesLoading } = useCollection(
     storiesQuery,
-    { allowNull: true }
+    { allowNull: true, disabled: !storyOwnerProject }
   );
 
   const stories = useMemo(() => {
@@ -97,7 +124,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
       stories.length === 0 &&
       userData?.lastStoryAt
     ) {
-      if (authUser?.id === userId) {
+      if (authUser?.id === userId && userRef) {
         void updateDoc(userRef, { lastStoryAt: null });
       }
     }
@@ -111,14 +138,26 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
     userRef
   ]);
 
-  const activeUsersQuery = useMemo(() => {
+  const activeUsersQueryA = useMemo(() => {
     const oneDayAgo = Timestamp.fromMillis(Date.now() - STORY_LIFETIME_MS);
-    return query(usersCollection, where('lastStoryAt', '>', oneDayAgo));
+    return query(
+      collectionsFor('a').users,
+      where('lastStoryAt', '>', oneDayAgo)
+    );
+  }, []);
+  const activeUsersQueryB = useMemo(() => {
+    const oneDayAgo = Timestamp.fromMillis(Date.now() - STORY_LIFETIME_MS);
+    return query(
+      collectionsFor('b').users,
+      where('lastStoryAt', '>', oneDayAgo)
+    );
   }, []);
 
-  const { data: activeUsersRaw } = useCollection(activeUsersQuery, {
-    allowNull: true
-  });
+  const { data: activeUsersRaw } = useMergedCollection(
+    activeUsersQueryA,
+    activeUsersQueryB,
+    { allowNull: true }
+  );
 
   const activeUsers = useMemo(() => {
     if (!activeUsersRaw || !authUser) return [];

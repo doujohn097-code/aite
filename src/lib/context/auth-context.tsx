@@ -25,16 +25,19 @@ import {
   query,
   where
 } from 'firebase/firestore';
-import { auth } from '@lib/firebase/app';
 import {
-  usersCollection,
-  userStatsCollection,
-  notificationsCollection
-} from '@lib/firebase/collections';
+  getFirebase,
+  signIntoPeer,
+  signOutBoth,
+  storeProject,
+  readStoredProject
+} from '@lib/firebase/app';
+import { collectionsFor } from '@lib/firebase/collections';
 import { getRandomId, getRandomInt } from '@lib/random';
 import { checkUsernameAvailability } from '@lib/firebase/utils';
 import { usernameToInternalEmail } from '@lib/utils';
 import { registerWebPushToken } from '@lib/native-bridge';
+import type { ProjectId } from '@lib/project-types';
 import type { ReactNode } from 'react';
 import type { User as AuthUser } from 'firebase/auth';
 import type { WithFieldValue } from 'firebase/firestore';
@@ -55,6 +58,8 @@ type AuthContext = {
   isAdmin: boolean;
   randomSeed: string;
   unreadNotifications: number;
+  /** Which round-robin database this account lives in. */
+  project: ProjectId;
   signOut: () => Promise<void>;
   signInWithUsername: (username: string, password: string) => Promise<void>;
   signUpWithUsername: (data: SignUpData) => Promise<void>;
@@ -68,6 +73,20 @@ type AuthContextProviderProps = {
   children: ReactNode;
 };
 
+/** Posts JSON to a server route and returns the parsed body. */
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = (await response.json().catch(() => ({}))) as T & {
+    error?: string;
+  };
+  if (!response.ok) throw new Error(data.error ?? 'request_failed');
+  return data;
+}
+
 export function AuthContextProvider({
   children
 }: AuthContextProviderProps): JSX.Element {
@@ -75,7 +94,16 @@ export function AuthContextProvider({
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
+  const [project, setProjectState] = useState<ProjectId>(readStoredProject);
   const processedUid = useRef<string | null>(null);
+
+  const setProject = (next: ProjectId): void => {
+    storeProject(next);
+    setProjectState(next);
+  };
+
+  // The auth subscription follows the active project (round-robin database).
+  const authInstance = getFirebase(project).auth;
 
   useEffect(() => {
     let cancelled = false;
@@ -108,13 +136,15 @@ export function AuthContextProvider({
       const fallbackName = pendingData?.name ?? displayName ?? 'مستخدم';
       const fallbackPhoto = photoURL ?? '/assets/default-avatar.png';
 
+      const cols = collectionsFor(project);
+
       // قراءة الملف مع إعادة محاولة — لا نترك المستخدم عالقًا بسبب خطأ عابر
       let userSnapshot;
       try {
-        userSnapshot = await getDoc(doc(usersCollection, uid));
+        userSnapshot = await getDoc(doc(cols.users, uid));
       } catch {
         await new Promise((resolve) => setTimeout(resolve, 800));
-        userSnapshot = await getDoc(doc(usersCollection, uid));
+        userSnapshot = await getDoc(doc(cols.users, uid));
       }
 
       const defaultUserData: User = {
@@ -192,11 +222,11 @@ export function AuthContextProvider({
 
         try {
           await Promise.all([
-            setDoc(doc(usersCollection, uid), userData),
-            setDoc(doc(userStatsCollection(uid), 'stats'), userStatsData)
+            setDoc(doc(cols.users, uid), userData),
+            setDoc(doc(cols.userStats(uid), 'stats'), userStatsData)
           ]);
 
-          const newUser = (await getDoc(doc(usersCollection, uid))).data();
+          const newUser = (await getDoc(doc(cols.users, uid))).data();
           setUser({ ...defaultUserData, ...newUser } as User);
         } catch (error) {
           setError(error as Error);
@@ -209,7 +239,7 @@ export function AuthContextProvider({
       setLoading(false);
     };
 
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribe = onAuthStateChanged(authInstance, (authUser) => {
       if (cancelled) return;
       if (authUser) {
         if (processedUid.current === authUser.uid) return;
@@ -229,7 +259,8 @@ export function AuthContextProvider({
       cancelled = true;
       unsubscribe();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project]);
 
   // Web app (PWA): persist the FCM token on the user doc so
   // the server can push message notifications; re-register on token refresh.
@@ -238,6 +269,9 @@ export function AuthContextProvider({
     if (!userId) return;
 
     void registerWebPushToken(userId);
+    // Sign into the OTHER database too, so cross-project content (feeds,
+    // profiles, messages) is readable from either project.
+    void signIntoPeer(project);
     const handleToken = (): void => void registerWebPushToken(userId);
     window.addEventListener('aite-fcm-token', handleToken);
 
@@ -259,12 +293,13 @@ export function AuthContextProvider({
     if (!userId) return;
     lastBeatRef.current = 0;
 
+    const cols = collectionsFor(project);
     const beat = (force = false): void => {
       const now = Date.now();
       if (!force && now - lastBeatRef.current < HEARTBEAT_FREQUENT_GUARD_MS)
         return;
       lastBeatRef.current = now;
-      void updateDoc(doc(usersCollection, userId), {
+      void updateDoc(doc(cols.users, userId), {
         lastActiveAt: serverTimestamp()
       }).catch(() => null);
     };
@@ -288,9 +323,10 @@ export function AuthContextProvider({
     if (!user) return;
 
     const { id } = user;
+    const cols = collectionsFor(project);
 
     const unsubscribeUser = onSnapshot(
-      doc(usersCollection, id),
+      doc(cols.users, id),
       (doc) => {
         setUser(
           (prevUser) => ({ ...prevUser, ...(doc.data() as User) } as User)
@@ -302,7 +338,7 @@ export function AuthContextProvider({
     );
 
     const unsubscribeNotifications = onSnapshot(
-      query(notificationsCollection(id), where('read', '==', false)),
+      query(cols.notifications(id), where('read', '==', false)),
       (snapshot) => setUnreadNotifications(snapshot.size),
       (error) => {
         console.error('notifications count error:', error);
@@ -339,8 +375,31 @@ export function AuthContextProvider({
     password: string
   ): Promise<void> => {
     try {
-      const email = usernameToInternalEmail(username);
-      await signInWithEmailAndPassword(auth, email, password);
+      const cleaned = username.trim().toLowerCase();
+      // يوجّه الحساب إلى قاعدته (الأساسية أو aite-76) عبر سجل التوجيه.
+      let targetProject: ProjectId = readStoredProject();
+      try {
+        const routed = await postJson<{ found?: boolean; project?: ProjectId }>(
+          '/api/auth/route',
+          { identifier: cleaned }
+        );
+        if (routed.found && routed.project) targetProject = routed.project;
+      } catch {
+        // فشل التوجيه — نجرّب المشروع الحالي ثم الأساسي
+      }
+
+      setProject(targetProject);
+      const email = usernameToInternalEmail(cleaned);
+      const targetAuth = getFirebase(targetProject).auth;
+      try {
+        await signInWithEmailAndPassword(targetAuth, email, password);
+      } catch (error) {
+        // احتياط: الحساب قد يكون في المشروع الآخر (سجل توجيه قديم/ناقص)
+        const fallbackProject: ProjectId = targetProject === 'a' ? 'b' : 'a';
+        const fallbackAuth = getFirebase(fallbackProject).auth;
+        await signInWithEmailAndPassword(fallbackAuth, email, password);
+        setProject(fallbackProject);
+      }
     } catch (error) {
       setError(toArabicAuthError(error));
       throw toArabicAuthError(error);
@@ -361,10 +420,18 @@ export function AuthContextProvider({
         throw error;
       }
 
-      const email = usernameToInternalEmail(username);
+      // إنشاء الحساب عبر الخادم: يختار القاعدة بالتناوب (الأساسية ↔ aite-76)
+      // ويسجّل الحساب في سجل التوجيه.
+      const result = await postJson<{ project: ProjectId; email: string }>(
+        '/api/auth/signup',
+        { username, password, name }
+      );
 
-      const { user: authUser } = await createUserWithEmailAndPassword(
-        auth,
+      setProject(result.project);
+      const email = result.email ?? usernameToInternalEmail(username);
+
+      const { user: authUser } = await signInWithEmailAndPassword(
+        getFirebase(result.project).auth,
         email,
         password
       );
@@ -385,38 +452,6 @@ export function AuthContextProvider({
         displayName: name,
         photoURL: defaultPhotoURL
       });
-
-      const userData: WithFieldValue<User> = {
-        id: authUser.uid,
-        bio: null,
-        name,
-        theme: null,
-        accent: null,
-        website: null,
-        location: null,
-        photoURL: defaultPhotoURL,
-        username,
-        verified: false,
-        following: [],
-        followers: [],
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        totalTweets: 0,
-        totalPhotos: 0,
-        pinnedTweet: null,
-        coverPhotoURL: null
-      };
-
-      const userStatsData: WithFieldValue<Stats> = {
-        likes: [],
-        tweets: [],
-        updatedAt: null
-      };
-
-      await Promise.all([
-        setDoc(doc(usersCollection, authUser.uid), userData),
-        setDoc(doc(userStatsCollection(authUser.uid), 'stats'), userStatsData)
-      ]);
     } catch (error) {
       setError(error as Error);
       throw error;
@@ -427,7 +462,7 @@ export function AuthContextProvider({
     try {
       if (typeof window !== 'undefined')
         window.sessionStorage.setItem('aite:post-logout', '1');
-      await signOutFirebase(auth);
+      await signOutBoth(project);
     } catch (error) {
       setError(error as Error);
     }
@@ -458,6 +493,7 @@ export function AuthContextProvider({
     isAdmin,
     randomSeed,
     unreadNotifications,
+    project,
     signOut,
     signInWithUsername,
     signUpWithUsername,

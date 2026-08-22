@@ -5,11 +5,8 @@ import Link from 'next/link';
 import { doc, onSnapshot, query, where } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
-import {
-  conversationsCollection,
-  conversationMessagesCollection,
-  usersCollection
-} from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
+import { resolveConversationProject, resolveUserProject } from '@lib/dual';
 import {
   sendMessage,
   markConversationRead,
@@ -60,6 +57,7 @@ export default function Chat(): JSX.Element {
   const router = useRouter();
   const conversationId = router.query.id as string | undefined;
 
+  const [convProject, setConvProject] = useState<'a' | 'b' | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [peer, setPeer] = useState<User | null>(null);
   const [peerId, setPeerId] = useState<string | null>(null);
@@ -122,6 +120,9 @@ export default function Chat(): JSX.Element {
     setShowJumpToLatest(false);
     stickToBottomRef.current = true;
     initialScrollDoneRef.current = false;
+    setConvProject(null);
+    if (conversationId)
+      void resolveConversationProject(conversationId).then(setConvProject);
   }, [conversationId]);
 
   // إيقاف "يكتب الآن" عند مغادرة المحادثة
@@ -137,8 +138,10 @@ export default function Chat(): JSX.Element {
   useEffect(() => {
     if (!user || !conversationId) return;
 
+    if (!convProject) return;
+    const cols = collectionsFor(convProject);
     const unsubscribe = onSnapshot(
-      doc(conversationsCollection, conversationId),
+      doc(cols.conversations, conversationId),
       (snapshot) => {
         if (!snapshot.exists()) {
           setForbidden(true);
@@ -164,19 +167,27 @@ export default function Chat(): JSX.Element {
 
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, conversationId]);
+  }, [user, conversationId, convProject]);
 
   // الاستماع الحي لبيانات الطرف الآخر (النشاط، الصورة، القصة)
   useEffect(() => {
     if (!peerId) return;
-    const unsubscribe = onSnapshot(
-      doc(usersCollection, peerId),
-      (snapshot) => {
-        if (snapshot.exists()) setPeer(snapshot.data());
-      },
-      () => undefined
-    );
-    return unsubscribe;
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+    void resolveUserProject(peerId).then((peerProject) => {
+      if (cancelled) return;
+      unsubscribe = onSnapshot(
+        doc(collectionsFor(peerProject).users, peerId),
+        (snapshot) => {
+          if (snapshot.exists()) setPeer(snapshot.data());
+        },
+        () => undefined
+      );
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, [peerId]);
 
   const isBlockedConversation =
@@ -194,8 +205,9 @@ export default function Chat(): JSX.Element {
 
     // فلتر واحد فقط بلا orderBy — array-contains مع orderBy يتطلب فهرسًا مركّبًا
     // غير موجود فيفشل الاستعلام وتختفي الرسائل. نرتّب محليًا ونقتطع آخر 150.
+    if (!convProject) return;
     const messagesQuery = query(
-      conversationMessagesCollection(conversationId),
+      collectionsFor(convProject).conversationMessages(conversationId),
       where('participants', 'array-contains', user.id)
     );
 
@@ -247,7 +259,7 @@ export default function Chat(): JSX.Element {
 
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, conversationId, forbidden]);
+  }, [user, conversationId, forbidden, convProject]);
 
   // نصل لآخر الرسائل قبل الرسم الأول، فلا يرى المستخدم حركة تمرير طويلة من الأعلى.
   useLayoutEffect(() => {

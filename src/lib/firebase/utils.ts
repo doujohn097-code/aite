@@ -17,7 +17,13 @@ import {
   getCountFromServer,
   Timestamp
 } from 'firebase/firestore';
-import { db, auth } from './app';
+import { db, auth, getFirebase, getActiveProject } from './app';
+import { collectionsFor } from './collections';
+import {
+  resolveTweetProject,
+  resolveUserProject,
+  resolveStoryProject
+} from '@lib/dual';
 import { normalizeVideo } from '@lib/media-normalize';
 import { sendPushNotification } from '@lib/push';
 import {
@@ -38,13 +44,51 @@ import type { Story } from '@lib/types/story';
 import { getTimestampMillis } from '@lib/date';
 import type { Tweet } from '@lib/types/tweet';
 
+/** Dual-database helpers: every write resolves which project the target
+ * document lives in (round-robin routing) so interactions work across both
+ * the primary (myapp-5a04d) and secondary (aite-76) databases. */
+async function colsOfTweet(
+  tweetId: string
+): Promise<ReturnType<typeof collectionsFor>> {
+  return collectionsFor(await resolveTweetProject(tweetId));
+}
+async function colsOfUser(
+  uid: string
+): Promise<ReturnType<typeof collectionsFor>> {
+  return collectionsFor(await resolveUserProject(uid));
+}
+async function colsOfStory(
+  storyId: string
+): Promise<ReturnType<typeof collectionsFor>> {
+  return collectionsFor(await resolveStoryProject(storyId));
+}
+function activeCols(): ReturnType<typeof collectionsFor> {
+  return collectionsFor(getActiveProject());
+}
+function activeDb() {
+  return getFirebase(getActiveProject()).firestore;
+}
+function activeAuth() {
+  return getFirebase(getActiveProject()).auth;
+}
+
 export async function checkUsernameAvailability(
   username: string
 ): Promise<boolean> {
-  const { empty } = await getDocs(
-    query(usersCollection, where('username', '==', username), limit(1))
+  const checks = await Promise.all(
+    (['a', 'b'] as const).map((project) =>
+      getDocs(
+        query(
+          collectionsFor(project).users,
+          where('username', '==', username),
+          limit(1)
+        )
+      )
+        .then((snapshot) => snapshot.empty)
+        .catch(() => true)
+    )
   );
-  return empty;
+  return checks.every(Boolean);
 }
 
 export async function getCollectionCount<T>(
@@ -102,7 +146,7 @@ export async function managePinnedTweet(
   userId: string,
   tweetId: string
 ): Promise<void> {
-  const userRef = doc(usersCollection, userId);
+  const userRef = doc(activeCols().users, userId);
   await updateDoc(userRef, {
     updatedAt: serverTimestamp(),
     pinnedTweet: type === 'pin' ? tweetId : null
@@ -114,32 +158,37 @@ export async function manageFollow(
   userId: string,
   targetUserId: string
 ): Promise<void> {
-  const batch = writeBatch(db);
-
-  const userDocRef = doc(usersCollection, userId);
-  const targetUserDocRef = doc(usersCollection, targetUserId);
+  // Each user's profile lives in its own round-robin database, so the two
+  // writes are applied to their respective projects.
+  const userDocRef = doc(activeCols().users, userId);
+  const targetUserDocRef = doc(
+    collectionsFor(await resolveUserProject(targetUserId)).users,
+    targetUserId
+  );
 
   if (type === 'follow') {
-    batch.update(userDocRef, {
-      following: arrayUnion(targetUserId),
-      updatedAt: serverTimestamp()
-    });
-    batch.update(targetUserDocRef, {
-      followers: arrayUnion(userId),
-      updatedAt: serverTimestamp()
-    });
+    await Promise.all([
+      updateDoc(userDocRef, {
+        following: arrayUnion(targetUserId),
+        updatedAt: serverTimestamp()
+      }),
+      updateDoc(targetUserDocRef, {
+        followers: arrayUnion(userId),
+        updatedAt: serverTimestamp()
+      })
+    ]);
   } else {
-    batch.update(userDocRef, {
-      following: arrayRemove(targetUserId),
-      updatedAt: serverTimestamp()
-    });
-    batch.update(targetUserDocRef, {
-      followers: arrayRemove(userId),
-      updatedAt: serverTimestamp()
-    });
+    await Promise.all([
+      updateDoc(userDocRef, {
+        following: arrayRemove(targetUserId),
+        updatedAt: serverTimestamp()
+      }),
+      updateDoc(targetUserDocRef, {
+        followers: arrayRemove(userId),
+        updatedAt: serverTimestamp()
+      })
+    ]);
   }
-
-  await batch.commit();
 
   if (type === 'follow')
     await createNotification(targetUserId, {
@@ -151,6 +200,8 @@ export async function manageFollow(
 }
 
 export async function removeTweet(tweetId: string): Promise<void> {
+  const cols = await colsOfTweet(tweetId);
+  const dbOfTweet = activeDb();
   const idsToDelete = new Set<string>([tweetId]);
   let currentBatch = [tweetId];
 
@@ -162,8 +213,8 @@ export async function removeTweet(tweetId: string): Promise<void> {
       for (let i = 0; i < currentBatch.length; i += 10) {
         const chunk = currentBatch.slice(i, i + 10);
         const [parentSnap, replyToSnap] = await Promise.all([
-          getDocs(query(tweetsCollection, where('parent.id', 'in', chunk))),
-          getDocs(query(tweetsCollection, where('replyTo.id', 'in', chunk)))
+          getDocs(query(cols.tweets, where('parent.id', 'in', chunk))),
+          getDocs(query(cols.tweets, where('replyTo.id', 'in', chunk)))
         ]);
 
         parentSnap.docs.forEach((d) => {
@@ -190,9 +241,9 @@ export async function removeTweet(tweetId: string): Promise<void> {
   // Delete all collected documents in atomic batches of up to 450
   const allIds = Array.from(idsToDelete);
   for (let i = 0; i < allIds.length; i += 450) {
-    const batch = writeBatch(db);
+    const batch = writeBatch(dbOfTweet);
     allIds.slice(i, i + 450).forEach((id) => {
-      batch.delete(doc(tweetsCollection, id));
+      batch.delete(doc(cols.tweets, id));
     });
     await batch.commit();
   }
@@ -285,7 +336,7 @@ export async function uploadImages(
 
   // Cloudflare R2 is the only media backend. A failed signed upload must be
   // surfaced to the UI rather than silently writing to a second provider.
-  const idToken = await auth.currentUser?.getIdToken();
+  const idToken = await activeAuth().currentUser?.getIdToken();
   if (!idToken) throw new Error('يجب تسجيل الدخول قبل رفع الوسائط');
 
   const response = await fetch('/api/upload', {
@@ -364,7 +415,8 @@ export async function manageReply(
   type: 'increment' | 'decrement',
   tweetId: string
 ): Promise<void> {
-  const tweetRef = doc(tweetsCollection, tweetId);
+  const cols = await colsOfTweet(tweetId);
+  const tweetRef = doc(cols.tweets, tweetId);
 
   try {
     const tweetSnap = await getDoc(tweetRef);
@@ -375,7 +427,7 @@ export async function manageReply(
       updatedAt: serverTimestamp()
     });
 
-    const currentUserId = auth.currentUser?.uid;
+    const currentUserId = activeAuth().currentUser?.uid;
 
     if (
       type === 'increment' &&
@@ -403,7 +455,7 @@ export async function manageTotalTweets(
   type: 'increment' | 'decrement',
   userId: string
 ): Promise<void> {
-  const userRef = doc(usersCollection, userId);
+  const userRef = doc((await colsOfUser(userId)).users, userId);
   await updateDoc(userRef, {
     totalTweets: increment(type === 'increment' ? 1 : -1),
     updatedAt: serverTimestamp()
@@ -414,7 +466,7 @@ export async function manageTotalReplies(
   type: 'increment' | 'decrement',
   userId: string
 ): Promise<void> {
-  const userRef = doc(usersCollection, userId);
+  const userRef = doc((await colsOfUser(userId)).users, userId);
   await updateDoc(userRef, {
     totalReplies: increment(type === 'increment' ? 1 : -1),
     updatedAt: serverTimestamp()
@@ -425,7 +477,7 @@ export async function manageTotalPhotos(
   type: 'increment' | 'decrement',
   userId: string
 ): Promise<void> {
-  const userRef = doc(usersCollection, userId);
+  const userRef = doc((await colsOfUser(userId)).users, userId);
   await updateDoc(userRef, {
     totalPhotos: increment(type === 'increment' ? 1 : -1),
     updatedAt: serverTimestamp()
@@ -438,43 +490,47 @@ export function manageRetweet(
   tweetId: string
 ) {
   return async (): Promise<void> => {
-    const batch = writeBatch(db);
-
-    const tweetRef = doc(tweetsCollection, tweetId);
-    const userStatsRef = doc(userStatsCollection(userId), 'stats');
+    // The tweet lives in its author's project; the user's stats live in the
+    // user's own project — applied separately (cross-project batch is not
+    // possible).
+    const tweetCols = await colsOfTweet(tweetId);
+    const tweetRef = doc(tweetCols.tweets, tweetId);
+    const userStatsRef = doc(activeCols().userStats(userId), 'stats');
 
     const tweetSnap = await getDoc(tweetRef);
     const tweetOwnerId = tweetSnap.data()?.createdBy;
 
     if (type === 'retweet') {
-      batch.update(tweetRef, {
-        userRetweets: arrayUnion(userId),
-        updatedAt: serverTimestamp()
-      });
-      batch.set(
-        userStatsRef,
-        {
-          tweets: arrayUnion(tweetId),
+      await Promise.all([
+        updateDoc(tweetRef, {
+          userRetweets: arrayUnion(userId),
           updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
+        }),
+        setDoc(
+          userStatsRef,
+          {
+            tweets: arrayUnion(tweetId),
+            updatedAt: serverTimestamp()
+          },
+          { merge: true }
+        )
+      ]);
     } else {
-      batch.update(tweetRef, {
-        userRetweets: arrayRemove(userId),
-        updatedAt: serverTimestamp()
-      });
-      batch.set(
-        userStatsRef,
-        {
-          tweets: arrayRemove(tweetId),
+      await Promise.all([
+        updateDoc(tweetRef, {
+          userRetweets: arrayRemove(userId),
           updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
+        }),
+        setDoc(
+          userStatsRef,
+          {
+            tweets: arrayRemove(tweetId),
+            updatedAt: serverTimestamp()
+          },
+          { merge: true }
+        )
+      ]);
     }
-
-    await batch.commit();
 
     if (type === 'retweet' && tweetOwnerId && tweetOwnerId !== userId)
       await createNotification(
@@ -497,43 +553,47 @@ export function manageLike(
   tweetId: string
 ) {
   return async (): Promise<void> => {
-    const batch = writeBatch(db);
-
-    const userStatsRef = doc(userStatsCollection(userId), 'stats');
-    const tweetRef = doc(tweetsCollection, tweetId);
+    // The tweet lives in its author's project; the user's stats live in the
+    // user's own project — applied separately (cross-project batch is not
+    // possible).
+    const tweetCols = await colsOfTweet(tweetId);
+    const tweetRef = doc(tweetCols.tweets, tweetId);
+    const userStatsRef = doc(activeCols().userStats(userId), 'stats');
 
     const tweetSnap = await getDoc(tweetRef);
     const tweetOwnerId = tweetSnap.data()?.createdBy;
 
     if (type === 'like') {
-      batch.update(tweetRef, {
-        userLikes: arrayUnion(userId),
-        updatedAt: serverTimestamp()
-      });
-      batch.set(
-        userStatsRef,
-        {
-          likes: arrayUnion(tweetId),
+      await Promise.all([
+        updateDoc(tweetRef, {
+          userLikes: arrayUnion(userId),
           updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
+        }),
+        setDoc(
+          userStatsRef,
+          {
+            likes: arrayUnion(tweetId),
+            updatedAt: serverTimestamp()
+          },
+          { merge: true }
+        )
+      ]);
     } else {
-      batch.update(tweetRef, {
-        userLikes: arrayRemove(userId),
-        updatedAt: serverTimestamp()
-      });
-      batch.set(
-        userStatsRef,
-        {
-          likes: arrayRemove(tweetId),
+      await Promise.all([
+        updateDoc(tweetRef, {
+          userLikes: arrayRemove(userId),
           updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
+        }),
+        setDoc(
+          userStatsRef,
+          {
+            likes: arrayRemove(tweetId),
+            updatedAt: serverTimestamp()
+          },
+          { merge: true }
+        )
+      ]);
     }
-
-    await batch.commit();
 
     if (type === 'like' && tweetOwnerId && tweetOwnerId !== userId)
       await createNotification(
@@ -555,7 +615,7 @@ export async function manageBookmark(
   userId: string,
   tweetId: string
 ): Promise<void> {
-  const bookmarkRef = doc(userBookmarksCollection(userId), tweetId);
+  const bookmarkRef = doc(activeCols().userBookmarks(userId), tweetId);
 
   if (type === 'bookmark') {
     const bookmarkData: WithFieldValue<Bookmark> = {
@@ -567,10 +627,10 @@ export async function manageBookmark(
 }
 
 export async function clearAllBookmarks(userId: string): Promise<void> {
-  const bookmarksRef = userBookmarksCollection(userId);
+  const bookmarksRef = activeCols().userBookmarks(userId);
   const bookmarksSnapshot = await getDocs(bookmarksRef);
 
-  const batch = writeBatch(db);
+  const batch = writeBatch(activeDb());
 
   bookmarksSnapshot.forEach(({ ref }) => batch.delete(ref));
 
@@ -588,7 +648,9 @@ export async function createNotification(
   // (e.g. exhausted Spark write quota) must never break the original
   // like/reply/retweet/follow action that triggered it.
   try {
-    const notificationsRef = notificationsCollection(toUserId);
+    const notificationsRef = (await colsOfUser(toUserId)).notifications(
+      toUserId
+    );
     const notificationRef = doc(notificationsRef);
 
     const notificationData: WithFieldValue<Notification> = {
@@ -635,14 +697,15 @@ export async function uploadStory(
 
   if (!images) return;
 
-  const batch = writeBatch(db);
-  const userRef = doc(usersCollection, userId);
+  const batch = writeBatch(activeDb());
+  const cols = activeCols();
+  const userRef = doc(cols.users, userId);
   const now = serverTimestamp();
 
   const expiresAt = getStoryExpiration();
 
   images.forEach((image) => {
-    const storyRef = doc(storiesCollection);
+    const storyRef = doc(cols.stories);
     const storyData: WithFieldValue<Story> = {
       id: storyRef.id,
       userId,
@@ -694,14 +757,15 @@ export async function uploadReel(
 
   if (!images) return;
 
-  const batch = writeBatch(db);
-  const userRef = doc(usersCollection, userId);
+  const batch = writeBatch(activeDb());
+  const cols = activeCols();
+  const userRef = doc(cols.users, userId);
   const now = serverTimestamp();
 
   const expiresAt = getReelExpiration();
 
   images.forEach((image) => {
-    const reelRef = doc(storiesCollection);
+    const reelRef = doc(cols.stories);
     const reelData: WithFieldValue<Story> = {
       id: reelRef.id,
       userId,
@@ -735,22 +799,21 @@ export async function viewStory(
 ): Promise<void> {
   if (!storyId || !viewerId) return;
 
-  const storyRef = doc(storiesCollection, storyId);
-  const viewerRef = doc(usersCollection, viewerId);
+  const storyCols = await colsOfStory(storyId);
+  const storyRef = doc(storyCols.stories, storyId);
+  const viewerRef = doc(activeCols().users, viewerId);
 
-  const batch = writeBatch(db);
-
-  batch.update(storyRef, {
-    views: arrayUnion(viewerId),
-    updatedAt: serverTimestamp()
-  } as Partial<WithFieldValue<Story>>);
-
-  batch.update(viewerRef, {
-    [`storyViews.${storyUserId}`]: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  } as Partial<WithFieldValue<User>>);
-
-  await batch.commit();
+  // Story lives in its author's project; the viewer's own profile in theirs.
+  await Promise.all([
+    updateDoc(storyRef, {
+      views: arrayUnion(viewerId),
+      updatedAt: serverTimestamp()
+    } as Partial<WithFieldValue<Story>>),
+    updateDoc(viewerRef, {
+      [`storyViews.${storyUserId}`]: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    } as Partial<WithFieldValue<User>>)
+  ]);
 }
 
 export async function likeStory(
@@ -759,7 +822,7 @@ export async function likeStory(
   storyUserId: string,
   liked: boolean
 ): Promise<void> {
-  const storyRef = doc(storiesCollection, storyId);
+  const storyRef = doc((await colsOfStory(storyId)).stories, storyId);
 
   await updateDoc(storyRef, {
     likes: liked ? arrayUnion(userId) : arrayRemove(userId),
@@ -785,7 +848,8 @@ export async function deleteStory(
   storyId: string,
   userId: string
 ): Promise<void> {
-  const storyRef = doc(storiesCollection, storyId);
+  const storyCols = await colsOfStory(storyId);
+  const storyRef = doc(storyCols.stories, storyId);
   const storySnap = await getDoc(storyRef);
   const storyData = storySnap.data();
 
@@ -794,7 +858,7 @@ export async function deleteStory(
   await deleteDoc(storyRef);
 
   const allStoriesSnap = await getDocs(
-    query(storiesCollection, where('userId', '==', userId))
+    query(storyCols.stories, where('userId', '==', userId))
   );
 
   const nowMs = Date.now();
@@ -815,7 +879,7 @@ export async function deleteStory(
         getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt)
     )[0];
 
-  const userRef = doc(usersCollection, userId);
+  const userRef = doc(activeCols().users, userId);
   if (!latest) {
     await updateDoc(userRef, {
       lastStoryAt: null,
@@ -833,7 +897,7 @@ export async function setStoryColor(
   userId: string,
   color: string
 ): Promise<void> {
-  const userRef = doc(usersCollection, userId);
+  const userRef = doc(activeCols().users, userId);
   await updateDoc(userRef, {
     storyColor: color,
     updatedAt: serverTimestamp()
@@ -851,7 +915,7 @@ export async function likeReel(
   reelOwnerId: string,
   liked: boolean
 ): Promise<void> {
-  const reelRef = doc(storiesCollection, reelId);
+  const reelRef = doc((await colsOfStory(reelId)).stories, reelId);
 
   await updateDoc(reelRef, {
     likes: liked ? arrayUnion(userId) : arrayRemove(userId),
@@ -879,7 +943,7 @@ export async function viewReel(
 ): Promise<void> {
   if (!reelId || !viewerId) return;
 
-  const reelRef = doc(storiesCollection, reelId);
+  const reelRef = doc((await colsOfStory(reelId)).stories, reelId);
 
   await updateDoc(reelRef, {
     views: arrayUnion(viewerId),
@@ -924,11 +988,12 @@ export async function addReelComment(
     userRetweets: []
   };
 
-  const docRef = await addDoc(tweetsCollection, tweetData);
+  const reelCols = await colsOfStory(reelId);
+  const docRef = await addDoc(reelCols.tweets, tweetData);
 
   // Safely update user total tweets without blocking
   try {
-    const userRef = doc(usersCollection, userId);
+    const userRef = doc(activeCols().users, userId);
     await setDoc(
       userRef,
       {
@@ -970,7 +1035,7 @@ export async function deleteReelComment(
   await removeTweet(commentId);
 
   try {
-    const userRef = doc(usersCollection, userId);
+    const userRef = doc(activeCols().users, userId);
     await setDoc(
       userRef,
       {

@@ -9,7 +9,11 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { db } from '@lib/firebase/app';
-import { notificationsCollection } from '@lib/firebase/collections';
+import {
+  collectionsFor,
+  notificationsCollection
+} from '@lib/firebase/collections';
+import { getActiveProject } from '@lib/firebase/app';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { MainContainer } from '@components/home/main-container';
@@ -32,7 +36,7 @@ export default function Notifications(): JSX.Element {
     if (!user) return;
 
     const notificationsQuery = query(
-      notificationsCollection(user.id),
+      collectionsFor(getActiveProject()).notifications(user.id),
       orderBy('createdAt', 'desc')
     );
 
@@ -58,7 +62,7 @@ export default function Notifications(): JSX.Element {
 
     const markRead = async (): Promise<void> => {
       const unreadQuery = query(
-        notificationsCollection(user.id),
+        collectionsFor(getActiveProject()).notifications(user.id),
         where('read', '==', false)
       );
 

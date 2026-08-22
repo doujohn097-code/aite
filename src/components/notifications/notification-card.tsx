@@ -2,10 +2,9 @@ import Link from 'next/link';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { useDocument } from '@lib/hooks/useDocument';
-import {
-  usersCollection,
-  notificationsCollection
-} from '@lib/firebase/collections';
+import { useAnywhereRef } from '@lib/dual';
+import type { User } from '@lib/types/user';
+import { notificationsCollection } from '@lib/firebase/collections';
 import { formatDate } from '@lib/date';
 import { UserAvatar } from '@components/user/user-avatar';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -55,9 +54,10 @@ export function NotificationCard({
 }): JSX.Element {
   const { user: currentUser } = useAuth();
 
-  const fromUserRef = notification.fromUserId
-    ? doc(usersCollection, notification.fromUserId)
-    : null;
+  const { ref: fromUserRef } = useAnywhereRef<User>(
+    'users',
+    notification.fromUserId
+  );
 
   const { data: fromUser } = useDocument(fromUserRef, {
     allowNull: true,

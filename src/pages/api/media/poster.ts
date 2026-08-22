@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { verifyIdToken } from '@lib/firebase-admin';
+import { verifyIdTokenAny } from '@lib/firebase-admin';
 import {
   downloadToFile,
   execFfmpeg,
@@ -44,7 +44,7 @@ export default async function posterMediaEndpoint(
   }
 
   try {
-    await verifyIdToken(token);
+    await verifyIdTokenAny(token);
 
     // Already extracted? Serve the cached poster without re-encoding.
     const cacheKey = `poster-${sha256Hex(src).slice(0, 48)}`;

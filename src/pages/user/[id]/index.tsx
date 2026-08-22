@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { doc, query, where, orderBy, documentId } from 'firebase/firestore';
 import { AnimatePresence } from 'framer-motion';
@@ -7,11 +7,8 @@ import { useUser } from '@lib/context/user-context';
 import { useAuth } from '@lib/context/auth-context';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useDocument } from '@lib/hooks/useDocument';
-import {
-  tweetsCollection,
-  storiesCollection,
-  userStatsCollection
-} from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
+import { resolveUserProject, useMergedCollection } from '@lib/dual';
 import { UserLayout, ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { UserDataLayout } from '@components/layout/user-data-layout';
@@ -42,8 +39,22 @@ export default function UserTweets(): JSX.Element {
   const isBlocked = !!id && authUser?.blockedUsers?.includes(id);
 
   const [tab, setTab] = useState<ProfileTab>('posts');
+  const [userProject, setUserProject] = useState<'a' | 'b' | null>(null);
 
-  const pinnedRef = pinnedTweet ? doc(tweetsCollection, pinnedTweet) : null;
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    void resolveUserProject(id).then((project) => {
+      if (!cancelled) setUserProject(project);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const pinnedRef = pinnedTweet
+    ? doc(collectionsFor('a').tweets, pinnedTweet)
+    : null;
 
   const { data: pinnedData } = useDocument(pinnedRef, {
     disabled: !pinnedTweet,
@@ -51,48 +62,70 @@ export default function UserTweets(): JSX.Element {
     includeUser: true
   });
 
-  const ownerTweetsQuery = id
-    ? query(
-        tweetsCollection,
-        where('createdBy', '==', id),
-        orderBy('createdAt', 'desc')
-      )
-    : null;
+  const ownerTweetsQuery =
+    id && userProject
+      ? query(
+          collectionsFor(userProject).tweets,
+          where('createdBy', '==', id),
+          orderBy('createdAt', 'desc')
+        )
+      : null;
 
   const { data: ownerTweets, loading: ownerLoading } = useCollection(
     ownerTweetsQuery,
-    { includeUser: true, allowNull: true, disabled: !id }
+    { includeUser: true, allowNull: true, disabled: !id || !userProject }
   );
 
-  const peopleTweetsQuery = id
-    ? query(tweetsCollection, where('userRetweets', 'array-contains', id))
+  const peopleTweetsQueryA = id
+    ? query(
+        collectionsFor('a').tweets,
+        where('userRetweets', 'array-contains', id)
+      )
+    : null;
+  const peopleTweetsQueryB = id
+    ? query(
+        collectionsFor('b').tweets,
+        where('userRetweets', 'array-contains', id)
+      )
     : null;
 
-  const { data: peopleTweets, loading: peopleLoading } = useCollection(
-    peopleTweetsQuery,
+  const { data: peopleTweets, loading: peopleLoading } = useMergedCollection(
+    peopleTweetsQueryA,
+    peopleTweetsQueryB,
     { includeUser: true, allowNull: true, disabled: !id }
   );
 
   // Reel retweets live on the owner's stats doc (story doc updates are
   // blocked by Firestore rules for that field)
-  const ownerStatsRef = id ? doc(userStatsCollection(id), 'stats') : null;
+  const ownerStatsRef =
+    id && userProject
+      ? doc(collectionsFor(userProject).userStats(id), 'stats')
+      : null;
   const { data: ownerStats } = useDocument(ownerStatsRef, {
     allowNull: true,
-    disabled: !id
+    disabled: !id || !userProject
   });
 
   const reelIds = ownerStats?.reels ?? (ownerStats ? [] : null);
 
-  const repostedReelsQuery =
+  const repostedReelsQueryA =
     id && reelIds?.length
       ? query(
-          storiesCollection,
+          collectionsFor('a').stories,
+          where(documentId(), 'in', reelIds.slice(0, 30))
+        )
+      : null;
+  const repostedReelsQueryB =
+    id && reelIds?.length
+      ? query(
+          collectionsFor('b').stories,
           where(documentId(), 'in', reelIds.slice(0, 30))
         )
       : null;
 
-  const { data: repostedReels, loading: reelsLoading } = useCollection(
-    repostedReelsQuery,
+  const { data: repostedReels, loading: reelsLoading } = useMergedCollection(
+    repostedReelsQueryA,
+    repostedReelsQueryB,
     { allowNull: true, disabled: !id || !reelIds?.length }
   );
 

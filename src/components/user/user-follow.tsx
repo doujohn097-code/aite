@@ -1,7 +1,7 @@
 import { query, where } from 'firebase/firestore';
 import { useUser } from '@lib/context/user-context';
-import { useCollection } from '@lib/hooks/useCollection';
-import { usersCollection } from '@lib/firebase/collections';
+import { useMergedCollection } from '@lib/dual';
+import { collectionsFor } from '@lib/firebase/collections';
 import { SEO } from '@components/common/seo';
 import { UserCards } from '@components/user/user-cards';
 import type { User } from '@lib/types/user';
@@ -14,9 +14,19 @@ export function UserFollow({ type }: UserFollowProps): JSX.Element {
   const { user } = useUser();
   const { name, username } = user as User;
 
-  const followQuery = user?.id
+  const followQueryA = user?.id
     ? query(
-        usersCollection,
+        collectionsFor('a').users,
+        where(
+          type === 'following' ? 'followers' : 'following',
+          'array-contains',
+          user.id
+        )
+      )
+    : null;
+  const followQueryB = user?.id
+    ? query(
+        collectionsFor('b').users,
         where(
           type === 'following' ? 'followers' : 'following',
           'array-contains',
@@ -25,7 +35,7 @@ export function UserFollow({ type }: UserFollowProps): JSX.Element {
       )
     : null;
 
-  const { data, loading } = useCollection(followQuery, {
+  const { data, loading } = useMergedCollection(followQueryA, followQueryB, {
     allowNull: true,
     disabled: !user?.id
   });

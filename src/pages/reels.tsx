@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { query, where } from 'firebase/firestore';
 import { AnimatePresence } from 'framer-motion';
-import { storiesCollection, usersCollection } from '@lib/firebase/collections';
-import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
+import { collectionsFor } from '@lib/firebase/collections';
+import { useInfiniteScrollBoth } from '@lib/hooks/useInfiniteScroll';
+import { useMergedCollection } from '@lib/dual';
 import { useCollection } from '@lib/hooks/useCollection';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -57,8 +58,9 @@ export default function Reels(): JSX.Element {
     data: rawReels,
     loading: reelsLoading,
     LoadMore
-  } = useInfiniteScroll(
-    storiesCollection,
+  } = useInfiniteScrollBoth(
+    collectionsFor('a').stories,
+    collectionsFor('b').stories,
     reelsConstraints,
     { allowNull: true },
     { initialSize: 50, stepSize: 25 }
@@ -113,14 +115,23 @@ export default function Reels(): JSX.Element {
     [reels]
   );
 
-  const ownersQuery = useMemo(
+  const ownersQueryA = useMemo(
     () =>
       ownerIds.length
-        ? query(usersCollection, where('__name__', 'in', ownerIds))
+        ? query(collectionsFor('a').users, where('__name__', 'in', ownerIds))
         : null,
     [ownerIds]
   );
-  const { data: owners } = useCollection(ownersQuery, { allowNull: true });
+  const ownersQueryB = useMemo(
+    () =>
+      ownerIds.length
+        ? query(collectionsFor('b').users, where('__name__', 'in', ownerIds))
+        : null,
+    [ownerIds]
+  );
+  const { data: owners } = useMergedCollection(ownersQueryA, ownersQueryB, {
+    allowNull: true
+  });
 
   const userById = useMemo(() => {
     const map = new Map<string, User>();

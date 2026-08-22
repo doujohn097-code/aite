@@ -14,7 +14,8 @@ import { toast } from 'react-hot-toast';
 import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
 import { useCollection } from '@lib/hooks/useCollection';
-import { tweetsCollection } from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
+import { resolveTweetProject, useMergedCollection } from '@lib/dual';
 import { addReelComment, deleteReelComment } from '@lib/firebase/utils';
 import { formatDate } from '@lib/date';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -107,19 +108,30 @@ export function ReelsComments({
   };
 
   // Query comments belonging to this reel (only when modal is open and reelId exists)
-  const commentsQuery = useMemo(
+  const commentsQueryA = useMemo(
     () =>
       open && reelId
-        ? query(tweetsCollection, where('parent.id', '==', reelId))
+        ? query(collectionsFor('a').tweets, where('parent.id', '==', reelId))
+        : null,
+    [open, reelId]
+  );
+  const commentsQueryB = useMemo(
+    () =>
+      open && reelId
+        ? query(collectionsFor('b').tweets, where('parent.id', '==', reelId))
         : null,
     [open, reelId]
   );
 
-  const { data: rawComments, loading } = useCollection(commentsQuery, {
-    includeUser: true,
-    allowNull: true,
-    disabled: !open || !reelId
-  });
+  const { data: rawComments, loading } = useMergedCollection(
+    commentsQueryA,
+    commentsQueryB,
+    {
+      includeUser: true,
+      allowNull: true,
+      disabled: !open || !reelId
+    }
+  );
 
   // Merge server comments with local optimistic comments cleanly without duplicate flash
   const allComments = useMemo(() => {
@@ -386,7 +398,10 @@ export function ReelsComments({
         setOptimisticLikes((prev) => ({ ...prev, [commentId]: updatedLikes }));
 
         try {
-          const commentRef = doc(tweetsCollection, commentId);
+          const commentRef = doc(
+            collectionsFor(await resolveTweetProject(commentId)).tweets,
+            commentId
+          );
           await updateDoc(commentRef, {
             userLikes: isLiked ? arrayRemove(user.id) : arrayUnion(user.id),
             updatedAt: serverTimestamp()

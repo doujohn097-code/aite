@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { doc } from 'firebase/firestore';
 import { useDocument } from '@lib/hooks/useDocument';
-import { tweetsCollection } from '@lib/firebase/collections';
+import { useAnywhereRef } from '@lib/dual';
 import { Tweet } from '@components/tweet/tweet';
+import type { Tweet as TweetType } from '@lib/types/tweet';
 import type { RefObject } from 'react';
 
 type ViewParentTweetProps = {
@@ -14,7 +14,8 @@ export function ViewParentTweet({
   parentId,
   viewTweetRef
 }: ViewParentTweetProps): JSX.Element | null {
-  const { data, loading } = useDocument(doc(tweetsCollection, parentId), {
+  const { ref: parentRef } = useAnywhereRef<TweetType>('tweets', parentId);
+  const { data, loading } = useDocument(parentRef, {
     includeUser: true,
     allowNull: true
   });

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { query, where, orderBy, limit, documentId } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
-import { useCollection } from '@lib/hooks/useCollection';
-import { usersCollection } from '@lib/firebase/collections';
+import { useMergedCollection } from '@lib/dual';
+import { collectionsFor } from '@lib/firebase/collections';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { MainContainer } from '@components/home/main-container';
@@ -38,12 +38,13 @@ export default function Search(): JSX.Element {
 
   const trimmedQuery = inputValue.trim().toLowerCase();
 
-  const usersQuery = useMemo(() => {
+  const makeUsersQuery = (project: 'a' | 'b') => {
     if (!userId) return null;
+    const cols = collectionsFor(project);
 
     if (!trimmedQuery)
       return query(
-        usersCollection,
+        cols.users,
         where(documentId(), '!=', userId),
         orderBy(documentId()),
         limit(20)
@@ -52,15 +53,28 @@ export default function Search(): JSX.Element {
     const end = `${trimmedQuery}\uf8ff`;
 
     return query(
-      usersCollection,
+      cols.users,
       where('username', '>=', trimmedQuery),
       where('username', '<=', end),
       orderBy('username'),
       limit(20)
     );
-  }, [userId, trimmedQuery]);
+  };
 
-  const { data, loading } = useCollection(usersQuery, { allowNull: true });
+  const usersQueryA = useMemo(
+    () => makeUsersQuery('a'),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId, trimmedQuery]
+  );
+  const usersQueryB = useMemo(
+    () => makeUsersQuery('b'),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId, trimmedQuery]
+  );
+
+  const { data, loading } = useMergedCollection(usersQueryA, usersQueryB, {
+    allowNull: true
+  });
 
   const results = data ?? [];
   const isSearching = trimmedQuery.length > 0;

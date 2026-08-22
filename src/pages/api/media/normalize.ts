@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { verifyIdToken } from '@lib/firebase-admin';
+import { verifyIdTokenAny } from '@lib/firebase-admin';
 import {
   downloadToFile,
   execFfmpeg,
@@ -44,7 +44,8 @@ export default async function normalizeMediaEndpoint(
   }
 
   try {
-    const { uid } = await verifyIdToken(token);
+    const { decoded: auth0 } = await verifyIdTokenAny(token);
+    const uid = auth0.uid;
 
     // Already normalized? Serve the cached result without re-encoding.
     const cacheKey = `norm-${sha256Hex(src).slice(0, 48)}`;

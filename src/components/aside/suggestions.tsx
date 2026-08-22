@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { limit, query, where, orderBy, documentId } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
-import { useCollection } from '@lib/hooks/useCollection';
-import { usersCollection } from '@lib/firebase/collections';
+import { useMergedCollection } from '@lib/dual';
+import { collectionsFor } from '@lib/firebase/collections';
 import { UserCard } from '@components/user/user-card';
 import { Loading } from '@components/ui/loading';
 import { Error } from '@components/ui/error';
@@ -12,15 +12,22 @@ import { variants } from './aside-trends';
 export function Suggestions(): JSX.Element {
   const { randomSeed } = useAuth();
 
-  const { data: suggestionsData, loading: suggestionsLoading } = useCollection(
-    query(
-      usersCollection,
-      where(documentId(), '>=', randomSeed),
-      orderBy(documentId()),
-      limit(3)
-    ),
-    { allowNull: true }
-  );
+  const { data: suggestionsData, loading: suggestionsLoading } =
+    useMergedCollection(
+      query(
+        collectionsFor('a').users,
+        where(documentId(), '>=', randomSeed),
+        orderBy(documentId()),
+        limit(3)
+      ),
+      query(
+        collectionsFor('b').users,
+        where(documentId(), '>=', randomSeed),
+        orderBy(documentId()),
+        limit(3)
+      ),
+      { allowNull: true }
+    );
 
   return (
     <section className='hover-animation rounded-2xl bg-main-sidebar-background'>

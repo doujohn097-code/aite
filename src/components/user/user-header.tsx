@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { doc } from 'firebase/firestore';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDocument } from '@lib/hooks/useDocument';
 import { useUser } from '@lib/context/user-context';
-import { userStatsCollection } from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
+import { resolveUserProject } from '@lib/dual';
 import { UserName } from './user-name';
 import type { Variants } from 'framer-motion';
 
@@ -23,11 +25,27 @@ export function UserHeader(): JSX.Element {
 
   const userId = user ? user.id : null;
 
+  // The profile user's stats live in their own round-robin database.
+  const [statsProject, setStatsProject] = useState<'a' | 'b' | null>(null);
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    setStatsProject(null);
+    void resolveUserProject(userId).then((project) => {
+      if (!cancelled) setStatsProject(project);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
   const { data: statsData, loading: statsLoading } = useDocument(
-    doc(userStatsCollection(userId ?? 'null'), 'stats'),
+    userId && statsProject
+      ? doc(collectionsFor(statsProject).userStats(userId), 'stats')
+      : null,
     {
       allowNull: true,
-      disabled: !userId
+      disabled: !userId || !statsProject
     }
   );
 

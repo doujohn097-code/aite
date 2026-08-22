@@ -24,11 +24,9 @@ import { useModal } from '@lib/hooks/useModal';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useDocument } from '@lib/hooks/useDocument';
 import { useRepairableVideo, useVideoPoster } from '@lib/media-normalize';
-import {
-  tweetsCollection,
-  storiesCollection,
-  userStatsCollection
-} from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
+import { useMergedCollection, resolveStoryProject } from '@lib/dual';
+import { getFirebase, getActiveProject } from '@lib/firebase/app';
 import { likeReel, viewReel, deleteReel } from '@lib/firebase/utils';
 import { formatNumber } from '@lib/date';
 import { preventBubbling } from '@lib/utils';
@@ -42,6 +40,10 @@ import { useShareToChat } from '@components/messages/share-to-chat';
 import { ReelsComments } from './reels-comments';
 import type { Story } from '@lib/types/story';
 import type { User } from '@lib/types/user';
+
+function activeCols() {
+  return collectionsFor(getActiveProject());
+}
 
 type ReelCardProps = {
   reel: Story;
@@ -124,17 +126,26 @@ export function ReelCard({
   const isLiked = reel.likes?.includes(authUser?.id ?? '') ?? false;
   const isOwner = authUser?.id === reel.userId;
 
-  // Live comment count for this reel
-  const commentsCountQuery = useMemo(
+  // Live comment count for this reel (comments may live in either database)
+  const commentsCountQueryA = useMemo(
     () =>
       reel.id
-        ? query(tweetsCollection, where('parent.id', '==', reel.id))
+        ? query(collectionsFor('a').tweets, where('parent.id', '==', reel.id))
         : null,
     [reel.id]
   );
-  const { data: commentsDocs } = useCollection(commentsCountQuery, {
-    allowNull: true
-  });
+  const commentsCountQueryB = useMemo(
+    () =>
+      reel.id
+        ? query(collectionsFor('b').tweets, where('parent.id', '==', reel.id))
+        : null,
+    [reel.id]
+  );
+  const { data: commentsDocs } = useMergedCollection(
+    commentsCountQueryA,
+    commentsCountQueryB,
+    { allowNull: true }
+  );
   const commentCount = commentsDocs?.length ?? 0;
 
   // Record a view once when the reel mounts
@@ -241,7 +252,7 @@ export function ReelCard({
   // Reel retweets are tracked on the viewer's own stats doc — the Firestore
   // rules only permit likes/views edits on story docs.
   const ownStatsRef = authUser
-    ? doc(userStatsCollection(authUser.id), 'stats')
+    ? doc(activeCols().userStats(authUser.id), 'stats')
     : null;
   const { data: ownStats } = useDocument(ownStatsRef, {
     allowNull: true,
@@ -266,18 +277,20 @@ export function ReelCard({
     setOptimisticRetweet(next);
 
     // Guaranteed write: viewer's own stats doc (drives the profile tab)
-    void updateDoc(doc(userStatsCollection(authUser.id), 'stats'), {
+    void updateDoc(doc(activeCols().userStats(authUser.id), 'stats'), {
       reels: next ? arrayUnion(reel.id) : arrayRemove(reel.id)
     }).catch(() => {
       setOptimisticRetweet(null);
       toast.error('تعذر تنفيذ العملية، حاول مجدداً');
     });
 
-    // Best-effort public counter on the story doc — needs the updated
-    // Firestore rules (userRetweets in the engagement whitelist)
-    void updateDoc(doc(storiesCollection, reel.id), {
-      userRetweets: next ? arrayUnion(authUser.id) : arrayRemove(authUser.id)
-    }).catch(() => null);
+    // Best-effort public counter on the story doc — resolves the reel's own
+    // round-robin database first.
+    void resolveStoryProject(reel.id).then((project) =>
+      updateDoc(doc(collectionsFor(project).stories, reel.id), {
+        userRetweets: next ? arrayUnion(authUser.id) : arrayRemove(authUser.id)
+      }).catch(() => null)
+    );
   };
 
   // Handles clicks anywhere across the entire reel card frame

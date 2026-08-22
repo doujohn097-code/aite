@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getDoc, doc, onSnapshot, Timestamp } from 'firebase/firestore';
-import { usersCollection } from '@lib/firebase/collections';
+import { onSnapshot, Timestamp } from 'firebase/firestore';
+import { fetchUserAnywhere } from '@lib/dual';
 import { useCacheQuery } from './useCacheQuery';
 import type { Query } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
@@ -84,10 +84,8 @@ export function useCollection<T>(
           if (!currentData.createdBy)
             return { ...currentData, user: fallbackUser };
 
-          const userDoc = await getDoc(
-            doc(usersCollection, currentData.createdBy)
-          );
-          const user = userDoc.data() ?? fallbackUser;
+          const user =
+            (await fetchUserAnywhere(currentData.createdBy)) ?? fallbackUser;
           return { ...currentData, user };
         })
       );

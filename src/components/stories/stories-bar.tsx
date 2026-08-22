@@ -3,8 +3,8 @@ import { useRouter } from 'next/router';
 import { query, where, Timestamp } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import { useAuth } from '@lib/context/auth-context';
-import { usersCollection } from '@lib/firebase/collections';
-import { useCollection } from '@lib/hooks/useCollection';
+import { collectionsFor } from '@lib/firebase/collections';
+import { useMergedCollection } from '@lib/dual';
 import { getTimestampMillis } from '@lib/date';
 import { StoryAvatar } from './story-avatar';
 import { CreateStoryModal } from './create-story-modal';
@@ -17,14 +17,22 @@ export function StoriesBar(): JSX.Element {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const usersQuery = useMemo(() => {
+  const makeUsersQuery = (project: 'a' | 'b') => {
     const oneDayAgo = Timestamp.fromMillis(Date.now() - STORY_LIFETIME_MS);
-    return query(usersCollection, where('lastStoryAt', '>', oneDayAgo));
-  }, []);
+    return query(
+      collectionsFor(project).users,
+      where('lastStoryAt', '>', oneDayAgo)
+    );
+  };
 
-  const { data: allUsers, loading } = useCollection(usersQuery, {
-    allowNull: true
-  });
+  const usersQueryA = useMemo(() => makeUsersQuery('a'), []);
+  const usersQueryB = useMemo(() => makeUsersQuery('b'), []);
+
+  const { data: allUsers, loading } = useMergedCollection(
+    usersQueryA,
+    usersQueryB,
+    { allowNull: true }
+  );
 
   const users = useMemo(() => {
     if (!allUsers) return [];

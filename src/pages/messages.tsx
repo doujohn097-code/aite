@@ -2,10 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
-import {
-  conversationsCollection,
-  usersCollection
-} from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
+import { fetchUserAnywhere } from '@lib/dual';
 import { getOrCreateConversation } from '@lib/messages';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -37,49 +35,82 @@ export default function Messages(): JSX.Element {
   useEffect(() => {
     if (!user) return;
 
-    const conversationsQuery = query(
-      conversationsCollection,
+    // Conversations may live in either round-robin database — subscribe to
+    // both and merge.
+    const conversationsQueryA = query(
+      collectionsFor('a').conversations,
+      where('participants', 'array-contains', user.id)
+    );
+    const conversationsQueryB = query(
+      collectionsFor('b').conversations,
       where('participants', 'array-contains', user.id)
     );
 
-    const unsubscribe = onSnapshot(
-      conversationsQuery,
-      (snapshot) => {
-        const data = snapshot.docs.map((docSnapshot) =>
-          docSnapshot.data({ serverTimestamps: 'estimate' })
-        );
+    const byId = new Map<string, Conversation>();
+    let loadedA = false;
+    let loadedB = false;
 
-        data.sort(
-          (a, b) =>
-            (b.updatedAt?.toMillis?.() ?? 0) - (a.updatedAt?.toMillis?.() ?? 0)
-        );
-        setConversations(data);
+    const publish = (): void => {
+      if (!loadedA || !loadedB) return;
+      const data = Array.from(byId.values()).sort(
+        (a, b) =>
+          (b.updatedAt?.toMillis?.() ?? 0) - (a.updatedAt?.toMillis?.() ?? 0)
+      );
+      setConversations(data);
 
-        const peerIds = data
-          .map((conversation) =>
-            conversation.participants.find(
-              (participant) => participant !== user.id
-            )
+      const peerIds = data
+        .map((conversation) =>
+          conversation.participants.find(
+            (participant) => participant !== user.id
           )
-          .filter((id): id is string => !!id);
+        )
+        .filter((id): id is string => !!id);
 
-        void Promise.all(
-          peerIds.map((id) => getDoc(doc(usersCollection, id)))
-        ).then((docs) => {
+      void Promise.all(peerIds.map((id) => fetchUserAnywhere(id))).then(
+        (users) => {
           const fetched: Record<string, User> = {};
-          docs.forEach((snapshot) => {
-            if (snapshot.exists()) fetched[snapshot.id] = snapshot.data();
+          users.forEach((u) => {
+            if (u) fetched[u.id] = u;
           });
           setPeers((previous) => ({ ...previous, ...fetched }));
+        }
+      );
+    };
+
+    const onSnapshotWrapper =
+      (loadedKey: 'loadedA' | 'loadedB') =>
+      (snapshot: {
+        docs: { id: string; data: () => Conversation }[];
+      }): void => {
+        snapshot.docs.forEach((docSnapshot) => {
+          byId.set(docSnapshot.id, docSnapshot.data());
         });
-      },
-      (error) => {
-        console.error('conversations snapshot error:', error);
-        setConversations([]);
+        if (loadedKey === 'loadedA') loadedA = true;
+        else loadedB = true;
+        publish();
+      };
+
+    const unsubscribeA = onSnapshot(
+      conversationsQueryA,
+      onSnapshotWrapper('loadedA'),
+      () => {
+        loadedA = true;
+        publish();
+      }
+    );
+    const unsubscribeB = onSnapshot(
+      conversationsQueryB,
+      onSnapshotWrapper('loadedB'),
+      () => {
+        loadedB = true;
+        publish();
       }
     );
 
-    return unsubscribe;
+    return () => {
+      unsubscribeA();
+      unsubscribeB();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 

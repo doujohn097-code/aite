@@ -3,7 +3,8 @@ import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { getFirebase } from '@lib/firebase/app';
-import { usersCollection } from '@lib/firebase/collections';
+import { collectionsFor } from '@lib/firebase/collections';
+import { getActiveProject } from '@lib/firebase/app';
 
 // مفتاح VAPID العام لإشعارات الويب (PWA)
 const VAPID_KEY =
@@ -43,7 +44,7 @@ async function registerNativePushToken(userId: string): Promise<void> {
   await PushNotifications.register();
   await PushNotifications.removeAllListeners();
   await PushNotifications.addListener('registration', ({ value }) => {
-    void updateDoc(doc(usersCollection, userId), {
+    void updateDoc(doc(collectionsFor(getActiveProject()).users, userId), {
       fcmTokens: arrayUnion(value)
     });
   });
@@ -74,7 +75,7 @@ export async function registerWebPushToken(userId: string): Promise<void> {
       { scope: '/' }
     );
 
-    const app = getFirebase().firebaseApp;
+    const app = getFirebase('a').firebaseApp;
     const messaging = getMessaging(app);
 
     const token = await getToken(messaging, {
@@ -83,7 +84,7 @@ export async function registerWebPushToken(userId: string): Promise<void> {
     });
 
     if (token) {
-      await updateDoc(doc(usersCollection, userId), {
+      await updateDoc(doc(collectionsFor(getActiveProject()).users, userId), {
         fcmTokens: arrayUnion(token)
       });
       localStorage.setItem('aite:fcmToken', token);
