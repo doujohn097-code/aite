@@ -72,7 +72,7 @@ export function ConversationCard({
     <Link href={`/messages/${id}`}>
       <a
         className={cn(
-          'accent-tab hover-animation flex items-center gap-3 border-b border-light-border/60 px-4 py-3',
+          'accent-tab hover-animation glass-card flex items-center gap-3 border-b border-light-border/60 px-4 py-3',
           'hover:bg-light-primary/5 dark:border-dark-border/60 dark:hover:bg-dark-primary/5',
           active && 'bg-light-primary/5 dark:bg-dark-primary/5'
         )}

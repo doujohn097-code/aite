@@ -91,7 +91,7 @@ export function NotificationCard({
     <Link href={href}>
       <a
         className={cn(
-          'hover-animation relative flex items-center gap-3.5 border-b border-light-border/60 px-4 py-3.5 hover:bg-light-primary/5 dark:border-dark-border/60 dark:hover:bg-dark-primary/5',
+          'hover-animation glass-card relative flex items-center gap-3.5 border-b border-light-border/60 px-4 py-3.5 hover:bg-light-primary/5 dark:border-dark-border/60 dark:hover:bg-dark-primary/5',
           unread && 'bg-main-accent/[0.07]'
         )}
         onClick={markAsRead}

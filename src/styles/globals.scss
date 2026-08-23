@@ -311,12 +311,52 @@ video:not([src]) {
   }
 
   /* عمود المحتوى الرئيسي: ضباب خفيف يجعل النص واضحًا فوق الخلفية */
+  /* العمود الرئيسي شفاف تمامًا — الخلفية تظهر طبيعية بين البطاقات */
   .theme-surface {
-    background-color: rgb(var(--main-background) / 0.38);
-    backdrop-filter: blur(calc(var(--surface-blur) * 0.6)) saturate(135%);
-    -webkit-backdrop-filter: blur(calc(var(--surface-blur) * 0.6))
-      saturate(135%);
-    border-color: rgb(var(--main-accent) / 0.16);
+    background-color: transparent;
+    border-color: transparent;
+  }
+
+  /* البطاقات نفسها زجاجية: تضبّب ما تحتها فقط */
+  .glass-card {
+    position: relative;
+    margin: 8px 8px;
+    border: 1px solid rgb(var(--main-accent) / 0.16);
+    border-radius: 20px;
+    background-color: rgb(var(--main-background) / 0.58);
+    backdrop-filter: blur(18px) saturate(155%);
+    -webkit-backdrop-filter: blur(18px) saturate(155%);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.18);
+    transition: background-color 220ms ease, transform 220ms ease,
+      box-shadow 220ms ease;
+  }
+
+  .glass-card:hover {
+    background-color: rgb(var(--main-background) / 0.68);
+  }
+
+  .glass-card:active {
+    transform: scale(0.995);
+  }
+
+  /* شريط القصص ولوحات فرعية */
+  .glass-panel {
+    margin: 8px;
+    border: 1px solid rgb(var(--main-accent) / 0.14);
+    border-radius: 20px;
+    background-color: rgb(var(--main-background) / 0.5);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+  }
+
+  /* لوحة التنقل الجانبية على الشاشات الكبيرة */
+  @media (min-width: 500px) {
+    .sidebar-glass {
+      border-radius: 22px;
+      background-color: rgb(var(--main-background) / 0.42);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+    }
   }
 
   /* بطاقات العمود الجانبي: زجاج ناعم */
@@ -363,17 +403,11 @@ video:not([src]) {
 .theme-background__veil {
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-      120% 80% at 50% 0%,
-      rgb(var(--main-background) / 0.05) 0%,
-      rgb(var(--main-background) / 0.3) 60%,
-      rgb(var(--main-background) / 0.5) 100%
-    ),
-    linear-gradient(
-      to bottom,
-      rgb(var(--main-background) / 0.18),
-      rgb(var(--main-background) / 0.4)
-    );
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--main-background) / 0.12),
+    rgb(var(--main-background) / 0.22)
+  );
 }
 
 @keyframes wallpaper-drift {
@@ -554,6 +588,12 @@ video:not([src]) {
 
     .menu-container {
       background-color: rgb(var(--main-background) / 0.97);
+    }
+
+    .glass-card,
+    .glass-panel,
+    .sidebar-glass {
+      background-color: rgb(var(--main-background) / 0.94);
     }
   }
 

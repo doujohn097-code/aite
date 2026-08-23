@@ -59,7 +59,7 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
   return (
     <motion.article
       className={cn(
-        `accent-tab relative flex cursor-default flex-col gap-3 border-b
+        `accent-tab glass-card relative flex cursor-default flex-col gap-3 border-b
          border-light-border px-4 py-3 outline-none dark:border-dark-border`,
         reply && 'scroll-m-[3.25rem] pt-0'
       )}
