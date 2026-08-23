@@ -5,7 +5,10 @@ export type Theme =
   | 'lilac'
   | 'ocean'
   | 'crimson'
-  | 'violet';
+  | 'violet'
+  | 'emerald'
+  | 'wisteria'
+  | 'carbon';
 
 export type Accent = 'blue' | 'yellow' | 'pink' | 'purple' | 'orange' | 'green';
 
@@ -24,8 +27,14 @@ type ThemeMeta = {
 };
 
 export const themesMeta: Readonly<Record<Theme, ThemeMeta>> = {
+  dark: {
+    label: 'الافتراضي',
+    description: 'أسود كامل',
+    dark: true,
+    preview: 'linear-gradient(135deg,#22262b 0%,#000000 100%)'
+  },
   light: {
-    label: 'افتراضي',
+    label: 'فاتح',
     description: 'أبيض نقي',
     dark: false,
     preview: 'linear-gradient(135deg,#ffffff 0%,#e9eff3 100%)'
@@ -35,12 +44,6 @@ export const themesMeta: Readonly<Record<Theme, ThemeMeta>> = {
     description: 'أزرق ليلي هادئ',
     dark: true,
     preview: 'linear-gradient(135deg,#1e2732 0%,#15202b 100%)'
-  },
-  dark: {
-    label: 'مظلم',
-    description: 'أسود كامل',
-    dark: true,
-    preview: 'linear-gradient(135deg,#22262b 0%,#000000 100%)'
   },
   lilac: {
     label: 'ليلكي سائل',
@@ -77,6 +80,33 @@ export const themesMeta: Readonly<Record<Theme, ThemeMeta>> = {
     thumbnail: '/assets/themes/violet-thumb.webp',
     accent: 'purple',
     preview: 'linear-gradient(135deg,#6d51d6 0%,#100a26 100%)'
+  },
+  emerald: {
+    label: 'ماء زمردي',
+    description: 'أوراق تحت الماء',
+    dark: true,
+    wallpaper: '/assets/themes/emerald.webp',
+    thumbnail: '/assets/themes/emerald-thumb.webp',
+    accent: 'green',
+    preview: 'linear-gradient(135deg,#5c8a3a 0%,#06180f 100%)'
+  },
+  wisteria: {
+    label: 'ويستيريا زرقاء',
+    description: 'أزهار متدلّية على أسود',
+    dark: true,
+    wallpaper: '/assets/themes/wisteria.webp',
+    thumbnail: '/assets/themes/wisteria-thumb.webp',
+    accent: 'purple',
+    preview: 'linear-gradient(135deg,#3b5bd6 0%,#04060f 100%)'
+  },
+  carbon: {
+    label: 'كربون',
+    description: 'أسود رياضي فاخر',
+    dark: true,
+    wallpaper: '/assets/themes/carbon.webp',
+    thumbnail: '/assets/themes/carbon-thumb.webp',
+    accent: 'blue',
+    preview: 'linear-gradient(135deg,#3a3a3d 0%,#08080a 100%)'
   }
 };
 

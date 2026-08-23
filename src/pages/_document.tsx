@@ -3,9 +3,9 @@ import { Html, Head, Main, NextScript } from 'next/document';
 const themeBootstrap = `(function(){try{
   var t = localStorage.getItem('theme');
   var a = localStorage.getItem('accent') || 'blue';
-  var dark = {dark:1,dim:1,ocean:1,crimson:1,violet:1};
-  var wallpaper = {lilac:1,ocean:1,crimson:1,violet:1};
-  var known = {light:1,dim:1,dark:1,lilac:1,ocean:1,crimson:1,violet:1};
+  var dark = {dark:1,dim:1,ocean:1,crimson:1,violet:1,emerald:1,wisteria:1,carbon:1};
+  var wallpaper = {lilac:1,ocean:1,crimson:1,violet:1,emerald:1,wisteria:1,carbon:1};
+  var known = {light:1,dim:1,dark:1,lilac:1,ocean:1,crimson:1,violet:1,emerald:1,wisteria:1,carbon:1};
   if(!t || !known[t]) t = 'dark';
   var r = document.documentElement;
   if(dark[t]) r.classList.add('dark'); else r.classList.remove('dark');
