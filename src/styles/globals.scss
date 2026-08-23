@@ -339,6 +339,40 @@ video:not([src]) {
     transform: scale(0.995);
   }
 
+  /* أي كتلة محتوى أو نص داخل العمود الرئيسي تصبح زجاجية مضبّبة تلقائيًا */
+  .theme-surface
+    > *:not(header):not(.glass-card):not(.glass-panel):not(
+      :has(.glass-card)
+    ):not(:has(.glass-panel)) {
+    margin: 8px;
+    border: 1px solid rgb(var(--main-accent) / 0.14);
+    border-radius: 20px;
+    background-color: rgb(var(--main-background) / 0.5);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+  }
+
+  /* القوائم داخل العمود: كل عنصر قائمة يصبح بطاقة زجاجية */
+  .theme-surface > section > article:not(.glass-card),
+  .theme-surface > section > a:not(.glass-card),
+  .theme-surface > section > li > a:not(.glass-card) {
+    margin: 8px;
+    border-radius: 20px;
+    background-color: rgb(var(--main-background) / 0.55);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+  }
+
+  /* صفحات مستقلة (الحسابات، لوحة التحكم، الرسائل) */
+  main:not(.theme-surface) > section,
+  main:not(.theme-surface) > div > ul > li > div,
+  main:not(.theme-surface) > div > div {
+    border-radius: 18px;
+    background-color: rgb(var(--main-background) / 0.5);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+  }
+
   /* شريط القصص ولوحات فرعية */
   .glass-panel {
     margin: 8px;
@@ -592,7 +626,10 @@ video:not([src]) {
 
     .glass-card,
     .glass-panel,
-    .sidebar-glass {
+    .sidebar-glass,
+    .theme-surface > *,
+    .theme-surface > section > article,
+    .theme-surface > section > a {
       background-color: rgb(var(--main-background) / 0.94);
     }
   }
