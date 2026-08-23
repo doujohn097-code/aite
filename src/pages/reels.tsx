@@ -210,7 +210,7 @@ export default function Reels(): JSX.Element {
   return (
     <MainLayout>
       <SEO title='الريلز / Aite' />
-      <div className='relative flex h-[calc(100dvh-3.5rem)] w-full items-center justify-center overflow-hidden bg-black xs:h-[100dvh]'>
+      <div className='relative flex h-app-nav w-full items-center justify-center overflow-hidden bg-black xs:h-app'>
         {/* Top Floating Header & Create Button */}
         <div
           className='pointer-events-auto absolute left-4 top-4 z-40 flex items-center gap-3'
@@ -268,7 +268,7 @@ export default function Reels(): JSX.Element {
                 return (
                   <div
                     key={reel.id}
-                    className='relative flex h-[calc(100dvh-3.5rem)] w-full select-none snap-start snap-always items-center justify-center overflow-hidden outline-none focus:outline-none xs:h-[100dvh]'
+                    className='relative flex h-app-nav w-full select-none snap-start snap-always items-center justify-center overflow-hidden outline-none focus:outline-none xs:h-app'
                   >
                     <div className='relative mx-auto h-full w-full max-w-md select-none outline-none focus:outline-none'>
                       <ReelCard reel={reel} user={owner} isActive={isActive} />

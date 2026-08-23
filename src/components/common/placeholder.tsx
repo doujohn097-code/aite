@@ -3,7 +3,7 @@ import { SEO } from './seo';
 
 export function Placeholder(): JSX.Element {
   return (
-    <main className='flex min-h-screen items-center justify-center bg-main-background'>
+    <main className='flex min-h-app items-center justify-center bg-main-background'>
       <SEO
         title='Aite'
         description='شارك أفكارك وتابع الآخرين في Aite.'

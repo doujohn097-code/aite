@@ -57,15 +57,21 @@ export function Modal({
     closeModal();
   };
 
-  const panelClassName =
-    modalClassName?.includes('min-h-screen') ||
-    modalClassName?.includes('h-screen') ||
-    modalClassName?.includes('h-full')
-      ? modalClassName
-      : cn(
-          'max-h-[90vh] overflow-y-auto',
-          modalClassName?.replace(/overflow-hidden/g, 'overflow-y-auto')
-        );
+  const isFullHeightPanel = [
+    'min-h-screen',
+    'h-screen',
+    'h-full',
+    'h-app',
+    '100dvh',
+    '100vh'
+  ].some((token) => modalClassName?.includes(token));
+
+  const panelClassName = isFullHeightPanel
+    ? cn('scroll-native', modalClassName)
+    : cn(
+        'max-h-[90vh] overflow-y-auto scroll-native',
+        modalClassName?.replace(/overflow-hidden/g, 'overflow-y-auto')
+      );
 
   return (
     <AnimatePresence>
@@ -77,7 +83,8 @@ export function Modal({
           static
         >
           <motion.div
-            className='fixed inset-0 bg-slate-950/55 backdrop-blur-[2px] dark:bg-black/65'
+            className='fixed inset-0 bg-[rgb(var(--main-background)/0.62)] backdrop-blur-[3px]
+                       [background-image:radial-gradient(120%_90%_at_50%_0%,rgb(var(--main-accent)/0.12),transparent_60%)]'
             aria-hidden='true'
             {...backdrop}
           />

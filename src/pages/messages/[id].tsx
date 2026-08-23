@@ -377,7 +377,7 @@ export default function Chat(): JSX.Element {
 
   if (forbidden)
     return (
-      <main className='mx-auto flex h-screen w-full max-w-xl flex-col items-center justify-center gap-4 border-x border-light-border text-center dark:border-dark-border'>
+      <main className='mx-auto flex h-app w-full max-w-xl flex-col items-center justify-center gap-4 border-x border-light-border text-center dark:border-dark-border'>
         <SEO title='الرسائل / Aite' />
         <HeroIcon className='h-12 w-12' iconName='EnvelopeIcon' />
         <p className='text-xl font-bold'>المحادثة غير متاحة</p>
@@ -404,7 +404,7 @@ export default function Chat(): JSX.Element {
   return (
     <main
       ref={mainRef as Ref<HTMLElement>}
-      className='hover-animation fixed inset-x-0 top-0 z-40 mx-auto flex h-[100dvh]
+      className='hover-animation fixed inset-x-0 top-0 z-40 mx-auto flex h-app
                  w-full max-w-xl flex-col border-x-0 border-light-border
                  dark:border-dark-border xs:static xs:border-x'
     >

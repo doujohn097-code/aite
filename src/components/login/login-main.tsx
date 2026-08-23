@@ -5,6 +5,8 @@ import { saveAccount } from '@lib/accounts';
 import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
 import { InputField } from '@components/input/input-field';
+import { useTheme } from '@lib/context/theme-context';
+import { themesMeta } from '@lib/types/theme';
 
 export function LoginMain(): JSX.Element {
   const {
@@ -12,6 +14,9 @@ export function LoginMain(): JSX.Element {
     signUpWithUsername,
     error: authError
   } = useAuth();
+
+  const { theme } = useTheme();
+  const { wallpaper } = themesMeta[theme];
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
@@ -91,8 +96,19 @@ export function LoginMain(): JSX.Element {
   };
 
   return (
-    <main className='grid min-h-screen lg:grid-cols-[1fr,45vw]'>
-      <div className='relative hidden items-center justify-center bg-black p-12 lg:flex'>
+    <main className='grid min-h-app lg:grid-cols-[1fr,45vw]'>
+      <div
+        className='relative hidden items-center justify-center bg-black p-12 lg:flex'
+        style={
+          wallpaper
+            ? {
+                backgroundImage: `linear-gradient(rgb(var(--main-background)/0.55), rgb(var(--main-background)/0.75)), url('${wallpaper}')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }
+            : undefined
+        }
+      >
         <img
           src='/assets/home-logo.png'
           alt='Aite'

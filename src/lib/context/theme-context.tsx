@@ -212,7 +212,7 @@ export function ThemeContextProvider({
     root.classList.add('theme-switching');
 
     const cleanup = (): void => {
-      window.setTimeout(() => root.classList.remove('theme-switching'), 450);
+      window.setTimeout(() => root.classList.remove('theme-switching'), 950);
     };
 
     if (!doc.startViewTransition) {

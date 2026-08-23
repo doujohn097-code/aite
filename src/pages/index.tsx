@@ -33,7 +33,7 @@ export default function Login(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, loading, user]);
   return (
-    <div className='grid min-h-screen grid-rows-[1fr,auto]'>
+    <div className='grid min-h-app grid-rows-[1fr,auto]'>
       <SEO
         title='Aite - تواصل بشكل أنيق مع الجميع'
         description='شارك أفكارك وتابع الآخرين في Aite.'

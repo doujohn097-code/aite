@@ -8,6 +8,8 @@ import { Timestamp } from 'firebase/firestore';
 import { UserName } from '@components/user/user-name';
 import { MobileSidebarLink } from '@components/sidebar/mobile-sidebar-link';
 import { HeroIcon } from '@components/ui/hero-icon';
+import { useTheme } from '@lib/context/theme-context';
+import { themesMeta } from '@lib/types/theme';
 import { Modal } from './modal';
 import { ActionModal } from './action-modal';
 import { SettingsModal } from './settings-modal';
@@ -67,6 +69,9 @@ export function MobileSidebarModal({
   closeModal
 }: MobileSidebarModalProps): JSX.Element {
   const { signOut } = useAuth();
+  const { theme } = useTheme();
+
+  const { wallpaper } = themesMeta[theme];
   const { open, openModal, closeModal: closeLogOutModal } = useModal();
   const {
     open: settingsOpen,
@@ -107,20 +112,31 @@ export function MobileSidebarModal({
         <SettingsModal closeModal={closeSettingsModal} />
       </Modal>
 
-      <div className='flex h-full flex-col overflow-y-auto bg-main-background'>
+      <div className='scroll-native pb-safe flex h-full flex-col overflow-y-auto bg-main-background'>
         {/* Cover Photo Header */}
-        <div className='relative h-28 w-full shrink-0 overflow-hidden bg-gradient-to-tr from-main-accent/30 via-main-accent/15 to-main-accent/5'>
-          {coverPhotoURL ? (
-            <NextImage
-              useSkeleton
-              imgClassName='object-cover'
-              src={coverPhotoURL}
-              alt={name}
-              layout='fill'
+        <div className='pt-safe relative w-full shrink-0 overflow-hidden bg-gradient-to-tr from-main-accent/30 via-main-accent/15 to-main-accent/5'>
+          <div className='relative h-28 w-full'>
+            {coverPhotoURL ? (
+              <NextImage
+                useSkeleton
+                imgClassName='object-cover'
+                src={coverPhotoURL}
+                alt={name}
+                layout='fill'
+              />
+            ) : wallpaper ? (
+              <div
+                className='h-full w-full bg-cover bg-center'
+                style={{ backgroundImage: `url('${wallpaper}')` }}
+              />
+            ) : (
+              <div className='h-full w-full bg-gradient-to-r from-main-accent/25 via-main-accent/15 to-main-accent/5' />
+            )}
+            <span
+              aria-hidden
+              className='absolute inset-0 bg-gradient-to-t from-main-background/80 via-main-background/10 to-transparent'
             />
-          ) : (
-            <div className='h-full w-full bg-gradient-to-r from-main-accent/25 via-main-accent/15 to-main-accent/5' />
-          )}
+          </div>
 
           {/* Frosted Close Button */}
           <button

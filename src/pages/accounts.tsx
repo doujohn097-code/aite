@@ -61,14 +61,14 @@ export default function Accounts(): JSX.Element {
 
   if (authLoading || accounts === null) {
     return (
-      <main className='flex min-h-screen items-center justify-center'>
+      <main className='flex min-h-app items-center justify-center'>
         <Loading className='mt-0' />
       </main>
     );
   }
 
   return (
-    <main className='flex min-h-screen flex-col items-center justify-center px-4 py-10'>
+    <main className='flex min-h-app flex-col items-center justify-center px-4 py-10'>
       <SEO title='الحسابات المحفوظة / Aite' />
       <div className='flex w-full max-w-md flex-col items-center gap-6'>
         <AiteLogo className='h-12 w-12' />

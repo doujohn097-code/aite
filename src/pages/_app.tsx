@@ -2,6 +2,7 @@ import '@styles/globals.scss';
 
 import { useEffect, useState } from 'react';
 import { AuthContextProvider } from '@lib/context/auth-context';
+import { useViewportFix } from '@lib/hooks/useViewportFix';
 import { ThemeContextProvider } from '@lib/context/theme-context';
 import { AppHead } from '@components/common/app-head';
 import { SplashScreen } from '@components/common/splash-screen';
@@ -25,6 +26,8 @@ export default function App({
   pageProps
 }: AppPropsWithLayout): ReactNode {
   const getLayout = Component.getLayout ?? ((page): ReactNode => page);
+
+  useViewportFix();
 
   const [showSplash, setShowSplash] = useState(true);
 

@@ -36,6 +36,7 @@ export function MainHeader({
     <header
       className={cn(
         'sticky top-0 z-30 flex min-h-[53px] items-center justify-between border-b border-light-border/60 bg-main-background/85 px-4 py-2 backdrop-blur-md dark:border-dark-border/60',
+        'pt-[max(0.5rem,env(safe-area-inset-top))]',
         disableSticky && 'relative',
         className
       )}

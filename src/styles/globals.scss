@@ -42,9 +42,15 @@
     --violet-search-background: 35 24 70;
     --violet-sidebar-background: 21 13 48;
 
-    /* شفافية الأسطح فوق الخلفية السائلة */
-    --surface-alpha: 0.62;
-    --surface-blur: 20px;
+    /* ألوان التنبيهات (toast) — تتبع المظهر */
+    --toast-bg: 15 20 25;
+    --toast-text: 255 255 255;
+
+    /* شفافية الأسطح وضبابيتها فوق الخلفية السائلة */
+    --surface-alpha: 0.66;
+    --surface-blur: 26px;
+    --wallpaper-blur: 3px;
+    --app-height: 100vh;
 
     --accent-yellow: 255 213 0;
     --accent-blue: 255 255 255;
@@ -72,6 +78,9 @@
 
   /* في الثيم الفاتح: الأبيض غير مرئي على خلفية بيضاء — نستخدم أزرق تويتر */
   :root:not(.dark) {
+    --toast-bg: 255 255 255;
+    --toast-text: 15 20 25;
+
     --accent-blue: 29 155 240;
 
     --accent-blue-contrast: 255 255 255;
@@ -194,7 +203,14 @@
 /* منع أي تمدد أفقي في كامل التطبيق (clip لا يكسر position: sticky) */
 html,
 body {
-  overflow-x: clip;
+  overflow-x: hidden;
+}
+
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
 }
 
 /* إظهار إطار الفيديو الأول بشكل صحيح بدل الأيقونة الرمادية في التطبيق */
@@ -233,6 +249,8 @@ video:not([src]) {
    الأسطح تصبح زجاجية شفافة فوق الخلفية مع الحفاظ على وضوح النص
    ========================================================= */
 .theme-wallpaper {
+  --toast-bg: var(--main-background);
+
   body {
     background-color: transparent;
   }
@@ -278,6 +296,37 @@ video:not([src]) {
     border-color: rgb(255 255 255 / 0.12);
   }
 
+  /* عمود المحتوى الرئيسي: ضباب خفيف يجعل النص واضحًا فوق الخلفية */
+  .theme-surface {
+    background-color: rgb(var(--main-background) / 0.5);
+    backdrop-filter: blur(calc(var(--surface-blur) * 0.75)) saturate(140%);
+    -webkit-backdrop-filter: blur(calc(var(--surface-blur) * 0.75))
+      saturate(140%);
+    border-color: rgb(var(--main-accent) / 0.16);
+  }
+
+  /* تجنّب تكرار الضبابية داخل سطح مضبّب (يسبب أداءً ضعيفًا وتشوهًا في WebView) */
+  .theme-surface .bg-main-background\/85,
+  .theme-surface .bg-main-background\/90,
+  .theme-surface .bg-main-background\/95 {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: rgb(var(--main-background) / 0.55);
+  }
+
+  /* بطاقات العمود الجانبي: زجاج ناعم */
+  aside > section,
+  aside > div {
+    background-color: rgb(var(--main-background) / 0.4);
+    backdrop-filter: blur(14px) saturate(135%);
+    -webkit-backdrop-filter: blur(14px) saturate(135%);
+    border-radius: 18px;
+  }
+
+  .aite-toast {
+    border-color: rgb(var(--main-accent) / 0.3) !important;
+  }
+
   /* القوائم المنبثقة تبقى مقروءة */
   .menu-container {
     background-color: rgb(var(--main-background) / 0.86);
@@ -297,11 +346,13 @@ video:not([src]) {
 
 .theme-background__image {
   position: absolute;
-  inset: -6%;
+  inset: -9%;
   background-size: cover;
   background-position: center;
+  filter: blur(var(--wallpaper-blur)) saturate(112%);
+  transform: translateZ(0);
   will-change: transform, opacity;
-  animation: wallpaper-drift 46s ease-in-out infinite alternate;
+  animation: wallpaper-drift 52s ease-in-out infinite alternate;
 }
 
 .theme-background__veil {
@@ -309,15 +360,17 @@ video:not([src]) {
   inset: 0;
   background: radial-gradient(
       120% 80% at 50% 0%,
-      rgb(var(--main-background) / 0.15) 0%,
-      rgb(var(--main-background) / 0.55) 60%,
-      rgb(var(--main-background) / 0.78) 100%
+      rgb(var(--main-background) / 0.2) 0%,
+      rgb(var(--main-background) / 0.58) 60%,
+      rgb(var(--main-background) / 0.82) 100%
     ),
     linear-gradient(
       to bottom,
-      rgb(var(--main-background) / 0.35),
-      rgb(var(--main-background) / 0.62)
+      rgb(var(--main-background) / 0.42),
+      rgb(var(--main-background) / 0.68)
     );
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 @keyframes wallpaper-drift {
@@ -336,25 +389,41 @@ video:not([src]) {
    أنميشن تبديل المظهر (كشف دائري من موضع الزر)
    ========================================================= */
 ::view-transition-old(root) {
-  animation: none;
+  animation: theme-fade-out 820ms cubic-bezier(0.65, 0, 0.35, 1) both;
   mix-blend-mode: normal;
 }
 
 ::view-transition-new(root) {
-  animation: theme-reveal 620ms cubic-bezier(0.4, 0, 0.2, 1);
+  animation: theme-reveal 820ms cubic-bezier(0.16, 0.84, 0.28, 1) both;
   mix-blend-mode: normal;
 }
 
 @keyframes theme-reveal {
-  from {
+  0% {
     clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
-    filter: saturate(140%);
+    opacity: 0.6;
+    filter: saturate(150%) brightness(1.05);
   }
-  to {
+  45% {
+    opacity: 1;
+  }
+  100% {
     clip-path: circle(
       var(--theme-r, 150vmax) at var(--theme-x, 50%) var(--theme-y, 50%)
     );
-    filter: saturate(100%);
+    opacity: 1;
+    filter: saturate(100%) brightness(1);
+  }
+}
+
+@keyframes theme-fade-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(0.995);
   }
 }
 
@@ -385,8 +454,39 @@ video:not([src]) {
 .theme-switching *,
 .theme-switching *::before,
 .theme-switching *::after {
-  transition: background-color 420ms ease, border-color 420ms ease,
-    color 420ms ease, fill 420ms ease !important;
+  transition: background-color 520ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 520ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    color 520ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 520ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    fill 520ms cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+}
+
+/* توهّج لوني لطيف ينتشر من موضع الضغط أثناء التبديل */
+.theme-switching body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--theme-x, 50%) var(--theme-y, 50%),
+    rgb(var(--main-accent) / 0.22) 0%,
+    rgb(var(--main-accent) / 0.08) 35%,
+    transparent 60%
+  );
+  animation: theme-glow 900ms ease-out forwards;
+}
+
+@keyframes theme-glow {
+  0% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -401,4 +501,112 @@ video:not([src]) {
   .theme-ripple {
     display: none;
   }
+}
+
+/* =========================================================
+   توافق تطبيق الهاتف (Android WebView / PWA)
+   ========================================================= */
+
+/* مناطق الأمان (الشق العلوي وشريط الإيماءات السفلي) */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.inset-safe-top {
+  top: env(safe-area-inset-top, 0px);
+}
+
+/* تمرير سلس داخل WebView */
+.scroll-native {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+/* بديل الزجاج عندما لا يدعم WebView الضبابية — نرفع العتامة كي يبقى النص واضحًا */
+@supports not (
+  (backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))
+) {
+  .theme-wallpaper {
+    --surface-alpha: 0.93;
+
+    .bg-main-sidebar-background {
+      background-color: rgb(var(--main-sidebar-background) / 0.93);
+    }
+
+    .bg-main-search-background {
+      background-color: rgb(var(--main-search-background) / 0.95);
+    }
+
+    .bg-main-background\/85,
+    .bg-main-background\/90,
+    .bg-main-background\/95 {
+      background-color: rgb(var(--main-background) / 0.95);
+    }
+
+    .menu-container {
+      background-color: rgb(var(--main-background) / 0.97);
+    }
+  }
+
+  .theme-background__veil {
+    background: rgb(var(--main-background) / 0.8);
+  }
+}
+
+/* شريط تمرير متناسق مع المظهر */
+* {
+  scrollbar-color: rgb(var(--main-accent) / 0.35) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--main-accent) / 0.3);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--main-accent) / 0.5);
+}
+
+/* تحديد النص بلون المظهر */
+::selection {
+  background-color: rgb(var(--main-accent) / 0.35);
+}
+
+/* منع تعليق حالة hover على شاشات اللمس */
+@media (hover: none) {
+  .hover-card:hover {
+    background-color: transparent;
+  }
+
+  .native-app body {
+    overscroll-behavior-y: none;
+  }
+}
+
+/* أداء الهاتف: إيقاف انسياب الخلفية على الشاشات الصغيرة لتوفير الطاقة */
+@media (max-width: 640px) {
+  .theme-background__image {
+    animation: none;
+    transform: scale(1.05);
+  }
+}
+
+/* تقليل الضبابية على أجهزة أندرويد الضعيفة */
+.is-android {
+  --surface-blur: 20px;
+  --wallpaper-blur: 2px;
 }

@@ -19,7 +19,7 @@ export default function NotFound(): JSX.Element {
         image='/404.png'
       />
       <div
-        className='flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center'
+        className='flex min-h-app flex-col items-center justify-center gap-4 px-4 text-center'
         style={{ background: isDarkMode ? '#000' : '#fff' }}
       >
         <h1 className='text-4xl font-bold'>٤٠٤</h1>

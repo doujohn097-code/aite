@@ -11,6 +11,16 @@ module.exports = {
       ...defaultTheme.screens
     },
     extend: {
+      height: {
+        app: 'var(--app-height, 100vh)',
+        'app-nav': 'calc(var(--app-height, 100vh) - 3.5rem)'
+      },
+      minHeight: {
+        app: 'var(--app-height, 100vh)'
+      },
+      maxHeight: {
+        app: 'var(--app-height, 100vh)'
+      },
       fontFamily: {
         aite: [
           '"IBM Plex Sans Arabic"',
