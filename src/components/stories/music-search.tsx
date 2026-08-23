@@ -4,9 +4,16 @@ import { auth } from '@lib/firebase/app';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { MusicTrack } from '@pages/api/music';
 
+type SelectedTrack = {
+  src: string;
+  name: string;
+  /** طول الأغنية الكامل بالثواني (للعرض في المقتطع) */
+  fullDuration?: number | null;
+};
+
 type MusicSearchProps = {
-  selected: { src: string; name: string } | null;
-  onSelect: (track: { src: string; name: string } | null) => void;
+  selected: SelectedTrack | null;
+  onSelect: (track: SelectedTrack | null) => void;
 };
 
 export function MusicSearch({
@@ -107,7 +114,11 @@ export function MusicSearch({
     if (selected?.src === track.src) {
       onSelect(null);
     } else {
-      onSelect({ src: track.src, name: `${track.name} — ${track.artist}` });
+      onSelect({
+        src: track.src,
+        name: `${track.name} — ${track.artist}`,
+        fullDuration: track.duration
+      });
     }
     stopPreview();
   };

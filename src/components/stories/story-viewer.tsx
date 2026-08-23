@@ -18,19 +18,11 @@ import { HeroIcon } from '@components/ui/hero-icon';
 import { Loading } from '@components/ui/loading';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
-import { StoryEditor } from './story-editor';
+import { StoryEditor, fontCss } from './story-editor';
 import type { Story } from '@lib/types/story';
 
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_STORY_DURATION_MS = 15000;
-
-const STORY_FONTS: Record<string, string> = {
-  aite: '"IBM Plex Sans Arabic", sans-serif',
-  serif: 'Georgia, "Times New Roman", serif',
-  mono: '"Courier New", monospace',
-  script: '"Great Vibes", cursive',
-  heavy: '"Arial Black", Impact, sans-serif'
-};
 
 export function StoryViewer({ userId }: { userId: string }): JSX.Element {
   const { push, replace } = useRouter();
@@ -570,7 +562,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
                     top: `${item.y * 100}%`,
                     transform: 'translate(-50%, -50%)',
                     color: item.color,
-                    fontFamily: STORY_FONTS[item.font] ?? STORY_FONTS.aite,
+                    fontFamily: fontCss(item.font),
                     fontSize: `clamp(12px, ${item.size * 100}vh, 96px)`
                   }}
                   className={cn(

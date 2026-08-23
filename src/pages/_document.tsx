@@ -44,6 +44,11 @@ export default function Document(): JSX.Element {
           href='https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap'
           rel='stylesheet'
         />
+        {/* خطوط محرّر القصص — عربية ولاتينية */}
+        <link
+          href='https://fonts.googleapis.com/css2?family=Cairo:wght@700&family=Tajawal:wght@700&family=Almarai:wght@700&family=Amiri:wght@700&family=Reem+Kufi:wght@600&family=Lalezar&family=Aref+Ruqaa:wght@700&family=Poppins:wght@700&family=Playfair+Display:wght@700&family=Bebas+Neue&family=Pacifico&family=Lobster&display=swap'
+          rel='stylesheet'
+        />
         <link
           href='https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Color+Emoji&display=swap'
           rel='stylesheet'
