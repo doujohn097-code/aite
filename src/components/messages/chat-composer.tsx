@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import cn from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +24,10 @@ type ChatComposerProps = {
     type: MessageType;
   } | null;
   onCancelReply?: () => void;
+  /** نص الرسالة قيد التعديل (null = لا يوجد تعديل) */
+  editingText?: string | null;
+  onCancelEdit?: () => void;
+  onSubmitEdit?: (text: string) => void;
   onSendText: (text: string) => void;
   onSendMedia: (files: FilesWithId, kind: 'image' | 'video') => void;
   onSendVoice: (blob: Blob, duration: number, peaks: number[]) => void;
@@ -34,6 +38,9 @@ export function ChatComposer({
   sending,
   replyingTo,
   onCancelReply,
+  editingText,
+  onCancelEdit,
+  onSubmitEdit,
   onSendText,
   onSendMedia,
   onSendVoice,
@@ -42,6 +49,7 @@ export function ChatComposer({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [text, setText] = useState('');
+  const isEditing = editingText !== null && editingText !== undefined;
   const [files, setFiles] = useState<FilesWithId>([]);
   const [previews, setPreviews] = useState<
     { id: string; url: string; type: string }[]
@@ -50,6 +58,11 @@ export function ChatComposer({
   const [recording, setRecording] = useState(false);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingSent = useRef(false);
+
+  useEffect(() => {
+    if (editingText !== null && editingText !== undefined) setText(editingText);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingText]);
 
   const notifyTyping = (): void => {
     if (!onTyping) return;
@@ -110,6 +123,16 @@ export function ChatComposer({
   };
 
   const handleSend = (): void => {
+    // وضع التعديل: نحفظ النص الجديد بدل إرسال رسالة جديدة
+    if (isEditing) {
+      const trimmed = text.trim();
+      if (!trimmed || sending) return;
+      onSubmitEdit?.(trimmed);
+      setText('');
+      stopTyping();
+      return;
+    }
+
     if (!hasContent || sending) return;
 
     // A composer action must create exactly one message. Previously a draft
@@ -149,6 +172,49 @@ export function ChatComposer({
       <div aria-live='polite' className='sr-only'>
         {sending ? 'جارٍ إرسال الرسالة' : ''}
       </div>
+      {/* شريط التعديل */}
+      <AnimatePresence>
+        {isEditing && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className='overflow-hidden'
+          >
+            <div
+              className='relative mb-2 flex items-center gap-2 overflow-hidden rounded-2xl
+                         border border-main-accent/30 bg-main-accent/10 px-3 py-2 ps-5'
+            >
+              <span className='absolute inset-y-0 start-0 w-1 rounded-full bg-gradient-to-b from-main-accent to-main-accent/30' />
+              <HeroIcon
+                className='h-4 w-4 shrink-0 text-main-accent-text'
+                iconName='PencilSquareIcon'
+              />
+              <div className='flex min-w-0 flex-1 flex-col text-xs'>
+                <span className='font-bold text-main-accent-text'>
+                  تعديل الرسالة
+                </span>
+                <span className='truncate text-light-secondary dark:text-dark-secondary'>
+                  {editingText || ''}
+                </span>
+              </div>
+              <button
+                type='button'
+                onClick={(): void => {
+                  setText('');
+                  onCancelEdit?.();
+                }}
+                aria-label='إلغاء التعديل'
+                className='shrink-0 rounded-full p-1.5 text-light-secondary transition
+                           hover:bg-light-primary/10 dark:text-dark-secondary'
+              >
+                <HeroIcon className='h-4 w-4' iconName='XMarkIcon' />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* شريط الرد قبل الإرسال */}
       <AnimatePresence>
         {replyingTo && (
@@ -327,7 +393,7 @@ export function ChatComposer({
                          dark:placeholder:text-dark-secondary'
             />
 
-            {hasContent ? (
+            {hasContent || (isEditing && text.trim()) ? (
               <button
                 type='button'
                 onClick={handleSend}
@@ -343,8 +409,8 @@ export function ChatComposer({
                   <span className='h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black' />
                 ) : (
                   <HeroIcon
-                    className='h-5 w-5 -scale-x-100'
-                    iconName='PaperAirplaneIcon'
+                    className={cn('h-5 w-5', !isEditing && '-scale-x-100')}
+                    iconName={isEditing ? 'CheckIcon' : 'PaperAirplaneIcon'}
                     solid
                   />
                 )}

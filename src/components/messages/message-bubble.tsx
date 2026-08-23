@@ -32,6 +32,8 @@ type MessageBubbleProps = {
   onReaction?: (message: Message, emoji: string) => void;
   /** حذف الرسالة (للمرسل فقط) */
   onDelete?: (message: Message) => void;
+  /** تعديل نص الرسالة (للمرسل فقط) */
+  onEdit?: (message: Message) => void;
 };
 
 const SWIPE_THRESHOLD = 56;
@@ -110,7 +112,8 @@ export function MessageBubble({
   viewerId,
   onReply,
   onReaction,
-  onDelete
+  onDelete,
+  onEdit
 }: MessageBubbleProps): JSX.Element {
   const {
     type,
@@ -121,7 +124,9 @@ export function MessageBubble({
     sharedPost,
     reactions,
     createdAt,
-    seenBy
+    seenBy,
+    edited,
+    deletedAt
   } = message;
   const seen = seenBy?.length > 1;
   const isDeleted = !!message.deletedAt;
@@ -476,6 +481,25 @@ export function MessageBubble({
                       رد على الرسالة
                     </button>
                   )}
+                  {/* تعديل الرسالة (نص المرسل فقط) */}
+                  {isOwn && onEdit && type === 'text' && !deletedAt && (
+                    <button
+                      className='accent-tab flex w-full items-center gap-3 border-t border-light-border/60 p-3
+                           text-light-primary hover:bg-main-sidebar-background dark:border-dark-border/60
+                           dark:text-dark-primary'
+                      onClick={() => {
+                        setPickerOpen(false);
+                        onEdit(message);
+                      }}
+                      type='button'
+                    >
+                      <HeroIcon
+                        className='h-5 w-5'
+                        iconName='PencilSquareIcon'
+                      />
+                      تعديل الرسالة
+                    </button>
+                  )}
                   {/* حذف الرسالة (للمرسل فقط) */}
                   {isOwn && onDelete && (
                     <button
@@ -751,6 +775,7 @@ export function MessageBubble({
         )}
       >
         <span>{formatTime(createdAt)}</span>
+        {edited && !deletedAt && <span className='opacity-80'>· معدّل</span>}
         {isOwn && (
           <HeroIcon
             className={cn('h-3.5 w-3.5', seen && 'text-main-accent-text')}

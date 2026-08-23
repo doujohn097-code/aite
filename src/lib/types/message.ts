@@ -56,6 +56,9 @@ export type Message = {
   seenBy: string[];
   /** Soft deletion keeps a clear, synchronized placeholder in the chat. */
   deletedAt?: Timestamp | null;
+  /** تم تعديل نص الرسالة بعد إرسالها */
+  edited?: boolean;
+  editedAt?: Timestamp | null;
 };
 
 export type LastMessage = {
@@ -63,6 +66,8 @@ export type LastMessage = {
   type: MessageType;
   senderId: string;
   createdAt: Timestamp;
+  /** آخر رسالة معدّلة — يظهر معها وسم «معدّل» في قائمة المحادثات */
+  edited?: boolean;
 };
 
 export type Conversation = {

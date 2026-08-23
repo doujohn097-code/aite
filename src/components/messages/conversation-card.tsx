@@ -126,7 +126,10 @@ export function ConversationCard({
               {typeIcon && (
                 <HeroIcon className='h-4 w-4 shrink-0' iconName={typeIcon} />
               )}
-              {previewText}
+              <span className='truncate'>{previewText}</span>
+              {lastMessage?.edited && (
+                <span className='shrink-0 text-[11px] opacity-75'>· معدّل</span>
+              )}
             </p>
             {unreadCount > 0 && (
               <span

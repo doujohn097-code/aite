@@ -131,6 +131,16 @@ service cloud.firestore {
                   && onlyCurrentUserChanged(resource.data.seenBy, request.resource.data.seenBy))
                 || (request.resource.data.reactions != resource.data.reactions
                   && onlyCurrentUserMapChanged(resource.data.reactions, request.resource.data.reactions))))
+            // تعديل نص الرسالة من صاحبها (لا يشمل الرسائل المحذوفة)
+            || (request.auth.uid == resource.data.senderId
+              && resource.data.get('deletedAt', null) == null
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                'text', 'edited', 'editedAt'
+              ])
+              && request.resource.data.edited == true
+              && validText(request.resource.data.text, 4000)
+              && request.resource.data.text is string
+              && request.resource.data.text.size() > 0)
             || (request.auth.uid == resource.data.senderId
               && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
                 'text', 'media', 'audio', 'replyTo', 'sharedPost', 'reactions', 'deletedAt'

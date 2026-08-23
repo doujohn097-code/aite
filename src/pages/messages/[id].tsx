@@ -16,7 +16,8 @@ import {
   markMessageSeen,
   toggleMessageReaction,
   setTyping,
-  deleteMessage
+  deleteMessage,
+  editMessage
 } from '@lib/messages';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -71,6 +72,7 @@ export default function Chat(): JSX.Element {
   const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
   // الرسالة قيد الرد عليها عبر السحب
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
+  const [editTarget, setEditTarget] = useState<Message | null>(null);
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Message | null>(null);
   const [blockBusy, setBlockBusy] = useState(false);
@@ -525,6 +527,10 @@ export default function Chat(): JSX.Element {
                   viewerId={user?.id}
                   onReply={setReplyTarget}
                   onDelete={(target) => setDeleteTarget(target)}
+                  onEdit={(target) => {
+                    setReplyTarget(null);
+                    setEditTarget(target);
+                  }}
                   onReaction={(target, emoji) => {
                     if (!user || !conversationId) return;
                     void toggleMessageReaction(
@@ -610,6 +616,25 @@ export default function Chat(): JSX.Element {
                 : null
             }
             onCancelReply={() => setReplyTarget(null)}
+            editingText={editTarget?.text ?? null}
+            onCancelEdit={() => setEditTarget(null)}
+            onSubmitEdit={(text) => {
+              if (!conversationId || !editTarget) return;
+
+              const isLastMessage =
+                conversation?.lastMessage?.createdAt?.seconds ===
+                  editTarget.createdAt?.seconds &&
+                conversation?.lastMessage?.senderId === editTarget.senderId;
+
+              void editMessage(conversationId, editTarget.id, text, {
+                isLastMessage
+              })
+                .then(() => {
+                  setEditTarget(null);
+                  toast.success('تم تعديل الرسالة');
+                })
+                .catch(() => toast.error('تعذر تعديل الرسالة'));
+            }}
             onSendText={(text) => void handleSend({ type: 'text', text })}
             onSendMedia={(files, kind) =>
               void handleSend({ type: kind, files })

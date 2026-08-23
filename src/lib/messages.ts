@@ -239,6 +239,38 @@ export async function deleteMessage(
   );
 }
 
+/**
+ * تعديل نص رسالة نصية أرسلها المستخدم نفسه.
+ * إن كانت آخر رسالة في المحادثة يُحدَّث المعاينة في قائمة المحادثات أيضًا.
+ */
+export async function editMessage(
+  conversationId: string,
+  messageId: string,
+  text: string,
+  options?: { isLastMessage?: boolean }
+): Promise<void> {
+  const trimmed = text.trim();
+
+  if (!trimmed) throw new Error('لا يمكن ترك الرسالة فارغة');
+  if (trimmed.length > 4000) throw new Error('الرسالة طويلة جدًا');
+
+  await updateDoc(
+    doc(db, 'conversations', conversationId, 'messages', messageId),
+    {
+      text: trimmed,
+      edited: true,
+      editedAt: serverTimestamp()
+    }
+  );
+
+  if (options?.isLastMessage)
+    await updateDoc(doc(db, 'conversations', conversationId), {
+      'lastMessage.text': trimmed,
+      'lastMessage.edited': true,
+      updatedAt: serverTimestamp()
+    });
+}
+
 export async function markConversationRead(
   conversationId: string,
   userId: string
