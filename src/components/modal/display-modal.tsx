@@ -1,19 +1,13 @@
 import { UserAvatar } from '@components/user/user-avatar';
 import { UserName } from '@components/user/user-name';
-import { InputThemeRadio } from '@components/input/input-theme-radio';
+import { ThemePicker } from '@components/input/theme-picker';
 import { Button } from '@components/ui/button';
 import { InputAccentRadio } from '@components/input/input-accent-radio';
-import type { Theme, Accent } from '@lib/types/theme';
+import type { Accent } from '@lib/types/theme';
 
 type DisplayModalProps = {
   closeModal: () => void;
 };
-
-const themes: Readonly<[Theme, string][]> = [
-  ['light', 'افتراضي'],
-  ['dim', 'خافت'],
-  ['dark', 'مظلم']
-];
 
 const accentsColor: Readonly<Accent[]> = [
   'blue',
@@ -75,13 +69,8 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
         <p className='text-sm font-bold text-light-secondary dark:text-dark-secondary'>
           الخلفية
         </p>
-        <div
-          className='hover-animation grid grid-rows-3 gap-3 rounded-2xl bg-main-sidebar-background
-                     px-4 py-3 xs:grid-cols-3 xs:grid-rows-none'
-        >
-          {themes.map(([themeType, label]) => (
-            <InputThemeRadio type={themeType} label={label} key={themeType} />
-          ))}
+        <div className='hover-animation rounded-2xl bg-main-sidebar-background px-3 py-3'>
+          <ThemePicker />
         </div>
       </div>
       <Button

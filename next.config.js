@@ -18,7 +18,10 @@ const nextConfig = {
         source: '/(.*)',
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'DENY' },
+          // في التطوير نسمح بالتضمين داخل إطار المعاينة فقط
+          ...(process.env.NODE_ENV === 'production'
+            ? [{ key: 'X-Frame-Options', value: 'DENY' }]
+            : []),
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           {
             key: 'Referrer-Policy',

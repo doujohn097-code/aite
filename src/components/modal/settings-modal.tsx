@@ -6,16 +6,30 @@ import {
   updatePassword
 } from 'firebase/auth';
 import { useAuth } from '@lib/context/auth-context';
+import { useTheme } from '@lib/context/theme-context';
 import { auth } from '@lib/firebase/app';
 import { usernameToInternalEmail } from '@lib/utils';
 import { saveAccount, removeSavedAccount } from '@lib/accounts';
+import { themesMeta } from '@lib/types/theme';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { InputField } from '@components/input/input-field';
+import { ThemePicker } from '@components/input/theme-picker';
+import { InputAccentRadio } from '@components/input/input-accent-radio';
+import type { Accent } from '@lib/types/theme';
 import type { ChangeEvent, FormEvent } from 'react';
 import type { User } from '@lib/types/user';
 
-type SettingsView = 'main' | 'password' | 'delete';
+type SettingsView = 'main' | 'password' | 'delete' | 'appearance';
+
+const accents: Readonly<Accent[]> = [
+  'blue',
+  'yellow',
+  'pink',
+  'purple',
+  'orange',
+  'green'
+];
 
 type SettingsModalProps = {
   closeModal: () => void;
@@ -23,6 +37,7 @@ type SettingsModalProps = {
 
 export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
   const { user, signOut } = useAuth();
+  const { theme } = useTheme();
   const { username, name, photoURL } = user as User;
 
   const [view, setView] = useState<SettingsView>('main');
@@ -202,6 +217,7 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
         <h2 className='text-xl font-bold'>
           {view === 'main' && 'الإعدادات'}
           {view === 'password' && 'تغيير كلمة المرور'}
+          {view === 'appearance' && 'المظهر'}
           {view === 'delete' && 'حذف الحساب'}
         </h2>
       </div>
@@ -235,9 +251,10 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
 
           <button
             type='button'
-            disabled
-            className='flex cursor-not-allowed items-center justify-between rounded-xl p-3.5
-                       text-start opacity-60'
+            onClick={(): void => setView('appearance')}
+            className='flex items-center justify-between rounded-xl p-3.5 text-start transition
+                       hover:bg-light-primary/10 active:bg-light-primary/20
+                       dark:hover:bg-dark-primary/10 dark:active:bg-dark-primary/20'
           >
             <div className='flex items-center gap-3'>
               <HeroIcon
@@ -245,18 +262,25 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
                 iconName='SwatchIcon'
               />
               <div>
-                <p className='font-semibold'>تبديل الثيم</p>
+                <p className='font-semibold'>المظهر والخلفية</p>
                 <p className='text-xs text-light-secondary dark:text-dark-secondary'>
-                  المظهر الفاتح والداكن
+                  {themesMeta[theme].label} · {themesMeta[theme].description}
                 </p>
               </div>
             </div>
             <span
-              className='rounded-full bg-main-accent/15 px-2.5 py-1 text-[11px] font-bold
-                         text-main-accent-text'
-            >
-              قريبًا
-            </span>
+              className='h-7 w-7 shrink-0 rounded-full ring-2 ring-main-accent/40'
+              style={{
+                background: themesMeta[theme].preview,
+                ...(themesMeta[theme].thumbnail && {
+                  backgroundImage: `url('${
+                    themesMeta[theme].thumbnail ?? ''
+                  }')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                })
+              }}
+            />
           </button>
 
           <div className='my-1 border-t border-light-border dark:border-dark-border' />
@@ -284,6 +308,30 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
               iconName='ChevronLeftIcon'
             />
           </button>
+        </div>
+      )}
+
+      {view === 'appearance' && (
+        <div className='flex flex-col gap-5'>
+          <div className='flex flex-col gap-2'>
+            <p className='text-sm font-bold text-light-secondary dark:text-dark-secondary'>
+              الخلفية والمظهر
+            </p>
+            <ThemePicker />
+          </div>
+          <div className='flex flex-col gap-2'>
+            <p className='text-sm font-bold text-light-secondary dark:text-dark-secondary'>
+              لون التمييز
+            </p>
+            <div
+              className='grid grid-cols-6 justify-items-center gap-2 rounded-2xl
+                         bg-main-sidebar-background py-3'
+            >
+              {accents.map((accentColor) => (
+                <InputAccentRadio type={accentColor} key={accentColor} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

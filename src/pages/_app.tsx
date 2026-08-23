@@ -5,6 +5,7 @@ import { AuthContextProvider } from '@lib/context/auth-context';
 import { ThemeContextProvider } from '@lib/context/theme-context';
 import { AppHead } from '@components/common/app-head';
 import { SplashScreen } from '@components/common/splash-screen';
+import { ThemeBackground } from '@components/common/theme-background';
 import type { ReactElement, ReactNode } from 'react';
 import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
@@ -38,6 +39,7 @@ export default function App({
       <SplashScreen isVisible={showSplash} />
       <AuthContextProvider>
         <ThemeContextProvider>
+          <ThemeBackground />
           {getLayout(<Component {...pageProps} />)}
         </ThemeContextProvider>
       </AuthContextProvider>
