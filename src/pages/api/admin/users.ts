@@ -1,27 +1,22 @@
-import { adminAuth, adminFirestore, isAdminConfigured } from '@lib/firebase-admin';
+import { adminFirestore, isAdminConfigured } from '@lib/firebase-admin';
+import { hasAdminAccess } from '@lib/server/admin-auth';
+import { purgeUserData } from '@lib/server/purge-user';
 import type { NextApiRequest, NextApiResponse } from 'next';
-
-async function requireAdmin(req: NextApiRequest): Promise<boolean> {
-  if (!isAdminConfigured() || !adminAuth) return false;
-  const header = req.headers.authorization ?? '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
-  if (!token) return false;
-  const decoded = await adminAuth.verifyIdToken(token);
-  return decoded.admin === true;
-}
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ): Promise<void> {
   try {
-    if (!isAdminConfigured() || !adminFirestore || !adminAuth) {
-      res.status(503).json({ error: 'Admin service not configured - FIREBASE_ADMIN_KEY missing' });
+    if (!isAdminConfigured() || !adminFirestore) {
+      res.status(503).json({
+        error: 'Admin service not configured - FIREBASE_ADMIN_KEY missing'
+      });
       return;
     }
 
-    if (!(await requireAdmin(req))) {
-      res.status(403).json({ error: 'Admin access is required' });
+    if (!(await hasAdminAccess(req))) {
+      res.status(403).json({ error: 'صلاحية الإدارة مطلوبة' });
       return;
     }
 
@@ -56,9 +51,11 @@ export default async function handler(
         res.status(400).json({ error: 'Invalid payload' });
         return;
       }
-      await adminAuth.deleteUser(userId);
-      await adminFirestore.collection('users').doc(userId).delete();
-      res.status(200).json({ success: true });
+
+      // حذف شامل: المنشورات والردود والقصص والمحادثات والإشعارات والمتابعات
+      const report = await purgeUserData(userId);
+
+      res.status(200).json({ success: true, report });
       return;
     }
 
@@ -66,6 +63,6 @@ export default async function handler(
     res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
     console.error('admin api error:', error);
-    res.status(401).json({ error: 'Unauthorized' });
+    res.status(500).json({ error: 'تعذر تنفيذ العملية' });
   }
 }
