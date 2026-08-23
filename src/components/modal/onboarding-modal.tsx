@@ -9,25 +9,24 @@ import { Modal } from '@components/modal/modal';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { NextImage } from '@components/ui/next-image';
+import { GenderIcon } from '@components/user/gender-badge';
 import type { ChangeEvent } from 'react';
 import type { FilesWithId } from '@lib/types/file';
 
 type Gender = 'male' | 'female';
 
 const genderOptions: Readonly<
-  { value: Gender; label: string; icon: string; classes: string }[]
+  { value: Gender; label: string; classes: string }[]
 > = [
   {
     value: 'male',
     label: 'ذكر',
-    icon: '♂',
     classes:
       'text-[#1D9BF0] ring-[#1D9BF0]/40 bg-[#1D9BF0]/10 hover:bg-[#1D9BF0]/15'
   },
   {
     value: 'female',
     label: 'أنثى',
-    icon: '♀',
     classes:
       'text-[#F91A82] ring-[#F91A82]/40 bg-[#F91A82]/10 hover:bg-[#F91A82]/15'
   }
@@ -194,7 +193,7 @@ export function OnboardingModal(): JSX.Element | null {
             البادج بجانب الاسم
           </p>
           <div className='mb-6 grid grid-cols-2 gap-3'>
-            {genderOptions.map(({ value, label, icon, classes }) => {
+            {genderOptions.map(({ value, label, classes }) => {
               const active = gender === value;
 
               return (
@@ -209,7 +208,11 @@ export function OnboardingModal(): JSX.Element | null {
                     active ? 'ring-2' : 'ring-inset'
                   )}
                 >
-                  <span className='text-3xl leading-none'>{icon}</span>
+                  <GenderIcon
+                    gender={value}
+                    className='h-8 w-8'
+                    strokeWidth={1.8}
+                  />
                   <span className='text-sm font-bold'>{label}</span>
                   {active && (
                     <motion.span
