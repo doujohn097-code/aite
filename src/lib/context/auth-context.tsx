@@ -149,9 +149,7 @@ export function AuthContextProvider({
 
         if (pendingData?.username) {
           try {
-            const avail = await checkUsernameAvailability(
-              pendingData.username
-            );
+            const avail = await checkUsernameAvailability(pendingData.username);
             if (avail) finalUsername = pendingData.username;
           } catch {
             // إذا فشل التحقق بسبب الصلاحيات، نستخدم الاسم المُدخل مباشرة
@@ -163,10 +161,9 @@ export function AuthContextProvider({
           // توليد اسم مستخدم عشوائي متاح
           let tries = 0;
           while (tries < 15) {
-            const normalizeName = fallbackName
-              .replace(/\s/g, '')
-              .toLowerCase()
-              .slice(0, 8) || 'user';
+            const normalizeName =
+              fallbackName.replace(/\s/g, '').toLowerCase().slice(0, 8) ||
+              'user';
             const randomInt = getRandomInt(1, 10_000);
             const candidate = `${normalizeName}${randomInt}`;
             try {
@@ -181,7 +178,8 @@ export function AuthContextProvider({
             }
             tries++;
           }
-          if (!finalUsername) finalUsername = `user${getRandomInt(1000, 99999)}`;
+          if (!finalUsername)
+            finalUsername = `user${getRandomInt(1000, 99999)}`;
         }
 
         // استخدام مرجع خام بدون converter لضمان التوافق مع جميع إصدارات القواعد
@@ -316,7 +314,7 @@ export function AuthContextProvider({
       doc(usersCollection, id),
       (snap) => {
         if (snap.exists())
-          setUser((prev) => ({ ...prev, ...(snap.data() as User) } as User));
+          setUser((prev) => ({ ...prev, ...snap.data() } as User));
       },
       (err) => {
         console.error('user snapshot error:', err);
@@ -342,10 +340,8 @@ export function AuthContextProvider({
     const code = (error as { code?: string })?.code ?? '';
     const message = (error as { message?: string })?.message ?? '';
     const map: Record<string, string> = {
-      'auth/invalid-credential':
-        'اسم المستخدم أو كلمة المرور غير صحيحة',
-      'auth/wrong-password':
-        'اسم المستخدم أو كلمة المرور غير صحيحة',
+      'auth/invalid-credential': 'اسم المستخدم أو كلمة المرور غير صحيحة',
+      'auth/wrong-password': 'اسم المستخدم أو كلمة المرور غير صحيحة',
       'auth/user-not-found': 'لا يوجد حساب بهذا الاسم',
       'auth/too-many-requests': 'محاولات كثيرة — انتظر قليلًا ثم حاول مجددًا',
       'auth/network-request-failed': 'تحقق من اتصالك بالإنترنت',
@@ -363,7 +359,12 @@ export function AuthContextProvider({
     if (message.includes('projectId') || message.includes('aite-76'))
       return new Error('حدث خطأ مؤقت — يرجى إعادة تحميل الصفحة');
 
-    return new Error(map[code] ?? (code ? `${map[code] ?? 'تعذر تسجيل الدخول'} (${code})` : 'تعذر تسجيل الدخول — حاول مرة أخرى'));
+    return new Error(
+      map[code] ??
+        (code
+          ? `${map[code] ?? 'تعذر تسجيل الدخول'} (${code})`
+          : 'تعذر تسجيل الدخول — حاول مرة أخرى')
+    );
   };
 
   const signInWithUsername = async (
@@ -494,7 +495,7 @@ export function AuthContextProvider({
         err instanceof Error && err.message.includes('اسم المستخدم')
           ? err
           : toArabicAuthError(err);
-      setError(arabic as Error);
+      setError(arabic);
       throw arabic;
     }
   };

@@ -9,7 +9,9 @@ type ServiceAccountJson = {
 function getServiceAccount(): admin.ServiceAccount | null {
   const encoded = process.env.FIREBASE_ADMIN_KEY;
   if (!encoded) {
-    console.warn('FIREBASE_ADMIN_KEY is missing - server features requiring admin will fail');
+    console.warn(
+      'FIREBASE_ADMIN_KEY is missing - server features requiring admin will fail'
+    );
     return null;
   }
 

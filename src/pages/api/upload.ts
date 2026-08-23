@@ -64,13 +64,17 @@ export default async function uploadEndpoint(
   // فحص إعدادات الخادم قبل التحقق من التوكن
   if (!isAdminConfigured()) {
     console.error('FIREBASE_ADMIN_KEY missing');
-    res.status(503).json({ error: 'خدمة الرفع غير متاحة حاليًا — حاول مجددًا لاحقًا' });
+    res
+      .status(503)
+      .json({ error: 'خدمة الرفع غير متاحة حاليًا — حاول مجددًا لاحقًا' });
     return;
   }
 
   if (!isR2Configured()) {
     console.error('R2 not configured');
-    res.status(503).json({ error: 'خدمة الرفع غير متاحة حاليًا — حاول مجددًا لاحقًا' });
+    res
+      .status(503)
+      .json({ error: 'خدمة الرفع غير متاحة حاليًا — حاول مجددًا لاحقًا' });
     return;
   }
 
@@ -104,7 +108,8 @@ export default async function uploadEndpoint(
     res.status(200).json({ files: uploadedFiles });
   } catch (error) {
     console.error('upload URL generation failed:', error);
-    const msg = error instanceof Error ? error.message : 'Failed to generate upload URLs';
+    const msg =
+      error instanceof Error ? error.message : 'Failed to generate upload URLs';
     // إرجاع رسالة واضحة للعميل
     res.status(500).json({ error: msg });
   }
