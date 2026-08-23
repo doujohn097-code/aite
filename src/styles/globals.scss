@@ -376,11 +376,19 @@ video:not([src]) {
   /* شريط القصص ولوحات فرعية */
   .glass-panel {
     margin: 8px;
-    border: 1px solid rgb(var(--main-accent) / 0.14);
+    border: 1px solid rgb(var(--main-accent) / 0.16);
     border-radius: 20px;
-    background-color: rgb(var(--main-background) / 0.5);
-    backdrop-filter: blur(16px) saturate(150%);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    background-color: rgb(var(--main-background) / 0.74);
+    backdrop-filter: blur(24px) saturate(155%);
+    -webkit-backdrop-filter: blur(24px) saturate(155%);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.18);
+  }
+
+  /* لوح أكثر إعتامًا للمعلومات المهمة (بطاقة الملف الشخصي) */
+  .glass-strong {
+    background-color: rgb(var(--main-background) / 0.86);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
   }
 
   /* لوحة التنقل الجانبية على الشاشات الكبيرة */

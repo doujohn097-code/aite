@@ -82,7 +82,7 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
         ) : (
           <>
             <UserHomeCover coverData={coverData} />
-            <div className='glass-panel relative flex flex-col gap-3 px-4 py-3'>
+            <div className='glass-panel glass-strong relative flex flex-col gap-3 px-4 py-3'>
               <div className='grid grid-cols-[auto,1fr] items-start gap-3'>
                 <UserHomeAvatar
                   className='-mt-3 -translate-y-1/2 transform justify-self-start'
