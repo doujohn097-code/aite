@@ -82,8 +82,7 @@ export function LoginMain(): JSX.Element {
       // لا نمسح الحقول فورًا عند النجاح حتى لا يفقد المستخدم الإحساس بالعملية
       setTimeout(() => resetFields(), 500);
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'حدث خطأ غير متوقع';
+      const msg = err instanceof Error ? err.message : 'حدث خطأ غير متوقع';
       console.error('login error', err);
       setError(msg);
     } finally {

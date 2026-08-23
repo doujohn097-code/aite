@@ -21,9 +21,7 @@ type SettingsModalProps = {
   closeModal: () => void;
 };
 
-export function SettingsModal({
-  closeModal
-}: SettingsModalProps): JSX.Element {
+export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
   const { user, signOut } = useAuth();
   const { username, name, photoURL } = user as User;
 
@@ -107,10 +105,7 @@ export function SettingsModal({
       closeModal();
     } catch (err) {
       const code = (err as { code?: string })?.code ?? '';
-      if (
-        code === 'auth/wrong-password' ||
-        code === 'auth/invalid-credential'
-      )
+      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential')
         toast.error('كلمة المرور الحالية غير صحيحة');
       else if (code === 'auth/too-many-requests')
         toast.error('محاولات كثيرة — انتظر قليلًا ثم حاول مجددًا');
@@ -171,10 +166,7 @@ export function SettingsModal({
       await signOut();
     } catch (err) {
       const code = (err as { code?: string })?.code ?? '';
-      if (
-        code === 'auth/wrong-password' ||
-        code === 'auth/invalid-credential'
-      )
+      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential')
         toast.error('كلمة المرور غير صحيحة');
       else if (code === 'auth/too-many-requests')
         toast.error('محاولات كثيرة — انتظر قليلًا ثم حاول مجددًا');
@@ -344,8 +336,8 @@ export function SettingsModal({
           >
             <p className='font-bold'>تحذير: هذا الإجراء نهائي</p>
             <p className='mt-1'>
-              سيتم حذف حسابك @{username} وجميع بياناتك نهائيًا ولا يمكن
-              التراجع عن ذلك.
+              سيتم حذف حسابك @{username} وجميع بياناتك نهائيًا ولا يمكن التراجع
+              عن ذلك.
             </p>
           </div>
           <InputField

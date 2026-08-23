@@ -75,7 +75,9 @@ export default function Chat(): JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<Message | null>(null);
   const [blockBusy, setBlockBusy] = useState(false);
   // حظر تفاؤلي فوري لإخفاء شريط الكتابة والمراسلة بدون انتظار Firestore
-  const [optimisticBlocked, setOptimisticBlocked] = useState<boolean | null>(null);
+  const [optimisticBlocked, setOptimisticBlocked] = useState<boolean | null>(
+    null
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
@@ -184,7 +186,8 @@ export default function Chat(): JSX.Element {
 
   // حظر في الاتجاهين + حظر تفاؤلي فوري لإخفاء شريط الكتابة فوراً
   const realBlockedByMe = !!peerId && !!user?.blockedUsers?.includes(peerId);
-  const realBlockedByPeer = !!peerId && !!peer?.blockedUsers?.includes(user?.id ?? '');
+  const realBlockedByPeer =
+    !!peerId && !!peer?.blockedUsers?.includes(user?.id ?? '');
   const realBlocked = realBlockedByMe || realBlockedByPeer;
   const isBlockedConversation =
     optimisticBlocked !== null ? optimisticBlocked : realBlocked;

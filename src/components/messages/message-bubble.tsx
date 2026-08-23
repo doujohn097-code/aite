@@ -503,11 +503,16 @@ export function MessageBubble({
         className={cn(
           'relative z-10 flex flex-col',
           'max-w-[78%] xs:max-w-[70%]',
-          isOwn ? 'ml-auto mr-0 self-end items-end' : 'mr-auto ml-0 self-start items-start'
+          isOwn
+            ? 'ml-auto mr-0 items-end self-end'
+            : 'ml-0 mr-auto items-start self-start'
         )}
       >
         <div
-          className={cn(bubbleClass, 'relative w-full !max-w-full !ml-0 !mr-0 !self-auto')}
+          className={cn(
+            bubbleClass,
+            'relative !ml-0 !mr-0 w-full !max-w-full !self-auto'
+          )}
           dir='auto'
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
