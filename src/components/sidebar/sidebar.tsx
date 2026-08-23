@@ -75,7 +75,7 @@ export function Sidebar(): JSX.Element {
       <div
         className={cn(
           'fixed inset-x-0 bottom-0 z-50 flex w-full flex-col justify-between border-t border-light-border',
-          'bg-main-background/95 py-0 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:border-dark-border dark:bg-black/95',
+          'bg-main-background/80 py-0 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 dark:border-dark-border dark:bg-black/80',
           'xs:inset-x-auto xs:top-0 xs:h-app xs:w-auto xs:overflow-y-auto xs:overscroll-contain xs:border-0 xs:bg-transparent xs:px-2 xs:py-2',
           'xs:[scrollbar-width:thin] md:px-4 xl:w-72',
           isChat && 'hidden xs:flex'

@@ -59,9 +59,9 @@
     --toast-text: 255 255 255;
 
     /* شفافية الأسطح وضبابيتها فوق الخلفية السائلة */
-    --surface-alpha: 0.66;
-    --surface-blur: 26px;
-    --wallpaper-blur: 3px;
+    --surface-alpha: 0.5;
+    --surface-blur: 18px;
+    --wallpaper-blur: 1px;
     --app-height: 100vh;
 
     --accent-yellow: 255 213 0;
@@ -275,28 +275,30 @@ video:not([src]) {
   }
 
   .bg-main-sidebar-background {
-    background-color: rgb(var(--main-sidebar-background) / 0.55);
+    background-color: rgb(var(--main-sidebar-background) / 0.42);
     backdrop-filter: blur(var(--surface-blur)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--surface-blur)) saturate(150%);
   }
 
   .bg-main-search-background {
-    background-color: rgb(var(--main-search-background) / 0.6);
+    background-color: rgb(var(--main-search-background) / 0.5);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
 
   /* الأسطح شبه الشفافة (الرأس اللاصق وشريط التنقل السفلي) */
+  .bg-main-background\/80,
   .bg-main-background\/85,
   .bg-main-background\/90,
   .bg-main-background\/95 {
-    background-color: rgb(var(--main-background) / 0.62);
-    backdrop-filter: blur(var(--surface-blur)) saturate(150%);
-    -webkit-backdrop-filter: blur(var(--surface-blur)) saturate(150%);
+    background-color: rgb(var(--main-background) / 0.45);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
   }
 
+  &.dark .dark\:bg-black\/80,
   &.dark .dark\:bg-black\/95 {
-    background-color: rgb(var(--main-background) / 0.62);
+    background-color: rgb(var(--main-background) / 0.45);
   }
 
   /* حدود أنعم فوق الخلفية اللامعة */
@@ -310,28 +312,19 @@ video:not([src]) {
 
   /* عمود المحتوى الرئيسي: ضباب خفيف يجعل النص واضحًا فوق الخلفية */
   .theme-surface {
-    background-color: rgb(var(--main-background) / 0.5);
-    backdrop-filter: blur(calc(var(--surface-blur) * 0.75)) saturate(140%);
-    -webkit-backdrop-filter: blur(calc(var(--surface-blur) * 0.75))
-      saturate(140%);
+    background-color: rgb(var(--main-background) / 0.38);
+    backdrop-filter: blur(calc(var(--surface-blur) * 0.6)) saturate(135%);
+    -webkit-backdrop-filter: blur(calc(var(--surface-blur) * 0.6))
+      saturate(135%);
     border-color: rgb(var(--main-accent) / 0.16);
-  }
-
-  /* تجنّب تكرار الضبابية داخل سطح مضبّب (يسبب أداءً ضعيفًا وتشوهًا في WebView) */
-  .theme-surface .bg-main-background\/85,
-  .theme-surface .bg-main-background\/90,
-  .theme-surface .bg-main-background\/95 {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background-color: rgb(var(--main-background) / 0.55);
   }
 
   /* بطاقات العمود الجانبي: زجاج ناعم */
   aside > section,
   aside > div {
-    background-color: rgb(var(--main-background) / 0.4);
-    backdrop-filter: blur(14px) saturate(135%);
-    -webkit-backdrop-filter: blur(14px) saturate(135%);
+    background-color: rgb(var(--main-background) / 0.32);
+    backdrop-filter: blur(12px) saturate(130%);
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
     border-radius: 18px;
   }
 
@@ -372,17 +365,15 @@ video:not([src]) {
   inset: 0;
   background: radial-gradient(
       120% 80% at 50% 0%,
-      rgb(var(--main-background) / 0.2) 0%,
-      rgb(var(--main-background) / 0.58) 60%,
-      rgb(var(--main-background) / 0.82) 100%
+      rgb(var(--main-background) / 0.05) 0%,
+      rgb(var(--main-background) / 0.3) 60%,
+      rgb(var(--main-background) / 0.5) 100%
     ),
     linear-gradient(
       to bottom,
-      rgb(var(--main-background) / 0.42),
-      rgb(var(--main-background) / 0.68)
+      rgb(var(--main-background) / 0.18),
+      rgb(var(--main-background) / 0.4)
     );
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
 }
 
 @keyframes wallpaper-drift {
@@ -554,6 +545,7 @@ video:not([src]) {
       background-color: rgb(var(--main-search-background) / 0.95);
     }
 
+    .bg-main-background\/80,
     .bg-main-background\/85,
     .bg-main-background\/90,
     .bg-main-background\/95 {
@@ -619,6 +611,6 @@ video:not([src]) {
 
 /* تقليل الضبابية على أجهزة أندرويد الضعيفة */
 .is-android {
-  --surface-blur: 20px;
-  --wallpaper-blur: 2px;
+  --surface-blur: 16px;
+  --wallpaper-blur: 0px;
 }
