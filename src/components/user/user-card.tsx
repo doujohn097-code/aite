@@ -14,7 +14,7 @@ type UserCardProps = User & {
 };
 
 export function UserCard(user: UserCardProps): JSX.Element {
-  const { id, bio, name, modal, follow, username, verified } = user;
+  const { id, bio, name, modal, follow, username, verified, gender } = user;
 
   return (
     <Link href={`/user/${username}`}>
@@ -34,6 +34,7 @@ export function UserCard(user: UserCardProps): JSX.Element {
                   name={name}
                   username={username}
                   verified={verified}
+                  gender={gender}
                   disableLink
                 />
               </UserTooltip>

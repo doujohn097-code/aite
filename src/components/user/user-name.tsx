@@ -1,11 +1,13 @@
 import cn from 'clsx';
 import Link from 'next/link';
 import { VerifiedBadge } from '@components/ui/verified-badge';
+import { GenderBadge } from './gender-badge';
 
 type UserNameProps = {
   tag?: keyof JSX.IntrinsicElements;
   name: string;
   verified: boolean;
+  gender?: 'male' | 'female' | null;
   username?: string;
   className?: string;
   iconClassName?: string;
@@ -16,6 +18,7 @@ export function UserName({
   tag,
   name,
   verified,
+  gender,
   username,
   className,
   iconClassName,
@@ -30,6 +33,7 @@ export function UserName({
     <span className='flex flex-col truncate'>
       <span className='flex items-center gap-1'>
         <CustomTag className='truncate'>{safeName}</CustomTag>
+        <GenderBadge gender={gender} />
         {verified && (
           <VerifiedBadge
             className={cn('shrink-0', iconClassName ?? 'h-4 w-4')}

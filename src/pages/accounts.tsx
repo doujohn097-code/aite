@@ -3,8 +3,14 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import cn from 'clsx';
+import { getDocs, query, where } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
-import { getSavedAccounts, removeSavedAccount } from '@lib/accounts';
+import {
+  getSavedAccounts,
+  removeSavedAccount,
+  saveAccount
+} from '@lib/accounts';
+import { usersCollection } from '@lib/firebase/collections';
 import { SEO } from '@components/common/seo';
 import { AiteLogo } from '@components/ui/aite-logo';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -20,12 +26,74 @@ export default function Accounts(): JSX.Element {
   const [accounts, setAccounts] = useState<SavedAccount[] | null>(null);
   const [signingIn, setSigningIn] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [profiles, setProfiles] = useState<
+    Record<
+      string,
+      {
+        photoURL: string;
+        name: string;
+        verified: boolean;
+        gender?: string | null;
+      }
+    >
+  >({});
 
   useEffect(() => {
     // حسابات Google القديمة لا تملك كلمة مرور — لا يمكن الدخول بها مباشرة فنخفيها
-    setAccounts(
-      getSavedAccounts().filter((account) => account.provider !== 'google')
+    const saved = getSavedAccounts().filter(
+      (account) => account.provider !== 'google'
     );
+
+    setAccounts(saved);
+
+    // جلب الصور الحقيقية من قاعدة البيانات (المحفوظ محليًا قد يكون فارغًا)
+    const usernames = saved.map(({ username }) => username).slice(0, 10);
+
+    if (!usernames.length) return;
+
+    void (async (): Promise<void> => {
+      try {
+        const snapshot = await getDocs(
+          query(usersCollection, where('username', 'in', usernames))
+        );
+
+        const resolved: Record<
+          string,
+          {
+            photoURL: string;
+            name: string;
+            verified: boolean;
+            gender?: string | null;
+          }
+        > = {};
+
+        snapshot.forEach((document) => {
+          const data = document.data();
+          resolved[data.username] = {
+            photoURL: data.photoURL,
+            name: data.name,
+            verified: data.verified,
+            gender: data.gender ?? null
+          };
+
+          // حدّث النسخة المحلية حتى تظهر الصورة فورًا في المرات القادمة
+          const local = saved.find((item) => item.username === data.username);
+
+          if (local && local.photoURL !== data.photoURL)
+            saveAccount({
+              username: local.username,
+              password: local.password,
+              name: data.name || local.name,
+              photoURL: data.photoURL ?? null,
+              provider: local.provider
+            });
+        });
+
+        setProfiles(resolved);
+      } catch {
+        // تعذّر الجلب — نكتفي بالبيانات المحلية
+      }
+    })();
   }, []);
 
   const getRedirectTarget = (): string => {
@@ -105,14 +173,18 @@ export default function Accounts(): JSX.Element {
                       className='flex flex-1 items-center gap-3 text-right disabled:cursor-default'
                     >
                       <UserAvatar
-                        src={account.photoURL}
-                        alt={account.name}
+                        src={
+                          profiles[account.username]?.photoURL ??
+                          account.photoURL ??
+                          '/assets/default-avatar.png'
+                        }
+                        alt={profiles[account.username]?.name ?? account.name}
                         username={account.username}
                         size={48}
                       />
                       <span className='flex min-w-0 flex-1 flex-col'>
                         <span className='truncate text-[15px] font-bold text-light-primary dark:text-dark-primary'>
-                          {account.name}
+                          {profiles[account.username]?.name ?? account.name}
                           {isCurrent && (
                             <span className='mr-2 text-xs font-medium text-main-accent-text'>
                               (الحساب الحالي)

@@ -65,6 +65,22 @@ export async function updateUserData(
   });
 }
 
+export async function completeOnboarding(
+  userId: string,
+  data: {
+    photoURL?: string;
+    coverPhotoURL?: string | null;
+    gender?: 'male' | 'female' | null;
+  }
+): Promise<void> {
+  const userRef = doc(usersCollection, userId);
+  await updateDoc(userRef, {
+    ...data,
+    onboarded: true,
+    updatedAt: serverTimestamp()
+  });
+}
+
 export async function updateUserTheme(
   userId: string,
   themeData: { theme?: Theme; accent?: Accent }

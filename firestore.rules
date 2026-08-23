@@ -85,7 +85,7 @@ service cloud.firestore {
             'bio', 'name', 'website', 'location', 'photoURL', 'coverPhotoURL',
             'theme', 'accent', 'username', 'pinnedTweet', 'storyColor', 'lastStoryAt',
             'storyViews', 'lastActiveAt', 'fcmTokens', 'blockedUsers', 'totalTweets', 'totalReplies',
-            'totalPhotos', 'updatedAt'
+            'totalPhotos', 'gender', 'onboarded', 'updatedAt'
           ]));
       allow delete: if isAdmin();
 

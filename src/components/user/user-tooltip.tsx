@@ -16,6 +16,7 @@ type UserTooltipProps = Pick<
   | 'bio'
   | 'name'
   | 'verified'
+  | 'gender'
   | 'username'
   | 'photoURL'
   | 'following'
@@ -36,6 +37,7 @@ export function UserTooltip({
   modal,
   avatar,
   verified,
+  gender,
   children,
   photoURL,
   username,
@@ -109,6 +111,7 @@ export function UserTooltip({
                 name={name}
                 username={username}
                 verified={verified}
+                gender={gender}
               />
               <div className='flex items-center gap-1'>
                 <UserFollowing userTargetId={id} />

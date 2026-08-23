@@ -23,7 +23,7 @@ export function SidebarProfile(): JSX.Element {
     closeModal: closeSettingsModal
   } = useModal();
 
-  const { name, username, verified, photoURL } = user as User;
+  const { name, username, verified, gender, photoURL } = user as User;
 
   return (
     <>
@@ -67,6 +67,7 @@ export function SidebarProfile(): JSX.Element {
                     name={name}
                     username={username}
                     verified={verified}
+                    gender={gender}
                     disableLink
                   />
                 </div>
@@ -97,6 +98,7 @@ export function SidebarProfile(): JSX.Element {
                           name={name}
                           username={username}
                           verified={verified}
+                          gender={gender}
                           disableLink
                         />
                       </div>

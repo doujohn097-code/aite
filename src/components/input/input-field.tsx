@@ -10,6 +10,8 @@ export type InputFieldProps = {
   inputLimit?: number;
   useTextArea?: boolean;
   type?: string;
+  name?: string;
+  autoComplete?: string;
   inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode'];
   errorMessage?: string;
   handleChange: (
@@ -28,6 +30,8 @@ export function InputField({
   inputLimit,
   useTextArea,
   type = 'text',
+  name,
+  autoComplete,
   inputMode,
   errorMessage,
   handleChange,
@@ -73,6 +77,8 @@ export function InputField({
               isPassword && 'pl-11'
             )}
             id={inputId}
+            name={name ?? inputId}
+            autoComplete={autoComplete}
             type={effectiveType}
             inputMode={inputMode}
             placeholder={inputId}

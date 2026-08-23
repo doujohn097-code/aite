@@ -13,6 +13,10 @@ export type User = {
   photoURL: string;
   verified: boolean;
   admin?: boolean;
+  /** الجنس — يظهر كبادج ملوّن بجانب الاسم */
+  gender?: 'male' | 'female' | null;
+  /** أكمل المستخدم خطوات الإعداد الأولى */
+  onboarded?: boolean;
   following: string[];
   followers: string[];
   createdAt: Timestamp;
@@ -61,6 +65,8 @@ export const userConverter: FirestoreDataConverter<User> = {
       photoURL: '/assets/default-avatar.png',
       verified: false,
       admin: false,
+      gender: null,
+      onboarded: false,
       following: [],
       followers: [],
       createdAt: Timestamp.now(),

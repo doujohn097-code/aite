@@ -58,12 +58,14 @@ export function Tweet(tweet: TweetProps): JSX.Element {
     name,
     username,
     verified,
+    gender,
     photoURL
   } = tweetUserData ?? {
     id: createdBy,
     name: 'مستخدم مجهول',
     username: 'unknown',
     verified: false,
+    gender: null,
     photoURL: '/assets/default-avatar.png'
   };
 
@@ -165,6 +167,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                       name={name}
                       username={username}
                       verified={verified}
+                      gender={gender}
                       className='text-light-primary dark:text-dark-primary'
                     />
                   </UserTooltip>

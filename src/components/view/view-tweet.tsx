@@ -40,7 +40,14 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
     user: tweetUserData
   } = tweet;
 
-  const { id: ownerId, name, username, verified, photoURL } = tweetUserData;
+  const {
+    id: ownerId,
+    name,
+    username,
+    verified,
+    gender,
+    photoURL
+  } = tweetUserData;
 
   const { user } = useAuth();
 
@@ -96,6 +103,7 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
                 name={name}
                 username={username}
                 verified={verified}
+                gender={gender}
               />
             </UserTooltip>
             <TweetActions

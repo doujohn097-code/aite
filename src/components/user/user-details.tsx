@@ -18,6 +18,7 @@ type UserDetailsProps = Pick<
   | 'username'
   | 'location'
   | 'verified'
+  | 'gender'
   | 'createdAt'
   | 'following'
   | 'followers'
@@ -33,6 +34,7 @@ export function UserDetails({
   username,
   location,
   verified,
+  gender,
   createdAt = Timestamp.now(),
   following,
   followers
@@ -49,6 +51,7 @@ export function UserDetails({
           className='text-xl'
           name={name}
           verified={verified}
+          gender={gender}
           iconClassName='h-5 w-5'
         />
         <div className='flex flex-wrap items-center gap-2 text-light-secondary dark:text-dark-secondary'>

@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ChangeEvent } from 'react';
+import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { useAuth } from '@lib/context/auth-context';
 import { auth } from '@lib/firebase/app';
 import { saveAccount } from '@lib/accounts';
@@ -25,6 +25,41 @@ export function LoginMain(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  /**
+   * بعض المتصفحات تملأ الحقول تلقائيًا دون إطلاق حدث change،
+   * فتُرسل الصفحة باسم مستخدم فارغ — نقرأ قيم الحقول ونزامنها.
+   */
+  useEffect(() => {
+    const syncAutofill = (): void => {
+      const read = (id: string): string =>
+        (document.getElementById(id) as HTMLInputElement | null)?.value ?? '';
+
+      const filledUsername = read('username');
+      const filledPassword = read('password');
+      const filledName = read('name');
+
+      if (filledUsername)
+        setUsername((prev) =>
+          prev ? prev : filledUsername.replace(/\s+/g, '').toLowerCase()
+        );
+      if (filledPassword) setPassword((prev) => (prev ? prev : filledPassword));
+      if (filledName) setName((prev) => (prev ? prev : filledName));
+    };
+
+    const timers = [80, 350, 900, 1800].map((delay) =>
+      window.setTimeout(syncAutofill, delay)
+    );
+
+    window.addEventListener('focus', syncAutofill);
+    document.addEventListener('animationstart', syncAutofill, true);
+
+    return () => {
+      timers.forEach(window.clearTimeout);
+      window.removeEventListener('focus', syncAutofill);
+      document.removeEventListener('animationstart', syncAutofill, true);
+    };
+  }, [isSignUp]);
 
   const resetFields = (): void => {
     setName('');
@@ -150,6 +185,7 @@ export function LoginMain(): JSX.Element {
               <InputField
                 label='الاسم الكامل'
                 inputId='name'
+                autoComplete='name'
                 inputValue={name}
                 handleChange={({
                   target: { value }
@@ -161,6 +197,7 @@ export function LoginMain(): JSX.Element {
             <InputField
               label='اسم المستخدم'
               inputId='username'
+              autoComplete='username'
               inputValue={username}
               handleChange={({
                 target: { value }
@@ -174,6 +211,7 @@ export function LoginMain(): JSX.Element {
               inputId='password'
               inputValue={password}
               type='password'
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
               handleChange={({
                 target: { value }
               }: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void =>
