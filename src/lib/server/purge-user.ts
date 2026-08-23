@@ -1,4 +1,5 @@
 import { adminAuth, adminFirestore } from '@lib/firebase-admin';
+import { deleteUserMedia } from '@lib/r2';
 import type { firestore } from 'firebase-admin';
 
 /** تقرير موجز عمّا تم حذفه */
@@ -10,6 +11,7 @@ export type PurgeReport = {
   notifications: number;
   likesRemoved: number;
   followsRemoved: number;
+  mediaFiles: number;
 };
 
 const BATCH_LIMIT = 400;
@@ -77,7 +79,8 @@ export async function purgeUserData(userId: string): Promise<PurgeReport> {
     conversations: 0,
     notifications: 0,
     likesRemoved: 0,
-    followsRemoved: 0
+    followsRemoved: 0,
+    mediaFiles: 0
   };
 
   // 1) منشورات المستخدم (والردود التي كتبها)
@@ -217,7 +220,14 @@ export async function purgeUserData(userId: string): Promise<PurgeReport> {
     // مجموعة اختيارية
   }
 
-  // 11) حساب المصادقة
+  // 11) ملفات الوسائط في Cloudflare R2
+  try {
+    report.mediaFiles = await deleteUserMedia(userId);
+  } catch (error) {
+    console.error('r2 purge failed:', error);
+  }
+
+  // 12) حساب المصادقة
   if (adminAuth) await adminAuth.deleteUser(userId).catch(() => undefined);
 
   return report;

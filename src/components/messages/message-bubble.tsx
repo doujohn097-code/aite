@@ -267,7 +267,7 @@ export function MessageBubble({
   };
 
   const bubbleClass = cn(
-    'max-w-[78%] xs:max-w-[70%]',
+    'max-w-[88%] xs:max-w-[76%]',
     type === 'text'
       ? cn(
           'rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed shadow-lg backdrop-blur-xl',
@@ -595,16 +595,16 @@ export function MessageBubble({
                     className={cn(
                       'block max-w-full overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl',
                       sharedPost.kind === 'reel'
-                        ? 'w-[min(220px,calc(100vw-140px))]'
-                        : 'w-[min(320px,calc(100vw-88px))]',
-                      'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50'
+                        ? 'w-[min(280px,calc(100vw-104px))]'
+                        : 'w-[min(420px,calc(100vw-72px))]',
+                      'glass-card !m-0 border-main-accent/15 text-light-primary dark:text-dark-primary'
                     )}
                     onClick={(event) => event.stopPropagation()}
                   >
                     {sharedPost.thumbnail ? (
                       <div
                         className={cn(
-                          'relative overflow-hidden bg-slate-100 dark:bg-slate-900',
+                          'relative overflow-hidden bg-main-search-background',
                           sharedPost.kind === 'reel' ? 'aspect-[4/5]' : 'h-36'
                         )}
                       >
@@ -719,7 +719,7 @@ export function MessageBubble({
         {Object.keys(reactionGroups).length > 0 && (
           <div
             className={cn(
-              'absolute z-20 flex items-center gap-0.5 rounded-full border border-light-border bg-main-background px-1.5 py-0.5 shadow-md backdrop-blur-sm dark:border-dark-border dark:bg-slate-800',
+              'absolute z-20 flex items-center gap-0.5 rounded-full border border-light-border bg-main-background px-1.5 py-0.5 shadow-md backdrop-blur-sm dark:border-dark-border dark:bg-main-sidebar-background',
               'bottom-0 translate-y-1/2',
               isOwn
                 ? 'left-0 -translate-x-1.5' // رسائلي على اليمين -> التفاعل على يسار الفقاعة من الأسفل

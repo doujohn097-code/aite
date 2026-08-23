@@ -70,7 +70,7 @@ export default function Accounts(): JSX.Element {
   return (
     <main className='flex min-h-app flex-col items-center justify-center px-4 py-10'>
       <SEO title='الحسابات المحفوظة / Aite' />
-      <div className='flex w-full max-w-md flex-col items-center gap-6'>
+      <div className='flex w-full max-w-lg flex-col items-center gap-6'>
         <AiteLogo className='h-12 w-12' />
 
         <div className='flex flex-col items-center gap-1 text-center'>
@@ -92,11 +92,8 @@ export default function Accounts(): JSX.Element {
                 <li key={account.username}>
                   <div
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-2xl border border-light-border p-3 transition',
-                      'dark:border-dark-border',
-                      isCurrent
-                        ? 'bg-main-accent/10'
-                        : 'bg-main-background hover:bg-light-primary/[0.04] dark:hover:bg-white/[0.04]'
+                      'glass-card !mx-0 flex w-full items-center gap-3 p-4 transition',
+                      isCurrent && 'ring-1 ring-main-accent/40'
                     )}
                   >
                     <button
@@ -109,10 +106,10 @@ export default function Accounts(): JSX.Element {
                         src={account.photoURL}
                         alt={account.name}
                         username={account.username}
-                        size={44}
+                        size={48}
                       />
                       <span className='flex min-w-0 flex-1 flex-col'>
-                        <span className='truncate text-sm font-bold text-light-primary dark:text-dark-primary'>
+                        <span className='truncate text-[15px] font-bold text-light-primary dark:text-dark-primary'>
                           {account.name}
                           {isCurrent && (
                             <span className='mr-2 text-xs font-medium text-main-accent-text'>
