@@ -57,6 +57,28 @@ async function registerNativePushToken(userId: string): Promise<void> {
   );
 }
 
+/** توكن الإشعارات القادم من تطبيق أندرويد الأصلي (عبر جسر WebView) */
+function getNativeToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  const bridge = (window as Window & { AiteAndroid?: { fcmToken?: string } })
+    .AiteAndroid;
+  return bridge?.fcmToken ?? null;
+}
+
+/** يحفظ توكن التطبيق الأصلي في حساب المستخدم */
+export async function registerNativeToken(userId: string): Promise<boolean> {
+  const token = getNativeToken();
+
+  if (!token) return false;
+
+  await updateDoc(doc(usersCollection, userId), {
+    fcmTokens: arrayUnion(token)
+  });
+
+  return true;
+}
+
+/** يسجّل توكن Web Push (FCM) للمتصفح أو تطبيق PWA المثبّت. */
 export async function registerWebPushToken(userId: string): Promise<void> {
   if (isNativeApp()) {
     await registerNativePushToken(userId);
@@ -64,6 +86,18 @@ export async function registerWebPushToken(userId: string): Promise<void> {
   }
 
   if (typeof window === 'undefined') return;
+
+  // داخل تطبيق أندرويد: الإشعارات أصلية عبر FCM — نحفظ توكن الجهاز فقط
+  const nativeSaved = await registerNativeToken(userId).catch(() => false);
+
+  if (nativeSaved) return;
+
+  // قد يصل التوكن بعد تحميل الصفحة — ننصت للحدث القادم من التطبيق
+  window.addEventListener(
+    'aite-native-token',
+    () => void registerNativeToken(userId).catch(() => undefined),
+    { once: true }
+  );
   if (!('serviceWorker' in navigator)) return;
 
   try {
