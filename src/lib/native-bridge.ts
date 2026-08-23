@@ -1,9 +1,12 @@
+/* eslint-disable import/no-unresolved, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
+
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { getFirebase } from '@lib/firebase/app';
 import { usersCollection } from '@lib/firebase/collections';
 
-// مفتاح VAPID العام لإشعارات الويب (PWA)
 const VAPID_KEY =
   process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY ||
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
@@ -11,18 +14,19 @@ const VAPID_KEY =
   process.env.VAPID_PUBLIC_KEY ||
   '';
 
-/** هل التطبيق يعمل كتطبيق مثبّت (PWA) أو داخل متصفح */
 export function isInstalledPwa(): boolean {
   if (typeof window === 'undefined') return false;
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
-    // iOS Safari
     (window.navigator as Navigator & { standalone?: boolean }).standalone ===
       true
   );
 }
 
-/** طلب إذن الإشعارات */
+export function isNativeApp(): boolean {
+  return Capacitor.isNativePlatform();
+}
+
 async function ensurePermission(): Promise<boolean> {
   if (typeof Notification === 'undefined') return false;
   if (Notification.permission === 'granted') return true;
@@ -31,8 +35,34 @@ async function ensurePermission(): Promise<boolean> {
   return res === 'granted';
 }
 
-/** يسجّل توكن Web Push (FCM) للمتصفح أو تطبيق PWA المثبّت. */
+async function registerNativePushToken(userId: string): Promise<void> {
+  const permission = await PushNotifications.requestPermissions();
+  if (permission.receive !== 'granted') return;
+
+  await PushNotifications.removeAllListeners();
+  await PushNotifications.register();
+
+  await PushNotifications.addListener('registration', ({ value }) => {
+    void updateDoc(doc(usersCollection, userId), {
+      fcmTokens: arrayUnion(value)
+    });
+  });
+
+  await PushNotifications.addListener(
+    'pushNotificationActionPerformed',
+    (event) => {
+      const url = (event.notification.data as { url?: string } | null)?.url;
+      if (url && typeof window !== 'undefined') window.location.assign(url);
+    }
+  );
+}
+
 export async function registerWebPushToken(userId: string): Promise<void> {
+  if (isNativeApp()) {
+    await registerNativePushToken(userId);
+    return;
+  }
+
   if (typeof window === 'undefined') return;
   if (!('serviceWorker' in navigator)) return;
 
@@ -60,7 +90,6 @@ export async function registerWebPushToken(userId: string): Promise<void> {
       localStorage.setItem('aite:fcmToken', token);
     }
 
-    // إشعارات أثناء فتح التطبيق (المقدمة)
     void onMessage(messaging, (payload) => {
       const title =
         payload.notification?.title || payload.data?.title || 'Aite';
@@ -69,7 +98,6 @@ export async function registerWebPushToken(userId: string): Promise<void> {
       if (Notification.permission === 'granted') {
         void registration.showNotification(title, {
           body,
-          // صورة المرسل كأيقونة + بادج شعار Aite (مثل انستغرام)
           icon: image || '/logo192.png',
           badge: '/badge.png',
           tag: payload.data?.tag || 'aite',
@@ -80,6 +108,6 @@ export async function registerWebPushToken(userId: string): Promise<void> {
       }
     });
   } catch {
-    /* تُعاد المحاولة عند الجلسة التالية */
+    // تُعاد المحاولة في الجلسة التالية
   }
 }

@@ -33,3 +33,6 @@ yarn-error.log*
 
 # misc build artifacts
 *.tsbuildinfo
+
+# Android Firebase config
+android/app/google-services.json
