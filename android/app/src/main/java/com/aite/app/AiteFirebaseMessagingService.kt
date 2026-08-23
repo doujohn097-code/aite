@@ -62,10 +62,11 @@ class AiteFirebaseMessagingService : FirebaseMessagingService() {
       .setPriority(NotificationCompat.PRIORITY_HIGH)
       .setCategory(NotificationCompat.CATEGORY_SOCIAL)
       .setDefaults(Notification.DEFAULT_ALL)
+      .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
       .setContentIntent(pendingIntent)
 
     if (!image.isNullOrBlank()) {
-      downloadBitmap(image)?.let { builder.setLargeIcon(circleCrop(it)) }
+      downloadBitmap(image)?.let { builder.setLargeIcon(createInstagramStyleAvatar(it)) }
     }
 
     val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -111,6 +112,44 @@ class AiteFirebaseMessagingService : FirebaseMessagingService() {
     } finally {
       connection?.disconnect()
     }
+  }
+
+  private fun createInstagramStyleAvatar(source: Bitmap): Bitmap {
+    val avatar = circleCrop(source)
+    val output = avatar.copy(Bitmap.Config.ARGB_8888, true)
+    val canvas = Canvas(output)
+
+    val iconSource = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
+      ?: return avatar
+
+    val size = output.width
+    val badgeSize = (size * 0.34f).toInt().coerceAtLeast(36)
+    val badgeInset = (size * 0.04f).toInt().coerceAtLeast(4)
+    val outerRadius = badgeSize / 2f
+    val border = (badgeSize * 0.1f).coerceAtLeast(4f)
+    val badgeCenterX = size - outerRadius - badgeInset
+    val badgeCenterY = size - outerRadius - badgeInset
+
+    val badgeBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+      color = Color.WHITE
+    }
+    canvas.drawCircle(badgeCenterX, badgeCenterY, outerRadius, badgeBackgroundPaint)
+
+    val badgeBitmap = circleCrop(
+      Bitmap.createScaledBitmap(iconSource, badgeSize, badgeSize, true)
+    )
+    val innerSize = badgeSize - (border * 2f)
+    val badgeLeft = badgeCenterX - innerSize / 2f
+    val badgeTop = badgeCenterY - innerSize / 2f
+    val badgeRect = Rect(
+      badgeLeft.toInt(),
+      badgeTop.toInt(),
+      (badgeLeft + innerSize).toInt(),
+      (badgeTop + innerSize).toInt()
+    )
+    canvas.drawBitmap(badgeBitmap, null, badgeRect, null)
+
+    return output
   }
 
   private fun circleCrop(source: Bitmap): Bitmap {
