@@ -92,8 +92,10 @@ export default function Accounts(): JSX.Element {
                 <li key={account.username}>
                   <div
                     className={cn(
-                      'glass-card !mx-0 flex w-full items-center gap-3 p-4 transition',
-                      isCurrent && 'ring-1 ring-main-accent/40'
+                      'flex w-full items-center gap-4 rounded-2xl border border-light-border p-4 transition dark:border-dark-border',
+                      isCurrent
+                        ? 'bg-main-accent/10 ring-1 ring-main-accent/40'
+                        : 'bg-main-background hover:bg-light-primary/[0.04] dark:hover:bg-white/[0.04]'
                     )}
                   >
                     <button

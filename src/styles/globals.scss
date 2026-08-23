@@ -63,14 +63,11 @@
     --surface-blur: 18px;
     --wallpaper-blur: 1px;
 
-    /* بطاقات زجاجية بلون المظهر (تعمل في كل الثيمات) */
-    --card-bg: var(--main-sidebar-background);
-    --card-alpha: 0.82;
-    --card-blur: 14px;
-    --card-tint: 0.1;
-    --panel-alpha: 0.9;
-    --strong-alpha: 0.96;
-    --card-shadow: 0 6px 20px rgb(0 0 0 / 0.12);
+    /* شفافية البطاقات الزجاجية في مظاهر الخلفيات */
+    --card-alpha: 0.58;
+    --card-blur: 18px;
+    --panel-alpha: 0.74;
+    --strong-alpha: 0.86;
     --app-height: 100vh;
 
     --accent-yellow: 255 213 0;
@@ -271,13 +268,6 @@ video:not([src]) {
    ========================================================= */
 .theme-wallpaper {
   --toast-bg: var(--main-background);
-  --card-bg: var(--main-background);
-  --card-alpha: 0.58;
-  --card-blur: 18px;
-  --card-tint: 0.16;
-  --panel-alpha: 0.74;
-  --strong-alpha: 0.86;
-  --card-shadow: 0 10px 30px rgb(0 0 0 / 0.18);
 
   body {
     background-color: transparent;
@@ -506,87 +496,96 @@ video:not([src]) {
 }
 
 /* =========================================================
-   نظام البطاقات الزجاجية — يعمل في كل المظاهر بلون المظهر نفسه
+   نظام البطاقات — بعرض الشاشة بالكامل
+   * المظاهر الكلاسيكية: بلا أي طبقة رمادية (أسود نقي في الداكن)
+   * مظاهر الخلفيات: زجاج مضبّب بعرض كامل مع فواصل رفيعة
    ========================================================= */
-.glass-card {
-  position: relative;
-  margin: 8px;
-  border: 1px solid rgb(var(--main-accent) / var(--card-tint));
-  border-radius: 20px;
-  background-color: rgb(var(--card-bg) / var(--card-alpha));
-  backdrop-filter: blur(var(--card-blur)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(150%);
-  box-shadow: var(--card-shadow);
-  transition: background-color 220ms ease, transform 220ms ease,
-    box-shadow 220ms ease, border-color 220ms ease;
-}
 
-.glass-card:hover {
-  border-color: rgb(var(--main-accent) / calc(var(--card-tint) * 2));
-  background-color: rgb(var(--card-bg) / calc(var(--card-alpha) + 0.08));
-}
-
-.glass-card:active {
-  transform: scale(0.995);
-}
-
-.glass-panel {
-  margin: 8px;
-  border: 1px solid rgb(var(--main-accent) / var(--card-tint));
-  border-radius: 20px;
-  background-color: rgb(var(--card-bg) / var(--panel-alpha));
-  backdrop-filter: blur(calc(var(--card-blur) * 1.4)) saturate(155%);
-  -webkit-backdrop-filter: blur(calc(var(--card-blur) * 1.4)) saturate(155%);
-  box-shadow: var(--card-shadow);
-}
-
+/* الوضع الكلاسيكي: خلفية المظهر نفسها تمامًا، بلا حواف أو هوامش */
+.glass-card,
+.glass-panel,
 .glass-strong {
-  background-color: rgb(var(--card-bg) / var(--strong-alpha));
-  backdrop-filter: blur(calc(var(--card-blur) * 1.8)) saturate(160%);
-  -webkit-backdrop-filter: blur(calc(var(--card-blur) * 1.8)) saturate(160%);
+  background-color: rgb(var(--main-background));
 }
 
-/* أي كتلة محتوى داخل العمود الرئيسي تصبح بطاقة */
-.theme-surface
-  > *:not(header):not(.glass-card):not(.glass-panel):not(:has(.glass-card)):not(
-    :has(.glass-panel)
-  ) {
-  margin: 8px;
-  border: 1px solid rgb(var(--main-accent) / var(--card-tint));
-  border-radius: 20px;
-  background-color: rgb(var(--card-bg) / var(--card-alpha));
-  backdrop-filter: blur(var(--card-blur)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(150%);
-}
+/* في مظاهر الخلفيات فقط: زجاج مضبّب يمتد على كامل العرض */
+.theme-wallpaper {
+  .glass-card {
+    position: relative;
+    margin: 4px 0;
+    border: 0;
+    border-radius: 0;
+    background-color: rgb(var(--main-background) / var(--card-alpha));
+    backdrop-filter: blur(var(--card-blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--card-blur)) saturate(150%);
+    box-shadow: none;
+    transition: background-color 220ms ease;
+  }
 
-/* بطاقات العمود الجانبي وقائمة التنقل */
-aside > section,
-aside > div {
-  border: 1px solid rgb(var(--main-accent) / var(--card-tint));
-  border-radius: 18px;
-  background-color: rgb(var(--card-bg) / var(--card-alpha));
-  backdrop-filter: blur(var(--card-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(140%);
-}
+  .glass-card:hover {
+    background-color: rgb(
+      var(--main-background) / calc(var(--card-alpha) + 0.08)
+    );
+  }
 
-@media (min-width: 500px) {
-  .sidebar-glass {
-    border-radius: 22px;
-    background-color: rgb(var(--card-bg) / calc(var(--card-alpha) - 0.25));
+  .glass-panel {
+    margin: 4px 0;
+    border: 0;
+    border-radius: 0;
+    background-color: rgb(var(--main-background) / var(--panel-alpha));
+    backdrop-filter: blur(calc(var(--card-blur) * 1.4)) saturate(155%);
+    -webkit-backdrop-filter: blur(calc(var(--card-blur) * 1.4)) saturate(155%);
+    box-shadow: none;
+  }
+
+  .glass-strong {
+    background-color: rgb(var(--main-background) / var(--strong-alpha));
+    backdrop-filter: blur(calc(var(--card-blur) * 1.8)) saturate(160%);
+    -webkit-backdrop-filter: blur(calc(var(--card-blur) * 1.8)) saturate(160%);
+  }
+
+  /* أي كتلة محتوى داخل العمود الرئيسي */
+  .theme-surface
+    > *:not(header):not(.glass-card):not(.glass-panel):not(
+      :has(.glass-card)
+    ):not(:has(.glass-panel)) {
+    margin: 4px 0;
+    border: 0;
+    border-radius: 0;
+    background-color: rgb(var(--main-background) / var(--card-alpha));
+    backdrop-filter: blur(var(--card-blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--card-blur)) saturate(150%);
+  }
+
+  /* عناصر القوائم التي لم تُصنَّف يدويًا */
+  .theme-surface > section > article:not(.glass-card),
+  .theme-surface > section > a:not(.glass-card),
+  .theme-surface > section > li > a:not(.glass-card) {
+    margin: 4px 0;
+    border-radius: 0;
+    background-color: rgb(var(--main-background) / var(--card-alpha));
+    backdrop-filter: blur(var(--card-blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--card-blur)) saturate(150%);
+  }
+
+  /* بطاقات العمود الجانبي (شاشات كبيرة) تبقى بحواف دائرية */
+  aside > section,
+  aside > div {
+    border: 1px solid rgb(var(--main-accent) / 0.12);
+    border-radius: 18px;
+    background-color: rgb(var(--main-background) / var(--card-alpha));
     backdrop-filter: blur(var(--card-blur)) saturate(140%);
     -webkit-backdrop-filter: blur(var(--card-blur)) saturate(140%);
   }
-}
 
-/* عناصر القوائم التي لم تُصنَّف يدويًا */
-.theme-surface > section > article:not(.glass-card),
-.theme-surface > section > a:not(.glass-card),
-.theme-surface > section > li > a:not(.glass-card) {
-  margin: 8px;
-  border-radius: 20px;
-  background-color: rgb(var(--card-bg) / var(--card-alpha));
-  backdrop-filter: blur(var(--card-blur)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(150%);
+  @media (min-width: 500px) {
+    .sidebar-glass {
+      border-radius: 22px;
+      background-color: rgb(var(--main-background) / 0.42);
+      backdrop-filter: blur(var(--card-blur)) saturate(140%);
+      -webkit-backdrop-filter: blur(var(--card-blur)) saturate(140%);
+    }
+  }
 }
 
 /* =========================================================

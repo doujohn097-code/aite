@@ -597,7 +597,7 @@ export function MessageBubble({
                       sharedPost.kind === 'reel'
                         ? 'w-[min(280px,calc(100vw-104px))]'
                         : 'w-[min(420px,calc(100vw-72px))]',
-                      'glass-card !m-0 border-main-accent/15 text-light-primary dark:text-dark-primary'
+                      'border-main-accent/20 text-light-primary dark:text-dark-primary'
                     )}
                     onClick={(event) => event.stopPropagation()}
                   >
