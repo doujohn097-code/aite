@@ -109,8 +109,10 @@ export default function UserTweets(): JSX.Element {
     <section>
       {/* Profile tabs */}
       <div
-        className='bg-light-sidebar-background/60 dark:bg-dark-sidebar-background/60 sticky top-0 z-10 mx-3 mt-3 flex gap-1
-                   rounded-full p-1.5'
+        className='profile-tabs bg-light-sidebar-background/80 dark:bg-dark-sidebar-background/80 sticky top-0 z-10 mx-3 mt-3 flex
+                   gap-1 rounded-full border border-main-accent/10
+                   p-1.5 backdrop-blur-xl
+                   backdrop-saturate-150'
       >
         {TABS.map(({ id: tabId, label, icon }) => (
           <button

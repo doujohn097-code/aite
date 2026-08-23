@@ -14,7 +14,7 @@ type UserCardProps = User & {
 };
 
 export function UserCard(user: UserCardProps): JSX.Element {
-  const { id, bio, name, modal, follow, username, verified, gender } = user;
+  const { id, name, modal, follow, username, verified } = user;
 
   return (
     <Link href={`/user/${username}`}>
@@ -45,7 +45,6 @@ export function UserCard(user: UserCardProps): JSX.Element {
               <FollowButton userTargetId={id} userTargetUsername={username} />
             </span>
           </div>
-          {follow && bio && <p className='whitespace-normal'>{bio}</p>}
         </div>
       </a>
     </Link>

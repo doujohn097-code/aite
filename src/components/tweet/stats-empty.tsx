@@ -16,7 +16,12 @@ export function StatsEmpty({
   description
 }: StatsEmptyProps): JSX.Element {
   return (
-    <div className={cn('flex justify-center p-8', modal && 'mt-[52px]')}>
+    <div
+      className={cn(
+        'glass-panel flex justify-center p-8',
+        modal && 'mt-[52px]'
+      )}
+    >
       <div className='w-full max-w-sm'>
         <div className='flex flex-col items-center gap-6'>
           {imageData && (

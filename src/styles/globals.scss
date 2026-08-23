@@ -517,9 +517,9 @@ video:not([src]) {
 
 /* أي كتلة محتوى داخل العمود الرئيسي */
 .theme-surface
-  > *:not(header):not(.glass-card):not(.glass-panel):not(:has(.glass-card)):not(
-    :has(.glass-panel)
-  ) {
+  > *:not(header):not(section):not(.glass-card):not(.glass-panel):not(
+    :has(.glass-card)
+  ):not(:has(.glass-panel)) {
   margin: 6px 0;
   border: 1px solid rgb(var(--main-accent) / 0.1);
   border-radius: 22px;
@@ -610,6 +610,18 @@ video:not([src]) {
       -webkit-backdrop-filter: blur(var(--card-blur)) saturate(140%);
     }
   }
+}
+
+/* تبويبات الملف الشخصي — تبقى واضحة دائمًا سواء كان التبويب فارغًا أو ممتلئًا */
+.profile-tabs {
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.12);
+}
+
+.theme-wallpaper .profile-tabs {
+  border-color: rgb(var(--main-accent) / 0.16);
+  background-color: rgb(var(--main-background) / 0.7);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
 }
 
 /* =========================================================
