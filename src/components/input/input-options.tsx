@@ -54,7 +54,7 @@ export function InputOptions({
 
   return (
     <motion.div className='flex justify-between' {...variants}>
-      <div className='flex text-main-accent'>
+      <div className='flex text-main-accent-text'>
         <input
           className='hidden'
           type='file'
@@ -101,7 +101,7 @@ export function InputOptions({
         </motion.div>
         <Button
           type='submit'
-          className='accent-tab bg-main-accent px-4 py-1.5 font-bold text-white dark:text-black
+          className='accent-tab bg-main-accent px-4 py-1.5 font-bold text-main-accent-contrast
                      enabled:hover:bg-main-accent/90
                      enabled:active:bg-main-accent/75'
           disabled={!isValidTweet}

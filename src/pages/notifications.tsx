@@ -93,7 +93,7 @@ export default function Notifications(): JSX.Element {
         </section>
       ) : (
         <div className='flex flex-col items-center gap-4 p-12 text-center'>
-          <div className='flex h-20 w-20 items-center justify-center rounded-full bg-main-accent/10 text-main-accent'>
+          <div className='flex h-20 w-20 items-center justify-center rounded-full bg-main-accent/10 text-main-accent-text'>
             <HeroIcon className='h-10 w-10' iconName='BellIcon' />
           </div>
           <p className='text-2xl font-bold'>لا توجد إشعارات</p>

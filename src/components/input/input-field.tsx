@@ -56,7 +56,8 @@ export function InputField({
         {useTextArea ? (
           <textarea
             className='peer mt-6 w-full resize-none bg-inherit px-3 pb-1
-                       placeholder-transparent outline-none transition'
+                       text-light-primary placeholder-transparent outline-none
+                       transition dark:text-dark-primary'
             id={inputId}
             placeholder={inputId}
             onChange={!isHittingInputLimit ? handleChange : undefined}
@@ -66,8 +67,11 @@ export function InputField({
           />
         ) : (
           <input
-            className='peer mt-6 w-full bg-inherit px-3 pb-1
-                       placeholder-transparent outline-none transition'
+            className={cn(
+              `peer mt-6 w-full bg-inherit px-3 pb-1 text-light-primary
+               placeholder-transparent outline-none transition dark:text-dark-primary`,
+              isPassword && 'pl-11'
+            )}
             id={inputId}
             type={effectiveType}
             inputMode={inputMode}
@@ -96,13 +100,13 @@ export function InputField({
         )}
         <label
           className={cn(
-            `group-peer absolute right-3 translate-y-1 bg-main-background text-sm
+            `group-peer pointer-events-none absolute right-3 translate-y-1 bg-inherit text-sm
              text-light-secondary transition-all peer-placeholder-shown:translate-y-3
              peer-placeholder-shown:text-lg peer-focus:translate-y-1 peer-focus:text-sm
              dark:text-dark-secondary`,
             errorMessage
               ? '!text-accent-red peer-focus:text-accent-red'
-              : 'peer-focus:text-main-accent'
+              : 'peer-focus:text-main-accent-text'
           )}
           htmlFor={inputId}
         >

@@ -70,12 +70,12 @@ export function UserDetails({
               ([detail, icon], index) =>
                 detail && (
                   <div className='flex items-center gap-1.5' key={icon}>
-                    <i className='flex h-6 w-6 items-center justify-center rounded-full bg-main-accent/10 text-main-accent'>
+                    <i className='flex h-6 w-6 items-center justify-center rounded-full bg-main-accent/10 text-main-accent-text'>
                       <HeroIcon className='h-3.5 w-3.5' iconName={icon} />
                     </i>
                     {index === 1 ? (
                       <a
-                        className='custom-underline text-main-accent'
+                        className='custom-underline text-main-accent-text'
                         href={`https://${detail}`}
                         target='_blank'
                         rel='noreferrer'
@@ -97,7 +97,7 @@ export function UserDetails({
           className='group relative flex items-center gap-1.5 text-sm
                      text-light-secondary dark:text-dark-secondary'
         >
-          <i className='flex h-7 w-7 items-center justify-center rounded-full bg-main-accent/10 text-main-accent'>
+          <i className='flex h-7 w-7 items-center justify-center rounded-full bg-main-accent/10 text-main-accent-text'>
             <HeroIcon className='h-4 w-4' iconName='CalendarDaysIcon' />
           </i>
           <span className='custom-underline'>

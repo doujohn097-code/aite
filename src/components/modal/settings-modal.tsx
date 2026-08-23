@@ -261,7 +261,7 @@ export function SettingsModal({
             </div>
             <span
               className='rounded-full bg-main-accent/15 px-2.5 py-1 text-[11px] font-bold
-                         text-main-accent'
+                         text-main-accent-text'
             >
               قريبًا
             </span>
@@ -323,8 +323,8 @@ export function SettingsModal({
           />
           <Button
             type='submit'
-            className='mt-1 bg-main-accent py-2.5 font-bold text-white transition
-                       hover:brightness-90 active:brightness-75 dark:text-black'
+            className='mt-1 bg-main-accent py-2.5 font-bold text-main-accent-contrast transition
+                       hover:brightness-90 active:brightness-75'
             loading={loading}
             disabled={loading}
           >

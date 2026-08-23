@@ -195,7 +195,7 @@ export function MusicSearch({
                   <span
                     className={cn(
                       'truncate text-sm',
-                      isSelected && 'font-bold text-main-accent'
+                      isSelected && 'font-bold text-main-accent-text'
                     )}
                   >
                     {track.name}
@@ -207,7 +207,7 @@ export function MusicSearch({
 
                 {isSelected && (
                   <HeroIcon
-                    className='h-5 w-5 shrink-0 text-main-accent'
+                    className='h-5 w-5 shrink-0 text-main-accent-text'
                     iconName='CheckIcon'
                   />
                 )}
@@ -217,7 +217,7 @@ export function MusicSearch({
       </div>
 
       {selected && (
-        <div className='mt-2 flex items-center gap-2 text-sm text-main-accent'>
+        <div className='mt-2 flex items-center gap-2 text-sm text-main-accent-text'>
           <HeroIcon className='h-4 w-4' iconName='MusicalNoteIcon' />
           <span className='truncate'>{selected.name}</span>
           <button

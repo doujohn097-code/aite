@@ -45,7 +45,7 @@ export function SearchBar(): JSX.Element {
         <i>
           <HeroIcon
             className='h-5 w-5 text-light-secondary transition-colors 
-                       group-focus-within:text-main-accent dark:text-dark-secondary'
+                       group-focus-within:text-main-accent-text dark:text-dark-secondary'
             iconName='MagnifyingGlassIcon'
           />
         </i>
@@ -69,7 +69,7 @@ export function SearchBar(): JSX.Element {
           disabled={!inputValue}
         >
           <HeroIcon
-            className='h-3 w-3 text-white dark:text-black'
+            className='h-3 w-3 text-main-accent-contrast'
             iconName='XMarkIcon'
           />
         </Button>

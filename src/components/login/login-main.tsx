@@ -177,7 +177,7 @@ export function LoginMain(): JSX.Element {
             )}
             <Button
               type='submit'
-              className='bg-accent-blue text-white dark:text-black transition hover:brightness-90
+              className='bg-accent-blue text-accent-blue-contrast transition hover:brightness-90
                          focus-visible:!ring-accent-blue/80 focus-visible:brightness-90 active:brightness-75'
               loading={loading}
               disabled={loading}

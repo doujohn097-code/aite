@@ -26,7 +26,7 @@ export function LinkifiedText({
             onClick={(event) => event.stopPropagation()}
             className={
               linkClassName ??
-              'break-all text-main-accent underline decoration-main-accent/60 underline-offset-2 transition hover:decoration-main-accent'
+              'break-all text-main-accent-text underline decoration-main-accent/60 underline-offset-2 transition hover:decoration-main-accent'
             }
           >
             {part}

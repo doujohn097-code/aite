@@ -164,7 +164,7 @@ export function VoiceRecorder({
         onClick={finish}
         aria-label='إنهاء التسجيل'
         className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full
-                   bg-main-accent text-white dark:text-black transition hover:brightness-90 active:scale-90'
+                   bg-main-accent text-main-accent-contrast transition hover:brightness-90 active:scale-90'
       >
         <HeroIcon className='h-5 w-5' iconName='CheckIcon' solid />
       </button>

@@ -22,10 +22,20 @@ const InputColors: Readonly<InputAccentData> = {
     'bg-accent-green hover:ring-accent-green/10 active:ring-accent-green/20'
 };
 
+const InputCheckColors: Readonly<InputAccentData> = {
+  yellow: 'text-accent-yellow-contrast',
+  blue: 'text-accent-blue-contrast',
+  pink: 'text-accent-pink-contrast',
+  purple: 'text-accent-purple-contrast',
+  orange: 'text-accent-orange-contrast',
+  green: 'text-accent-green-contrast'
+};
+
 export function InputAccentRadio({ type }: InputAccentRadioProps): JSX.Element {
   const { accent, changeAccent } = useTheme();
 
   const bgColor = InputColors[type];
+  const checkColor = InputCheckColors[type];
   const isChecked = type === accent;
 
   return (
@@ -46,7 +56,7 @@ export function InputAccentRadio({ type }: InputAccentRadioProps): JSX.Element {
         checked={isChecked}
         onChange={changeAccent}
       />
-      <i className='text-black peer-checked:inner:opacity-100'>
+      <i className={cn('peer-checked:inner:opacity-100', checkColor)}>
         <HeroIcon
           className='h-6 w-6 opacity-0 transition-opacity duration-200'
           iconName='CheckIcon'

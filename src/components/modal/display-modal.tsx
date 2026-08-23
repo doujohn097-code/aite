@@ -53,7 +53,7 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
             <p className='whitespace-pre-line break-words'>
               جوهر Aite هي رسائل قصيرة تُسمّى منشورات — مثل هذه — ويمكن أن تتضمن
               صورًا وفيديوهات وروابط ونصًا ووسوم وإشارات مثل{' '}
-              <span className='text-main-accent'>@myplatform</span>.
+              <span className='text-main-accent-text'>@myplatform</span>.
             </p>
           </div>
         </div>
@@ -86,7 +86,7 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
       </div>
       <Button
         className='bg-main-accent px-4 py-1.5 font-bold
-                   text-white dark:text-black hover:bg-main-accent/90 active:bg-main-accent/75'
+                   text-main-accent-contrast hover:bg-main-accent/90 active:bg-main-accent/75'
         onClick={closeModal}
       >
         تم

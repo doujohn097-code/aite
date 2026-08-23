@@ -193,7 +193,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                 >
                   رد على{' '}
                   <Link href={`/user/${parentUsername}`}>
-                    <a className='custom-underline text-main-accent'>
+                    <a className='custom-underline text-main-accent-text'>
                       @{parentUsername}
                     </a>
                   </Link>

@@ -77,7 +77,7 @@ export function InputThemeRadio({
         <i
           className={cn(
             `flex h-5 w-5 items-center justify-center rounded-full 
-             border-2 border-[#B9CAD3] text-black transition
+             border-2 border-[#B9CAD3] text-main-accent-contrast transition
              duration-200 peer-checked:border-transparent
              peer-checked:bg-main-accent peer-checked:inner:opacity-100`,
             iconBorderColor

@@ -454,7 +454,7 @@ export function PostComments({
                             e.stopPropagation();
                             handleReplyClick(item);
                           }}
-                          className='flex items-center gap-1 transition hover:text-main-accent active:scale-95'
+                          className='flex items-center gap-1 transition hover:text-main-accent-text active:scale-95'
                         >
                           <HeroIcon
                             className='h-3.5 w-3.5 rotate-180'
@@ -483,7 +483,7 @@ export function PostComments({
                             toggleThreadReplies(item.id);
                           }}
                           className='mt-2.5 flex select-none items-center gap-2 text-xs font-bold
-                                     text-main-accent transition hover:brightness-110'
+                                     text-main-accent-text transition hover:brightness-110'
                         >
                           <span className='h-[1px] w-6 bg-main-accent/60' />
                           <span>
@@ -582,13 +582,13 @@ export function PostComments({
                                 </span>
                               </div>
 
-                              <div className='mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-main-accent/90'>
+                              <div className='mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-main-accent-text/90'>
                                 <HeroIcon
-                                  className='h-3 w-3 shrink-0 rotate-180 text-main-accent'
+                                  className='h-3 w-3 shrink-0 rotate-180 text-main-accent-text'
                                   iconName='ArrowUturnLeftIcon'
                                 />
                                 <span>رد على</span>
-                                <span className='py-0.2 rounded bg-main-accent/15 px-1.5 text-main-accent'>
+                                <span className='py-0.2 rounded bg-main-accent/15 px-1.5 text-main-accent-text'>
                                   @
                                   {reply.replyTo?.username ||
                                     item.user.username}
@@ -606,7 +606,7 @@ export function PostComments({
                                     e.stopPropagation();
                                     handleReplyClick(reply);
                                   }}
-                                  className='flex items-center gap-1 transition hover:text-main-accent active:scale-95'
+                                  className='flex items-center gap-1 transition hover:text-main-accent-text active:scale-95'
                                 >
                                   <HeroIcon
                                     className='h-3 w-3 rotate-180'
@@ -674,11 +674,11 @@ export function PostComments({
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className='flex items-center justify-between overflow-hidden bg-main-accent/10 px-4 py-2 text-xs text-main-accent'
+                className='flex items-center justify-between overflow-hidden bg-main-accent/10 px-4 py-2 text-xs text-main-accent-text'
               >
                 <div className='flex items-center gap-2 truncate'>
                   <HeroIcon
-                    className='h-4 w-4 shrink-0 rotate-180 text-main-accent'
+                    className='h-4 w-4 shrink-0 rotate-180 text-main-accent-text'
                     iconName='ArrowUturnLeftIcon'
                   />
                   <span className='truncate'>
@@ -694,7 +694,7 @@ export function PostComments({
                 <button
                   type='button'
                   onClick={cancelReply}
-                  className='shrink-0 rounded-full p-1 text-main-accent hover:bg-main-accent/20'
+                  className='shrink-0 rounded-full p-1 text-main-accent-text hover:bg-main-accent/20'
                   aria-label='إلغاء الرد'
                 >
                   <HeroIcon className='h-3.5 w-3.5' iconName='XMarkIcon' />
@@ -734,7 +734,7 @@ export function PostComments({
               loading={sending}
               disabled={!comment.trim()}
               className='flex shrink-0 items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm
-                         font-bold text-white dark:text-black shadow-md transition hover:brightness-95 active:scale-95
+                         font-bold text-main-accent-contrast shadow-md transition hover:brightness-95 active:scale-95
                          disabled:pointer-events-none disabled:opacity-40'
             >
               <span>إرسال</span>

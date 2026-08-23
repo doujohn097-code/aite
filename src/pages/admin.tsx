@@ -115,7 +115,7 @@ export default function Admin(): JSX.Element {
           <div className='m-5 rounded-2xl border border-accent-red/30 bg-accent-red/10 p-4 text-sm text-accent-red'>
             <p>{error}</p>
             <Button
-              className='mt-3 bg-main-accent px-4 py-2 font-bold text-white dark:text-black'
+              className='mt-3 bg-main-accent px-4 py-2 font-bold text-main-accent-contrast'
               onClick={(): Promise<void> => fetchUsers()}
             >
               إعادة المحاولة
@@ -146,7 +146,7 @@ export default function Admin(): JSX.Element {
               </div>
               <div className='flex shrink-0 gap-2'>
                 <Button
-                  className='bg-main-accent px-3 py-1.5 text-sm font-bold text-white dark:text-black'
+                  className='bg-main-accent px-3 py-1.5 text-sm font-bold text-main-accent-contrast'
                   onClick={(): Promise<void> => toggleVerified(targetUser)}
                   loading={processing[targetUser.id]}
                   disabled={processing[targetUser.id]}

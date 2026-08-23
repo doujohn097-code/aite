@@ -205,7 +205,7 @@ export function CreateReelModal({
         {/* Header */}
         <div className='flex items-center justify-between border-b border-light-border px-6 py-4 dark:border-dark-border'>
           <div className='flex items-center gap-2.5'>
-            <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-main-accent/15 text-main-accent'>
+            <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-main-accent/15 text-main-accent-text'>
               <HeroIcon className='h-5 w-5' iconName='FilmIcon' />
             </div>
             <div>
@@ -243,7 +243,7 @@ export function CreateReelModal({
                   : 'border-light-border hover:border-main-accent/60 hover:bg-main-accent/5 dark:border-dark-border'
               }`}
             >
-              <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-main-accent/10 text-main-accent shadow-inner transition group-hover:scale-110'>
+              <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-main-accent/10 text-main-accent-text shadow-inner transition group-hover:scale-110'>
                 <HeroIcon className='h-8 w-8' iconName='ArrowUpTrayIcon' />
               </div>
               <h3 className='text-base font-bold text-light-primary dark:text-dark-primary'>
@@ -380,7 +380,7 @@ export function CreateReelModal({
                   key={tag}
                   type='button'
                   onClick={() => addTag(tag)}
-                  className='rounded-full bg-light-line-reply/40 px-2.5 py-0.5 text-xs text-light-secondary transition hover:bg-main-accent/15 hover:text-main-accent dark:bg-dark-line-reply/40 dark:text-dark-secondary'
+                  className='rounded-full bg-light-line-reply/40 px-2.5 py-0.5 text-xs text-light-secondary transition hover:bg-main-accent/15 hover:text-main-accent-text dark:bg-dark-line-reply/40 dark:text-dark-secondary'
                 >
                   {tag}
                 </button>
@@ -401,7 +401,7 @@ export function CreateReelModal({
 
           <Button
             type='button'
-            className='flex items-center gap-2 rounded-full bg-main-accent px-6 py-2.5 font-bold text-white dark:text-black shadow-lg transition hover:brightness-95 active:scale-95 disabled:pointer-events-none disabled:opacity-50'
+            className='flex items-center gap-2 rounded-full bg-main-accent px-6 py-2.5 font-bold text-main-accent-contrast shadow-lg transition hover:brightness-95 active:scale-95 disabled:pointer-events-none disabled:opacity-50'
             onClick={handleSubmit}
             loading={loading || computingDuration}
             disabled={!selectedVideos.length || loading || computingDuration}

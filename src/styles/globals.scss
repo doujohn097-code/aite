@@ -10,6 +10,8 @@
     --main-search-background: var(--dark-search-background);
     --main-sidebar-background: var(--dark-sidebar-background);
     --main-accent: var(--accent-blue);
+    --main-accent-contrast: var(--accent-blue-contrast);
+    --main-accent-text: var(--accent-blue-text);
 
     --dark-background: 0 0 0;
     --dim-background: 22 33 44;
@@ -29,11 +31,40 @@
     --accent-purple: 120 87 255;
     --accent-orange: 255 122 0;
     --accent-green: 0 184 122;
+
+    /* لون النص/الأيقونة فوق خلفية بلون التمييز (زر ممتلئ) */
+    --accent-yellow-contrast: 15 20 25;
+    --accent-blue-contrast: 15 20 25;
+    --accent-pink-contrast: 255 255 255;
+    --accent-purple-contrast: 255 255 255;
+    --accent-orange-contrast: 15 20 25;
+    --accent-green-contrast: 15 20 25;
+
+    /* لون التمييز عند استخدامه كنص فوق خلفية الصفحة (قابل للقراءة دائمًا) */
+    --accent-yellow-text: 255 213 0;
+    --accent-blue-text: 255 255 255;
+    --accent-pink-text: 249 84 158;
+    --accent-purple-text: 163 141 255;
+    --accent-orange-text: 255 150 51;
+    --accent-green-text: 0 214 142;
   }
 
   /* في الثيم الفاتح: الأبيض غير مرئي على خلفية بيضاء — نستخدم أزرق تويتر */
   :root:not(.dark) {
     --accent-blue: 29 155 240;
+
+    --accent-blue-contrast: 255 255 255;
+    --accent-yellow-contrast: 15 20 25;
+    --accent-orange-contrast: 255 255 255;
+    --accent-green-contrast: 255 255 255;
+
+    /* نسخ أغمق من ألوان التمييز حتى تبقى النصوص مقروءة على الأبيض */
+    --accent-yellow-text: 161 98 7;
+    --accent-blue-text: 26 140 216;
+    --accent-pink-text: 190 24 93;
+    --accent-purple-text: 91 47 219;
+    --accent-orange-text: 194 65 12;
+    --accent-green-text: 4 120 87;
   }
 
   *,

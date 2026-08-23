@@ -186,7 +186,7 @@ export default function Messages(): JSX.Element {
         </section>
       ) : (
         <div className='flex flex-col items-center gap-4 p-12 text-center'>
-          <div className='flex h-20 w-20 items-center justify-center rounded-full bg-main-accent/10 text-main-accent'>
+          <div className='flex h-20 w-20 items-center justify-center rounded-full bg-main-accent/10 text-main-accent-text'>
             <HeroIcon className='h-10 w-10' iconName='EnvelopeIcon' />
           </div>
           <p className='text-2xl font-bold'>لا توجد محادثات بعد</p>
@@ -196,7 +196,7 @@ export default function Messages(): JSX.Element {
           <button
             type='button'
             onClick={openModal}
-            className='rounded-full bg-main-accent px-6 py-2.5 font-bold text-white dark:text-black
+            className='rounded-full bg-main-accent px-6 py-2.5 font-bold text-main-accent-contrast
                        transition hover:brightness-90 active:brightness-75'
           >
             رسالة جديدة

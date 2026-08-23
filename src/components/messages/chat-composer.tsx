@@ -164,11 +164,11 @@ export function ChatComposer({
             >
               <span className='absolute inset-y-0 start-0 w-1 rounded-full bg-gradient-to-b from-main-accent to-main-accent/30' />
               <HeroIcon
-                className='h-4 w-4 shrink-0 rotate-180 text-main-accent'
+                className='h-4 w-4 shrink-0 rotate-180 text-main-accent-text'
                 iconName='ArrowUturnLeftIcon'
               />
               <div className='flex min-w-0 flex-1 flex-col text-xs'>
-                <span className='font-bold text-main-accent'>
+                <span className='font-bold text-main-accent-text'>
                   الرد على {replyingTo.senderName}
                 </span>
                 <span className='truncate text-light-secondary dark:text-dark-secondary'>
@@ -306,7 +306,7 @@ export function ChatComposer({
               onClick={() => fileInputRef.current?.click()}
               aria-label='إرفاق صورة أو فيديو'
               disabled={sending}
-              className='custom-button dark-bg-tab shrink-0 p-2 text-main-accent hover:bg-light-primary/10 disabled:cursor-not-allowed
+              className='custom-button dark-bg-tab shrink-0 p-2 text-main-accent-text hover:bg-light-primary/10 disabled:cursor-not-allowed
                          disabled:opacity-40 dark:hover:bg-dark-primary/10'
             >
               <HeroIcon className='h-6 w-6' iconName='PhotoIcon' />
@@ -335,7 +335,7 @@ export function ChatComposer({
                 aria-label='إرسال'
                 className={cn(
                   'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
-                  'bg-main-accent text-white transition hover:brightness-90 active:scale-90 dark:text-black',
+                  'bg-main-accent text-main-accent-contrast transition hover:brightness-90 active:scale-90',
                   'disabled:opacity-50'
                 )}
               >
@@ -354,7 +354,7 @@ export function ChatComposer({
                 type='button'
                 onClick={() => setRecording(true)}
                 aria-label='تسجيل رسالة صوتية'
-                className='custom-button dark-bg-tab shrink-0 p-2 text-main-accent
+                className='custom-button dark-bg-tab shrink-0 p-2 text-main-accent-text
                            hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
               >
                 <HeroIcon className='h-6 w-6' iconName='MicrophoneIcon' />

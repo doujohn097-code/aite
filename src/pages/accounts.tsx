@@ -115,7 +115,7 @@ export default function Accounts(): JSX.Element {
                         <span className='truncate text-sm font-bold text-light-primary dark:text-dark-primary'>
                           {account.name}
                           {isCurrent && (
-                            <span className='mr-2 text-xs font-medium text-main-accent'>
+                            <span className='mr-2 text-xs font-medium text-main-accent-text'>
                               (الحساب الحالي)
                             </span>
                           )}
@@ -189,7 +189,7 @@ export default function Accounts(): JSX.Element {
             <Link href='/home'>
               <a className='w-full'>
                 <Button
-                  className='w-full bg-main-accent py-2.5 font-bold text-white dark:text-black transition
+                  className='w-full bg-main-accent py-2.5 font-bold text-main-accent-contrast transition
                              hover:brightness-90 active:brightness-75'
                 >
                   العودة إلى الرئيسية

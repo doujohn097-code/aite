@@ -130,8 +130,8 @@ export function VoicePlayer({
           'flex shrink-0 items-center justify-center rounded-full transition active:scale-90',
           tall ? 'h-11 w-11' : 'h-9 w-9',
           isOwn
-            ? 'bg-black/15 text-black hover:bg-black/25'
-            : 'bg-main-accent text-white hover:brightness-90 dark:text-black'
+            ? 'bg-white/20 text-white hover:bg-white/30'
+            : 'bg-main-accent text-main-accent-contrast hover:brightness-90'
         )}
       >
         <HeroIcon
@@ -157,8 +157,8 @@ export function VoicePlayer({
                 'w-0.5 shrink-0 rounded-full transition-[height,background-color] duration-150',
                 isOwn
                   ? played
-                    ? 'bg-black'
-                    : 'bg-black/30'
+                    ? 'bg-white'
+                    : 'bg-white/40'
                   : played
                   ? 'bg-main-accent'
                   : 'bg-light-secondary/40 dark:bg-dark-secondary/50'
@@ -173,7 +173,7 @@ export function VoicePlayer({
           className={cn(
             'min-w-[2.25rem] text-left text-xs tabular-nums',
             isOwn
-              ? 'text-black/70'
+              ? 'text-white/80'
               : 'text-light-secondary dark:text-dark-secondary'
           )}
         >
@@ -189,11 +189,11 @@ export function VoicePlayer({
             'rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums transition active:scale-90',
             speed === 1
               ? isOwn
-                ? 'text-black/50'
+                ? 'text-white/70'
                 : 'text-light-secondary/60 dark:text-dark-secondary/60'
               : isOwn
-              ? 'bg-black/15 text-black'
-              : 'bg-main-accent/15 text-main-accent'
+              ? 'bg-white/20 text-white'
+              : 'bg-main-accent/15 text-main-accent-text'
           )}
         >
           {speed}×

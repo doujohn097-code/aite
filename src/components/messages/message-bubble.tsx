@@ -346,7 +346,7 @@ export function MessageBubble({
         aria-hidden
         className={cn(
           'absolute top-1/2 flex h-10 -translate-y-1/2 items-center gap-1.5 rounded-full px-2',
-          'bg-main-accent text-white shadow-lg shadow-main-accent/40 dark:text-black',
+          'bg-main-accent text-main-accent-contrast shadow-lg shadow-main-accent/40',
           swipeReady && 'ring-4 ring-main-accent/25',
           isOwn ? '-start-2' : '-end-2'
         )}
@@ -649,7 +649,7 @@ export function MessageBubble({
                         )}
                       </div>
                     ) : (
-                      <div className='flex h-24 items-center justify-center bg-gradient-to-br from-main-accent/20 to-main-accent/5 text-main-accent'>
+                      <div className='flex h-24 items-center justify-center bg-gradient-to-br from-main-accent/20 to-main-accent/5 text-main-accent-text'>
                         <HeroIcon
                           className='h-9 w-9'
                           iconName={
@@ -683,7 +683,7 @@ export function MessageBubble({
                           'rounded-full px-2 py-0.5 text-[10px] font-bold',
                           isOwn
                             ? 'bg-black/15'
-                            : 'bg-main-accent/15 text-main-accent'
+                            : 'bg-main-accent/15 text-main-accent-text'
                         )}
                       >
                         {sharedPost.kind === 'reel' ? 'ريل' : 'منشور'}
@@ -748,7 +748,7 @@ export function MessageBubble({
         <span>{formatTime(createdAt)}</span>
         {isOwn && (
           <HeroIcon
-            className={cn('h-3.5 w-3.5', seen && 'text-main-accent')}
+            className={cn('h-3.5 w-3.5', seen && 'text-main-accent-text')}
             iconName={seen ? 'CheckCircleIcon' : 'CheckIcon'}
             solid={seen}
           />

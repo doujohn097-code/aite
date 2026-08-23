@@ -66,7 +66,7 @@ export function StoriesBar(): JSX.Element {
               onClick={openCreateModal}
               className='relative flex h-14 w-14 items-center justify-center rounded-full
                          border-2 border-dashed border-main-accent bg-main-background
-                         text-main-accent transition hover:bg-main-accent/10'
+                         text-main-accent-text transition hover:bg-main-accent/10'
             >
               <span className='text-2xl leading-none'>+</span>
             </button>

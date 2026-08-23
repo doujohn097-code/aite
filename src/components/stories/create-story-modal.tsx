@@ -243,7 +243,7 @@ export function CreateStoryModal({
 
         <Button
           type='button'
-          className='bg-main-accent px-4 py-2 font-bold text-white dark:text-black disabled:opacity-50'
+          className='bg-main-accent px-4 py-2 font-bold text-main-accent-contrast disabled:opacity-50'
           onClick={handleSubmit}
           loading={loading || computingDurations}
           disabled={!selectedImages.length || loading || computingDurations}

@@ -30,7 +30,7 @@ export function TweetAudioPlayer({
       role='presentation'
     >
       <div className='flex items-center justify-between gap-2'>
-        <span className='flex items-center gap-1.5 text-xs font-bold text-main-accent'>
+        <span className='flex items-center gap-1.5 text-xs font-bold text-main-accent-text'>
           <span className='flex h-6 w-6 items-center justify-center rounded-full bg-main-accent/15'>
             <HeroIcon className='h-3.5 w-3.5' iconName='MicrophoneIcon' />
           </span>
@@ -38,7 +38,7 @@ export function TweetAudioPlayer({
         </span>
         <span
           className='rounded-full bg-main-accent/10 px-2 py-0.5 text-[11px]
-                     font-semibold text-main-accent'
+                     font-semibold text-main-accent-text'
         >
           {formatDuration(audio.duration)}
         </span>

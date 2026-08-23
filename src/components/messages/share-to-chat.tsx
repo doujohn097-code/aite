@@ -67,7 +67,7 @@ export function useShareToChat(shared: SharedPostRef): {
         <button
           type='button'
           onClick={() => void copyLink()}
-          className='flex items-center gap-2 rounded-full bg-main-accent/15 px-3 py-2 text-sm font-bold text-main-accent transition hover:bg-main-accent/25'
+          className='flex items-center gap-2 rounded-full bg-main-accent/15 px-3 py-2 text-sm font-bold text-main-accent-text transition hover:bg-main-accent/25'
         >
           <HeroIcon className='h-4 w-4' iconName='LinkIcon' /> نسخ الرابط
         </button>

@@ -383,13 +383,13 @@ export default function Chat(): JSX.Element {
             type='button'
             onClick={() => void toggleBlockPeer()}
             disabled={blockBusy}
-            className='rounded-full bg-main-accent px-6 py-2 font-bold text-white dark:text-black disabled:opacity-60'
+            className='rounded-full bg-main-accent px-6 py-2 font-bold text-main-accent-contrast disabled:opacity-60'
           >
             {blockBusy ? 'جارٍ التحديث...' : 'إلغاء الحظر'}
           </button>
         )}
         <Link href='/messages'>
-          <a className='rounded-full bg-main-accent px-6 py-2 font-bold text-white dark:text-black'>
+          <a className='rounded-full bg-main-accent px-6 py-2 font-bold text-main-accent-contrast'>
             العودة للرسائل
           </a>
         </Link>
@@ -509,7 +509,7 @@ export default function Chat(): JSX.Element {
                     <span className='h-px flex-1 bg-main-accent/40' />
                     <span
                       className='rounded-full bg-main-accent/15 px-3 py-0.5 text-[11px]
-                                 font-bold text-main-accent'
+                                 font-bold text-main-accent-text'
                     >
                       رسائل جديدة
                     </span>
@@ -580,7 +580,7 @@ export default function Chat(): JSX.Element {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.9 }}
               onClick={jumpToLatest}
-              className='sticky bottom-2 z-20 mx-auto flex w-fit items-center gap-1.5 rounded-full bg-main-accent px-3 py-2 text-xs font-bold text-white dark:text-black shadow-lg'
+              className='sticky bottom-2 z-20 mx-auto flex w-fit items-center gap-1.5 rounded-full bg-main-accent px-3 py-2 text-xs font-bold text-main-accent-contrast shadow-lg'
             >
               <HeroIcon className='h-4 w-4' iconName='ArrowDownIcon' />
               أحدث الرسائل

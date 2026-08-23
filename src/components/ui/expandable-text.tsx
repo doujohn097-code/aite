@@ -43,7 +43,7 @@ export function ExpandableText({
           type='button'
           onClick={(): void => setExpanded((v) => !v)}
           className={cn(
-            'mt-1 text-sm font-semibold text-main-accent hover:underline',
+            'mt-1 text-sm font-semibold text-main-accent-text hover:underline',
             buttonClassName
           )}
         >

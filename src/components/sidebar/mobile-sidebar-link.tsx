@@ -37,7 +37,7 @@ export function MobileSidebarLink({
         <HeroIcon
           className={cn(
             bottom ? 'h-5 w-5' : 'h-6 w-6',
-            'text-light-secondary transition group-hover:text-main-accent dark:text-dark-secondary dark:group-hover:text-main-accent'
+            'text-light-secondary transition group-hover:text-main-accent-text dark:text-dark-secondary dark:group-hover:text-main-accent-text'
           )}
           iconName={iconName}
         />

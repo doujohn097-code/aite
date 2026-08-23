@@ -217,7 +217,7 @@ export default function Reels(): JSX.Element {
           style={{ marginTop: 'env(safe-area-inset-top)' }}
         >
           <Button
-            className='flex items-center gap-2 rounded-full bg-main-accent/95 px-4 py-2 text-sm font-bold text-white shadow-xl backdrop-blur-md transition hover:brightness-105 active:scale-95 dark:text-black'
+            className='flex items-center gap-2 rounded-full bg-main-accent/95 px-4 py-2 text-sm font-bold text-main-accent-contrast shadow-xl backdrop-blur-md transition hover:brightness-105 active:scale-95'
             onClick={() => setCreateOpen(true)}
           >
             <HeroIcon className='h-5 w-5' iconName='PlusIcon' />
@@ -244,7 +244,7 @@ export default function Reels(): JSX.Element {
               </p>
             </div>
             <Button
-              className='flex items-center gap-2 rounded-full bg-main-accent px-6 py-3 font-bold text-white dark:text-black shadow-lg transition hover:brightness-105 active:scale-95'
+              className='flex items-center gap-2 rounded-full bg-main-accent px-6 py-3 font-bold text-main-accent-contrast shadow-lg transition hover:brightness-105 active:scale-95'
               onClick={() => setCreateOpen(true)}
             >
               <HeroIcon className='h-5 w-5' iconName='PlusIcon' />

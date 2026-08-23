@@ -90,6 +90,16 @@ export function ThemeContextProvider({
 
       root.style.setProperty('--main-accent', `var(--accent-${accent})`);
 
+      root.style.setProperty(
+        '--main-accent-contrast',
+        `var(--accent-${accent}-contrast)`
+      );
+
+      root.style.setProperty(
+        '--main-accent-text',
+        `var(--accent-${accent}-text)`
+      );
+
       if (user) {
         localStorage.setItem('accent', accent);
         return setTimeout(() => void updateUserTheme(user.id, { accent }), 500);

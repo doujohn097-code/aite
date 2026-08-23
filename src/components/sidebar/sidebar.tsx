@@ -116,7 +116,7 @@ export function Sidebar(): JSX.Element {
           </nav>
           {!isReels && !isMessages && (
             <Button
-              className='accent-tab absolute right-4 -translate-y-[72px] bg-main-accent text-lg font-bold text-white dark:text-black
+              className='accent-tab absolute right-4 -translate-y-[72px] bg-main-accent text-lg font-bold text-main-accent-contrast
                          outline-none transition hover:brightness-90 active:brightness-75 xs:static xs:translate-y-0
                          xs:hover:bg-main-accent/90 xs:active:bg-main-accent/75 xl:w-11/12'
               onClick={openModal}

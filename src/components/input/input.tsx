@@ -321,7 +321,7 @@ export function Input({
         >
           رد على{' '}
           <Link href={`/user/${parent?.username as string}`}>
-            <a className='custom-underline text-main-accent'>
+            <a className='custom-underline text-main-accent-text'>
               {parent?.username as string}
             </a>
           </Link>
