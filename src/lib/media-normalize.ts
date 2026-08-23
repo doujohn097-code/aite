@@ -2,10 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { auth } from '@lib/firebase/app';
 
 /**
- * Client-side repair for videos Android WebView cannot decode.
+ * Client-side repair for videos some mobile browsers cannot decode.
  *
  * The platform accepts raw phone uploads (HEVC / H.264 High@L5.2 / .mov /
- * non-faststart MP4). Desktop Chrome decodes most of them, but Android's
+ * non-faststart MP4). Desktop Chrome decodes most of them, but mobile browsers'
  * WebView relies on the device hardware decoder, which caps out at
  * H.264 level 4.1/4.2 — so the same video renders as a gray box in the app
  * while looking perfect on the web.
@@ -133,7 +133,7 @@ type RepairableVideo = {
 
 /**
  * Hook for video elements: when the browser fails to load/decode a video
- * (exactly what happens for unsupported codecs on Android WebView), it
+ * (exactly what happens for unsupported codecs on mobile browsers), it
  * requests a server-side re-encode and swaps the src once ready.
  */
 export function useRepairableVideo(src: string): RepairableVideo {

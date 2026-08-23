@@ -589,7 +589,7 @@ video:not([src]) {
 }
 
 /* =========================================================
-   توافق تطبيق الهاتف (Android WebView / PWA)
+   توافق متصفحات الجوال و PWA
    ========================================================= */
 
 /* مناطق الأمان (الشق العلوي وشريط الإيماءات السفلي) */
@@ -605,14 +605,14 @@ video:not([src]) {
   top: env(safe-area-inset-top, 0px);
 }
 
-/* تمرير سلس داخل WebView */
+/* تمرير سلس على الجوال */
 .scroll-native {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scrollbar-width: thin;
 }
 
-/* بديل الزجاج عندما لا يدعم WebView الضبابية — نرفع العتامة كي يبقى النص واضحًا */
+/* بديل الزجاج عندما لا يدعم المتصفح الضبابية — نرفع العتامة كي يبقى النص واضحًا */
 @supports not (
   (backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))
 ) {
@@ -687,7 +687,7 @@ video:not([src]) {
     background-color: transparent;
   }
 
-  .native-app body {
+  .standalone-app body {
     overscroll-behavior-y: none;
   }
 }
@@ -700,8 +700,10 @@ video:not([src]) {
   }
 }
 
-/* تقليل الضبابية على أجهزة أندرويد الضعيفة */
-.is-android {
-  --surface-blur: 16px;
-  --wallpaper-blur: 0px;
+/* تخفيف الضبابية على الشاشات الصغيرة لتحسين الأداء */
+@media (max-width: 640px) {
+  :root {
+    --surface-blur: 16px;
+    --wallpaper-blur: 0px;
+  }
 }

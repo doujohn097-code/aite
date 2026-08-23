@@ -15,15 +15,7 @@
 # production
 /build
 
-# Android build tools and secrets
 /.tools/
-/android/.gradle/
-/android/build/
-/android/app/build/
-/android/local.properties
-/android/app/google-services.json
-*.keystore
-*.jks
 
 # misc
 .DS_Store

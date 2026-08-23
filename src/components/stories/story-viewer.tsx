@@ -147,7 +147,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
   const currentStoryId = currentStory?.id;
   const isCurrentVideo = currentStory?.images?.[0]?.type?.startsWith('video/');
 
-  // Android WebView cannot decode some phone uploads; swap in a server-side
+  // some mobile browsers cannot decode some phone uploads; swap in a server-side
   // re-encoded copy when the original fails to load.
   const { effectiveSrc, repairing, onError } = useRepairableVideo(
     isCurrentVideo ? currentStory?.images?.[0]?.src ?? '' : ''

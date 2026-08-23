@@ -200,8 +200,8 @@ export default async function handler(
 
     const response = await admin.messaging().sendEachForMulticast({
       tokens,
-      // رسالة data-only: على أندرويد تعالجها خدمة AiteFirebaseMessagingService
-      // لعرض إشعار احترافي بصورة المرسل الدائرية وبادج شعار Aite (مثل انستغرام)
+      // رسالة data-only: يعالجها Service Worker لعرض إشعار بصورة المرسل
+      // وبادج شعار Aite (مثل انستغرام)
       data: {
         title: notification.title,
         body: notification.body,
@@ -210,7 +210,6 @@ export default async function handler(
         tag: notification.tag,
         ...(senderPhoto ? { image: senderPhoto } : {})
       },
-      android: { priority: 'high' },
       // يجعل Web Push يظهر فوراً على مدار 24 ساعة ولا يُجمّع في الخلفية
       apns: { headers: { 'apns-priority': '10' } },
       webpush: {

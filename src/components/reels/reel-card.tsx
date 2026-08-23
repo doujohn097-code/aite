@@ -109,7 +109,7 @@ export function ReelCard({
   const media = reel.images?.[0];
   const isVideo = media?.type?.startsWith('video/') ?? true;
 
-  // Android WebView cannot decode some phone uploads; swap in a server-side
+  // some mobile browsers cannot decode some phone uploads; swap in a server-side
   // re-encoded copy when the original fails to load.
   const { effectiveSrc, repairing, onError } = useRepairableVideo(
     isVideo ? media?.src ?? '' : ''
@@ -456,7 +456,7 @@ export function ReelCard({
         <div className='pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85' />
       </div>
 
-      {/* Repairing an unsupported video (Android WebView fallback) */}
+      {/* Repairing an unsupported video (mobile fallback) */}
       {repairing && (
         <div className='absolute inset-x-0 top-16 z-20 flex justify-center'>
           <div className='flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur'>

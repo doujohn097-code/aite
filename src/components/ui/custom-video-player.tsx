@@ -29,7 +29,7 @@ export function CustomVideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Android WebView cannot decode some phone uploads; swap in a server-side
+  // some mobile browsers cannot decode some phone uploads; swap in a server-side
   // re-encoded copy when the original fails to load.
   const { effectiveSrc, repairing, onError } = useRepairableVideo(src);
 
@@ -163,7 +163,7 @@ export function CustomVideoPlayer({
         }}
       />
 
-      {/* Repairing an unsupported video (Android WebView fallback) */}
+      {/* Repairing an unsupported video (mobile fallback) */}
       {repairing && (
         <div className='absolute inset-0 z-20 flex items-center justify-center bg-black/45'>
           <div className='flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur'>

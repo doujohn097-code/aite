@@ -126,7 +126,7 @@ export function MessageBubble({
   const seen = seenBy?.length > 1;
   const isDeleted = !!message.deletedAt;
 
-  // Shared cards carry the raw video URL as "thumbnail", which Android's
+  // Shared cards carry the raw video URL as "thumbnail", which mobile browsers'
   // WebView cannot decode — render a server-extracted frame instead.
   const sharedThumb = sharedPost?.thumbnail ?? null;
   const sharedPoster = useVideoPoster(sharedThumb ?? '', sharedThumb);

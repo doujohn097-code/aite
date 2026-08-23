@@ -16,7 +16,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 /**
  * Re-encodes raw phone uploads (HEVC, H.264 High@L5.2, .mov, non-faststart
  * MP4) into a universally playable MP4 — H.264 High@L4.0, faststart, AAC.
- * Desktop Chrome software-decodes the originals, but Android WebView's
+ * Desktop Chrome software-decodes the originals, but mobile browsers's
  * hardware decoder caps at H.264 level 4.x, which is the gray box bug.
  */
 export default async function normalizeMediaEndpoint(

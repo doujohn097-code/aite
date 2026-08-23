@@ -85,7 +85,7 @@ export function ImageModal({
     const handleLoadingCompleted = (): void => setLoading(false);
 
     if (isVideo) {
-      // onloadeddata never fires for videos Android WebView cannot decode;
+      // onloadeddata never fires for videos some mobile browsers cannot decode;
       // treat a load error as "loaded" so the player can repair the file.
       media.onloadeddata = handleLoadingCompleted;
       media.onerror = handleLoadingCompleted;

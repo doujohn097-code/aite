@@ -17,7 +17,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
  * Extracts a real frame (near the beginning) from a video and uploads it as
  * a JPEG poster, so previews show a picture of the video — exactly like the
  * web — instead of a black/gray box on devices whose decoder cannot render
- * the raw file (Android WebView). Results are cached in Firestore.
+ * the raw file (mobile browsers). Results are cached in Firestore.
  */
 export default async function posterMediaEndpoint(
   req: NextApiRequest,

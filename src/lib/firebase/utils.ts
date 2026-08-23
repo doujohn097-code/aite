@@ -346,7 +346,7 @@ export async function uploadImages(
   });
 
   // Raw phone uploads (HEVC, H.264 High@L5.2, .mov, non-faststart MP4) decode
-  // fine on desktop Chrome but fail on Android WebView's hardware decoder,
+  // fine on desktop Chrome but fail on some mobile hardware decoders,
   // which caps at H.264 level 4.x — that is the gray box bug in the app.
   // Re-encode every video server-side so all devices can play it.
   const normalized = await Promise.all(

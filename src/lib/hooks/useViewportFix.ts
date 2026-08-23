@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
 
 /**
- * تهيئة بيئة العرض للتطبيق الأصلي والويب:
- * - متغيّر --app-height لارتفاع شاشة حقيقي داخل WebView (بديل 100vh غير الدقيق)
- * - إضافة صنف native-app / standalone لتخصيص التنسيقات
- * - إضافة مناطق الأمان كمتغيّرات قابلة للاستخدام
+ * تهيئة بيئة العرض على الجوال والويب:
+ * - متغيّر --app-height لارتفاع شاشة حقيقي (بديل 100vh غير الدقيق على الجوال)
+ * - إضافة صنف standalone-app عند تثبيت التطبيق كـ PWA
  */
 export function useViewportFix(): void {
   useEffect(() => {
@@ -24,21 +23,12 @@ export function useViewportFix(): void {
 
     setHeight();
 
-    const ua = navigator.userAgent || '';
-
-    const isNative =
-      /\b(capacitor|cordova)\b/i.test(ua) ||
-      'Capacitor' in window ||
-      (window as Window & { cordova?: unknown }).cordova !== undefined;
-
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as Navigator & { standalone?: boolean }).standalone ===
         true;
 
-    if (isNative) root.classList.add('native-app');
     if (isStandalone) root.classList.add('standalone-app');
-    if (/android/i.test(ua)) root.classList.add('is-android');
 
     window.addEventListener('resize', setHeight);
     window.addEventListener('orientationchange', setHeight);
