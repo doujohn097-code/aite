@@ -5,7 +5,7 @@ type GenderBadgeProps = {
   className?: string;
 };
 
-/** بادج ملوّن صغير يوضّح الجنس بجانب الاسم — أزرق للذكر ووردي للأنثى */
+/** بادج ملوّن يوضّح الجنس — أزرق للذكر ووردي للأنثى (يظهر في الملف الشخصي) */
 export function GenderBadge({
   gender,
   className
@@ -16,18 +16,17 @@ export function GenderBadge({
 
   return (
     <span
-      title={isMale ? 'ذكر' : 'أنثى'}
-      aria-label={isMale ? 'ذكر' : 'أنثى'}
       className={cn(
-        `inline-flex shrink-0 items-center justify-center rounded-full
-         font-bold leading-none ring-1`,
+        `inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1
+         text-xs font-bold leading-none ring-1 backdrop-blur`,
         isMale
-          ? 'bg-[#1D9BF0]/15 text-[#1D9BF0] ring-[#1D9BF0]/35'
-          : 'bg-[#F91A82]/15 text-[#F91A82] ring-[#F91A82]/35',
-        className ?? 'h-[18px] w-[18px] text-[11px]'
+          ? 'bg-[#1D9BF0]/15 text-[#1D9BF0] ring-[#1D9BF0]/40'
+          : 'bg-[#F91A82]/15 text-[#F91A82] ring-[#F91A82]/40',
+        className
       )}
     >
-      {isMale ? '♂' : '♀'}
+      <span className='text-sm leading-none'>{isMale ? '♂' : '♀'}</span>
+      {isMale ? 'ذكر' : 'أنثى'}
     </span>
   );
 }

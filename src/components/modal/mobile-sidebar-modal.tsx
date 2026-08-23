@@ -215,8 +215,8 @@ export function MobileSidebarModal({
 
         <div className='mx-4 border-t border-light-border/70 dark:border-dark-border/70' />
 
-        {/* Always visible account actions — navigation alone scrolls on short phones. */}
-        <div className='shrink-0 border-y border-light-border/70 bg-main-background px-3 py-2 dark:border-dark-border/70'>
+        {/* الإعدادات تبقى ظاهرة دائمًا فوق قائمة التنقل */}
+        <div className='shrink-0 border-y border-light-border/70 px-3 py-2 dark:border-dark-border/70'>
           <Button
             className='flex w-full items-center gap-3 rounded-xl p-3 font-semibold transition
                        hover:bg-light-primary/10 active:bg-light-primary/20
@@ -225,16 +225,6 @@ export function MobileSidebarModal({
           >
             <HeroIcon className='h-5 w-5' iconName='Cog6ToothIcon' />
             <span>الإعدادات</span>
-          </Button>
-          <Button
-            className='flex w-full items-center gap-3 rounded-xl p-3 font-semibold text-accent-red transition hover:bg-accent-red/10 active:bg-accent-red/20'
-            onClick={openModal}
-          >
-            <HeroIcon
-              className='h-5 w-5 text-accent-red'
-              iconName='ArrowRightOnRectangleIcon'
-            />
-            <span>تسجيل الخروج</span>
           </Button>
         </div>
 
@@ -255,7 +245,20 @@ export function MobileSidebarModal({
           ))}
         </nav>
 
-        <div className='mx-4 border-t border-light-border/70 dark:border-dark-border/70' />
+        {/* تسجيل الخروج — آخر زر في القائمة */}
+        <div className='mt-auto shrink-0 border-t border-light-border/70 px-3 py-3 dark:border-dark-border/70'>
+          <Button
+            className='flex w-full items-center gap-3 rounded-xl p-3 font-semibold text-accent-red
+                       transition hover:bg-accent-red/10 active:bg-accent-red/20'
+            onClick={openModal}
+          >
+            <HeroIcon
+              className='h-5 w-5 text-accent-red'
+              iconName='ArrowRightOnRectangleIcon'
+            />
+            <span>تسجيل الخروج</span>
+          </Button>
+        </div>
       </div>
     </>
   );

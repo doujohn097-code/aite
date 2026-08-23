@@ -46,14 +46,6 @@
     --emerald-search-background: 16 46 30;
     --emerald-sidebar-background: 9 30 19;
 
-    --wisteria-background: 4 6 16;
-    --wisteria-search-background: 20 26 56;
-    --wisteria-sidebar-background: 8 12 30;
-
-    --carbon-background: 8 8 10;
-    --carbon-search-background: 28 28 32;
-    --carbon-sidebar-background: 15 15 18;
-
     /* ألوان التنبيهات (toast) — تتبع المظهر */
     --toast-bg: 15 20 25;
     --toast-text: 255 255 255;
@@ -501,20 +493,52 @@ video:not([src]) {
    * مظاهر الخلفيات: زجاج مضبّب بعرض كامل مع فواصل رفيعة
    ========================================================= */
 
-/* الوضع الكلاسيكي: خلفية المظهر نفسها تمامًا، بلا حواف أو هوامش */
+/* الوضع الكلاسيكي: خلفية المظهر نفسها (أسود نقي) مع انحناءات ناعمة */
 .glass-card,
 .glass-panel,
 .glass-strong {
+  margin: 6px 0;
+  border: 1px solid rgb(var(--main-accent) / 0.1);
+  border-radius: 22px;
   background-color: rgb(var(--main-background));
+}
+
+.glass-card {
+  transition: border-color 220ms ease, transform 220ms ease;
+}
+
+.glass-card:hover {
+  border-color: rgb(var(--main-accent) / 0.22);
+}
+
+.glass-card:active {
+  transform: scale(0.995);
+}
+
+/* أي كتلة محتوى داخل العمود الرئيسي */
+.theme-surface
+  > *:not(header):not(.glass-card):not(.glass-panel):not(:has(.glass-card)):not(
+    :has(.glass-panel)
+  ) {
+  margin: 6px 0;
+  border: 1px solid rgb(var(--main-accent) / 0.1);
+  border-radius: 22px;
+}
+
+.theme-surface > section > article:not(.glass-card),
+.theme-surface > section > a:not(.glass-card),
+.theme-surface > section > li > a:not(.glass-card) {
+  margin: 6px 0;
+  border-radius: 22px;
 }
 
 /* في مظاهر الخلفيات فقط: زجاج مضبّب يمتد على كامل العرض */
 .theme-wallpaper {
   .glass-card {
     position: relative;
-    margin: 4px 0;
-    border: 0;
-    border-radius: 0;
+    margin: 6px 0;
+    border: 1px solid rgb(var(--main-accent) / 0.14);
+    border-radius: 22px;
     background-color: rgb(var(--main-background) / var(--card-alpha));
     backdrop-filter: blur(var(--card-blur)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--card-blur)) saturate(150%);
@@ -529,9 +553,9 @@ video:not([src]) {
   }
 
   .glass-panel {
-    margin: 4px 0;
-    border: 0;
-    border-radius: 0;
+    margin: 6px 0;
+    border: 1px solid rgb(var(--main-accent) / 0.14);
+    border-radius: 22px;
     background-color: rgb(var(--main-background) / var(--panel-alpha));
     backdrop-filter: blur(calc(var(--card-blur) * 1.4)) saturate(155%);
     -webkit-backdrop-filter: blur(calc(var(--card-blur) * 1.4)) saturate(155%);
@@ -549,9 +573,9 @@ video:not([src]) {
     > *:not(header):not(.glass-card):not(.glass-panel):not(
       :has(.glass-card)
     ):not(:has(.glass-panel)) {
-    margin: 4px 0;
-    border: 0;
-    border-radius: 0;
+    margin: 6px 0;
+    border: 1px solid rgb(var(--main-accent) / 0.14);
+    border-radius: 22px;
     background-color: rgb(var(--main-background) / var(--card-alpha));
     backdrop-filter: blur(var(--card-blur)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--card-blur)) saturate(150%);
@@ -561,8 +585,8 @@ video:not([src]) {
   .theme-surface > section > article:not(.glass-card),
   .theme-surface > section > a:not(.glass-card),
   .theme-surface > section > li > a:not(.glass-card) {
-    margin: 4px 0;
-    border-radius: 0;
+    margin: 6px 0;
+    border-radius: 22px;
     background-color: rgb(var(--main-background) / var(--card-alpha));
     backdrop-filter: blur(var(--card-blur)) saturate(150%);
     -webkit-backdrop-filter: blur(var(--card-blur)) saturate(150%);

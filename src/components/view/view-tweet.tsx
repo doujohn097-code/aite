@@ -103,7 +103,6 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
                 name={name}
                 username={username}
                 verified={verified}
-                gender={gender}
               />
             </UserTooltip>
             <TweetActions

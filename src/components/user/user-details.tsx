@@ -4,6 +4,7 @@ import { HeroIcon } from '@components/ui/hero-icon';
 import { ToolTip } from '@components/ui/tooltip';
 import { ExpandableText } from '@components/ui/expandable-text';
 import { UserName } from './user-name';
+import { GenderBadge } from './gender-badge';
 import { UserFollowing } from './user-following';
 import { UserFollowStats } from './user-follow-stats';
 import type { IconName } from '@components/ui/hero-icon';
@@ -47,13 +48,15 @@ export function UserDetails({
   return (
     <>
       <div className='-mt-6 flex flex-col gap-1'>
-        <UserName
-          className='text-xl'
-          name={name}
-          verified={verified}
-          gender={gender}
-          iconClassName='h-5 w-5'
-        />
+        <div className='flex items-center justify-between gap-3'>
+          <UserName
+            className='text-xl'
+            name={name}
+            verified={verified}
+            iconClassName='h-5 w-5'
+          />
+          <GenderBadge gender={gender} />
+        </div>
         <div className='flex flex-wrap items-center gap-2 text-light-secondary dark:text-dark-secondary'>
           <span>@{username}</span>
           <UserFollowing userTargetId={id} />

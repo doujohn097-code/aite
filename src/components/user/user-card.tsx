@@ -34,7 +34,6 @@ export function UserCard(user: UserCardProps): JSX.Element {
                   name={name}
                   username={username}
                   verified={verified}
-                  gender={gender}
                   disableLink
                 />
               </UserTooltip>

@@ -111,7 +111,6 @@ export function UserTooltip({
                 name={name}
                 username={username}
                 verified={verified}
-                gender={gender}
               />
               <div className='flex items-center gap-1'>
                 <UserFollowing userTargetId={id} />

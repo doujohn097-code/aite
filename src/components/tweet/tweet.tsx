@@ -167,7 +167,6 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                       name={name}
                       username={username}
                       verified={verified}
-                      gender={gender}
                       className='text-light-primary dark:text-dark-primary'
                     />
                   </UserTooltip>

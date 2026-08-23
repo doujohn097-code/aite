@@ -67,7 +67,6 @@ export function SidebarProfile(): JSX.Element {
                     name={name}
                     username={username}
                     verified={verified}
-                    gender={gender}
                     disableLink
                   />
                 </div>
@@ -98,7 +97,6 @@ export function SidebarProfile(): JSX.Element {
                           name={name}
                           username={username}
                           verified={verified}
-                          gender={gender}
                           disableLink
                         />
                       </div>
