@@ -3,6 +3,31 @@ import type { ImagesPreview } from './file';
 
 export type StoryKind = 'story' | 'reel';
 
+/** نص يضعه المستخدم فوق الصورة/الفيديو */
+export type StoryText = {
+  id: string;
+  text: string;
+  /** موضع نسبي 0..1 من عرض/ارتفاع الوسائط */
+  x: number;
+  y: number;
+  color: string;
+  font: string;
+  /** حجم الخط نسبةً إلى ارتفاع الوسائط (0.02 - 0.16) */
+  size: number;
+  align?: 'right' | 'center' | 'left';
+  background?: boolean;
+};
+
+/** مقطع موسيقي مقتطع (15 ثانية) */
+export type StoryMusic = {
+  src: string;
+  name: string;
+  /** بداية المقطع بالثواني */
+  start?: number;
+  /** طول المقطع بالثواني */
+  clip?: number;
+};
+
 export type Story = {
   id: string;
   userId: string;
@@ -10,7 +35,8 @@ export type Story = {
   caption: string | null;
   color: string;
   duration?: number | null;
-  music?: { src: string; name: string } | null;
+  music?: StoryMusic | null;
+  texts?: StoryText[] | null;
   likes: string[];
   userRetweets?: string[] | null;
   views: string[];
@@ -39,6 +65,7 @@ export const storyConverter: FirestoreDataConverter<Story> = {
       userId: '',
       images: null,
       caption: null,
+      texts: null,
       color: '#3b82f6',
       duration: null,
       music: null,

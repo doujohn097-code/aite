@@ -7,7 +7,7 @@ import { usersCollection } from '@lib/firebase/collections';
 import { useCollection } from '@lib/hooks/useCollection';
 import { getTimestampMillis } from '@lib/date';
 import { StoryAvatar } from './story-avatar';
-import { CreateStoryModal } from './create-story-modal';
+import { StoryEditor } from './story-editor';
 
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
@@ -49,7 +49,7 @@ export function StoriesBar(): JSX.Element {
 
   return (
     <>
-      <CreateStoryModal
+      <StoryEditor
         open={createModalOpen}
         closeModal={(): void => setCreateModalOpen(false)}
       />

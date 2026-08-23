@@ -34,7 +34,7 @@ import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import type { Bookmark } from '@lib/types/bookmark';
 import type { Theme, Accent } from '@lib/types/theme';
 import type { Notification } from '@lib/types/notification';
-import type { Story } from '@lib/types/story';
+import type { StoryMusic, StoryText, Story } from '@lib/types/story';
 import { getTimestampMillis } from '@lib/date';
 import type { Tweet } from '@lib/types/tweet';
 
@@ -643,7 +643,8 @@ export async function uploadStory(
   color: string,
   caption: string | null,
   durations?: Record<string, number>,
-  music?: { src: string; name: string } | null
+  music?: StoryMusic | null,
+  texts?: StoryText[] | null
 ): Promise<void> {
   if (!files.length) return;
 
@@ -667,6 +668,7 @@ export async function uploadStory(
       color,
       duration: durations?.[image.id] ?? DEFAULT_STORY_DURATION_MS,
       music: music ?? null,
+      texts: texts?.length ? texts : null,
       likes: [],
       views: [],
       kind: 'story',

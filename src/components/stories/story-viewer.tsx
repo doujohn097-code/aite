@@ -18,11 +18,19 @@ import { HeroIcon } from '@components/ui/hero-icon';
 import { Loading } from '@components/ui/loading';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
-import { CreateStoryModal } from './create-story-modal';
+import { StoryEditor } from './story-editor';
 import type { Story } from '@lib/types/story';
 
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_STORY_DURATION_MS = 15000;
+
+const STORY_FONTS: Record<string, string> = {
+  aite: '"IBM Plex Sans Arabic", sans-serif',
+  serif: 'Georgia, "Times New Roman", serif',
+  mono: '"Courier New", monospace',
+  script: '"Great Vibes", cursive',
+  heavy: '"Arial Black", Impact, sans-serif'
+};
 
 export function StoryViewer({ userId }: { userId: string }): JSX.Element {
   const { push, replace } = useRouter();
@@ -243,11 +251,35 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
     if (!audio) return;
     const music = currentStory?.music;
     if (music?.src) {
+      const start = music.start ?? 0;
+      const clip = music.clip ?? 15;
+
       audio.src = music.src;
-      audio.loop = true;
+      audio.loop = false;
       audio.muted = false;
       audio.volume = 0.8;
-      void audio.play().catch(() => null);
+
+      const startAt = (): void => {
+        audio.currentTime = start;
+        void audio.play().catch(() => null);
+      };
+
+      // كرّر المقطع المختار (15 ثانية) بدل تشغيل الأغنية كاملة
+      const loopClip = (): void => {
+        if (audio.currentTime >= start + clip || audio.currentTime < start)
+          audio.currentTime = start;
+      };
+
+      audio.addEventListener('loadedmetadata', startAt, { once: true });
+      audio.addEventListener('timeupdate', loopClip);
+
+      if (audio.readyState >= 1) startAt();
+
+      return () => {
+        audio.removeEventListener('timeupdate', loopClip);
+        audio.pause();
+        audio.src = '';
+      };
     } else {
       audio.pause();
       audio.src = '';
@@ -256,7 +288,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
       audio.pause();
       audio.src = '';
     };
-  }, [currentStoryId, currentStory?.music?.src]);
+  }, [currentStoryId, currentStory?.music?.src, currentStory?.music?.start]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -361,7 +393,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
   if (!stories.length)
     return (
       <>
-        <CreateStoryModal
+        <StoryEditor
           open={createModalOpen}
           closeModal={(): void => setCreateModalOpen(false)}
         />
@@ -530,6 +562,28 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
                   </div>
                 </div>
               )}
+              {currentStory.texts?.map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    left: `${item.x * 100}%`,
+                    top: `${item.y * 100}%`,
+                    transform: 'translate(-50%, -50%)',
+                    color: item.color,
+                    fontFamily: STORY_FONTS[item.font] ?? STORY_FONTS.aite,
+                    fontSize: `clamp(12px, ${item.size * 100}vh, 96px)`
+                  }}
+                  className={cn(
+                    `pointer-events-none absolute max-w-[86%] whitespace-pre-wrap break-words
+                     px-2 text-center font-bold leading-tight
+                     drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]`,
+                    item.background &&
+                      'rounded-2xl bg-black/45 px-3 py-1 backdrop-blur-sm'
+                  )}
+                >
+                  {item.text}
+                </div>
+              ))}
               {currentStory.caption && (
                 <div className='absolute bottom-24 left-4 right-4 rounded-xl bg-black/50 p-3 text-center text-white backdrop-blur-sm'>
                   {currentStory.caption}
