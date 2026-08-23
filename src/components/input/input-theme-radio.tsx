@@ -39,6 +39,27 @@ const inputThemeData: Readonly<InputThemeData> = {
     iconBorderColor: 'border-[#3E4144]',
     hoverBackgroundColor:
       '[&:hover>div]:bg-dark-primary/10 [&:active>div]:bg-dark-primary/20'
+  },
+  rose: {
+    textColor: 'text-[#FDA4AF]',
+    backgroundColor: 'bg-gradient-to-br from-[#2B0A16] via-[#180612] to-[#4C0D24]',
+    iconBorderColor: 'border-[#9F1249]',
+    hoverBackgroundColor:
+      '[&:hover>div]:bg-[#FDA4AF]/10 [&:active>div]:bg-[#FDA4AF]/20'
+  },
+  violet: {
+    textColor: 'text-[#C4B5FD]',
+    backgroundColor: 'bg-gradient-to-br from-[#1B1030] via-[#0F081E] to-[#3B1D74]',
+    iconBorderColor: 'border-[#6D28D9]',
+    hoverBackgroundColor:
+      '[&:hover>div]:bg-[#C4B5FD]/10 [&:active>div]:bg-[#C4B5FD]/20'
+  },
+  emerald: {
+    textColor: 'text-[#6EE7B7]',
+    backgroundColor: 'bg-gradient-to-br from-[#06231A] via-[#04120D] to-[#0B4A33]',
+    iconBorderColor: 'border-[#059669]',
+    hoverBackgroundColor:
+      '[&:hover>div]:bg-[#6EE7B7]/10 [&:active>div]:bg-[#6EE7B7]/20'
   }
 };
 

@@ -25,6 +25,19 @@
     --dim-sidebar-background: 30 39 50;
     --light-sidebar-background: 247 249 249;
 
+    /* الثيمات الزجاجية الملوّنة */
+    --rose-background: 24 6 14;
+    --rose-search-background: 48 16 30;
+    --rose-sidebar-background: 38 12 24;
+
+    --violet-background: 15 8 30;
+    --violet-search-background: 36 24 62;
+    --violet-sidebar-background: 27 16 48;
+
+    --emerald-background: 4 18 13;
+    --emerald-search-background: 13 40 30;
+    --emerald-sidebar-background: 9 30 22;
+
     --accent-yellow: 255 213 0;
     --accent-blue: 255 255 255;
     --accent-pink: 249 26 130;
@@ -160,6 +173,114 @@
     @apply z-10 rounded-md bg-main-background outline-none 
            [box-shadow:#65778633_0px_0px_15px,_#65778626_0px_0px_3px_1px] 
            dark:[box-shadow:#ffffff33_0px_0px_15px,_#ffffff26_0px_0px_3px_1px];
+  }
+}
+
+/* ===== الثيمات الزجاجية الملوّنة (وردي / بنفسجي / زمردي) ===== */
+
+:root[data-theme='rose'] {
+  --glow-1: 244 63 122;
+  --glow-2: 190 24 60;
+  --glow-3: 131 24 67;
+}
+
+:root[data-theme='violet'] {
+  --glow-1: 139 92 246;
+  --glow-2: 109 40 217;
+  --glow-3: 192 132 252;
+}
+
+:root[data-theme='emerald'] {
+  --glow-1: 16 185 129;
+  --glow-2: 5 150 105;
+  --glow-3: 52 211 153;
+}
+
+:root[data-theme='rose'],
+:root[data-theme='violet'],
+:root[data-theme='emerald'] {
+  background-color: rgb(var(--main-background));
+
+  body {
+    background-color: transparent !important;
+  }
+
+  /* خلفية احترافية متحركة (شفق ضوئي) خلف كل المحتوى */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: -20%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+        45% 40% at 18% 8%,
+        rgb(var(--glow-1) / 0.28),
+        transparent 70%
+      ),
+      radial-gradient(
+        40% 38% at 85% 22%,
+        rgb(var(--glow-2) / 0.22),
+        transparent 70%
+      ),
+      radial-gradient(
+        50% 45% at 50% 105%,
+        rgb(var(--glow-3) / 0.18),
+        transparent 70%
+      );
+    animation: theme-aurora 22s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  /* مظهر زجاجي: شفافية + ضبابية خلفية للأسطح الرئيسية */
+  .bg-main-background:not(body) {
+    background-color: rgb(var(--main-background) / 0.6);
+    backdrop-filter: blur(16px) saturate(1.35);
+    -webkit-backdrop-filter: blur(16px) saturate(1.35);
+  }
+
+  .bg-main-sidebar-background {
+    background-color: rgb(var(--main-sidebar-background) / 0.5);
+    backdrop-filter: blur(16px) saturate(1.35);
+    -webkit-backdrop-filter: blur(16px) saturate(1.35);
+  }
+
+  .bg-main-search-background {
+    background-color: rgb(var(--main-search-background) / 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .menu-container {
+    background-color: rgb(var(--main-background) / 0.78);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  }
+}
+
+@keyframes theme-aurora {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, -3%, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-4%, 3%, 0) scale(1.02);
+  }
+}
+
+/* انتقال ناعم عند تبديل الثيم (View Transitions API) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.45s;
+  animation-timing-function: ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme='rose'] body::before,
+  :root[data-theme='violet'] body::before,
+  :root[data-theme='emerald'] body::before {
+    animation: none;
   }
 }
 

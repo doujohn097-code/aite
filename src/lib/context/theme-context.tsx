@@ -1,7 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import { useState, useEffect, createContext, useContext } from 'react';
+import { flushSync } from 'react-dom';
 import { updateUserTheme } from '@lib/firebase/utils';
+import { DARK_LIKE_THEMES, THEME_ACCENTS } from '@lib/types/theme';
 import { useAuth } from './auth-context';
 import type { ReactNode, ChangeEvent } from 'react';
 import type { Theme, Accent } from '@lib/types/theme';
@@ -55,10 +57,11 @@ export function ThemeContextProvider({
   useEffect(() => {
     const flipTheme = (theme: Theme): NodeJS.Timeout | undefined => {
       const root = document.documentElement;
-      const targetTheme = theme === 'dim' ? 'dark' : theme;
 
-      if (targetTheme === 'dark') root.classList.add('dark');
+      if (DARK_LIKE_THEMES.includes(theme)) root.classList.add('dark');
       else root.classList.remove('dark');
+
+      root.setAttribute('data-theme', theme);
 
       root.style.setProperty('--main-background', `var(--${theme}-background)`);
 
@@ -72,10 +75,10 @@ export function ThemeContextProvider({
         `var(--${theme}-sidebar-background)`
       );
 
-      if (user) {
-        localStorage.setItem('theme', theme);
+      localStorage.setItem('theme', theme);
+
+      if (user)
         return setTimeout(() => void updateUserTheme(user.id, { theme }), 500);
-      }
 
       return undefined;
     };
@@ -100,10 +103,10 @@ export function ThemeContextProvider({
         `var(--accent-${accent}-text)`
       );
 
-      if (user) {
-        localStorage.setItem('accent', accent);
+      localStorage.setItem('accent', accent);
+
+      if (user)
         return setTimeout(() => void updateUserTheme(user.id, { accent }), 500);
-      }
 
       return undefined;
     };
@@ -114,7 +117,24 @@ export function ThemeContextProvider({
 
   const changeTheme = ({
     target: { value }
-  }: ChangeEvent<HTMLInputElement>): void => setTheme(value as Theme);
+  }: ChangeEvent<HTMLInputElement>): void => {
+    const newTheme = value as Theme;
+
+    const applyTheme = (): void => {
+      setTheme(newTheme);
+
+      const matchedAccent = THEME_ACCENTS[newTheme];
+      if (matchedAccent) setAccent(matchedAccent);
+    };
+
+    const doc = document as Document & {
+      startViewTransition?: (callback: () => void) => void;
+    };
+
+    if (typeof doc.startViewTransition === 'function')
+      doc.startViewTransition(() => flushSync(applyTheme));
+    else applyTheme();
+  };
 
   const changeAccent = ({
     target: { value }

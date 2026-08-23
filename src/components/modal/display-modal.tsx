@@ -10,9 +10,15 @@ type DisplayModalProps = {
 };
 
 const themes: Readonly<[Theme, string][]> = [
-  ['light', 'افتراضي'],
+  ['light', 'فاتح'],
   ['dim', 'خافت'],
-  ['dark', 'مظلم']
+  ['dark', 'الافتراضي']
+];
+
+const glassThemes: Readonly<[Theme, string][]> = [
+  ['rose', 'وردي'],
+  ['violet', 'بنفسجي'],
+  ['emerald', 'زمردي']
 ];
 
 const accentsColor: Readonly<Accent[]> = [
@@ -80,6 +86,19 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
                      px-4 py-3 xs:grid-cols-3 xs:grid-rows-none'
         >
           {themes.map(([themeType, label]) => (
+            <InputThemeRadio type={themeType} label={label} key={themeType} />
+          ))}
+        </div>
+      </div>
+      <div className='flex w-full flex-col gap-1'>
+        <p className='text-sm font-bold text-light-secondary dark:text-dark-secondary'>
+          ثيمات زجاجية مميزة
+        </p>
+        <div
+          className='hover-animation grid grid-rows-3 gap-3 rounded-2xl bg-main-sidebar-background
+                     px-4 py-3 xs:grid-cols-3 xs:grid-rows-none'
+        >
+          {glassThemes.map(([themeType, label]) => (
             <InputThemeRadio type={themeType} label={label} key={themeType} />
           ))}
         </div>

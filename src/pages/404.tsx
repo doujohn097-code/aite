@@ -1,4 +1,5 @@
 import { ThemeContext } from '@lib/context/theme-context';
+import { DARK_LIKE_THEMES } from '@lib/types/theme';
 import { SEO } from '@components/common/seo';
 import { useContext } from 'react';
 
@@ -9,7 +10,7 @@ export default function NotFound(): JSX.Element {
   const context = useContext(ThemeContext);
   const theme = context?.theme ?? 'dark';
 
-  const isDarkMode = ['dim', 'dark'].includes(theme);
+  const isDarkMode = DARK_LIKE_THEMES.includes(theme);
 
   return (
     <>
