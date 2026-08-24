@@ -33,19 +33,29 @@ export function useShareToChat(shared: SharedPostRef): {
     }
   };
 
-  const handleSelect = async (targetUserId: string): Promise<void> => {
-    if (!user) return;
-    try {
-      const conversation = await getOrCreateConversation(user.id, targetUserId);
-      await sendMessage(conversation, user.id, {
-        type: 'shared',
-        post: shared
-      });
-      setOpen(false);
-      toast.success('تم الإرسال عبر الرسائل');
-    } catch {
-      toast.error('تعذرت المشاركة — حاول مرة أخرى');
-    }
+  const handleSelectMany = async (
+    targets: { id: string }[]
+  ): Promise<void> => {
+    if (!user || !targets.length) return;
+    const results = await Promise.allSettled(
+      targets.map(async (target) => {
+        const conversation = await getOrCreateConversation(user.id, target.id);
+        await sendMessage(conversation, user.id, {
+          type: 'shared',
+          post: shared
+        });
+      })
+    );
+    const sent = results.filter((result) => result.status === 'fulfilled').length;
+    const failed = results.length - sent;
+    setOpen(false);
+    if (sent && !failed)
+      toast.success(
+        sent === 1 ? 'تم الإرسال عبر الرسائل' : `تم الإرسال إلى ${sent} أشخاص`
+      );
+    else if (sent && failed)
+      toast.success(`تم الإرسال إلى ${sent}، وتعذّر ${failed}`);
+    else toast.error('تعذرت المشاركة — حاول مرة أخرى');
   };
 
   const element = (
@@ -60,8 +70,8 @@ export function useShareToChat(shared: SharedPostRef): {
         <div>
           <p className='font-bold'>إرسال إلى</p>
           <p className='text-xs text-light-secondary dark:text-dark-secondary'>
-            اختر شخصًا لإرسال {shared.kind === 'reel' ? 'الريل' : 'المنشور'}{' '}
-            إليه
+            يمكنك اختيار أكثر من شخص لإرسال{' '}
+            {shared.kind === 'reel' ? 'الريل' : 'المنشور'}
           </p>
         </div>
         <button
@@ -73,8 +83,11 @@ export function useShareToChat(shared: SharedPostRef): {
         </button>
       </div>
       <NewMessageModal
+        multiSelect
+        title='اختر المستلمين'
         closeModal={() => setOpen(false)}
-        onSelect={(target) => void handleSelect(target.id)}
+        onSelect={(target) => void handleSelectMany([target])}
+        onSelectMany={(targets) => void handleSelectMany(targets)}
       />
     </Modal>
   );
