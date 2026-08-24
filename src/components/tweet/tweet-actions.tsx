@@ -19,7 +19,11 @@ import {
   manageTotalPhotos
 } from '@lib/firebase/utils';
 import { delayScroll, preventBubbling, sleep } from '@lib/utils';
-import { EditContentModal } from '@components/modal/edit-content-modal';
+import {
+  EditContentModal,
+  type EditContentSave
+} from '@components/modal/edit-content-modal';
+import type { ImagesPreview } from '@lib/types/file';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { Button } from '@components/ui/button';
@@ -48,6 +52,7 @@ type TweetActionsProps = Pick<Tweet, 'createdBy'> & {
   hasImages: boolean;
   hasAudio?: boolean;
   text?: string | null;
+  images?: ImagesPreview | null;
   viewTweet?: boolean;
 };
 
@@ -75,6 +80,7 @@ export function TweetActions({
   hasImages,
   hasAudio,
   text,
+  images,
   viewTweet,
   createdBy
 }: TweetActionsProps): JSX.Element | null {
@@ -140,9 +146,10 @@ export function TweetActions({
     removeCloseModal();
   };
 
-  const handleEdit = async (nextText: string): Promise<void> => {
+  const handleEdit = async ({ text: nextText, images: nextImages }: EditContentSave): Promise<void> => {
     await editTweet(tweetId, userId, nextText, {
-      allowEmpty: hasImages || !!hasAudio
+      allowEmpty: !!hasAudio,
+      images: nextImages
     });
     toast.success('تم حفظ تعديل المنشور');
   };
@@ -213,7 +220,9 @@ export function TweetActions({
         closeModal={editCloseModal}
         title='تعديل المنشور'
         initialText={text ?? ''}
-        allowEmpty={hasImages || !!hasAudio}
+        initialImages={images}
+        mediaKind='images'
+        allowEmpty={!!hasAudio}
         onSave={handleEdit}
       />
       <Popover className='relative'>

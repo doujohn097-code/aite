@@ -1,19 +1,3 @@
-export type FeedMode = 'pulse' | 'following' | 'latest' | 'hot';
-
-export const FEED_MODES: readonly FeedMode[] = [
-  'pulse',
-  'following',
-  'latest',
-  'hot'
-];
-
-export const FEED_MODE_LABELS: Record<FeedMode, string> = {
-  pulse: 'نبض',
-  following: 'المتابَعون',
-  latest: 'الأحدث',
-  hot: 'الأقوى'
-};
-
 export type RankableItem = {
   id: string;
   authorId: string;
@@ -29,25 +13,21 @@ export type RankContext = {
   viewerId: string | null;
   following: readonly string[];
   nowMs: number;
-  mode: FeedMode;
   seed: string;
   kind?: 'post' | 'reel';
 };
 
 const HOUR = 60 * 60 * 1000;
-
-export function isFeedMode(value: unknown): value is FeedMode {
-  return (
-    value === 'pulse' ||
-    value === 'following' ||
-    value === 'latest' ||
-    value === 'hot'
-  );
-}
+/** Newer buckets always sit above older ones. Pulse only reorders inside a bucket. */
+export const RECENCY_BUCKET_MS = 2 * HOUR;
 
 export function sessionSeed(viewerId: string | null, nowMs: number): string {
   const day = Math.floor(nowMs / (24 * HOUR));
   return `${viewerId ?? 'anon'}:${day}`;
+}
+
+export function recencyBucket(createdAtMs: number): number {
+  return Math.floor(Math.max(0, createdAtMs) / RECENCY_BUCKET_MS);
 }
 
 /** Deterministic 0..1 from a string. Stable across clients. */
@@ -60,10 +40,7 @@ export function hash01(input: string): number {
   return (hash >>> 0) / 0xffffffff;
 }
 
-export function recencyWeight(
-  ageMs: number,
-  halfLifeHours: number
-): number {
+export function recencyWeight(ageMs: number, halfLifeHours: number): number {
   if (ageMs <= 0) return 1;
   const halfLifeMs = Math.max(halfLifeHours, 0.25) * HOUR;
   return Math.pow(0.5, ageMs / halfLifeMs);
@@ -87,21 +64,6 @@ export function scoreItem(item: RankableItem, ctx: RankContext): number {
   const recency = recencyWeight(ageMs, halfLife);
   const engagement = engagementScore(item);
   const jitter = hash01(`${ctx.seed}:${item.id}`) * 0.28;
-
-  if (ctx.mode === 'latest') return item.createdAtMs;
-
-  if (ctx.mode === 'hot') {
-    const week = 7 * 24 * HOUR;
-    const freshness = ageMs > week ? 0.35 : recencyWeight(ageMs, 36);
-    return (
-      engagement * 2.2 * freshness +
-      (isFollowed ? 0.55 : 0) +
-      (isSelf ? 0.2 : 0) +
-      (item.hasMedia ? 0.12 : 0)
-    );
-  }
-
-  // pulse + following share the same scorer; following is filtered first.
   const followBoost = isFollowed ? 1.45 : 1;
   const selfBoost = isSelf ? 1.18 : 1;
   const mediaBoost = item.hasMedia ? 1.08 : 1;
@@ -145,60 +107,37 @@ export function rankItems<T>(
   mapItem: (item: T) => RankableItem,
   ctx: RankContext
 ): T[] {
-  const following = new Set(ctx.following);
-  const mapped = items.map((item) => ({ item, rank: mapItem(item) }));
+  const mapped = items.map((item) => ({
+    item,
+    rank: mapItem(item),
+    score: 0
+  }));
 
-  const pool =
-    ctx.mode === 'following'
-      ? mapped.filter(
-          ({ rank }) =>
-            following.has(rank.authorId) || rank.authorId === ctx.viewerId
-        )
-      : mapped;
+  mapped.forEach((entry) => {
+    entry.score = scoreItem(entry.rank, ctx);
+  });
 
-  if (ctx.mode === 'latest') {
-    return pool
-      .slice()
-      .sort((a, b) => b.rank.createdAtMs - a.rank.createdAtMs)
-      .map(({ item }) => item);
+  const buckets = new Map<number, typeof mapped>();
+  for (const entry of mapped) {
+    const key = recencyBucket(entry.rank.createdAtMs);
+    const list = buckets.get(key) ?? [];
+    list.push(entry);
+    buckets.set(key, list);
   }
 
-  const scored = pool
-    .map((entry) => ({
-      ...entry,
-      score: scoreItem(entry.rank, ctx)
-    }))
-    .sort((a, b) => {
+  const orderedBuckets = Array.from(buckets.keys()).sort((a, b) => b - a);
+  const result: T[] = [];
+
+  for (const key of orderedBuckets) {
+    const group = (buckets.get(key) ?? []).sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       return b.rank.createdAtMs - a.rank.createdAtMs;
     });
-
-  if (ctx.mode === 'hot') return scored.map(({ item }) => item);
-
-  return diversifyAuthors(
-    scored.map(({ item, rank }) => ({ item, authorId: rank.authorId }))
-  ).map(({ item }) => item);
-}
-
-export function stabilizeFeed<T>(
-  previous: readonly T[],
-  nextRanked: readonly T[],
-  getId: (item: T) => string
-): T[] {
-  if (!previous.length) return [...nextRanked];
-
-  const nextById = new Map(nextRanked.map((item) => [getId(item), item]));
-  const kept: T[] = [];
-  const seen = new Set<string>();
-
-  for (const item of previous) {
-    const id = getId(item);
-    const fresh = nextById.get(id);
-    if (!fresh) continue;
-    kept.push(fresh);
-    seen.add(id);
+    const mixed = diversifyAuthors(
+      group.map(({ item, rank }) => ({ item, authorId: rank.authorId }))
+    );
+    mixed.forEach(({ item }) => result.push(item));
   }
 
-  const newcomers = nextRanked.filter((item) => !seen.has(getId(item)));
-  return [...kept, ...newcomers];
+  return result;
 }

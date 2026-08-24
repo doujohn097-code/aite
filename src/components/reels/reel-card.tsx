@@ -30,7 +30,10 @@ import {
   userStatsCollection
 } from '@lib/firebase/collections';
 import { likeReel, viewReel, deleteReel, editReel } from '@lib/firebase/utils';
-import { EditContentModal } from '@components/modal/edit-content-modal';
+import {
+  EditContentModal,
+  type EditContentSave
+} from '@components/modal/edit-content-modal';
 import { formatNumber } from '@lib/date';
 import { preventBubbling } from '@lib/utils';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -410,9 +413,12 @@ export function ReelCard({
     }
   };
 
-  const handleEdit = async (nextCaption: string): Promise<void> => {
+  const handleEdit = async ({
+    text: nextCaption,
+    images: nextImages
+  }: EditContentSave): Promise<void> => {
     if (!authUser) return;
-    await editReel(reel.id, authUser.id, nextCaption);
+    await editReel(reel.id, authUser.id, nextCaption, { images: nextImages });
     toast.success('تم حفظ تعديل الريل');
   };
 
@@ -904,7 +910,7 @@ export function ReelCard({
                   className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
                   iconName='PencilSquareIcon'
                 />
-                <span>تعديل الوصف</span>
+                <span>تعديل الريل</span>
               </button>
               <button
                 type='button'
@@ -950,8 +956,10 @@ export function ReelCard({
       <EditContentModal
         open={editOpen}
         closeModal={closeEdit}
-        title='تعديل وصف الريل'
+        title='تعديل الريل'
         initialText={reel.caption ?? ''}
+        initialImages={reel.images}
+        mediaKind='video'
         allowEmpty
         placeholder='عدّل وصف الريل…  @للإشارة'
         onSave={handleEdit}

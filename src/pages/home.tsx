@@ -13,7 +13,6 @@ import { MainContainer } from '@components/home/main-container';
 import { Input } from '@components/input/input';
 import { NotificationsButton } from '@components/home/notifications-button';
 import { MainHeader } from '@components/home/main-header';
-import { FeedModeBar } from '@components/home/feed-mode-bar';
 import { StoriesBar } from '@components/stories/stories-bar';
 import { Tweet } from '@components/tweet/tweet';
 import { Loading } from '@components/ui/loading';
@@ -46,8 +45,7 @@ export default function Home(): JSX.Element {
     { initialSize: 40, stepSize: 25 }
   );
 
-  const { mode, setMode, ranked } = useRankedFeed(data, {
-    storageKey: 'aite:home-feed-mode',
+  const ranked = useRankedFeed(data, {
     mapItem: mapTweet,
     viewerId: user?.id ?? null,
     following: user?.following ?? [],
@@ -66,7 +64,6 @@ export default function Home(): JSX.Element {
       </MainHeader>
       {/* Stories bar - force rebuild */}
       <StoriesBar />
-      <FeedModeBar mode={mode} onChange={setMode} />
       {!isMobile && <Input />}
       <section className='mt-0.5 xs:mt-0'>
         {loading ? (
@@ -77,17 +74,11 @@ export default function Home(): JSX.Element {
           <div className='flex flex-col items-center gap-3 px-6 py-16 text-center'>
             <HeroIcon
               className='h-10 w-10 text-light-secondary dark:text-dark-secondary'
-              iconName={mode === 'following' ? 'UserGroupIcon' : 'SparklesIcon'}
+              iconName='SparklesIcon'
             />
-            <p className='font-bold'>
-              {mode === 'following'
-                ? 'لا منشورات من من تتابعهم بعد'
-                : 'لا توجد منشورات بعد'}
-            </p>
+            <p className='font-bold'>لا توجد منشورات بعد</p>
             <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-              {mode === 'following'
-                ? 'تابع حسابات لترى منشوراتهم هنا، أو جرّب تبويب نبض.'
-                : 'كن أول من ينشر.'}
+              كن أول من ينشر.
             </p>
           </div>
         ) : (

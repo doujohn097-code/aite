@@ -143,7 +143,12 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
           )}
           {audio && <TweetAudioPlayer audio={audio} />}
           <div className='border-b border-light-border pb-2 dark:border-dark-border'>
-            <TweetDate viewTweet tweetLink={tweetLink} createdAt={createdAt} />
+            <TweetDate
+              viewTweet
+              tweetLink={tweetLink}
+              createdAt={createdAt}
+              edited={!!edited}
+            />
             <TweetStats
               viewTweet
               reply={reply}

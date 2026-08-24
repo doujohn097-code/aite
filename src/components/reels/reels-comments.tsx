@@ -20,7 +20,10 @@ import {
   deleteReelComment,
   editTweet
 } from '@lib/firebase/utils';
-import { EditContentModal } from '@components/modal/edit-content-modal';
+import {
+  EditContentModal,
+  type EditContentSave
+} from '@components/modal/edit-content-modal';
 import { formatDate } from '@lib/date';
 import { UserAvatar } from '@components/user/user-avatar';
 import { VerifiedBadge } from '@components/ui/verified-badge';
@@ -331,7 +334,7 @@ export function ReelsComments({
     }
   };
 
-  const handleSaveEdit = async (nextText: string): Promise<void> => {
+  const handleSaveEdit = async ({ text: nextText }: EditContentSave): Promise<void> => {
     if (!user || !editTarget) return;
     await editTweet(editTarget.id, user.id, nextText);
     toast.success('تم حفظ تعديل التعليق');
@@ -551,6 +554,7 @@ export function ReelsComments({
                               )}
                               <span className='mr-auto text-xs text-light-secondary dark:text-dark-secondary'>
                                 {formatDate(item.createdAt, 'message')}
+                                {item.edited ? ' · تم التعديل' : ''}
                               </span>
                             </div>
 
@@ -731,6 +735,7 @@ export function ReelsComments({
                                       )}
                                       <span className='mr-auto text-[11px] text-light-secondary dark:text-dark-secondary'>
                                         {formatDate(reply.createdAt, 'message')}
+                                        {reply.edited ? ' · تم التعديل' : ''}
                                       </span>
                                     </div>
 
@@ -926,6 +931,14 @@ export function ReelsComments({
           </motion.div>
         </motion.div>
       )}
+
+      <EditContentModal
+        open={!!editTarget}
+        closeModal={() => setEditTarget(null)}
+        title={editTarget?.replyTo ? 'تعديل الرد' : 'تعديل التعليق'}
+        initialText={editTarget?.text ?? ''}
+        onSave={handleSaveEdit}
+      />
 
       {/* Delete Comment / Reply Confirmation Modal - Rendered outside to prevent backdrop clash */}
       <Modal

@@ -1,22 +1,36 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import TextArea from 'react-textarea-autosize';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
 import { useMentionAssist } from '@lib/hooks/useMentionAssist';
+import { uploadImages } from '@lib/firebase/utils';
+import { getImagesData } from '@lib/validation';
 import { Modal } from './modal';
 import { MentionSuggest } from '@components/input/mention-suggest';
+import { ImagePreview } from '@components/input/image-preview';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
+import type { FilesWithId, ImagesPreview } from '@lib/types/file';
+
+export type EditMediaKind = 'none' | 'images' | 'video';
+
+export type EditContentSave = {
+  text: string;
+  images: ImagesPreview | null;
+};
 
 type EditContentModalProps = {
   open: boolean;
   closeModal: () => void;
   title: string;
   initialText: string;
+  initialImages?: ImagesPreview | null;
+  mediaKind?: EditMediaKind;
   maxLength?: number;
   allowEmpty?: boolean;
   placeholder?: string;
-  onSave: (text: string) => Promise<void>;
+  onSave: (next: EditContentSave) => Promise<void>;
 };
 
 export function EditContentModal({
@@ -24,22 +38,36 @@ export function EditContentModal({
   closeModal,
   title,
   initialText,
+  initialImages = null,
+  mediaKind = 'none',
   maxLength,
   allowEmpty,
   placeholder = 'عدّل النص…  @للإشارة',
   onSave
 }: EditContentModalProps): JSX.Element {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const limit = maxLength ?? (isAdmin ? 560 : 280);
+  const maxFiles = mediaKind === 'video' ? 1 : 4;
   const [value, setValue] = useState(initialText);
+  const [keptImages, setKeptImages] = useState<ImagesPreview>(
+    initialImages ?? []
+  );
+  const [newFiles, setNewFiles] = useState<FilesWithId>([]);
+  const [newPreview, setNewPreview] = useState<ImagesPreview>([]);
   const [saving, setSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const { mentionQuery, onMentionChange, insertMention, closeMentions } =
     useMentionAssist(value, setValue, inputRef);
 
   useEffect(() => {
     if (!open) return;
     setValue(initialText);
+    setKeptImages(initialImages ?? []);
+    setNewFiles([]);
+    setNewPreview([]);
+    setUploadProgress(0);
     const timer = window.setTimeout(() => {
       inputRef.current?.focus();
       const end = initialText.length;
@@ -50,18 +78,91 @@ export function EditContentModal({
       }
     }, 40);
     return () => window.clearTimeout(timer);
-  }, [open, initialText]);
+  }, [open, initialText, initialImages]);
 
+  const previewImages = [...keptImages, ...newPreview];
   const trimmed = value.trim();
   const tooLong = value.length > limit;
-  const unchanged = trimmed === initialText.trim();
-  const canSave = !tooLong && !unchanged && (allowEmpty || !!trimmed);
+  const initialIds = (initialImages ?? []).map((image) => image.id).join('|');
+  const keptIds = keptImages.map((image) => image.id).join('|');
+  const mediaChanged = keptIds !== initialIds || newFiles.length > 0;
+  const textChanged = trimmed !== initialText.trim();
+  const hasMedia = previewImages.length > 0;
+  const canSave =
+    !tooLong &&
+    (textChanged || mediaChanged) &&
+    (allowEmpty || !!trimmed || hasMedia);
+
+  const handleFiles = (event: ChangeEvent<HTMLInputElement>): void => {
+    const remaining = maxFiles - keptImages.length - newFiles.length;
+    const imagesData = getImagesData(event.target.files, {
+      currentFiles: maxFiles - remaining,
+      allowUploadingVideos: true
+    });
+    if (fileRef.current) fileRef.current.value = '';
+    if (!imagesData) {
+      toast.error(
+        mediaKind === 'video'
+          ? 'اختر فيديو واحداً صالحاً'
+          : 'يرجى اختيار صورة أو فيديو (حتى 4)'
+      );
+      return;
+    }
+    if (mediaKind === 'video') {
+      const video = imagesData.selectedImagesData.find((file) =>
+        (file.type || '').startsWith('video/')
+      );
+      if (!video) {
+        toast.error('الريل يحتاج ملف فيديو');
+        return;
+      }
+      newPreview.forEach(({ src }) => {
+        if (src.startsWith('blob:')) URL.revokeObjectURL(src);
+      });
+      setKeptImages([]);
+      setNewFiles([video]);
+      setNewPreview([imagesData.imagesPreviewData[0]]);
+      return;
+    }
+    const room = Math.max(0, remaining);
+    setNewFiles((prev) => [
+      ...prev,
+      ...imagesData.selectedImagesData.slice(0, room)
+    ]);
+    setNewPreview((prev) => [
+      ...prev,
+      ...imagesData.imagesPreviewData.slice(0, room)
+    ]);
+  };
+
+  const removeImage = (targetId: string) => (): void => {
+    const fromKept = keptImages.find((image) => image.id === targetId);
+    if (fromKept) {
+      setKeptImages((prev) => prev.filter((image) => image.id !== targetId));
+      return;
+    }
+    const preview = newPreview.find((image) => image.id === targetId);
+    if (preview?.src.startsWith('blob:')) URL.revokeObjectURL(preview.src);
+    setNewFiles((prev) => prev.filter((file) => file.id !== targetId));
+    setNewPreview((prev) => prev.filter((image) => image.id !== targetId));
+  };
 
   const handleSave = async (): Promise<void> => {
     if (!canSave || saving) return;
     setSaving(true);
+    setUploadProgress(0);
     try {
-      await onSave(trimmed);
+      let uploaded: ImagesPreview = [];
+      if (newFiles.length) {
+        if (!user?.id) throw new Error('يجب تسجيل الدخول');
+        uploaded =
+          (await uploadImages(user.id, newFiles, setUploadProgress)) ?? [];
+      }
+      const images = [...keptImages, ...uploaded];
+      await onSave({
+        text: trimmed,
+        images: images.length ? images : null
+      });
       closeMentions();
       closeModal();
     } catch (error) {
@@ -70,6 +171,7 @@ export function EditContentModal({
       );
     } finally {
       setSaving(false);
+      setUploadProgress(0);
     }
   };
 
@@ -96,7 +198,7 @@ export function EditContentModal({
           </Button>
         </div>
 
-        <div className='relative px-5 py-4'>
+        <div className='relative max-h-[70vh] overflow-y-auto px-5 py-4'>
           <MentionSuggest
             query={mentionQuery}
             onSelect={insertMention}
@@ -108,7 +210,7 @@ export function EditContentModal({
             onChange={onMentionChange}
             placeholder={placeholder}
             minRows={4}
-            maxRows={12}
+            maxRows={10}
             className='w-full resize-none rounded-2xl border border-light-border bg-light-primary/5 p-3.5 text-base outline-none focus:border-main-accent dark:border-dark-border dark:bg-dark-primary/5'
           />
           <p
@@ -120,6 +222,60 @@ export function EditContentModal({
           >
             {value.length} / {limit}
           </p>
+
+          {mediaKind !== 'none' && (
+            <div className='mt-4 flex flex-col gap-3'>
+              {!!previewImages.length && (
+                <ImagePreview
+                  imagesPreview={previewImages}
+                  previewCount={previewImages.length}
+                  removeImage={!saving ? removeImage : undefined}
+                />
+              )}
+              <input
+                ref={fileRef}
+                type='file'
+                className='hidden'
+                accept={
+                  mediaKind === 'video'
+                    ? 'video/mp4,video/quicktime,video/webm,video/*'
+                    : 'image/*,video/*'
+                }
+                multiple={mediaKind !== 'video'}
+                onChange={handleFiles}
+              />
+              <Button
+                className='flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-light-border py-3 text-sm font-bold hover:border-main-accent hover:bg-main-accent/5 dark:border-dark-border'
+                onClick={(): void => fileRef.current?.click()}
+                disabled={
+                  saving ||
+                  (mediaKind === 'images' && previewImages.length >= maxFiles)
+                }
+              >
+                <HeroIcon className='h-5 w-5' iconName='PhotoIcon' />
+                {mediaKind === 'video'
+                  ? previewImages.length
+                    ? 'استبدال الفيديو'
+                    : 'إضافة فيديو'
+                  : 'إضافة صور أو فيديو'}
+              </Button>
+            </div>
+          )}
+
+          {saving && uploadProgress > 0 && (
+            <div className='mt-3 flex flex-col gap-1.5'>
+              <div className='flex items-center justify-between text-xs text-light-secondary dark:text-dark-secondary'>
+                <span>جارٍ رفع الوسائط…</span>
+                <span className='tabular-nums'>{uploadProgress}%</span>
+              </div>
+              <div className='h-1.5 w-full overflow-hidden rounded-full bg-light-border dark:bg-dark-border'>
+                <div
+                  className='h-full rounded-full bg-main-accent transition-all'
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className='flex items-center justify-end gap-2 border-t border-light-border px-5 py-4 dark:border-dark-border'>

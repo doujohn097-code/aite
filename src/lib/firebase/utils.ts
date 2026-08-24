@@ -174,12 +174,16 @@ export async function editTweet(
   tweetId: string,
   userId: string,
   text: string,
-  options?: { allowEmpty?: boolean }
+  options?: { allowEmpty?: boolean; images?: ImagesPreview | null }
 ): Promise<void> {
   const trimmed = text.trim();
-  if (!trimmed && !options?.allowEmpty)
+  const nextImages = options?.images ?? null;
+  const hasImages = !!nextImages?.length;
+  if (!trimmed && !hasImages && !options?.allowEmpty)
     throw new Error('لا يمكن حفظ منشور فارغ');
   if (trimmed.length > 1000) throw new Error('النص أطول من المسموح');
+  if (nextImages && nextImages.length > 4)
+    throw new Error('يمكن إرفاق 4 ملفات كحد أقصى');
 
   const tweetRef = doc(tweetsCollection, tweetId);
   const snap = await getDoc(tweetRef);
@@ -187,19 +191,26 @@ export async function editTweet(
   if (!data) throw new Error('المنشور غير موجود');
   if (data.createdBy !== userId) throw new Error('لا يمكنك تعديل هذا المنشور');
 
+  const hadImages = !!data.images?.length;
   await updateDoc(tweetRef, {
     text: trimmed || null,
+    images: nextImages,
     edited: true,
     editedAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
+
+  if (hadImages !== hasImages)
+    await manageTotalPhotos(hasImages ? 'increment' : 'decrement', userId);
+
   await notifyMentions('post', tweetId);
 }
 
 export async function editReel(
   reelId: string,
   userId: string,
-  caption: string
+  caption: string,
+  options?: { images?: ImagesPreview | null }
 ): Promise<void> {
   const trimmed = caption.trim();
   if (trimmed.length > 1000) throw new Error('الوصف أطول من المسموح');
@@ -210,8 +221,13 @@ export async function editReel(
   if (!data) throw new Error('الريل غير موجود');
   if (data.userId !== userId) throw new Error('لا يمكنك تعديل هذا الريل');
 
+  const nextImages = options?.images === undefined ? data.images : options.images;
+  if (options?.images !== undefined && !nextImages?.length)
+    throw new Error('الريل يحتاج فيديو');
+
   await updateDoc(reelRef, {
     caption: trimmed || null,
+    ...(options?.images !== undefined ? { images: nextImages } : {}),
     edited: true,
     editedAt: serverTimestamp(),
     updatedAt: serverTimestamp()

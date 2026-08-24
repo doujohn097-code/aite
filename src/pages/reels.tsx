@@ -8,7 +8,6 @@ import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useRankedFeed } from '@lib/hooks/useRankedFeed';
 import { getTimestampMillis } from '@lib/date';
-import { FeedModeBar } from '@components/home/feed-mode-bar';
 import type { RankableItem } from '@lib/feed-rank';
 import type { Story } from '@lib/types/story';
 import { ProtectedLayout } from '@components/layout/common-layout';
@@ -105,8 +104,7 @@ export default function Reels(): JSX.Element {
     });
   }, [rawReels]);
 
-  const { mode, setMode, ranked: reels } = useRankedFeed(visibleReels, {
-    storageKey: 'aite:reels-feed-mode',
+  const reels = useRankedFeed(visibleReels, {
     mapItem: mapReel,
     viewerId: user?.id ?? null,
     following: user?.following ?? [],
@@ -219,7 +217,7 @@ export default function Reels(): JSX.Element {
       <div className='relative flex h-app-nav w-full items-center justify-center overflow-hidden bg-black xs:h-app'>
         {/* Top Floating Header & Create Button */}
         <div
-          className='pointer-events-auto absolute left-4 right-4 top-4 z-40 flex items-start justify-between gap-3'
+          className='pointer-events-auto absolute left-4 top-4 z-40 flex items-center gap-3'
           style={{ marginTop: 'env(safe-area-inset-top)' }}
         >
           <Button
@@ -229,9 +227,6 @@ export default function Reels(): JSX.Element {
             <HeroIcon className='h-5 w-5' iconName='PlusIcon' />
             <span>إنشاء ريل</span>
           </Button>
-          <div className='max-w-[60%] rounded-full bg-black/35 backdrop-blur-md'>
-            <FeedModeBar mode={mode} onChange={setMode} variant='dark' />
-          </div>
         </div>
 
         {reelsLoading ? (

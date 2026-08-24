@@ -188,6 +188,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                       hasImages={!!images}
                       hasAudio={!!audio}
                       text={text}
+                      images={images}
                       createdBy={createdBy}
                     />
                   )}
