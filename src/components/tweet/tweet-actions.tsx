@@ -18,6 +18,8 @@ import {
   manageTotalTweets,
   manageTotalPhotos
 } from '@lib/firebase/utils';
+import { copyText } from '@lib/copy-text';
+import { useLanguage } from '@lib/context/language-context';
 import { delayScroll, preventBubbling, sleep } from '@lib/utils';
 import {
   EditContentModal,
@@ -86,6 +88,7 @@ export function TweetActions({
 }: TweetActionsProps): JSX.Element | null {
   const { user, isAdmin } = useAuth();
   const { push } = useRouter();
+  const { t } = useLanguage();
 
   const {
     open: removeOpen,
@@ -108,10 +111,25 @@ export function TweetActions({
   const tweetIsPinned = user?.pinnedTweet === tweetId;
 
   const currentPinModalData = useMemo(
-    () => pinModalData[+tweetIsPinned],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pinOpen]
+    () =>
+      tweetIsPinned
+        ? {
+            title: t('tweet.unpinTitle'),
+            description: t('tweet.unpinBody'),
+            mainBtnLabel: t('tweet.unpin')
+          }
+        : {
+            title: t('tweet.pinTitle'),
+            description: t('tweet.pinBody'),
+            mainBtnLabel: t('tweet.pin')
+          },
+    [t, tweetIsPinned]
   );
+
+  const handleCopy = async (): Promise<void> => {
+    const ok = await copyText(text ?? '');
+    toast[ok ? 'success' : 'error'](ok ? t('common.copied') : t('common.copyFailed'));
+  };
 
   if (!user) return null;
 
@@ -140,7 +158,9 @@ export function TweetActions({
     ]);
 
     toast.success(
-      `${isInAdminControl ? `تم حذف منشور @${username}` : 'تم حذف منشورك'}`
+      isInAdminControl
+        ? t('tweet.deletedOther', { username })
+        : t('tweet.deleted')
     );
 
     removeCloseModal();
@@ -151,15 +171,13 @@ export function TweetActions({
       allowEmpty: !!hasAudio,
       images: nextImages
     });
-    toast.success('تم حفظ تعديل المنشور');
+    toast.success(t('tweet.saved'));
   };
 
   const handlePin = async (): Promise<void> => {
     if (!userId) return;
     await managePinnedTweet(tweetIsPinned ? 'unpin' : 'pin', userId, tweetId);
-    toast.success(
-      `تم ${tweetIsPinned ? 'إلغاء تثبيت' : 'تثبيت'} منشورك في ملفك الشخصي`
-    );
+    toast.success(tweetIsPinned ? t('tweet.unpinned') : t('tweet.pinned'));
     pinCloseModal();
   };
 
@@ -187,15 +205,15 @@ export function TweetActions({
         closeModal={removeCloseModal}
       >
         <ActionModal
-          title='حذف المنشور؟'
-          description={`لا يمكن التراجع عن هذا وسيُحذف من ملف ${
-            isInAdminControl ? `@${username}` : 'ك'
-          } الشخصي ومن الزمني لكل من يتابع ${
-            isInAdminControl ? `@${username}` : 'ك'
-          } ومن نتائج البحث.`}
+          title={t('tweet.deleteTitle')}
+          description={
+            isInAdminControl
+              ? t('tweet.deleteBodyOther', { username })
+              : t('tweet.deleteBody')
+          }
           mainBtnClassName='bg-accent-red hover:bg-accent-red/90 active:bg-accent-red/75 accent-tab
                             focus-visible:bg-accent-red/90'
-          mainBtnLabel='حذف'
+          mainBtnLabel={t('common.delete')}
           focusOnMainBtn
           action={handleRemove}
           closeModal={removeCloseModal}
@@ -218,7 +236,7 @@ export function TweetActions({
       <EditContentModal
         open={editOpen}
         closeModal={editCloseModal}
-        title='تعديل المنشور'
+        title={t('tweet.edit')}
         initialText={text ?? ''}
         initialImages={images}
         mediaKind='images'
@@ -242,13 +260,13 @@ export function TweetActions({
                              group-focus-visible:text-accent-blue dark:text-dark-secondary/80'
                   iconName='EllipsisHorizontalIcon'
                 />
-                {!open && <ToolTip tip='المزيد' />}
+                {!open && <ToolTip tip={t('common.more')} />}
               </div>
             </Popover.Button>
             <AnimatePresence>
               {open && (
                 <Popover.Panel
-                  className='menu-container group absolute left-0 top-full z-20 w-max max-w-xs
+                  className='menu-container group absolute start-0 top-full z-20 w-max max-w-xs
                              break-words rounded-md bg-main-background text-light-primary dark:text-dark-primary'
                   as={motion.div}
                   {...variants}
@@ -261,7 +279,19 @@ export function TweetActions({
                       onClick={preventBubbling(editOpenModal)}
                     >
                       <HeroIcon iconName='PencilSquareIcon' />
-                      تعديل
+                      {t('common.edit')}
+                    </Popover.Button>
+                  )}
+                  {!!text?.trim() && (
+                    <Popover.Button
+                      className='accent-tab flex w-full gap-3 p-4 hover:bg-main-sidebar-background'
+                      as={Button}
+                      onClick={preventBubbling(() => {
+                        void handleCopy();
+                      })}
+                    >
+                      <HeroIcon iconName='ClipboardDocumentIcon' />
+                      {t('tweet.copy')}
                     </Popover.Button>
                   )}
                   {(isAdmin || isOwner) && (
@@ -274,7 +304,7 @@ export function TweetActions({
                       onClick={preventBubbling(removeOpenModal)}
                     >
                       <HeroIcon iconName='TrashIcon' />
-                      حذف
+                      {t('common.delete')}
                     </Popover.Button>
                   )}
                   {isOwner ? (
@@ -286,12 +316,12 @@ export function TweetActions({
                       {tweetIsPinned ? (
                         <>
                           <CustomIcon iconName='PinOffIcon' />
-                          إلغاء التثبيت من الملف الشخصي
+                          {t('tweet.unpinFromProfile')}
                         </>
                       ) : (
                         <>
                           <CustomIcon iconName='PinIcon' />
-                          تثبيت في ملفك الشخصي
+                          {t('tweet.pinToProfile')}
                         </>
                       )}
                     </Popover.Button>
@@ -304,7 +334,7 @@ export function TweetActions({
                       )}
                     >
                       <HeroIcon iconName='UserMinusIcon' />
-                      إلغاء متابعة @{username}
+                      {t('tweet.unfollow', { username })}
                     </Popover.Button>
                   ) : (
                     <Popover.Button
@@ -315,7 +345,7 @@ export function TweetActions({
                       )}
                     >
                       <HeroIcon iconName='UserPlusIcon' />
-                      متابعة @{username}
+                      {t('tweet.follow', { username })}
                     </Popover.Button>
                   )}
                 </Popover.Panel>

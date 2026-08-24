@@ -1,6 +1,8 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
+import type { AppLocale } from '@lib/i18n';
 import { auth } from '@lib/firebase/app';
 import { saveAccount } from '@lib/accounts';
 import { CustomIcon } from '@components/ui/custom-icon';
@@ -18,6 +20,7 @@ export function LoginMain(): JSX.Element {
   } = useAuth();
 
   const { theme } = useTheme();
+  const { t, locale, setLocale } = useLanguage();
   const { wallpaper } = themesMeta[theme];
 
   const [isSignUp, setIsSignUp] = useState(false);
@@ -168,10 +171,10 @@ export function LoginMain(): JSX.Element {
         </i>
         <div className='flex max-w-md flex-col gap-4 font-aite-extended lg:max-w-2xl lg:gap-16'>
           <h1 className='font-aite-extended text-3xl lg:text-6xl'>
-            تواصل بشكل أنيق مع الجميع!
+            {t('auth.tagline')}
           </h1>
           <h2 className='hidden text-xl lg:block lg:text-3xl'>
-            انضم إلى Aite اليوم.
+            {t('auth.join')}
           </h2>
         </div>
         <div className='flex w-full max-w-xs flex-col gap-6 [&_button]:py-2'>
@@ -192,7 +195,7 @@ export function LoginMain(): JSX.Element {
           <form onSubmit={handleSubmit} className='grid gap-3'>
             {isSignUp && (
               <InputField
-                label='الاسم الكامل'
+                label={t('auth.fullName')}
                 inputId='name'
                 autoComplete='name'
                 inputValue={name}
@@ -204,7 +207,7 @@ export function LoginMain(): JSX.Element {
               />
             )}
             <InputField
-              label='اسم المستخدم'
+              label={t('auth.username')}
               inputId='username'
               autoComplete='username'
               inputValue={username}
@@ -244,11 +247,11 @@ export function LoginMain(): JSX.Element {
               loading={loading}
               disabled={loading}
             >
-              {isSignUp ? 'إنشاء حساب' : 'تسجيل الدخول'}
+              {isSignUp ? t('auth.signup') : t('auth.login')}
             </Button>
           </form>
           <p className='text-center text-sm text-light-secondary dark:text-dark-secondary'>
-            {isSignUp ? 'لديك حساب؟ ' : 'ليس لديك حساب؟ '}
+            {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}
             <button
               type='button'
               onClick={(): void => {
@@ -258,9 +261,25 @@ export function LoginMain(): JSX.Element {
               }}
               className='text-accent-blue hover:underline'
             >
-              {isSignUp ? 'سجل الدخول' : 'سجل الآن'}
+              {isSignUp ? t('auth.loginNow') : t('auth.signupNow')}
             </button>
           </p>
+          <div className='flex justify-center gap-2 text-xs'>
+            {(['ar', 'en', 'fr'] as AppLocale[]).map((code) => (
+              <button
+                key={code}
+                type='button'
+                onClick={(): void => setLocale(code)}
+                className={`rounded-full px-2.5 py-1 ${
+                  locale === code
+                    ? 'bg-main-accent text-main-accent-contrast'
+                    : 'text-light-secondary dark:text-dark-secondary'
+                }`}
+              >
+                {t(`lang.${code}`)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </main>

@@ -1,4 +1,5 @@
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
 import { MobileSidebarModal } from '@components/modal/mobile-sidebar-modal';

@@ -6,7 +6,9 @@ import {
   updatePassword
 } from 'firebase/auth';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useTheme } from '@lib/context/theme-context';
+import type { AppLocale } from '@lib/i18n';
 import { auth } from '@lib/firebase/app';
 import { usernameToInternalEmail } from '@lib/utils';
 import { saveAccount, removeSavedAccount } from '@lib/accounts';
@@ -20,7 +22,7 @@ import type { Accent } from '@lib/types/theme';
 import type { ChangeEvent, FormEvent } from 'react';
 import type { User } from '@lib/types/user';
 
-type SettingsView = 'main' | 'password' | 'delete' | 'appearance';
+type SettingsView = 'main' | 'password' | 'delete' | 'appearance' | 'language';
 
 const accents: Readonly<Accent[]> = [
   'blue',
@@ -38,6 +40,8 @@ type SettingsModalProps = {
 export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
   const { user, signOut } = useAuth();
   const { theme } = useTheme();
+  const { t, locale, setLocale, isRtl } = useLanguage();
+  const deleteWord = t('settings.deleteConfirmWord');
   const { username, name, photoURL } = user as User;
 
   const [view, setView] = useState<SettingsView>('main');
@@ -80,19 +84,19 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
     if (loading) return;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error('يرجى ملء جميع الحقول');
+      toast.error(t('settings.fillAll'));
       return;
     }
     if (newPassword.length < 6) {
-      toast.error('كلمة المرور الجديدة ضعيفة (6 أحرف على الأقل)');
+      toast.error(t('settings.passWeak'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error('كلمتا المرور غير متطابقتين');
+      toast.error(t('settings.passMismatch'));
       return;
     }
     if (newPassword === currentPassword) {
-      toast.error('كلمة المرور الجديدة مطابقة للحالية');
+      toast.error(t('settings.passSame'));
       return;
     }
 
@@ -114,7 +118,7 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
         // لا يؤثر على العملية
       }
 
-      toast.success('تم تغيير كلمة المرور بنجاح');
+      toast.success(t('settings.passChanged'));
       resetForms();
       closeModal();
     } catch (err) {
@@ -139,11 +143,11 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
     if (loading) return;
 
     if (!deletePassword) {
-      toast.error('أدخل كلمة المرور للتأكيد');
+      toast.error(t('settings.enterPass'));
       return;
     }
-    if (deleteConfirmText.trim() !== 'حذف') {
-      toast.error("اكتب كلمة 'حذف' للتأكيد");
+    if (deleteConfirmText.trim() !== deleteWord) {
+      toast.error(t('settings.typeDelete', { word: deleteWord }));
       return;
     }
 
@@ -206,18 +210,22 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
           <button
             type='button'
             onClick={goBack}
-            aria-label='رجوع'
+            aria-label={t('common.back')}
             className='flex h-8 w-8 items-center justify-center rounded-full transition
                        hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
           >
-            <HeroIcon className='h-5 w-5' iconName='ArrowRightIcon' />
+            <HeroIcon
+              className='h-5 w-5'
+              iconName={isRtl ? 'ArrowRightIcon' : 'ArrowLeftIcon'}
+            />
           </button>
         )}
         <h2 className='text-xl font-bold'>
-          {view === 'main' && 'الإعدادات'}
-          {view === 'password' && 'تغيير كلمة المرور'}
-          {view === 'appearance' && 'المظهر'}
-          {view === 'delete' && 'حذف الحساب'}
+          {view === 'main' && t('settings.title')}
+          {view === 'password' && t('settings.password')}
+          {view === 'appearance' && t('settings.appearanceTitle')}
+          {view === 'language' && t('settings.language')}
+          {view === 'delete' && t('settings.deleteTitle')}
         </h2>
       </div>
 
@@ -236,9 +244,9 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
                 iconName='KeyIcon'
               />
               <div>
-                <p className='font-semibold'>تغيير كلمة المرور</p>
+                <p className='font-semibold'>{t('settings.password')}</p>
                 <p className='text-xs text-light-secondary dark:text-dark-secondary'>
-                  حدّث كلمة مرور حسابك
+                  {t('settings.passwordHint')}
                 </p>
               </div>
             </div>
@@ -261,9 +269,10 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
                 iconName='SwatchIcon'
               />
               <div>
-                <p className='font-semibold'>المظهر والخلفية</p>
+                <p className='font-semibold'>{t('settings.appearance')}</p>
                 <p className='text-xs text-light-secondary dark:text-dark-secondary'>
-                  {themesMeta[theme].label} · {themesMeta[theme].description}
+                  {t(`theme.${theme}` as 'theme.dark')} ·{' '}
+                  {t(`theme.${theme}Desc` as 'theme.darkDesc')}
                 </p>
               </div>
             </div>
@@ -279,6 +288,31 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
                   backgroundPosition: 'center'
                 })
               }}
+            />
+          </button>
+
+          <button
+            type='button'
+            onClick={(): void => setView('language')}
+            className='flex items-center justify-between rounded-xl p-3.5 text-start transition
+                       hover:bg-light-primary/10 active:bg-light-primary/20
+                       dark:hover:bg-dark-primary/10 dark:active:bg-dark-primary/20'
+          >
+            <div className='flex items-center gap-3'>
+              <HeroIcon
+                className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
+                iconName='GlobeAltIcon'
+              />
+              <div>
+                <p className='font-semibold'>{t('settings.language')}</p>
+                <p className='text-xs text-light-secondary dark:text-dark-secondary'>
+                  {t(`lang.${locale}`)} · {t('lang.hint')}
+                </p>
+              </div>
+            </div>
+            <HeroIcon
+              className='h-4 w-4 text-light-secondary dark:text-dark-secondary'
+              iconName={isRtl ? 'ChevronLeftIcon' : 'ChevronRightIcon'}
             />
           </button>
 
@@ -310,17 +344,41 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
         </div>
       )}
 
+      {view === 'language' && (
+        <div className='flex flex-col gap-2'>
+          <p className='text-sm text-light-secondary dark:text-dark-secondary'>
+            {t('lang.hint')}
+          </p>
+          {(['ar', 'en', 'fr'] as AppLocale[]).map((code) => (
+            <button
+              key={code}
+              type='button'
+              onClick={(): void => setLocale(code)}
+              className={`flex items-center justify-between rounded-xl p-3.5 text-start transition
+                         hover:bg-light-primary/10 dark:hover:bg-dark-primary/10 ${
+                           locale === code ? 'ring-2 ring-main-accent' : ''
+                         }`}
+            >
+              <span className='font-semibold'>{t(`lang.${code}`)}</span>
+              <span className='text-xs text-light-secondary dark:text-dark-secondary'>
+                {code === 'ar' ? 'RTL' : 'LTR'}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {view === 'appearance' && (
         <div className='flex flex-col gap-5'>
           <div className='flex flex-col gap-2'>
             <p className='text-sm font-bold text-light-secondary dark:text-dark-secondary'>
-              الخلفية والمظهر
+              {t('settings.bg')}
             </p>
             <ThemePicker />
           </div>
           <div className='flex flex-col gap-2'>
             <p className='text-sm font-bold text-light-secondary dark:text-dark-secondary'>
-              لون التمييز
+              {t('settings.accent')}
             </p>
             <div
               className='grid grid-cols-6 justify-items-center gap-2 rounded-2xl
@@ -340,21 +398,21 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
           onSubmit={(e): void => void handleChangePassword(e)}
         >
           <InputField
-            label='كلمة المرور الحالية'
+            label={t('settings.currentPassword')}
             inputId='current-password'
             type='password'
             inputValue={currentPassword}
             handleChange={inputHandler(setCurrentPassword)}
           />
           <InputField
-            label='كلمة المرور الجديدة'
+            label={t('settings.newPassword')}
             inputId='new-password'
             type='password'
             inputValue={newPassword}
             handleChange={inputHandler(setNewPassword)}
           />
           <InputField
-            label='تأكيد كلمة المرور الجديدة'
+            label={t('settings.confirmPassword')}
             inputId='confirm-password'
             type='password'
             inputValue={confirmPassword}
@@ -367,7 +425,7 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
             loading={loading}
             disabled={loading}
           >
-            حفظ كلمة المرور
+            {t('settings.savePassword')}
           </Button>
         </form>
       )}
@@ -381,14 +439,13 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
             className='rounded-xl border border-accent-red/30 bg-accent-red/10 p-3.5
                        text-sm leading-relaxed text-accent-red'
           >
-            <p className='font-bold'>تحذير: هذا الإجراء نهائي</p>
+            <p className='font-bold'>{t('settings.deleteWarnTitle')}</p>
             <p className='mt-1'>
-              سيتم حذف حسابك @{username} وجميع بياناتك نهائيًا ولا يمكن التراجع
-              عن ذلك.
+              {t('settings.deleteWarnBody', { username })}
             </p>
           </div>
           <InputField
-            label='كلمة المرور'
+            label={t('auth.password')}
             inputId='delete-password'
             type='password'
             inputValue={deletePassword}

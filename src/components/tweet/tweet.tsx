@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
 import { LinkifiedText } from '@components/ui/linkified-text';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useModal } from '@lib/hooks/useModal';
 import { delayScroll } from '@lib/utils';
 import { Modal } from '@components/modal/modal';
@@ -71,6 +72,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
   };
 
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const { open, openModal, closeModal } = useModal();
 
@@ -128,7 +130,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
             <AnimatePresence initial={false}>
               {modal ? null : pinned ? (
                 <TweetStatus type='pin'>
-                  <p className='text-sm font-bold'>منشور مثبت</p>
+                  <p className='text-sm font-bold'>{t('home.pinned')}</p>
                 </TweetStatus>
               ) : (
                 tweetIsRetweeted && (
@@ -136,8 +138,8 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                     <Link href={profileUsername as string}>
                       <a className='custom-underline truncate text-sm font-bold'>
                         {userId === profileId
-                          ? 'أعدت نشر'
-                          : `أعاد ${profileName ?? ''} نشر`}
+                          ? t('home.youReposted')
+                          : t('home.reposted', { name: profileName ?? '' })}
                       </a>
                     </Link>
                   </TweetStatus>
@@ -201,7 +203,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                     modal && 'order-1 my-2'
                   )}
                 >
-                  رد على{' '}
+                  {t('home.replyTo')}{' '}
                   <Link href={`/user/${parentUsername}`}>
                     <a className='custom-underline text-main-accent-text'>
                       @{parentUsername}
@@ -210,7 +212,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                 </p>
               )}
               {text && (
-                <p className='whitespace-pre-line break-words'>
+                <p className='selectable-text whitespace-pre-line break-words'>
                   <LinkifiedText text={text} />
                 </p>
               )}

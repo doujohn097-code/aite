@@ -1,13 +1,18 @@
 import { Html, Head, Main, NextScript } from 'next/document';
 
 const themeBootstrap = `(function(){try{
+  var r = document.documentElement;
+  var loc = localStorage.getItem('aite:locale');
+  if(loc!=='en' && loc!=='fr' && loc!=='ar') loc = 'ar';
+  r.lang = loc;
+  r.dir = loc==='ar' ? 'rtl' : 'ltr';
+  r.dataset.locale = loc;
   var t = localStorage.getItem('theme');
   var a = localStorage.getItem('accent') || 'blue';
   var dark = {dark:1,dim:1,ocean:1,crimson:1,violet:1,emerald:1};
   var wallpaper = {lilac:1,ocean:1,crimson:1,violet:1,emerald:1};
   var known = {light:1,dim:1,dark:1,lilac:1,ocean:1,crimson:1,violet:1,emerald:1};
   if(!t || !known[t]) t = 'dark';
-  var r = document.documentElement;
   if(dark[t]) r.classList.add('dark'); else r.classList.remove('dark');
   if(wallpaper[t]) r.classList.add('theme-wallpaper');
   r.dataset.theme = t;
@@ -21,7 +26,7 @@ const themeBootstrap = `(function(){try{
 
 export default function Document(): JSX.Element {
   return (
-    <Html lang='ar' dir='rtl' className='dark'>
+    <Html lang='ar' dir='rtl' className='dark' suppressHydrationWarning>
       <Head>
         <link rel='manifest' href='/manifest.json' />
         <meta name='theme-color' content='#000000' />

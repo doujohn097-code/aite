@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import {
   conversationsCollection,
   usersCollection
@@ -25,6 +26,7 @@ import type { User } from '@lib/types/user';
 
 export default function Messages(): JSX.Element {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const { open, openModal, closeModal } = useModal();
 
@@ -114,12 +116,12 @@ export default function Messages(): JSX.Element {
 
   return (
     <MainContainer>
-      <SEO title='الرسائل / Aite' />
-      <MainHeader title='الرسائل'>
+      <SEO title={t('messages.title')} />
+      <MainHeader title={t('messages.heading')}>
         <button
           type='button'
           onClick={openModal}
-          aria-label='رسالة جديدة'
+          aria-label={t('messages.new')}
           className='dark-bg-tab group relative rounded-full p-2 hover:bg-light-primary/10
                      active:bg-light-primary/20 dark:hover:bg-dark-primary/10
                      dark:active:bg-dark-primary/20'
@@ -149,7 +151,7 @@ export default function Messages(): JSX.Element {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder='ابحث في المحادثات'
+              placeholder={t('messages.search')}
               className='w-full bg-transparent text-sm outline-none
                          placeholder:text-light-secondary dark:placeholder:text-dark-secondary'
             />
@@ -161,7 +163,7 @@ export default function Messages(): JSX.Element {
         <ConversationFeedSkeleton />
       ) : !filtered?.length && conversations.length ? (
         <p className='p-12 text-center text-light-secondary dark:text-dark-secondary'>
-          لا توجد نتائج مطابقة
+          {t('messages.noMatch')}
         </p>
       ) : conversations.length ? (
         <section className='overflow-x-clip'>
@@ -189,9 +191,9 @@ export default function Messages(): JSX.Element {
           <div className='flex h-20 w-20 items-center justify-center rounded-full bg-main-accent/10 text-main-accent-text'>
             <HeroIcon className='h-10 w-10' iconName='EnvelopeIcon' />
           </div>
-          <p className='text-2xl font-bold'>لا توجد محادثات بعد</p>
+          <p className='text-2xl font-bold'>{t('messages.empty')}</p>
           <p className='max-w-xs text-light-secondary dark:text-dark-secondary'>
-            ابدأ محادثة جديدة مع الأشخاص الذين تتابعهم وستظهر هنا.
+            {t('messages.emptyHint')}
           </p>
           <button
             type='button'
@@ -199,7 +201,7 @@ export default function Messages(): JSX.Element {
             className='rounded-full bg-main-accent px-6 py-2.5 font-bold text-main-accent-contrast
                        transition hover:brightness-90 active:brightness-75'
           >
-            رسالة جديدة
+            {t('messages.new')}
           </button>
         </div>
       )}

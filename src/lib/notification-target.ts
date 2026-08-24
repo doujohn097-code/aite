@@ -1,3 +1,4 @@
+import { translate } from './i18n';
 import type { Notification } from './types/notification';
 
 export type NotificationContext = 'post' | 'reel' | 'story';
@@ -46,31 +47,31 @@ export function notificationHref(
 }
 
 export function notificationCopy(
-  notification: Pick<Notification, 'type' | 'context' | 'storyId' | 'tweetId'>
+  notification: Pick<Notification, 'type' | 'context' | 'storyId' | 'tweetId'>,
+  t?: (key: import('./i18n').MessageKey) => string
 ): string {
+  const text = t ?? ((key) => translate('ar', key));
   const context = resolveNotificationContext(notification);
 
   switch (notification.type) {
     case 'follow':
-      return 'بدأ بمتابعتك';
+      return text('notif.follow');
     case 'like':
-      return context === 'reel' ? 'تفاعل مع الريلز الخاص بك' : 'أعجب بمنشورك';
+      return context === 'reel' ? text('notif.likeReel') : text('notif.likePost');
     case 'retweet':
-      return 'أعاد نشر منشورك';
+      return text('notif.retweet');
     case 'reply':
-      return context === 'reel'
-        ? 'علّق على الريلز الخاص بك'
-        : 'علّق على منشورك';
+      return context === 'reel' ? text('notif.replyReel') : text('notif.replyPost');
     case 'storyLike':
-      return context === 'reel' ? 'تفاعل مع الريلز الخاص بك' : 'أعجب بقصتك';
+      return context === 'reel' ? text('notif.likeReel') : text('notif.storyLike');
     case 'mention':
       return context === 'reel'
-        ? 'أشار إليك في ريلز'
+        ? text('notif.mentionReel')
         : context === 'story'
-        ? 'أشار إليك في قصة'
-        : 'أشار إليك في منشور';
+        ? text('notif.mentionStory')
+        : text('notif.mentionPost');
     default:
-      return 'تفاعل معك';
+      return text('notif.generic');
   }
 }
 

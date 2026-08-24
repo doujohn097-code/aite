@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { limit, query, where, orderBy, documentId } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useCollection } from '@lib/hooks/useCollection';
 import { usersCollection } from '@lib/firebase/collections';
 import { UserCard } from '@components/user/user-card';
@@ -10,6 +11,7 @@ import { variants } from './aside-trends';
 
 export function Suggestions(): JSX.Element {
   const { randomSeed } = useAuth();
+  const { t } = useLanguage();
 
   const { data: suggestionsData, loading: suggestionsLoading } = useCollection(
     query(
@@ -27,7 +29,7 @@ export function Suggestions(): JSX.Element {
         <UserFeedSkeleton count={3} />
       ) : (
         <motion.div className='inner:px-4 inner:py-3' {...variants}>
-          <h2 className='text-xl font-bold'>اقتراحات المتابعة</h2>
+          <h2 className='text-xl font-bold'>{t('search.suggest')}</h2>
           {suggestionsData?.map((userData) => (
             <UserCard {...userData} key={userData.id} />
           ))}

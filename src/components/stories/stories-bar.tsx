@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { query, where, Timestamp } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { usersCollection } from '@lib/firebase/collections';
 import { useCollection } from '@lib/hooks/useCollection';
 import { getTimestampMillis } from '@lib/date';
@@ -14,6 +15,7 @@ const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 export function StoriesBar(): JSX.Element {
   const { user: currentUser } = useAuth();
+  const { t } = useLanguage();
   const { push } = useRouter();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -69,7 +71,7 @@ export function StoriesBar(): JSX.Element {
             >
               <span className='text-2xl leading-none'>+</span>
             </button>
-            <span className='max-w-[4rem] truncate text-xs'>قصتك</span>
+            <span className='max-w-[4rem] truncate text-xs'>{t('stories.yours')}</span>
           </div>
         )}
 

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import cn from 'clsx';
 import { useRouter } from 'next/router';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useWindow } from '@lib/context/window-context';
 import { useModal } from '@lib/hooks/useModal';
 import { useUnreadMessagesCount } from '@lib/hooks/useUnreadMessagesCount';
@@ -21,33 +22,25 @@ export type NavLink = {
   canBeHidden?: boolean;
 };
 
-const navLinks: Readonly<NavLink[]> = [
-  {
-    href: '/home',
-    linkName: 'الرئيسية',
-    iconName: 'HomeIcon'
-  },
-  {
-    href: '/reels',
-    linkName: 'الريلز',
-    iconName: 'FilmIcon'
-  },
-  {
-    href: '/messages',
-    linkName: 'الرسائل',
-    iconName: 'EnvelopeIcon'
-  },
-  {
-    href: '/search',
-    linkName: 'الأشخاص',
-    iconName: 'UserGroupIcon'
-  }
+const navLinkDefs: Readonly<
+  { href: string; nameKey: 'nav.home' | 'nav.reels' | 'nav.messages' | 'nav.people'; iconName: IconName }[]
+> = [
+  { href: '/home', nameKey: 'nav.home', iconName: 'HomeIcon' },
+  { href: '/reels', nameKey: 'nav.reels', iconName: 'FilmIcon' },
+  { href: '/messages', nameKey: 'nav.messages', iconName: 'EnvelopeIcon' },
+  { href: '/search', nameKey: 'nav.people', iconName: 'UserGroupIcon' }
 ];
 
 export function Sidebar(): JSX.Element {
   const { user } = useAuth();
+  const { t, isRtl } = useLanguage();
   const { isMobile } = useWindow();
   const { asPath } = useRouter();
+  const navLinks: Readonly<NavLink[]> = navLinkDefs.map((link) => ({
+    href: link.href,
+    linkName: t(link.nameKey),
+    iconName: link.iconName
+  }));
 
   const { open, openModal, closeModal } = useModal();
   const unreadMessages = useUnreadMessagesCount();
@@ -89,7 +82,7 @@ export function Sidebar(): JSX.Element {
                   e.preventDefault();
                   window.location.replace('/home');
                 }}
-                title='الرئيسية + تحديث'
+                title={t('nav.homeRefresh')}
                 className='custom-button main-tab cursor-pointer transition hover:bg-light-primary/10 focus-visible:!ring-main-accent/80 dark:hover:bg-dark-primary/10'
               >
                 <CustomIcon className='h-8 w-8' iconName='AiteIcon' />
@@ -110,15 +103,17 @@ export function Sidebar(): JSX.Element {
             <SidebarLink
               href={`/user/${username}`}
               username={username}
-              linkName='الملف الشخصي'
+              linkName={t('nav.profile')}
               iconName='UserIcon'
             />
           </nav>
           {!isReels && !isMessages && (
             <Button
-              className='accent-tab absolute right-4 -translate-y-[72px] bg-main-accent text-lg font-bold text-main-accent-contrast
+              className={`accent-tab absolute -translate-y-[72px] bg-main-accent text-lg font-bold text-main-accent-contrast
                          outline-none transition hover:brightness-90 active:brightness-75 xs:static xs:translate-y-0
-                         xs:hover:bg-main-accent/90 xs:active:bg-main-accent/75 xl:w-11/12'
+                         xs:hover:bg-main-accent/90 xs:active:bg-main-accent/75 xl:w-11/12 ${
+                           isRtl ? 'right-4' : 'left-4'
+                         }`}
               onClick={openModal}
             >
               <CustomIcon

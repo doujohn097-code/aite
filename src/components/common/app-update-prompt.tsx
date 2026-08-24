@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useLanguage } from '@lib/context/language-context';
 import {
   canInstallNativeUpdate,
   dismissUpdate,
@@ -89,6 +90,7 @@ function saveBlob(blob: Blob, filename: string): void {
 
 export function AppUpdatePrompt(): JSX.Element | null {
   const router = useRouter();
+  const { t } = useLanguage();
   const [update, setUpdate] = useState<AppUpdate | null>(null);
   const [nativeInfo, setNativeInfo] = useState(() => getNativeAppInfo());
   const [waitForNative, setWaitForNative] = useState(() =>
@@ -222,10 +224,14 @@ export function AppUpdatePrompt(): JSX.Element | null {
             <HeroIcon className='h-6 w-6' iconName='ArrowDownTrayIcon' />
           </span>
           <div className='min-w-0'>
-            <p className='text-lg font-black'>{update.title || 'تحديث جديد'}</p>
+            <p className='text-lg font-black'>
+              {update.title || t('update.title')}
+            </p>
             <p className='mt-1 text-xs font-bold text-main-accent-text'>
-              الإصدار {update.versionName}
-              {nativeInfo ? ` · المثبت ${nativeInfo.versionName}` : ''}
+              {t('update.version', { name: update.versionName })}
+              {nativeInfo
+                ? ` · ${t('update.installed', { name: nativeInfo.versionName })}`
+                : ''}
             </p>
           </div>
         </div>
@@ -237,7 +243,7 @@ export function AppUpdatePrompt(): JSX.Element | null {
         {downloading && (
           <div className='px-5 pt-4'>
             <div className='flex items-center justify-between text-xs font-bold text-main-accent-text'>
-              <span>{progressLabel || 'جارٍ التنزيل…'}</span>
+              <span>{progressLabel || t('update.downloading')}</span>
               <span>{indeterminate ? '…' : `${percent}%`}</span>
             </div>
             <div className='mt-2 h-2.5 overflow-hidden rounded-full bg-light-line-reply dark:bg-dark-line-reply'>
@@ -251,8 +257,7 @@ export function AppUpdatePrompt(): JSX.Element | null {
               />
             </div>
             <p className='mt-2 text-xs leading-relaxed text-light-secondary dark:text-dark-secondary'>
-              ابقَ في هذه الشاشة حتى يكتمل التنزيل. لا تضغط رجوع ولا تغلق
-              التطبيق.
+              {t('update.stay')}
             </p>
           </div>
         )}
@@ -270,18 +275,18 @@ export function AppUpdatePrompt(): JSX.Element | null {
           >
             {downloading
               ? progress?.status === 'done'
-                ? 'أكمل التثبيت'
-                : 'جارٍ التنزيل…'
+                ? t('update.finish')
+                : t('update.downloading')
               : native && hasApk
-              ? 'تثبيت التحديث'
-              : 'تحديث الآن'}
+              ? t('update.install')
+              : t('update.now')}
           </Button>
           {hasApk && !native && !downloading && (
             <a
               href={update.apkUrl ?? undefined}
               className='flex w-full items-center justify-center rounded-full border border-light-border py-3 text-sm font-bold dark:border-dark-border'
             >
-              تحميل تطبيق أندرويد
+              {t('update.apk')}
             </a>
           )}
           {!update.force && !downloading && (
@@ -292,7 +297,7 @@ export function AppUpdatePrompt(): JSX.Element | null {
                 setHidden(true);
               }}
             >
-              لاحقاً
+              {t('common.later')}
             </Button>
           )}
         </div>

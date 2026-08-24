@@ -1,3 +1,5 @@
+import { intlLocale, translate } from '@lib/i18n';
+import { getActiveLocale } from '@lib/i18n/locale-store';
 import type { Timestamp } from 'firebase/firestore';
 
 type Units = Readonly<Partial<Record<Intl.RelativeTimeFormatUnit, number>>>;
@@ -44,14 +46,25 @@ export function formatDate(
 }
 
 export function formatNumber(number: number): string {
-  return new Intl.NumberFormat('ar', {
+  return new Intl.NumberFormat(intlLocale(getActiveLocale()), {
     notation: number > 10_000 ? 'compact' : 'standard',
     maximumFractionDigits: 1
   }).format(number);
 }
 
+function loc(): ReturnType<typeof intlLocale> {
+  return intlLocale(getActiveLocale());
+}
+
+function tDate(
+  key: 'date.justNow' | 'date.todayAt' | 'date.yesterdayAt' | 'date.min' | 'date.hour' | 'date.day',
+  params?: Record<string, string | number>
+): string {
+  return translate(getActiveLocale(), key, params);
+}
+
 function getFullTime(date: Date): string {
-  return new Intl.DateTimeFormat('ar', {
+  return new Intl.DateTimeFormat(loc(), {
     hour: 'numeric',
     minute: 'numeric',
     day: 'numeric',
@@ -63,12 +76,12 @@ function getFullTime(date: Date): string {
 function getPostTime(date: Date): string {
   if (isToday(date)) return getRelativeTime(date);
   if (isYesterday(date))
-    return new Intl.DateTimeFormat('ar', {
+    return new Intl.DateTimeFormat(loc(), {
       day: 'numeric',
       month: 'short'
     }).format(date);
 
-  return new Intl.DateTimeFormat('ar', {
+  return new Intl.DateTimeFormat(loc(), {
     day: 'numeric',
     month: 'short',
     year: isCurrentYear(date) ? undefined : 'numeric'
@@ -76,44 +89,39 @@ function getPostTime(date: Date): string {
 }
 
 function getJoinedTime(date: Date): string {
-  return new Intl.DateTimeFormat('ar', {
+  return new Intl.DateTimeFormat(loc(), {
     month: 'long',
     year: 'numeric'
   }).format(date);
 }
 
 function getShortTime(date: Date): string {
-  const isNear = isToday(date)
-    ? 'today'
-    : isYesterday(date)
-    ? 'yesterday'
-    : null;
-
-  const time = new Intl.DateTimeFormat('ar', {
+  const time = new Intl.DateTimeFormat(loc(), {
     hour: 'numeric',
     minute: 'numeric'
   }).format(date);
 
-  return isNear
-    ? `${isNear === 'today' ? 'اليوم' : 'أمس'} في ${time}`
-    : getFullTime(date);
+  if (isToday(date)) return tDate('date.todayAt', { time });
+  if (isYesterday(date)) return tDate('date.yesterdayAt', { time });
+  return getFullTime(date);
 }
 
 function getRelativeTime(date: Date): string {
   const elapsed = +new Date() - +date;
 
-  if (elapsed < 60_000) return 'الآن';
+  if (elapsed < 60_000) return tDate('date.justNow');
 
   const unitsItems = Object.entries(UNITS) as [keyof Units, number][];
 
   for (const [unit, millis] of unitsItems)
     if (elapsed >= millis) {
       const value = Math.round(elapsed / millis);
-      const suffix = unit === 'day' ? 'ي' : unit === 'hour' ? 'س' : 'د';
-      return `${value}${suffix}`;
+      if (unit === 'day') return tDate('date.day', { n: value });
+      if (unit === 'hour') return tDate('date.hour', { n: value });
+      return tDate('date.min', { n: value });
     }
 
-  return 'الآن';
+  return tDate('date.justNow');
 }
 
 function isToday(date: Date): boolean {

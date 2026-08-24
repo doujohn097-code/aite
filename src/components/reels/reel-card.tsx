@@ -35,6 +35,8 @@ import {
   type EditContentSave
 } from '@components/modal/edit-content-modal';
 import { formatNumber } from '@lib/date';
+import { copyText } from '@lib/copy-text';
+import { useLanguage } from '@lib/context/language-context';
 import { preventBubbling, visibleProfileName, visibleUsername } from '@lib/utils';
 import { UserAvatar } from '@components/user/user-avatar';
 import { Skeleton } from '@components/ui/skeleton';
@@ -75,6 +77,7 @@ export function ReelCard({
   isActive = true
 }: ReelCardProps): JSX.Element {
   const { user: authUser } = useAuth();
+  const { t, isRtl } = useLanguage();
   const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -618,7 +621,11 @@ export function ReelCard({
       {/* LEFT SIDE: Interaction Action Rail (Likes, Comments, Share, Menu, Audio) */}
       {/* Strictly pinned to the PHYSICAL LEFT                                      */}
       {/* ========================================================================= */}
-      <div className='absolute bottom-20 left-4 z-20 flex flex-col items-center gap-5 text-white xs:bottom-16 sm:bottom-14'>
+      <div
+        className={`absolute bottom-20 z-20 flex flex-col items-center gap-5 text-white xs:bottom-16 sm:bottom-14 ${
+          isRtl ? 'left-4' : 'right-4'
+        }`}
+      >
         {/* Like Button */}
         <div className='flex flex-col items-center gap-1.5'>
           <button
@@ -800,8 +807,10 @@ export function ReelCard({
       {/* Strictly pinned to the PHYSICAL RIGHT                                     */}
       {/* ========================================================================= */}
       <div
-        dir='rtl'
-        className='absolute bottom-8 right-4 z-20 flex max-w-[65%] flex-col items-start gap-2 text-right text-white'
+        dir={isRtl ? 'rtl' : 'ltr'}
+        className={`absolute bottom-8 z-20 flex max-w-[65%] flex-col items-start gap-2 text-white ${
+          isRtl ? 'right-4 text-right' : 'left-4 text-left'
+        }`}
       >
         {/* User profile row with verified badge */}
         {visibleUsername(user.username) ? (
@@ -922,7 +931,7 @@ export function ReelCard({
                   className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
                   iconName='PencilSquareIcon'
                 />
-                <span>تعديل الريل</span>
+                <span>{t('reels.edit')}</span>
               </button>
               <button
                 type='button'
@@ -936,7 +945,7 @@ export function ReelCard({
                   className='h-5 w-5 text-accent-red'
                   iconName='TrashIcon'
                 />
-                <span>حذف الريل</span>
+                <span>{t('reels.delete')}</span>
               </button>
             </>
           )}
@@ -949,8 +958,28 @@ export function ReelCard({
               className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
               iconName='LinkIcon'
             />
-            <span>نسخ الرابط</span>
+            <span>{t('reels.copyLink')}</span>
           </button>
+          {!!captionText.trim() && (
+            <button
+              type='button'
+              onClick={() => {
+                closeMenu();
+                void copyText(captionText).then((ok) =>
+                  toast[ok ? 'success' : 'error'](
+                    ok ? t('common.copied') : t('common.copyFailed')
+                  )
+                );
+              }}
+              className='active:scale-98 flex w-full items-center gap-3 rounded-2xl p-3 text-sm font-bold text-light-primary transition hover:bg-light-primary/10 dark:text-dark-primary dark:hover:bg-dark-primary/10'
+            >
+              <HeroIcon
+                className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
+                iconName='ClipboardDocumentIcon'
+              />
+              <span>{t('reels.copyCaption')}</span>
+            </button>
+          )}
           <button
             type='button'
             onClick={handleShare}
@@ -960,7 +989,7 @@ export function ReelCard({
               className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
               iconName='ShareIcon'
             />
-            <span>مشاركة الريل</span>
+            <span>{t('reels.share')}</span>
           </button>
         </div>
       </Modal>
@@ -968,7 +997,7 @@ export function ReelCard({
       <EditContentModal
         open={editOpen}
         closeModal={closeEdit}
-        title='تعديل الريل'
+        title={t('reels.edit')}
         initialText={reel.caption ?? ''}
         initialImages={reel.images}
         mediaKind='video'
@@ -985,9 +1014,9 @@ export function ReelCard({
       >
         <div onClick={preventBubbling()}>
           <ActionModal
-            title='حذف الريل؟'
-            description='لن يمكن التراجع عن حذف هذا الريل بعد تأكيد الحذف.'
-            mainBtnLabel='حذف نهائي'
+            title={t('reels.deleteTitle')}
+            description={t('reels.deleteBody')}
+            mainBtnLabel={t('reels.deleteFinal')}
             mainBtnClassName='bg-accent-red hover:bg-accent-red/90 active:bg-accent-red/75'
             secondaryBtnLabel='إلغاء'
             action={confirmDelete}

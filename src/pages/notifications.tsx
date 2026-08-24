@@ -9,6 +9,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { db } from '@lib/firebase/app';
 import { notificationsCollection } from '@lib/firebase/collections';
 import { ProtectedLayout } from '@components/layout/common-layout';
@@ -25,6 +26,7 @@ import type { Notification } from '@lib/types/notification';
 
 export default function Notifications(): JSX.Element {
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const [notifications, setNotifications] = useState<Notification[] | null>(
     null
@@ -94,8 +96,8 @@ export default function Notifications(): JSX.Element {
 
   return (
     <MainContainer>
-      <SEO title='الإشعارات / Aite' />
-      <MainHeader title='الإشعارات' />
+      <SEO title={t('notif.title')} />
+      <MainHeader title={t('notif.heading')} />
       {notifications === null ? (
         <NotificationFeedSkeleton />
       ) : notifications.length ? (
@@ -112,9 +114,9 @@ export default function Notifications(): JSX.Element {
           <div className='flex h-20 w-20 items-center justify-center rounded-full bg-main-accent/10 text-main-accent-text'>
             <HeroIcon className='h-10 w-10' iconName='BellIcon' />
           </div>
-          <p className='text-2xl font-bold'>لا توجد إشعارات</p>
+          <p className='text-2xl font-bold'>{t('notif.empty')}</p>
           <p className='max-w-xs text-light-secondary dark:text-dark-secondary'>
-            عندما يتفاعل أحدهم مع منشوراتك أو يتابعك، ستظهر التنبيهات هنا.
+            {t('notif.emptyHint')}
           </p>
         </div>
       )}

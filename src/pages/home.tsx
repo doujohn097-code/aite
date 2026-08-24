@@ -1,5 +1,6 @@
 import { where, orderBy } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useWindow } from '@lib/context/window-context';
 import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 import { useRankedFeed } from '@lib/hooks/useRankedFeed';
@@ -36,6 +37,7 @@ function mapTweet(tweet: TweetWithUser): RankableItem {
 export default function Home(): JSX.Element {
   const { isMobile } = useWindow();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const { data, loading, LoadMore } = useInfiniteScroll(
     tweetsCollection,
@@ -53,7 +55,7 @@ export default function Home(): JSX.Element {
 
   return (
     <MainContainer>
-      <SEO title='الرئيسية / Aite' />
+      <SEO title={t('home.title')} />
       <MainHeader
         useMobileSidebar
         logo='/assets/home-logo.png'
@@ -68,16 +70,16 @@ export default function Home(): JSX.Element {
         {loading && !data ? (
           <TweetFeedSkeleton />
         ) : !data ? (
-          <Error message='حدث خطأ ما. حاول إعادة التحميل.' />
+          <Error message={t('common.error')} />
         ) : !ranked.length ? (
           <div className='flex flex-col items-center gap-3 px-6 py-16 text-center'>
             <HeroIcon
               className='h-10 w-10 text-light-secondary dark:text-dark-secondary'
               iconName='SparklesIcon'
             />
-            <p className='font-bold'>لا توجد منشورات بعد</p>
+            <p className='font-bold'>{t('home.empty')}</p>
             <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-              كن أول من ينشر.
+              {t('home.emptyHint')}
             </p>
           </div>
         ) : (

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useDocument } from '@lib/hooks/useDocument';
 import {
   usersCollection,
@@ -56,6 +57,7 @@ export function NotificationCard({
   notification: Notification;
 }): JSX.Element {
   const { user: currentUser } = useAuth();
+  const { t } = useLanguage();
 
   const fromUserRef = notification.fromUserId
     ? doc(usersCollection, notification.fromUserId)
@@ -121,18 +123,18 @@ export function NotificationCard({
             )}
             <span className='text-light-secondary dark:text-dark-secondary'>
               {' '}
-              {notificationCopy(notification)}
+              {notificationCopy(notification, t)}
             </span>
           </p>
           <div className='mt-0.5 flex flex-wrap items-center gap-2'>
             {context === 'reel' && (
               <span className='rounded-full bg-main-accent/15 px-2 py-0.5 text-[10px] font-bold text-main-accent-text'>
-                ريلز
+                {t('notif.badgeReels')}
               </span>
             )}
             {context === 'story' && (
               <span className='rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-300'>
-                قصة
+                {t('notif.badgeStory')}
               </span>
             )}
             {notification.createdAt && (

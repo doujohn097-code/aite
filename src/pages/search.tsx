@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { query, where, orderBy, limit, documentId } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useCollection } from '@lib/hooks/useCollection';
 import { usersCollection } from '@lib/firebase/collections';
 import { ProtectedLayout } from '@components/layout/common-layout';
@@ -16,6 +17,7 @@ import type { ReactElement, ReactNode } from 'react';
 export default function Search(): JSX.Element {
   const { push, query: routerQuery } = useRouter();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const userId = user?.id;
 
   const [inputValue, setInputValue] = useState('');
@@ -70,9 +72,13 @@ export default function Search(): JSX.Element {
   return (
     <MainContainer>
       <SEO
-        title={isSearching ? `بحث: ${trimmedQuery} / Aite` : 'الأشخاص / Aite'}
+        title={
+          isSearching
+            ? t('search.seo', { q: trimmedQuery })
+            : t('search.title')
+        }
       />
-      <MainHeader title='الأشخاص' />
+      <MainHeader title={t('search.heading')} />
       <form
         onSubmit={handleSubmit}
         className='sticky top-0 z-10 -my-2 border-b border-light-border bg-main-background px-4 py-3 dark:border-dark-border'
@@ -84,7 +90,7 @@ export default function Search(): JSX.Element {
           <input
             className='flex-1 bg-transparent outline-none placeholder:text-light-secondary dark:placeholder:text-dark-secondary'
             type='text'
-            placeholder='البحث عن مستخدم...'
+            placeholder={t('search.placeholder')}
             value={inputValue}
             onChange={({ target: { value } }): void => setInputValue(value)}
           />
@@ -100,12 +106,10 @@ export default function Search(): JSX.Element {
         ) : (
           <div className='p-8 text-center'>
             <p className='text-2xl font-bold'>
-              {isSearching ? 'لا توجد نتائج' : 'لا يوجد مستخدمون'}
+              {isSearching ? t('search.none') : t('search.empty')}
             </p>
             <p className='mt-2 text-light-secondary dark:text-dark-secondary'>
-              {isSearching
-                ? 'جرب كلمة بحث أخرى.'
-                : 'ستظهر اقتراحات المستخدمين هنا.'}
+              {isSearching ? t('search.noneHint') : t('search.emptyHint')}
             </p>
           </div>
         )}

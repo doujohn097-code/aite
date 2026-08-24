@@ -8,6 +8,9 @@ import {
   useMotionValue,
   useTransform
 } from 'framer-motion';
+import { copyText } from '@lib/copy-text';
+import { useLanguage } from '@lib/context/language-context';
+import { toast } from 'react-hot-toast';
 import { TweetAudioPlayer } from '@components/tweet/tweet-audio';
 import { Modal } from '@components/modal/modal';
 import { ImageModal } from '@components/modal/image-modal';
@@ -115,6 +118,7 @@ export function MessageBubble({
   onDelete,
   onEdit
 }: MessageBubbleProps): JSX.Element {
+  const { t } = useLanguage();
   const {
     type,
     text,
@@ -463,6 +467,28 @@ export function MessageBubble({
                     ))}
                   </div>
                   {/* رد — بأسلوب عناصر قائمة المنشور */}
+                  {!!text?.trim() && !isDeleted && (
+                    <button
+                      className='accent-tab flex w-full items-center gap-3 border-t border-light-border/60 p-3
+                           text-light-primary hover:bg-main-sidebar-background dark:border-dark-border/60
+                           dark:text-dark-primary'
+                      onClick={() => {
+                        setPickerOpen(false);
+                        void copyText(text).then((ok) =>
+                          toast[ok ? 'success' : 'error'](
+                            ok ? t('common.copied') : t('common.copyFailed')
+                          )
+                        );
+                      }}
+                      type='button'
+                    >
+                      <HeroIcon
+                        className='h-5 w-5'
+                        iconName='ClipboardDocumentIcon'
+                      />
+                      {t('messages.copy')}
+                    </button>
+                  )}
                   {onReply && (
                     <button
                       className='accent-tab flex w-full items-center gap-3 border-t border-light-border/60 p-3
@@ -478,7 +504,7 @@ export function MessageBubble({
                         className='h-5 w-5 rotate-180'
                         iconName='ArrowUturnLeftIcon'
                       />
-                      رد على الرسالة
+                      {t('messages.reply')}
                     </button>
                   )}
                   {/* تعديل الرسالة (نص المرسل فقط) */}
@@ -497,7 +523,7 @@ export function MessageBubble({
                         className='h-5 w-5'
                         iconName='PencilSquareIcon'
                       />
-                      تعديل الرسالة
+                      {t('messages.edit')}
                     </button>
                   )}
                   {/* حذف الرسالة (للمرسل فقط) */}
@@ -512,7 +538,7 @@ export function MessageBubble({
                       type='button'
                     >
                       <HeroIcon className='h-5 w-5' iconName='TrashIcon' />
-                      حذف الرسالة
+                      {t('messages.delete')}
                     </button>
                   )}
                 </motion.div>
@@ -549,14 +575,14 @@ export function MessageBubble({
           {isDeleted ? (
             <div className='flex items-center gap-2 px-1 py-1 text-sm italic opacity-65'>
               <HeroIcon className='h-4 w-4' iconName='NoSymbolIcon' />
-              تم حذف هذه الرسالة
+              {t('messages.deleted')}
             </div>
           ) : (
             <>
               {replyQuote}
 
               {type === 'text' && (
-                <p className='whitespace-pre-wrap break-words'>
+                <p className='selectable-text whitespace-pre-wrap break-words'>
                   {text && (
                     <LinkifiedText
                       text={text}

@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu } from '@headlessui/react';
 import cn from 'clsx';
+import { useLanguage } from '@lib/context/language-context';
 import { useModal } from '@lib/hooks/useModal';
 import { preventBubbling } from '@lib/utils';
 import { Modal } from '@components/modal/modal';
@@ -22,6 +23,7 @@ export const variants: Variants = {
 
 export function MoreSettings(): JSX.Element {
   const { open, openModal, closeModal } = useModal();
+  const { t, isRtl } = useLanguage();
 
   return (
     <>
@@ -48,13 +50,15 @@ export function MoreSettings(): JSX.Element {
                   className='h-7 w-7'
                   iconName='EllipsisHorizontalCircleIcon'
                 />{' '}
-                <p className='hidden xl:block'>المزيد</p>
+                <p className='hidden xl:block'>{t('nav.more')}</p>
               </div>
             </Menu.Button>
             <AnimatePresence>
               {open && (
                 <Menu.Items
-                  className='menu-container absolute -top-44 right-0 w-60 max-w-[90vw] font-medium xl:w-11/12'
+                  className={`menu-container absolute -top-44 w-60 max-w-[90vw] font-medium xl:w-11/12 ${
+                    isRtl ? 'right-0' : 'left-0'
+                  }`}
                   as={motion.div}
                   {...variants}
                   static
@@ -70,7 +74,7 @@ export function MoreSettings(): JSX.Element {
                         onClick={preventBubbling()}
                       >
                         <HeroIcon iconName='Cog8ToothIcon' />
-                        الإعدادات والخصوصية
+                        {t('nav.settings')}
                       </MenuLink>
                     )}
                   </Menu.Item>
@@ -85,7 +89,7 @@ export function MoreSettings(): JSX.Element {
                         onClick={preventBubbling()}
                       >
                         <HeroIcon iconName='QuestionMarkCircleIcon' />
-                        مركز المساعدة
+                        {t('nav.help')}
                       </MenuLink>
                     )}
                   </Menu.Item>
@@ -99,7 +103,7 @@ export function MoreSettings(): JSX.Element {
                         onClick={openModal}
                       >
                         <HeroIcon iconName='PaintBrushIcon' />
-                        العرض
+                        {t('nav.display')}
                       </Button>
                     )}
                   </Menu.Item>

@@ -4,6 +4,7 @@ import { query, where } from 'firebase/firestore';
 import { AnimatePresence } from 'framer-motion';
 import { storiesCollection, usersCollection } from '@lib/firebase/collections';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useRankedFeed } from '@lib/hooks/useRankedFeed';
@@ -41,6 +42,7 @@ function mapReel(reel: Story): RankableItem {
 
 export default function Reels(): JSX.Element {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const deepLinkId =
     typeof router.query.video === 'string' ? router.query.video : null;
@@ -192,7 +194,7 @@ export default function Reels(): JSX.Element {
 
   return (
     <MainLayout>
-      <SEO title='الريلز / Aite' />
+      <SEO title={t('reels.title')} />
       <div className='relative flex h-app-nav w-full items-center justify-center overflow-hidden bg-black xs:h-app'>
         {/* Top Floating Header & Create Button */}
         <div
@@ -204,7 +206,7 @@ export default function Reels(): JSX.Element {
             onClick={() => setCreateOpen(true)}
           >
             <HeroIcon className='h-5 w-5' iconName='PlusIcon' />
-            <span>إنشاء ريل</span>
+            <span>{t('reels.create')}</span>
           </Button>
         </div>
 
@@ -218,9 +220,9 @@ export default function Reels(): JSX.Element {
               <HeroIcon className='h-10 w-10' iconName='FilmIcon' />
             </div>
             <div>
-              <p className='text-2xl font-bold'>لا توجد ريلز بعد</p>
+              <p className='text-2xl font-bold'>{t('reels.empty')}</p>
               <p className='mt-2 text-sm leading-relaxed text-light-secondary dark:text-dark-secondary'>
-                كن أول من يشارك لحظاته المميزة بمقطع فيديو ريل ووصف مميز!
+                {t('reels.emptyHint')}
               </p>
             </div>
             <Button
@@ -228,7 +230,7 @@ export default function Reels(): JSX.Element {
               onClick={() => setCreateOpen(true)}
             >
               <HeroIcon className='h-5 w-5' iconName='PlusIcon' />
-              <span>إنشاء أول ريل الآن</span>
+              <span>{t('reels.createFirst')}</span>
             </Button>
           </div>
         ) : (

@@ -130,6 +130,16 @@
     background-color: rgb(var(--main-background));
   }
 
+  .selectable-text {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  html[dir='ltr'] body {
+    font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI',
+      Roboto, Helvetica, Arial, sans-serif;
+  }
+
   body {
     @apply hover-animation select-none font-aite text-light-primary dark:text-dark-primary;
     background-color: rgb(var(--main-background));

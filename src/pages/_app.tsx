@@ -6,6 +6,7 @@ import { Capacitor } from '@capacitor/core';
 import { AuthContextProvider } from '@lib/context/auth-context';
 import { useViewportFix } from '@lib/hooks/useViewportFix';
 import { isSafeInternalPath } from '@lib/utils';
+import { LanguageProvider } from '@lib/context/language-context';
 import { ThemeContextProvider } from '@lib/context/theme-context';
 import { AppHead } from '@components/common/app-head';
 import { SplashScreen } from '@components/common/splash-screen';
@@ -128,14 +129,16 @@ export default function App({
     <>
       <AppHead />
       <SplashScreen isVisible={showSplash} />
-      <AuthContextProvider>
-        <ThemeContextProvider>
-          <ThemeBackground />
-          <AppUpdatePrompt />
-          <GlobalPullToRefresh />
-          {getLayout(<Component {...pageProps} />)}
-        </ThemeContextProvider>
-      </AuthContextProvider>
+      <LanguageProvider>
+        <AuthContextProvider>
+          <ThemeContextProvider>
+            <ThemeBackground />
+            <AppUpdatePrompt />
+            <GlobalPullToRefresh />
+            {getLayout(<Component {...pageProps} />)}
+          </ThemeContextProvider>
+        </AuthContextProvider>
+      </LanguageProvider>
     </>
   );
 }
