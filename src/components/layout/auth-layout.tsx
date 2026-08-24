@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@lib/context/auth-context';
+import { isSafeInternalPath } from '@lib/utils';
 import { Placeholder } from '@components/common/placeholder';
 import type { LayoutProps } from './common-layout';
 
@@ -15,10 +16,9 @@ export function AuthLayout({ children }: LayoutProps): JSX.Element {
       ? query.redirect[0]
       : query.redirect;
 
-    const target =
-      typeof redirect === 'string' && redirect.startsWith('/')
-        ? decodeURIComponent(redirect)
-        : '/home';
+    const target = isSafeInternalPath(redirect)
+      ? decodeURIComponent(redirect)
+      : '/home';
 
     void replace(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps

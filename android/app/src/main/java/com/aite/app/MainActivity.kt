@@ -135,7 +135,14 @@ class MainActivity : BridgeActivity() {
         error: WebResourceError
       ) {
         if (request.isForMainFrame && (!hasNetwork() || isNetworkError(error.errorCode))) {
-          launchOffline()
+          view.stopLoading()
+          if (view.canGoBack()) {
+            view.goBack()
+            dispatchConnectivityEvent("offline")
+          } else {
+            // شاشة عدم الاتصال تُستخدم فقط عند التشغيل البارد بلا صفحة حية.
+            launchOffline()
+          }
           return
         }
         super.onReceivedError(view, request, error)
@@ -147,7 +154,13 @@ class MainActivity : BridgeActivity() {
         errorResponse: WebResourceResponse
       ) {
         if (request.isForMainFrame && !hasNetwork()) {
-          launchOffline()
+          view.stopLoading()
+          if (view.canGoBack()) {
+            view.goBack()
+            dispatchConnectivityEvent("offline")
+          } else {
+            launchOffline()
+          }
           return
         }
         super.onReceivedHttpError(view, request, errorResponse)
@@ -266,16 +279,30 @@ class MainActivity : BridgeActivity() {
       .build()
 
     networkCallback = object : ConnectivityManager.NetworkCallback() {
+      override fun onAvailable(network: Network) {
+        dispatchConnectivityEvent("online")
+      }
+
       override fun onLost(network: Network) {
-        runOnUiThread {
-          if (!hasNetwork()) launchOffline()
-        }
+        // لا نهدم Activity أو WebView عند تبديل الشبكة أو وضع التطبيق في
+        // الخلفية؛ نبقي الصفحة والتمرير والمسودات في الذاكرة كما هي.
+        if (!hasNetwork()) dispatchConnectivityEvent("offline")
       }
     }
 
     try {
       connectivityManager.registerNetworkCallback(request, networkCallback!!)
     } catch (_: Exception) {
+    }
+  }
+
+  private fun dispatchConnectivityEvent(eventName: String) {
+    val webView = bridge?.webView ?: return
+    webView.post {
+      webView.evaluateJavascript(
+        "window.dispatchEvent(new Event('$eventName'));",
+        null
+      )
     }
   }
 

@@ -103,11 +103,10 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
       if (!currentUser) throw new Error('انتهت الجلسة');
       await updatePassword(currentUser, newPassword);
 
-      // تحديث الحساب المحفوظ محليًا للتبديل السريع
+      // نحدّث بيانات العرض فقط؛ كلمات المرور لا تُخزن محليًا.
       try {
         saveAccount({
           username,
-          password: newPassword,
           name: name ?? username,
           photoURL: photoURL ?? null
         });

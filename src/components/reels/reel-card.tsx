@@ -36,6 +36,7 @@ import { UserAvatar } from '@components/user/user-avatar';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
+import { LinkifiedText } from '@components/ui/linkified-text';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { useShareToChat } from '@components/messages/share-to-chat';
@@ -823,7 +824,10 @@ export function ReelCard({
                 !isExpandedCaption && isLongCaption && 'line-clamp-2'
               )}
             >
-              {captionText}
+              <LinkifiedText
+                text={captionText}
+                linkClassName='font-semibold text-white underline decoration-white/70 underline-offset-2'
+              />
             </p>
             {isLongCaption && (
               <button

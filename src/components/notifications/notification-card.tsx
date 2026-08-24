@@ -19,7 +19,8 @@ const notificationText: Record<Notification['type'], (name: string) => string> =
     retweet: () => 'أعاد نشر منشورك',
     follow: () => 'بدأ بمتابعتك',
     reply: () => 'رد على منشورك',
-    storyLike: () => 'أعجب بقصتك'
+    storyLike: () => 'أعجب بقصتك',
+    mention: () => 'أشار إليك في محتوى'
   };
 
 const typeStyles: Record<
@@ -45,6 +46,10 @@ const typeStyles: Record<
   reply: {
     icon: 'ChatBubbleOvalLeftIcon',
     classes: 'bg-sky-500/50 text-sky-100 backdrop-blur-md'
+  },
+  mention: {
+    icon: 'AtSymbolIcon',
+    classes: 'bg-violet-500/50 text-violet-100 backdrop-blur-md'
   }
 };
 
@@ -70,6 +75,10 @@ export function NotificationCard({
   const href =
     notification.type === 'follow'
       ? `/user/${username}`
+      : notification.type === 'mention' && notification.storyId
+      ? notification.storyUserId
+        ? `/stories/${notification.storyUserId}?storyId=${notification.storyId}`
+        : `/reels?video=${notification.storyId}`
       : notification.type === 'storyLike' && notification.storyUserId
       ? `/stories/${notification.storyUserId}?storyId=${
           notification.storyId ?? ''

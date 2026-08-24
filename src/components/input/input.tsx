@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useId } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
 import { toast } from 'react-hot-toast';
-import { addDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { addDoc, serverTimestamp } from 'firebase/firestore';
 import { tweetsCollection } from '@lib/firebase/collections';
 import {
   manageReply,
@@ -16,6 +16,7 @@ import { useAuth } from '@lib/context/auth-context';
 
 import { getImagesData } from '@lib/validation';
 import { getAudioWaveform } from '@lib/audio';
+import { notifyMentions } from '@lib/mentions';
 import { formatFileSize, MAX_AUDIO_UPLOAD_BYTES } from '@lib/media-limits';
 import { UserAvatar } from '@components/user/user-avatar';
 import { InputForm, fromTop } from './input-form';
@@ -147,16 +148,18 @@ export function Input({
         userRetweets: []
       };
 
-      const [tweetRef] = await Promise.all([
-        addDoc(tweetsCollection, tweetData),
+      const tweetRef = await addDoc(tweetsCollection, tweetData);
+      await Promise.all([
         isReplying
           ? manageTotalReplies('increment', userId)
           : manageTotalTweets('increment', userId),
         tweetData.images && manageTotalPhotos('increment', userId),
-        isReplying && manageReply('increment', parent?.id as string)
+        isReplying &&
+          manageReply('increment', parent?.id as string, tweetRef.id),
+        notifyMentions('post', tweetRef.id)
       ]);
 
-      const { id: tweetId } = await getDoc(tweetRef);
+      const tweetId = tweetRef.id;
 
       if (!modal && !replyModal) discardTweet();
 

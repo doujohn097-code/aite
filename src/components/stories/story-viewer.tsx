@@ -15,6 +15,7 @@ import { viewStory, likeStory, deleteStory } from '@lib/firebase/utils';
 import { UserAvatar } from '@components/user/user-avatar';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
+import { LinkifiedText } from '@components/ui/linkified-text';
 import { Loading } from '@components/ui/loading';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
@@ -578,7 +579,10 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
               ))}
               {currentStory.caption && (
                 <div className='absolute bottom-24 left-4 right-4 rounded-xl bg-black/50 p-3 text-center text-white backdrop-blur-sm'>
-                  {currentStory.caption}
+                  <LinkifiedText
+                    text={currentStory.caption}
+                    linkClassName='font-semibold text-white underline decoration-white/70 underline-offset-2'
+                  />
                 </div>
               )}
               {currentStory.music?.name && (

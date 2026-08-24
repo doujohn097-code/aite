@@ -7,7 +7,8 @@ import {
   usernameToInternalEmail,
   internalEmailToUsername,
   isPlaceholderProfileName,
-  isPlaceholderUsername
+  isPlaceholderUsername,
+  isSafeInternalPath
 } from '../utils';
 
 describe('preventBubbling', () => {
@@ -165,5 +166,17 @@ describe('placeholder profile detection', () => {
     expect(isPlaceholderUsername('مستخدم125')).toBe(true);
     expect(isPlaceholderUsername('user_8721')).toBe(true);
     expect(isPlaceholderUsername('salem_125')).toBe(false);
+  });
+});
+
+describe('safe internal redirects', () => {
+  it('allows normal application routes', () => {
+    expect(isSafeInternalPath('/messages/abc?from=home')).toBe(true);
+  });
+
+  it('blocks protocol-relative, encoded, and backslash redirects', () => {
+    expect(isSafeInternalPath('//evil.example')).toBe(false);
+    expect(isSafeInternalPath('/%2Fevil.example')).toBe(false);
+    expect(isSafeInternalPath('/\\evil.example')).toBe(false);
   });
 });

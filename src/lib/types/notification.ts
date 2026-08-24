@@ -5,7 +5,8 @@ export type NotificationType =
   | 'retweet'
   | 'follow'
   | 'reply'
-  | 'storyLike';
+  | 'storyLike'
+  | 'mention';
 
 export type Notification = {
   id: string;

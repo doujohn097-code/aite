@@ -11,6 +11,7 @@ import {
   saveAccount
 } from '@lib/accounts';
 import { usersCollection } from '@lib/firebase/collections';
+import { isSafeInternalPath } from '@lib/utils';
 import { SEO } from '@components/common/seo';
 import { AiteLogo } from '@components/ui/aite-logo';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -20,7 +21,7 @@ import { Loading } from '@components/ui/loading';
 import type { SavedAccount } from '@lib/accounts';
 
 export default function Accounts(): JSX.Element {
-  const { user, loading: authLoading, signInWithUsername } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const [accounts, setAccounts] = useState<SavedAccount[] | null>(null);
@@ -39,10 +40,7 @@ export default function Accounts(): JSX.Element {
   >({});
 
   useEffect(() => {
-    // حسابات Google القديمة لا تملك كلمة مرور — لا يمكن الدخول بها مباشرة فنخفيها
-    const saved = getSavedAccounts().filter(
-      (account) => account.provider !== 'google'
-    );
+    const saved = getSavedAccounts();
 
     setAccounts(saved);
 
@@ -82,7 +80,6 @@ export default function Accounts(): JSX.Element {
           if (local && local.photoURL !== data.photoURL)
             saveAccount({
               username: local.username,
-              password: local.password,
               name: data.name || local.name,
               photoURL: data.photoURL ?? null,
               provider: local.provider
@@ -99,25 +96,22 @@ export default function Accounts(): JSX.Element {
   const getRedirectTarget = (): string => {
     const { redirect } = router.query;
     const target = Array.isArray(redirect) ? redirect[0] : redirect;
-    return typeof target === 'string' && target.startsWith('/')
-      ? decodeURIComponent(target)
-      : '/home';
+    return isSafeInternalPath(target) ? decodeURIComponent(target) : '/home';
   };
 
   const handlePick = async (account: SavedAccount): Promise<void> => {
     if (signingIn) return;
     setSigningIn(account.username);
-    try {
-      // دخول مباشر — Firebase يبدل الجلسة بهدوء دون الخروج المُسبَق (يمنع الغليتش)
-      await signInWithUsername(account.username, account.password);
-      if (typeof window !== 'undefined')
-        window.sessionStorage.removeItem('aite:post-logout');
-      await router.push(getRedirectTarget());
-    } catch {
-      toast.error('تعذر تسجيل الدخول بهذا الحساب — تحقق من كلمة المرور.');
-    } finally {
-      setSigningIn(null);
-    }
+    // لأسباب أمنية لا تُحفظ كلمات المرور على الجهاز. نملأ اسم المستخدم فقط
+    // ويكتب صاحبه كلمة المرور عند تبديل الحساب.
+    await router.push({
+      pathname: '/',
+      query: {
+        manual: '1',
+        username: account.username,
+        redirect: getRedirectTarget()
+      }
+    });
   };
 
   const handleRemove = (username: string): void => {

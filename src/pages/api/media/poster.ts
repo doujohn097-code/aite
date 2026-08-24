@@ -2,6 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { verifyIdToken } from '@lib/firebase-admin';
+import { consumeRateLimit } from '@lib/server/rate-limit';
 import {
   downloadToFile,
   execFfmpeg,
@@ -44,7 +45,13 @@ export default async function posterMediaEndpoint(
   }
 
   try {
-    await verifyIdToken(token);
+    const { uid } = await verifyIdToken(token);
+    const rate = consumeRateLimit(`poster:${uid}`, 12, 60_000);
+    if (!rate.allowed) {
+      res.setHeader('Retry-After', String(rate.retryAfterSeconds));
+      res.status(429).json({ error: 'rate_limited' });
+      return;
+    }
 
     // Already extracted? Serve the cached poster without re-encoding.
     const cacheKey = `poster-${sha256Hex(src).slice(0, 48)}`;
@@ -85,14 +92,11 @@ export default async function posterMediaEndpoint(
         }
       }
       if (!posterOk) {
-        res.status(200).json({
-          src: '',
-          debug: {
-            ffmpegError: lastResult?.error ?? 'output missing',
-            binary: lastResult?.binary,
-            cwd: process.cwd()
-          }
-        });
+        console.error(
+          'media poster failed:',
+          lastResult?.error ?? 'output missing'
+        );
+        res.status(200).json({ src: '' });
         return;
       }
 

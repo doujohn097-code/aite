@@ -61,6 +61,25 @@ export function isPlural(count: number): string {
   return count > 1 ? 's' : '';
 }
 
+export function isSafeInternalPath(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length > 2048) return false;
+  try {
+    const decoded = decodeURIComponent(value);
+    const hasControlCharacter = Array.from(decoded).some((character) => {
+      const code = character.charCodeAt(0);
+      return code < 32 || code === 127;
+    });
+    return (
+      decoded.startsWith('/') &&
+      !decoded.startsWith('//') &&
+      !decoded.includes('\\') &&
+      !hasControlCharacter
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function withoutId<T extends { id: string }>(obj: T): Omit<T, 'id'> {
   const copy = { ...obj };
   delete (copy as Record<string, unknown>).id;

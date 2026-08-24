@@ -13,8 +13,6 @@ import { HeroIcon } from '@components/ui/hero-icon';
 import type { ChangeEvent, FormEvent } from 'react';
 import type { User } from '@lib/types/user';
 
-const ADMIN_KEY_STORAGE = 'aite:admin-key';
-
 export default function Admin(): JSX.Element {
   const { loading: authLoading } = useAuth();
 
@@ -27,12 +25,6 @@ export default function Admin(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [processing, setProcessing] = useState<Record<string, boolean>>({});
-
-  // استعادة الجلسة الإدارية داخل نفس التبويب فقط
-  useEffect(() => {
-    const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE);
-    if (saved) setAdminKey(saved);
-  }, []);
 
   const adminFetch = async (
     url: string,
@@ -103,7 +95,7 @@ export default function Admin(): JSX.Element {
       if (!response.ok)
         throw new Error(data?.error ?? 'تعذر التحقق من كلمة السر');
 
-      sessionStorage.setItem(ADMIN_KEY_STORAGE, password);
+      // يبقى المفتاح في ذاكرة React فقط ولا يُكتب في تخزين المتصفح.
       setAdminKey(password);
       setPassword('');
     } catch (err) {
@@ -114,7 +106,6 @@ export default function Admin(): JSX.Element {
   };
 
   const lock = (): void => {
-    sessionStorage.removeItem(ADMIN_KEY_STORAGE);
     setAdminKey(null);
     setUsers([]);
   };

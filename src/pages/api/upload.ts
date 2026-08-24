@@ -1,5 +1,6 @@
 import { verifyIdToken, isAdminConfigured } from '@lib/firebase-admin';
 import { getUploadUrl, isR2Configured } from '@lib/r2';
+import { consumeRateLimit } from '@lib/server/rate-limit';
 import { inferMediaType, maxUploadBytesForType } from '@lib/media-limits';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -94,6 +95,12 @@ export default async function uploadEndpoint(
 
   try {
     const { uid } = await verifyIdToken(token);
+    const rate = consumeRateLimit(`upload:${uid}`, 30, 60_000);
+    if (!rate.allowed) {
+      res.setHeader('Retry-After', String(rate.retryAfterSeconds));
+      res.status(429).json({ error: 'طلبات رفع كثيرة — حاول بعد قليل' });
+      return;
+    }
     const { files } = req.body as { files?: UploadFile[] };
     if (
       !Array.isArray(files) ||

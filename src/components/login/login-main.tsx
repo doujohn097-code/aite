@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
+import { useRouter } from 'next/router';
 import { useAuth } from '@lib/context/auth-context';
 import { auth } from '@lib/firebase/app';
 import { saveAccount } from '@lib/accounts';
@@ -9,6 +10,7 @@ import { useTheme } from '@lib/context/theme-context';
 import { themesMeta } from '@lib/types/theme';
 
 export function LoginMain(): JSX.Element {
+  const router = useRouter();
   const {
     signInWithUsername,
     signUpWithUsername,
@@ -25,6 +27,14 @@ export function LoginMain(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    const requested = Array.isArray(router.query.username)
+      ? router.query.username[0]
+      : router.query.username;
+    if (typeof requested === 'string' && /^[a-zA-Z0-9_]{3,15}$/.test(requested))
+      setUsername(requested.toLowerCase());
+  }, [router.query.username]);
 
   /**
    * بعض المتصفحات تملأ الحقول تلقائيًا دون إطلاق حدث change،
@@ -109,7 +119,6 @@ export function LoginMain(): JSX.Element {
       try {
         saveAccount({
           username: cleanedUsername,
-          password,
           name:
             (isSignUp ? name.trim() : currentUser?.displayName) ??
             cleanedUsername,

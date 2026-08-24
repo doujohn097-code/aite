@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getDoc, doc, onSnapshot, Timestamp } from 'firebase/firestore';
 import { usersCollection } from '@lib/firebase/collections';
 import { useCacheQuery } from './useCacheQuery';
@@ -41,6 +41,7 @@ export function useCollection<T>(
 ): UseCollection<T> | DataWithUser<T> {
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasLiveData = useRef(false);
 
   const cachedQuery = useCacheQuery(query);
 
@@ -53,6 +54,7 @@ export function useCollection<T>(
     }
 
     if (!preserve && data) {
+      hasLiveData.current = false;
       setData(null);
       setLoading(true);
     }
@@ -98,6 +100,7 @@ export function useCollection<T>(
     const unsubscribe = onSnapshot(
       cachedQuery,
       (snapshot) => {
+        hasLiveData.current = true;
         const data = snapshot.docs.map((doc) =>
           doc.data({ serverTimestamps: 'estimate' })
         );
@@ -116,7 +119,8 @@ export function useCollection<T>(
       },
       (error) => {
         console.error('useCollection snapshot error:', error);
-        setData([]);
+        // انقطاع مؤقت بعد استئناف التطبيق لا يمسح آخر بيانات سليمة.
+        if (!hasLiveData.current) setData([]);
         setLoading(false);
       }
     );

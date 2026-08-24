@@ -647,8 +647,10 @@ export function AuthContextProvider({
 
   const signOut = async (): Promise<void> => {
     try {
-      if (typeof window !== 'undefined')
+      if (typeof window !== 'undefined') {
         window.sessionStorage.setItem('aite:post-logout', '1');
+        window.localStorage.removeItem('aite:native-last-route');
+      }
       await signOutFirebase(auth);
     } catch (err) {
       setError(err as Error);

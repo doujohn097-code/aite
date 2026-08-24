@@ -2,6 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { verifyIdToken } from '@lib/firebase-admin';
+import { consumeRateLimit } from '@lib/server/rate-limit';
 import {
   downloadToFile,
   execFfmpeg,
@@ -45,6 +46,12 @@ export default async function normalizeMediaEndpoint(
 
   try {
     const { uid } = await verifyIdToken(token);
+    const rate = consumeRateLimit(`normalize:${uid}`, 6, 60_000);
+    if (!rate.allowed) {
+      res.setHeader('Retry-After', String(rate.retryAfterSeconds));
+      res.status(429).json({ error: 'rate_limited' });
+      return;
+    }
 
     // Already normalized? Serve the cached result without re-encoding.
     const cacheKey = `norm-${sha256Hex(src).slice(0, 48)}`;
@@ -100,14 +107,11 @@ export default async function normalizeMediaEndpoint(
       const result = await execFfmpeg(args);
       const ok = result.ok && existsSync(outputPath);
       if (!ok) {
-        res.status(200).json({
-          src,
-          debug: {
-            ffmpegError: result.error ?? 'output missing',
-            binary: result.binary,
-            cwd: process.cwd()
-          }
-        }); // graceful degradation
+        console.error(
+          'media normalization failed:',
+          result.error ?? 'output missing'
+        );
+        res.status(200).json({ src }); // graceful degradation
         return;
       }
       const fixedSrc = await uploadBufferToR2(

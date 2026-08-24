@@ -1,7 +1,5 @@
 export type SavedAccount = {
   username: string;
-  /** Empty for Google accounts — they re-authenticate via the Google popup. */
-  password: string;
   name: string;
   photoURL: string | null;
   provider?: 'password' | 'google';
@@ -11,18 +9,29 @@ export type SavedAccount = {
 const STORAGE_KEY = 'aite:saved-accounts';
 const MAX_ACCOUNTS = 8;
 
-function isValidAccount(value: unknown): value is SavedAccount {
-  if (typeof value !== 'object' || value === null) return false;
+function toSafeAccount(value: unknown): SavedAccount | null {
+  if (typeof value !== 'object' || value === null) return null;
   const account = value as Record<string, unknown>;
-  return (
-    typeof account.username === 'string' &&
-    typeof account.password === 'string' &&
-    typeof account.name === 'string' &&
-    (typeof account.photoURL === 'string' || account.photoURL === null) &&
-    (account.provider === undefined ||
-      account.provider === 'password' ||
-      account.provider === 'google')
-  );
+  if (
+    typeof account.username !== 'string' ||
+    typeof account.name !== 'string' ||
+    (typeof account.photoURL !== 'string' && account.photoURL !== null) ||
+    (account.provider !== undefined &&
+      account.provider !== 'password' &&
+      account.provider !== 'google')
+  )
+    return null;
+
+  return {
+    username: account.username,
+    name: account.name,
+    photoURL: account.photoURL,
+    provider:
+      account.provider === 'google' || account.provider === 'password'
+        ? account.provider
+        : 'password',
+    savedAt: typeof account.savedAt === 'number' ? account.savedAt : Date.now()
+  };
 }
 
 export function getSavedAccounts(): SavedAccount[] {
@@ -31,7 +40,23 @@ export function getSavedAccounts(): SavedAccount[] {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown) : [];
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isValidAccount).slice(0, MAX_ACCOUNTS);
+    const safe = parsed
+      .map(toSafeAccount)
+      .filter((account): account is SavedAccount => account !== null)
+      .slice(0, MAX_ACCOUNTS);
+
+    // ترحيل أمني: الإصدارات القديمة خزنت كلمات المرور كنص صريح. نكتب فورًا
+    // نسخة بيانات تعريفية فقط ونزيل أي password قديم من localStorage.
+    const containedPassword = parsed.some(
+      (value) =>
+        typeof value === 'object' &&
+        value !== null &&
+        Object.prototype.hasOwnProperty.call(value, 'password')
+    );
+    if (containedPassword)
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(safe));
+
+    return safe;
   } catch {
     return [];
   }

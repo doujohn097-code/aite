@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getDoc, doc, onSnapshot, Timestamp } from 'firebase/firestore';
 import { usersCollection } from '@lib/firebase/collections';
 import { useCacheRef } from './useCacheRef';
@@ -50,6 +50,7 @@ export function useDocument<T>(
 ): UseDocument<T> | DataWithUser<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasLiveData = useRef(false);
 
   const cachedDocRef = useCacheRef(docRef);
 
@@ -62,6 +63,7 @@ export function useDocument<T>(
       return;
     }
 
+    hasLiveData.current = false;
     setData(null);
     setLoading(true);
 
@@ -94,6 +96,7 @@ export function useDocument<T>(
     const unsubscribe = onSnapshot(
       cachedDocRef,
       (snapshot) => {
+        hasLiveData.current = true;
         const data = snapshot.data({ serverTimestamps: 'estimate' });
 
         if (allowNull && !data) {
@@ -110,7 +113,7 @@ export function useDocument<T>(
       },
       (error) => {
         console.error('useDocument snapshot error:', error);
-        setData(null);
+        if (!hasLiveData.current) setData(null);
         setLoading(false);
       }
     );

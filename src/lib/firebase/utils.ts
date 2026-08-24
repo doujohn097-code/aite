@@ -18,19 +18,18 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, auth } from './app';
+import { notifyMentions } from '@lib/mentions';
 import {
   formatFileSize,
   inferMediaType,
   maxUploadBytesForType,
   uploadTimeoutMs
 } from '@lib/media-limits';
-import { sendPushNotification } from '@lib/push';
 import {
   usersCollection,
   tweetsCollection,
   userStatsCollection,
   userBookmarksCollection,
-  notificationsCollection,
   storiesCollection
 } from './collections';
 import type { WithFieldValue, Query } from 'firebase/firestore';
@@ -473,7 +472,8 @@ export async function uploadImages(
 
 export async function manageReply(
   type: 'increment' | 'decrement',
-  tweetId: string
+  tweetId: string,
+  replyId?: string
 ): Promise<void> {
   const tweetRef = doc(tweetsCollection, tweetId);
 
@@ -500,7 +500,7 @@ export async function manageReply(
           type: 'reply',
           fromUserId: currentUserId,
           toUserId: tweetOwnerId,
-          tweetId,
+          tweetId: replyId ?? tweetId,
           read: false
         },
         'post'
@@ -695,29 +695,23 @@ export async function createNotification(
 ): Promise<void> {
   if (!toUserId || toUserId === notification.fromUserId) return;
 
-  // Notification delivery is best-effort — a failing notification write
-  // (e.g. exhausted Spark write quota) must never break the original
-  // like/reply/retweet/follow action that triggered it.
+  // الكتابة تتم عبر الخادم بعد التحقق من أن الإعجاب/المتابعة/الرد حدث
+  // فعليًا. هذا يمنع أي عميل معدل من حقن إشعارات في حسابات الآخرين.
   try {
-    const notificationsRef = notificationsCollection(toUserId);
-    const notificationRef = doc(notificationsRef);
-
-    const notificationData: WithFieldValue<Notification> = {
-      ...notification,
-      id: notificationRef.id,
-      createdAt: serverTimestamp()
-    };
-
-    await setDoc(notificationRef, notificationData);
-
-    sendPushNotification({
-      kind: 'activity',
-      toUserId,
-      type: notification.type,
-      context,
-      tweetId: notification.tweetId ?? null,
-      storyId: notification.storyId ?? null,
-      storyUserId: notification.storyUserId ?? null
+    const currentUser = auth.currentUser;
+    if (!currentUser || currentUser.uid !== notification.fromUserId) return;
+    const token = await currentUser.getIdToken();
+    await fetch('/api/notifications/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        ...notification,
+        toUserId,
+        context
+      })
     });
   } catch (error) {
     console.warn('notification delivery skipped:', error);
@@ -752,9 +746,11 @@ export async function uploadStory(
   const now = serverTimestamp();
 
   const expiresAt = getStoryExpiration();
+  const storyIds: string[] = [];
 
   images.forEach((image) => {
     const storyRef = doc(storiesCollection);
+    storyIds.push(storyRef.id);
     const storyData: WithFieldValue<Story> = {
       id: storyRef.id,
       userId,
@@ -781,6 +777,7 @@ export async function uploadStory(
   });
 
   await batch.commit();
+  await Promise.all(storyIds.map((id) => notifyMentions('story', id)));
 }
 
 // Reels live in the same `stories` collection but are tagged with kind:'reel'
@@ -813,9 +810,11 @@ export async function uploadReel(
   const now = serverTimestamp();
 
   const expiresAt = getReelExpiration();
+  const reelIds: string[] = [];
 
   images.forEach((image) => {
     const reelRef = doc(storiesCollection);
+    reelIds.push(reelRef.id);
     const reelData: WithFieldValue<Story> = {
       id: reelRef.id,
       userId,
@@ -840,6 +839,7 @@ export async function uploadReel(
   });
 
   await batch.commit();
+  await Promise.all(reelIds.map((id) => notifyMentions('reel', id)));
 }
 
 export async function viewStory(
@@ -1039,6 +1039,7 @@ export async function addReelComment(
   };
 
   const docRef = await addDoc(tweetsCollection, tweetData);
+  await notifyMentions('post', docRef.id);
 
   // Safely update user total tweets without blocking
   try {

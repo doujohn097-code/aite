@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 import { verifyIdToken } from '@lib/firebase-admin';
+import { consumeRateLimit } from '@lib/server/rate-limit';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 type NotifyBody = {
@@ -110,9 +111,21 @@ export default async function handler(
     }
     const decoded = await verifyIdToken(idToken);
     const senderId = decoded.uid;
+    const rate = consumeRateLimit(`push:${senderId}`, 60, 60_000);
+    if (!rate.allowed) {
+      res.setHeader('Retry-After', String(rate.retryAfterSeconds));
+      res.status(429).json({ error: 'rate_limited' });
+      return;
+    }
 
     const body = req.body as NotifyBody;
-    const kind = body.kind ?? 'activity';
+    const kind = body.kind;
+    // إشعارات النشاط تُنشأ وتُتحقق خادميًا عبر /api/notifications/create.
+    // هذا المسار مخصص فقط لرسائل محادثة يكون المرسل طرفًا فيها.
+    if (kind !== 'message' && kind !== 'messageReaction') {
+      res.status(400).json({ error: 'invalid_kind' });
+      return;
+    }
 
     const firestore = admin.firestore();
 
@@ -154,20 +167,30 @@ export default async function handler(
       recipientId = participants.find(
         (participant) => participant !== senderId
       );
+      const lastMessage = conversationSnap.data()?.lastMessage as
+        | { senderId?: string; text?: string }
+        | null
+        | undefined;
+      if (lastMessage?.senderId !== senderId) {
+        res.status(409).json({ error: 'message_not_committed' });
+        return;
+      }
+      const committedPreview = String(
+        lastMessage.text ??
+          (kind === 'message' ? 'أرسل لك رسالة' : 'تفاعل مع رسالتك')
+      ).slice(0, 180);
 
       notification =
         kind === 'message'
           ? {
               title: `رسالة من ${senderName}`,
-              body: String(body.preview ?? 'أرسل لك رسالة').slice(0, 180),
+              body: committedPreview,
               url: `/messages/${conversationId}`,
               tag: `conv-${conversationId}`
             }
           : {
               title: 'تفاعل مع رسالتك',
-              body: `قام ${senderName} بالتفاعل مع رسالتك ${
-                body.emoji ?? ''
-              }`.trim(),
+              body: committedPreview,
               url: `/messages/${conversationId}`,
               tag: `conv-${conversationId}`
             };

@@ -5,7 +5,11 @@ import {
   setPersistence,
   browserLocalPersistence
 } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import {
+  getFirestore,
+  connectFirestoreEmulator,
+  enableMultiTabIndexedDbPersistence
+} from 'firebase/firestore';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { isUsingEmulator } from '@lib/env';
 import { getFirebaseConfig } from './config';
@@ -24,12 +28,16 @@ type Firebase = {
 function initialize(): Firebase {
   const firebaseApp = initializeApp(getFirebaseConfig());
   const auth = getAuth(firebaseApp);
-  // جلسة دائمة — يبقى المستخدم مسجلاً بعد إعادة التحميل.
+  const firestore = getFirestore(firebaseApp);
+  // جلسة دائمة وذاكرة Firestore محلية: عند العودة من الخلفية تظهر آخر حالة
+  // سليمة فورًا بدل شاشة فارغة أثناء إعادة الاتصال.
   void setPersistence(auth, browserLocalPersistence).catch(() => undefined);
+  if (typeof window !== 'undefined')
+    void enableMultiTabIndexedDbPersistence(firestore).catch(() => undefined);
   return {
     firebaseApp,
     auth,
-    firestore: getFirestore(firebaseApp),
+    firestore,
     functions: getFunctions(firebaseApp)
   };
 }
