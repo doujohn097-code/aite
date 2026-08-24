@@ -79,7 +79,7 @@ export function EditProfileModal({
             disabled={!!inputNameError}
             loading={loading}
           >
-            حفظ
+            {t('common.save')}
           </Button>
         </div>
       </MainHeader>

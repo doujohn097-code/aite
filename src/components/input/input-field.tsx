@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import cn from 'clsx';
+import { useLanguage } from '@lib/context/language-context';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { KeyboardEvent, ChangeEvent, InputHTMLAttributes } from 'react';
 
@@ -37,6 +38,7 @@ export function InputField({
   handleChange,
   handleKeyboardShortcut
 }: InputFieldProps): JSX.Element {
+  const { t } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
   const effectiveType = isPassword && showPassword ? 'text' : type;
@@ -91,7 +93,7 @@ export function InputField({
           <button
             type='button'
             aria-label={
-              showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'
+              showPassword ? t('action.hidePass') : t('action.showPass')
             }
             onClick={(): void => setShowPassword((prev) => !prev)}
             className='absolute left-2 top-1/2 -translate-y-1/2 rounded-full p-1.5

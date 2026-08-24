@@ -5,12 +5,14 @@ import { SEO } from '@components/common/seo';
 import { LoginMain } from '@components/login/login-main';
 import { LoginFooter } from '@components/login/login-footer';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { hasSavedAccounts } from '@lib/accounts';
 import type { ReactElement, ReactNode } from 'react';
 
 export default function Login(): JSX.Element {
   const { replace, query, isReady } = useRouter();
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Wait for the auth session to resolve first — a logged-in user must
@@ -35,8 +37,8 @@ export default function Login(): JSX.Element {
   return (
     <div className='grid min-h-app grid-rows-[1fr,auto]'>
       <SEO
-        title='Aite - تواصل بشكل أنيق مع الجميع'
-        description='شارك أفكارك وتابع الآخرين في Aite.'
+        title={t('seo.tagline')}
+        description={t('seo.share')}
       />
       <LoginMain />
       <LoginFooter />

@@ -1,4 +1,5 @@
 import cn from 'clsx';
+import { useLanguage } from '@lib/context/language-context';
 
 type GenderBadgeProps = {
   gender?: 'male' | 'female' | null;
@@ -60,6 +61,7 @@ export function GenderBadge({
   gender,
   className
 }: GenderBadgeProps): JSX.Element | null {
+  const { t } = useLanguage();
   if (gender !== 'male' && gender !== 'female') return null;
 
   const isMale = gender === 'male';
@@ -78,7 +80,7 @@ export function GenderBadge({
       )}
     >
       <Icon className='h-3.5 w-3.5' />
-      {isMale ? 'ذكر' : 'أنثى'}
+      {isMale ? t('gender.male') : t('gender.female')}
     </span>
   );
 }

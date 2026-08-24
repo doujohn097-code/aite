@@ -1,12 +1,14 @@
 import Link from 'next/link';
-
-const footerLinks = [
-  ['الأشخاص', '/search'],
-  ['الريلز', '/reels'],
-  ['استكشاف', '/home']
-] as const;
+import { useLanguage } from '@lib/context/language-context';
 
 export function AsideFooter(): JSX.Element {
+  const { t } = useLanguage();
+  const footerLinks = [
+    [t('nav.people'), '/search'],
+    [t('nav.reels'), '/reels'],
+    [t('action.explore'), '/home']
+  ] as const;
+
   return (
     <footer
       className='sticky top-16 flex flex-col gap-3 text-center text-sm

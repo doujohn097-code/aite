@@ -43,8 +43,12 @@ export default function TweetId(): JSX.Element {
   const parentId = tweetData?.parent?.id;
 
   const pageTitle = tweetData
-    ? `${tweetData.user.name} على Aite: "${text ?? ''}${
-        images ? ` (${imagesLength} ${imagesLength > 1 ? 'صور' : 'صورة'})` : ''
+    ? `${t('profile.seoUser', { name: tweetData.user.name })}: "${text ?? ''}${
+        images
+          ? ` (${imagesLength} ${
+              imagesLength > 1 ? t('tweet.photos') : t('tweet.photo')
+            })`
+          : ''
       }" / Aite`
     : null;
 

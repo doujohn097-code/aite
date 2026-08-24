@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useLanguage } from '@lib/context/language-context';
 import { doc } from 'firebase/firestore';
 import { useDocument } from '@lib/hooks/useDocument';
 import { tweetsCollection } from '@lib/firebase/collections';
@@ -14,6 +15,7 @@ export function ViewParentTweet({
   parentId,
   viewTweetRef
 }: ViewParentTweetProps): JSX.Element | null {
+  const { t } = useLanguage();
   const { data, loading } = useDocument(doc(tweetsCollection, parentId), {
     includeUser: true,
     allowNull: true
@@ -32,7 +34,7 @@ export function ViewParentTweet({
           className='rounded-2xl bg-main-sidebar-background px-1 py-3 pl-4 
                      text-light-secondary dark:text-dark-secondary'
         >
-          تم حذف هذا المنشور من قبل صاحبه.
+          {t('tweet.deletedByOwner')}
         </p>
       </div>
     );

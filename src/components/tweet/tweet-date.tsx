@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import cn from 'clsx';
+import { useLanguage } from '@lib/context/language-context';
 import { formatDate } from '@lib/date';
 import { ToolTip } from '@components/ui/tooltip';
 import type { Tweet } from '@lib/types/tweet';
@@ -16,6 +17,7 @@ export function TweetDate({
   viewTweet,
   edited
 }: TweetDateProps): JSX.Element {
+  const { t } = useLanguage();
   return (
     <div className={cn('flex gap-1', viewTweet && 'py-4')}>
       {!viewTweet && <i>·</i>}
@@ -38,7 +40,7 @@ export function TweetDate({
       </div>
       {edited && (
         <span className='whitespace-nowrap text-xs text-light-secondary dark:text-dark-secondary'>
-          · تم التعديل
+          · {t('common.edited')}
         </span>
       )}
     </div>

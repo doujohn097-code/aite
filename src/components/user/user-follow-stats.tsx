@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useLanguage } from '@lib/context/language-context';
 import { NumberStats } from '@components/tweet/number-stats';
 import type { User } from '@lib/types/user';
 
@@ -13,6 +14,7 @@ export function UserFollowStats({
   following = [],
   followers = []
 }: UserFollowStatsProps): JSX.Element {
+  const { t } = useLanguage();
   const totalFollowing = following.length;
   const totalFollowers = followers.length;
 
@@ -45,14 +47,25 @@ export function UserFollowStats({
   const userPath = `/user/${id as string}`;
 
   const allStats: Readonly<Stats[]> = [
-    ['يتابع', `${userPath}/following`, followingMove, currentFollowing],
-    ['متابع', `${userPath}/followers`, followersMove, currentFollowers]
+    [
+      t('profile.following'),
+      `${userPath}/following`,
+      followingMove,
+      currentFollowing
+    ],
+    [
+      t('profile.follower'),
+      `${userPath}/followers`,
+      followersMove,
+      currentFollowers
+    ]
   ];
 
   return (
     <div className='flex items-center gap-2.5 text-light-secondary dark:text-dark-secondary'>
       {allStats.map(([title, link, move, stats], index) => {
-        const label = index === 1 && stats > 1 ? 'متابعون' : title;
+        const label =
+          index === 1 && stats > 1 ? t('profile.followers') : title;
         return (
           <Link href={link} key={title}>
             <a

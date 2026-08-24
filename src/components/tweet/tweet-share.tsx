@@ -92,7 +92,7 @@ export function TweetShare({
                   })}
                 >
                   <HeroIcon iconName='PaperAirplaneIcon' />
-                  إرسال عبر رسالة
+                  {t('tweet.sendMsg')}
                 </Popover.Button>
                 <Popover.Button
                   className='accent-tab flex w-full gap-3 rounded-md p-4 hover:bg-main-sidebar-background'
@@ -100,7 +100,7 @@ export function TweetShare({
                   onClick={preventBubbling(handleCopy(close))}
                 >
                   <HeroIcon iconName='LinkIcon' />
-                  نسخ رابط المنشور
+                  {t('tweet.copyLink')}
                 </Popover.Button>
               </Popover.Panel>
             )}

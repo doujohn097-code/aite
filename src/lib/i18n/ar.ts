@@ -149,6 +149,7 @@ export const ar = {
   'tweet.page': 'منشور',
   'tweet.thread': 'سلسلة',
   'tweet.seoMissing': 'المنشور غير موجود / Aite',
+  'tweet.deletedByOwner': 'تم حذف هذا المنشور من قبل صاحبه.',
 
   'reels.title': 'الريلز / Aite',
   'reels.create': 'إنشاء ريل',
@@ -485,6 +486,10 @@ export const ar = {
   'profile.follower': 'متابع',
   'profile.followers': 'متابعون',
   'profile.followersTab': 'المتابعون',
+  'profile.joined': 'انضم في {date}',
+  'profile.followsYou': 'يتابعك',
+  'profile.seoFollowing': 'يتابعهم {name} (@{username}) / Aite',
+  'profile.seoFollowers': 'متابعو {name} (@{username}) / Aite',
   'profile.username': 'اسم المستخدم',
   'profile.bestPosts': 'أفضل المنشورات',
   'profile.logoutTitle': 'تسجيل الخروج من Aite؟',

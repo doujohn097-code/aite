@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
+import { useLanguage } from '@lib/context/language-context';
 import { preventBubbling } from '@lib/utils';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -37,6 +38,7 @@ export function ImageModal({
   handleNextIndex,
   onClose
 }: ImageModalProps): JSX.Element {
+  const { t } = useLanguage();
   const [indexes, setIndexes] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -168,7 +170,7 @@ export function ImageModal({
             >
               <button
                 type='button'
-                aria-label='حفظ الوسيط على الجهاز'
+                aria-label={t('media.save')}
                 className='flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-black/80 active:scale-95'
                 onClick={(event) => {
                   event.preventDefault();
@@ -181,7 +183,7 @@ export function ImageModal({
               {onClose && (
                 <button
                   type='button'
-                  aria-label='إغلاق المعاينة'
+                  aria-label={t('media.closePreview')}
                   onClick={onClose}
                   className='flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-black/80 active:scale-95'
                 >

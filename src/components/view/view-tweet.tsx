@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import cn from 'clsx';
 import { LinkifiedText } from '@components/ui/linkified-text';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
 import { TweetReplyModal } from '@components/modal/tweet-reply-modal';
@@ -51,6 +52,7 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
   } = tweetUserData;
 
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const { open, openModal, closeModal } = useModal();
 
@@ -121,7 +123,7 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
           </div>
           {reply && (
             <p className='text-light-secondary dark:text-dark-secondary'>
-              رد على{' '}
+              {t('home.replyTo')}{' '}
               <Link href={`/user/${parentUsername}`}>
                 <a className='custom-underline text-main-accent-text'>
                   @{parentUsername}

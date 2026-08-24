@@ -169,8 +169,8 @@ export default function UserTweets(): JSX.Element {
       ) : tab === 'retweets' ? (
         !filteredPeopleTweets?.length ? (
           <StatsEmpty
-            title='لا توجد منشورات معاد نشرها'
-            description='عندما يعيد النشر، ستظهر هنا.'
+            title={t('profile.noReposts')}
+            description={t('profile.noRepostsHint')}
           />
         ) : (
           <>

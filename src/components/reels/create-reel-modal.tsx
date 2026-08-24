@@ -445,7 +445,7 @@ export function CreateReelModal({
             <span>
               {loading
                 ? uploadProgress > 0
-                  ? `جارٍ الرفع ${uploadProgress}%`
+                  ? t('media.uploading', { n: uploadProgress })
                   : t('media.preparing')
                 : t('media.publishReel')}
             </span>

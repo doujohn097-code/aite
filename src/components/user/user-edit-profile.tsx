@@ -272,7 +272,7 @@ export function UserEditProfile({ hide }: UserEditProfileProps): JSX.Element {
                    dark:hover:bg-dark-primary/10 dark:active:bg-dark-primary/20'
         onClick={openModal}
       >
-        تعديل الملف الشخصي
+        {t('profile.edit')}
       </Button>
     </form>
   );

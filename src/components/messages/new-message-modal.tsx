@@ -43,7 +43,7 @@ export function NewMessageModal({
         if (current.includes(person.id))
           return current.filter((id) => id !== person.id);
         if (current.length >= MAX_SHARE_RECIPIENTS) {
-          toast.error(`يمكن الإرسال إلى ${MAX_SHARE_RECIPIENTS} شخصاً كحد أقصى`);
+          toast.error(t('err.maxShare', { n: MAX_SHARE_RECIPIENTS }));
           return current;
         }
         return [...current, person.id];
@@ -220,7 +220,7 @@ export function NewMessageModal({
           })
         ) : (
           <p className='p-8 text-center text-light-secondary dark:text-dark-secondary'>
-            لا يوجد أشخاص مطابقون
+            {t('chat.noPeople')}
           </p>
         )}
       </div>
@@ -234,7 +234,7 @@ export function NewMessageModal({
             disabled={!selectedIds.length}
           >
             {selectedIds.length > 1
-              ? `إرسال إلى ${selectedIds.length} أشخاص`
+              ? t('chat.sendMany', { n: selectedIds.length })
               : selectedIds.length === 1
               ? t('chat.sendOne')
               : t('chat.pickPeople')}

@@ -217,7 +217,7 @@ export function LoginMain(): JSX.Element {
             />
 
             <InputField
-              label='كلمة المرور'
+              label={t('auth.password')}
               inputId='password'
               inputValue={password}
               type='password'

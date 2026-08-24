@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import cn from 'clsx';
+import { useLanguage } from '@lib/context/language-context';
 import { useWindow } from '@lib/context/window-context';
 import { preventBubbling } from '@lib/utils';
 import { FollowButton } from '@components/ui/follow-button';
@@ -46,14 +47,19 @@ export function UserTooltip({
   coverPhotoURL
 }: UserTooltipProps): JSX.Element {
   const { isMobile } = useWindow();
+  const { t } = useLanguage();
 
   if (isMobile || modal) return <>{children}</>;
 
   const userLink = `/user/${username}`;
 
   const allStats: Readonly<Stats[]> = [
-    ['following', 'يتابع', following.length],
-    ['followers', followers.length > 1 ? 'متابعون' : 'متابع', followers.length]
+    ['following', t('profile.following'), following.length],
+    [
+      'followers',
+      followers.length > 1 ? t('profile.followers') : t('profile.follower'),
+      followers.length
+    ]
   ];
 
   return (

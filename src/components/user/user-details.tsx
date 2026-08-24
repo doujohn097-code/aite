@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
+import { useLanguage } from '@lib/context/language-context';
 import { formatDate } from '@lib/date';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ToolTip } from '@components/ui/tooltip';
@@ -40,6 +41,7 @@ export function UserDetails({
   following,
   followers
 }: UserDetailsProps): JSX.Element {
+  const { t } = useLanguage();
   const detailIcons: Readonly<DetailIcon[]> = [
     [location, 'MapPinIcon'],
     [website, 'LinkIcon']
@@ -107,7 +109,7 @@ export function UserDetails({
             <HeroIcon className='h-4 w-4' iconName='CalendarDaysIcon' />
           </i>
           <span className='custom-underline'>
-            انضم في {formatDate(createdAt, 'joined')}
+            {t('profile.joined', { date: formatDate(createdAt, 'joined') })}
           </span>
           <ToolTip
             className='translate-y-1'

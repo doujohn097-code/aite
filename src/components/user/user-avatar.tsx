@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import cn from 'clsx';
 import { NextImage } from '@components/ui/next-image';
+import { useLanguage } from '@lib/context/language-context';
 import { useOnlineStatus } from '@lib/presence-store';
 
 type UserAvatarProps = {
@@ -21,6 +22,7 @@ export function UserAvatar({
   className,
   showPresence = true
 }: UserAvatarProps): JSX.Element {
+  const { t } = useLanguage();
   const online = useOnlineStatus(showPresence ? username : undefined);
 
   const pictureSize = size ?? 48;
@@ -48,7 +50,7 @@ export function UserAvatar({
           className='absolute bottom-0 left-0 z-10 rounded-full bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.9)] ring-2
                      ring-main-background'
           style={{ width: dotSize, height: dotSize }}
-          title='نشط الآن'
+          title={t('common.online')}
         />
       )}
     </span>

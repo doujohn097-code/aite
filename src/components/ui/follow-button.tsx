@@ -90,7 +90,7 @@ export function FollowButton({
                      dark:bg-light-border dark:text-light-primary'
           onClick={preventBubbling(handleFollow)}
         >
-          متابعة
+          {t('action.follow')}
         </Button>
       )}
     </>

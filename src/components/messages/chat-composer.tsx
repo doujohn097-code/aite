@@ -206,7 +206,7 @@ export function ChatComposer({
               />
               <div className='flex min-w-0 flex-1 flex-col text-xs'>
                 <span className='font-bold text-main-accent-text'>
-                  تعديل الرسالة
+                  {t('messages.edit')}
                 </span>
                 <span className='truncate text-light-secondary dark:text-dark-secondary'>
                   {editingText || ''}
@@ -249,7 +249,7 @@ export function ChatComposer({
               />
               <div className='flex min-w-0 flex-1 flex-col text-xs'>
                 <span className='font-bold text-main-accent-text'>
-                  الرد على {replyingTo.senderName}
+                  {t('chat.replyToName', { name: replyingTo.senderName })}
                 </span>
                 <span className='truncate text-light-secondary dark:text-dark-secondary'>
                   {replyingTo.text ||
@@ -314,7 +314,7 @@ export function ChatComposer({
                 </button>
                 {preview.type.startsWith('video/') && (
                   <span className='absolute bottom-1 right-1 rounded bg-black/70 px-1 text-[10px] text-white'>
-                    فيديو
+                    {t('messages.video')}
                   </span>
                 )}
               </div>
