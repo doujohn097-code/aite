@@ -22,6 +22,12 @@ type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout;
 };
 
+declare global {
+  interface Window {
+    __aiteNavigate?: (path: string) => void;
+  }
+}
+
 const SPLASH_DURATION_MS = 3200;
 const NATIVE_ROUTE_KEY = 'aite:native-last-route';
 const MAX_SAVED_ROUTE_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -92,6 +98,11 @@ export default function App({
       if (document.visibilityState === 'hidden') saveRoute(router.asPath);
     };
     const handlePageHide = (): void => saveRoute(router.asPath);
+
+    window.__aiteNavigate = (path: string): void => {
+      if (!isSafeInternalPath(path)) return;
+      void router.push(path);
+    };
 
     router.events.on('routeChangeComplete', saveRoute);
     document.addEventListener('visibilitychange', handleVisibility);

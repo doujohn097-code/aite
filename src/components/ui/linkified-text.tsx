@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { isMentionToken } from '@lib/mention-parser';
+import { safeHttpUrl } from '@lib/utils';
 
 const TOKEN_PATTERN =
   /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+|@[a-zA-Z0-9_]{3,15}\b)/g;

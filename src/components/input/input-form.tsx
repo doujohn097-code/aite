@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import TextArea from 'react-textarea-autosize';
 import { useModal } from '@lib/hooks/useModal';
+import { useMentionAssist } from '@lib/hooks/useMentionAssist';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { Button } from '@components/ui/button';
+import { MentionSuggest } from './mention-suggest';
 import type {
   ReactNode,
   RefObject,
@@ -68,6 +70,16 @@ export function InputForm({
   handleImageUpload
 }: InputFormProps): JSX.Element {
   const { open, openModal, closeModal } = useModal();
+  const { mentionQuery, onMentionChange, insertMention, closeMentions } =
+    useMentionAssist(
+      inputValue,
+      (next) => {
+        handleChange({
+          target: { value: next }
+        } as ChangeEvent<HTMLTextAreaElement>);
+      },
+      inputRef
+    );
 
   useEffect(() => handleShowHideNav(true), []);
 
@@ -122,21 +134,30 @@ export function InputForm({
           closeModal={closeModal}
         />
       </Modal>
-      <div className='flex flex-col gap-6'>
+      <div className='relative flex flex-col gap-6'>
+        <MentionSuggest
+          query={mentionQuery}
+          onSelect={insertMention}
+          onClose={closeMentions}
+        />
         <div className='flex items-center gap-3'>
           <TextArea
             id={formId}
             className='w-full min-w-0 resize-none bg-transparent text-xl outline-none
                        placeholder:text-light-secondary dark:placeholder:text-dark-secondary'
             value={inputValue}
-            placeholder={reply || replyModal ? 'اكتب ردك' : 'ما الجديد؟'}
+            placeholder={
+              reply || replyModal
+                ? 'اكتب ردك  @للإشارة'
+                : 'ما الجديد؟  @للإشارة'
+            }
             onBlur={handleShowHideNav(true)}
             minRows={loading ? 1 : modal && !isUploadingImages ? 3 : 1}
             maxRows={isUploadingImages ? 5 : 15}
             onFocus={handleFormFocus}
             onPaste={handleImageUpload}
             onKeyUp={handleKeyboardShortcut}
-            onChange={handleChange}
+            onChange={onMentionChange}
             ref={inputRef}
           />
           {reply && !visited && (

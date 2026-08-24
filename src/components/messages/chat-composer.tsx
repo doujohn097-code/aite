@@ -3,6 +3,8 @@ import TextareaAutosize from 'react-textarea-autosize';
 import cn from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HeroIcon } from '@components/ui/hero-icon';
+import { useMentionAssist } from '@lib/hooks/useMentionAssist';
+import { MentionSuggest } from '@components/input/mention-suggest';
 import { VoiceRecorder } from './voice-recorder';
 import { VoicePlayer } from './voice-player';
 import { getRandomId } from '@lib/random';
@@ -51,8 +53,11 @@ export function ChatComposer({
   onTyping
 }: ChatComposerProps): JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textInputRef = useRef<HTMLTextAreaElement>(null);
 
   const [text, setText] = useState('');
+  const { mentionQuery, onMentionChange, insertMention, closeMentions } =
+    useMentionAssist(text, setText, textInputRef);
   const isEditing = editingText !== null && editingText !== undefined;
   const [files, setFiles] = useState<FilesWithId>([]);
   const [previews, setPreviews] = useState<
@@ -385,14 +390,15 @@ export function ChatComposer({
             </button>
 
             <TextareaAutosize
+              ref={textInputRef}
               value={text}
               onChange={(event) => {
-                setText(event.target.value);
+                onMentionChange(event);
                 if (event.target.value) notifyTyping();
                 else stopTyping();
               }}
               onKeyDown={handleKeyDown}
-              placeholder='اكتب رسالة...'
+              placeholder='اكتب رسالة...  @للإشارة'
               maxRows={4}
               className='max-h-32 flex-1 resize-none self-center bg-transparent px-2 py-1.5
                          text-[15px] outline-none placeholder:text-light-secondary

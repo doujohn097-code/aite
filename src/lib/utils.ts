@@ -61,6 +61,31 @@ export function isPlural(count: number): string {
   return count > 1 ? 's' : '';
 }
 
+export function safeHttpUrl(raw: string): string | null {
+  if (!raw || raw.length > 2048) return null;
+  const trimmed = raw.trim();
+  if (!/^(https?:\/\/|www\.)/i.test(trimmed)) return null;
+  try {
+    const href = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const url = new URL(href);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    if (url.username || url.password) return null;
+    const host = url.hostname.toLowerCase();
+    if (
+      host === 'localhost' ||
+      host.endsWith('.local') ||
+      host.startsWith('127.') ||
+      host.startsWith('10.') ||
+      host.startsWith('192.168.') ||
+      host.startsWith('169.254.')
+    )
+      return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 export function isSafeInternalPath(value: unknown): value is string {
   if (typeof value !== 'string' || value.length > 2048) return false;
   try {
