@@ -5,6 +5,12 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
 import { uploadReel } from '@lib/firebase/utils';
 import { withTimeout } from '@lib/utils';
+import {
+  formatFileSize,
+  inferMediaType,
+  MAX_VIDEO_UPLOAD_BYTES,
+  uploadTimeoutMs
+} from '@lib/media-limits';
 import { getImagesData } from '@lib/validation';
 import { Modal } from '@components/modal/modal';
 import { Button } from '@components/ui/button';
@@ -40,6 +46,7 @@ export function CreateReelModal({
   const [durations, setDurations] = useState<Record<string, number>>({});
   const [caption, setCaption] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [computingDuration, setComputingDuration] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isPlayingPreview, setIsPlayingPreview] = useState(true);
@@ -55,6 +62,7 @@ export function CreateReelModal({
       setDurations({});
       setCaption('');
       setLoading(false);
+      setUploadProgress(0);
       setComputingDuration(false);
       setIsDragging(false);
     }
@@ -87,15 +95,22 @@ export function CreateReelModal({
     if (!files || !files.length) return;
     const file = files[0];
 
-    // Check if it is a video
-    if (!file.type.startsWith('video/')) {
+    const mediaType = inferMediaType(file.name, file.type);
+    if (!mediaType.startsWith('video/')) {
       toast.error('يرجى اختيار ملف فيديو للريل (MP4 أو MOV أو WebM)');
       return;
     }
 
-    // Max 100MB
-    if (file.size > 100 * 1024 * 1024) {
-      toast.error('حجم الفيديو يجب ألا يتجاوز 100 ميغابايت');
+    if (file.size <= 0) {
+      toast.error('ملف الفيديو فارغ أو تالف');
+      return;
+    }
+    if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
+      toast.error(
+        `حجم الفيديو ${formatFileSize(
+          file.size
+        )}، والحد الأقصى ${formatFileSize(MAX_VIDEO_UPLOAD_BYTES)}`
+      );
       return;
     }
 
@@ -164,7 +179,9 @@ export function CreateReelModal({
     }
 
     setLoading(true);
+    setUploadProgress(0);
     try {
+      const file = selectedVideos[0];
       await withTimeout(
         uploadReel(
           user.id,
@@ -172,9 +189,11 @@ export function CreateReelModal({
           '#000000',
           caption,
           durations,
-          null
+          null,
+          setUploadProgress
         ),
-        120_000
+        uploadTimeoutMs(file.size) + 30_000,
+        'استغرق رفع الفيديو وقتًا طويلًا. تحقق من الاتصال وأعد المحاولة'
       );
       toast.success('تم نشر الريل بنجاح!');
       closeModal();
@@ -187,6 +206,7 @@ export function CreateReelModal({
       toast.error(msg);
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -407,7 +427,13 @@ export function CreateReelModal({
             disabled={!selectedVideos.length || loading || computingDuration}
           >
             <HeroIcon className='h-5 w-5' iconName='PaperAirplaneIcon' />
-            <span>نشر الريل الآن</span>
+            <span>
+              {loading
+                ? uploadProgress > 0
+                  ? `جارٍ الرفع ${uploadProgress}%`
+                  : 'جارٍ تجهيز الرفع...'
+                : 'نشر الريل الآن'}
+            </span>
           </Button>
         </div>
       </motion.div>
@@ -418,23 +444,31 @@ export function CreateReelModal({
 function getMediaDuration(url: string): Promise<number> {
   return new Promise((resolve) => {
     const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.muted = true;
-    video.src = url;
+    let settled = false;
+    const timeout = window.setTimeout(() => finish(15_000), 8_000);
     const cleanup = (): void => {
+      window.clearTimeout(timeout);
       video.onloadedmetadata = null;
       video.onerror = null;
+      video.removeAttribute('src');
+      video.load();
     };
-    video.onloadedmetadata = () => {
+    const finish = (duration: number): void => {
+      if (settled) return;
+      settled = true;
       cleanup();
+      resolve(duration);
+    };
+
+    video.preload = 'metadata';
+    video.muted = true;
+    video.onloadedmetadata = () => {
       const duration = video.duration;
-      resolve(
-        duration && isFinite(duration) ? Math.round(duration * 1000) : 15000
+      finish(
+        duration && isFinite(duration) ? Math.round(duration * 1000) : 15_000
       );
     };
-    video.onerror = () => {
-      cleanup();
-      resolve(15000);
-    };
+    video.onerror = () => finish(15_000);
+    video.src = url;
   });
 }

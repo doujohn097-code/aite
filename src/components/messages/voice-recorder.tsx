@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
+import {
+  MAX_AUDIO_UPLOAD_BYTES,
+  MAX_VOICE_DURATION_SECONDS
+} from '@lib/media-limits';
 import { HeroIcon } from '@components/ui/hero-icon';
 
 type VoiceRecorderProps = {
@@ -43,6 +47,7 @@ export function VoiceRecorder({
 }: VoiceRecorderProps): JSX.Element {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recordedBytesRef = useRef(0);
   const peaksRef = useRef<number[]>([]);
   const startRef = useRef(0);
   const streamRef = useRef<MediaStream | null>(null);
@@ -64,6 +69,7 @@ export function VoiceRecorder({
 
     cancelledRef.current = false;
     chunksRef.current = [];
+    recordedBytesRef.current = 0;
     peaksRef.current = [];
     setElapsed(0);
     setLiveBars(Array.from({ length: LIVE_BARS }, () => 0.12));
@@ -130,9 +136,19 @@ export function VoiceRecorder({
           : new MediaRecorder(stream);
         recorderRef.current = recorder;
         recorder.ondataavailable = (event) => {
-          if (event.data.size) chunksRef.current.push(event.data);
+          if (!event.data.size) return;
+          recordedBytesRef.current += event.data.size;
+          if (recordedBytesRef.current > MAX_AUDIO_UPLOAD_BYTES) {
+            cancelledRef.current = true;
+            if (recorder.state !== 'inactive') recorder.stop();
+            setError('وصل التسجيل إلى الحد الأقصى للحجم. سجّل رسالة أقصر.');
+            return;
+          }
+          chunksRef.current.push(event.data);
         };
         recorder.onstop = () => {
+          if (intervalId) clearInterval(intervalId);
+          if (timerId) clearInterval(timerId);
           stream.getTracks().forEach((track) => track.stop());
           void audioCtxRef.current?.close().catch(() => undefined);
           if (cancelledRef.current) return;
@@ -152,10 +168,15 @@ export function VoiceRecorder({
 
         startRef.current = Date.now();
         recorder.start(200);
-        timerId = setInterval(
-          () => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)),
-          500
-        );
+        timerId = setInterval(() => {
+          const seconds = Math.floor((Date.now() - startRef.current) / 1000);
+          setElapsed(seconds);
+          if (
+            seconds >= MAX_VOICE_DURATION_SECONDS &&
+            recorder.state !== 'inactive'
+          )
+            recorder.stop();
+        }, 500);
       } catch (startError) {
         streamRef.current?.getTracks().forEach((track) => track.stop());
         void audioCtxRef.current?.close().catch(() => undefined);

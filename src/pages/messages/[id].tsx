@@ -323,8 +323,8 @@ export default function Chat(): JSX.Element {
       | { type: 'text'; text: string }
       | { type: 'image' | 'video'; files: FilesWithId }
       | { type: 'audio'; blob: Blob; duration: number; peaks: number[] }
-  ): Promise<void> => {
-    if (!conversation || !user) return;
+  ): Promise<boolean> => {
+    if (!conversation || !user) return false;
 
     const replyTo = replyTarget
       ? {
@@ -342,8 +342,14 @@ export default function Chat(): JSX.Element {
     try {
       await sendMessage(conversation, user.id, { ...payload, replyTo });
       void setTyping(conversation.id, null).catch(() => undefined);
-    } catch {
-      toast.error('تعذر إرسال الرسالة، حاول مرة أخرى');
+      return true;
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'تعذر إرسال الرسالة، حاول مرة أخرى'
+      );
+      return false;
     } finally {
       setSending(false);
     }
@@ -640,7 +646,7 @@ export default function Chat(): JSX.Element {
               void handleSend({ type: kind, files })
             }
             onSendVoice={(blob, duration, peaks) =>
-              void handleSend({ type: 'audio', blob, duration, peaks })
+              handleSend({ type: 'audio', blob, duration, peaks })
             }
             onTyping={(typing) => {
               if (!conversationId || !user) return;

@@ -13,7 +13,15 @@
  * (output: 'standalone'), so dropping the binary next to its wrapper there
  * is enough for the lambda to find it at runtime.
  */
-import { copyFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
+import {
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync
+} from 'node:fs';
 import { createWriteStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -59,6 +67,7 @@ if (!binary) {
   console.warn('[copy-ffmpeg] no ffmpeg binary available, skipping');
   process.exit(0);
 }
+chmodSync(binary, 0o755);
 
 const targets = [
   join(root, '.next', 'standalone', 'node_modules', 'ffmpeg-static', 'ffmpeg'),
@@ -70,14 +79,47 @@ for (const target of targets) {
   try {
     mkdirSync(dirname(target), { recursive: true });
     copyFileSync(binary, target);
+    chmodSync(target, 0o755);
     copied += 1;
   } catch {
     // Standalone output may not exist on every platform; that's fine.
   }
 }
 
+// Next 12 traces ffmpeg-static's JS wrapper but omits its binary. Add the
+// binary explicitly to the two API route manifests Vercel packages.
+const manifests = [
+  join(
+    root,
+    '.next',
+    'server',
+    'pages',
+    'api',
+    'media',
+    'normalize.js.nft.json'
+  ),
+  join(root, '.next', 'server', 'pages', 'api', 'media', 'poster.js.nft.json')
+];
+const tracedBinary = '../../../../../node_modules/ffmpeg-static/ffmpeg';
+let patched = 0;
+for (const manifestPath of manifests) {
+  if (!existsSync(manifestPath)) continue;
+  try {
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    manifest.files ??= [];
+    if (!manifest.files.includes(tracedBinary))
+      manifest.files.push(tracedBinary);
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    patched += 1;
+  } catch (error) {
+    console.warn('[copy-ffmpeg] could not patch trace:', String(error));
+  }
+}
+
 console.log(
   `[copy-ffmpeg] copied binary into ${copied}/${
     targets.length
-  } output dirs (${Math.round(statSync(binary).size / 1024 / 1024)} MB)`
+  } output dirs, patched ${patched}/${manifests.length} traces (${Math.round(
+    statSync(binary).size / 1024 / 1024
+  )} MB)`
 );

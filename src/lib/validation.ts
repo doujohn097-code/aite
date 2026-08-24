@@ -1,4 +1,9 @@
 import { getRandomId } from './random';
+import {
+  MAX_IMAGE_UPLOAD_BYTES,
+  inferMediaType,
+  maxUploadBytesForType
+} from './media-limits';
 import type { FilesWithId, FileWithId, ImagesPreview } from './types/file';
 
 const IMAGE_EXTENSIONS = [
@@ -71,11 +76,18 @@ function isValidMediaExtension(
 }
 
 export function isValidImage(name: string, bytes: number): boolean {
-  return isValidImageExtension(name) && bytes < 20 * Math.pow(1024, 2);
+  return isValidImageExtension(name) && bytes <= MAX_IMAGE_UPLOAD_BYTES;
 }
 
-export function isValidMedia(name: string, size: number): boolean {
-  return isValidMediaExtension(name) && size < 50 * Math.pow(1024, 2);
+export function isValidMedia(
+  name: string,
+  size: number,
+  type = 'video/mp4'
+): boolean {
+  return (
+    isValidMediaExtension(name) &&
+    size <= maxUploadBytesForType(inferMediaType(name, type))
+  );
 }
 
 export function isValidUsername(
@@ -113,9 +125,9 @@ export function getImagesData(
   const rawImages =
     singleEditingMode ||
     !(currentFiles === 4 || files.length > 4 - currentFiles)
-      ? Array.from(files).filter(({ name, size }) =>
+      ? Array.from(files).filter(({ name, size, type }) =>
           allowUploadingVideos
-            ? isValidMedia(name, size)
+            ? isValidMedia(name, size, type)
             : isValidImage(name, size)
         )
       : null;

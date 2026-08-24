@@ -30,7 +30,11 @@ type ChatComposerProps = {
   onSubmitEdit?: (text: string) => void;
   onSendText: (text: string) => void;
   onSendMedia: (files: FilesWithId, kind: 'image' | 'video') => void;
-  onSendVoice: (blob: Blob, duration: number, peaks: number[]) => void;
+  onSendVoice: (
+    blob: Blob,
+    duration: number,
+    peaks: number[]
+  ) => Promise<boolean>;
   onTyping?: (typing: boolean) => void;
 };
 
@@ -122,7 +126,7 @@ export function ChatComposer({
     });
   };
 
-  const handleSend = (): void => {
+  const handleSend = async (): Promise<void> => {
     // وضع التعديل: نحفظ النص الجديد بدل إرسال رسالة جديدة
     if (isEditing) {
       const trimmed = text.trim();
@@ -148,9 +152,11 @@ export function ChatComposer({
       setFiles([]);
       setPreviews([]);
     } else if (voice) {
-      onSendVoice(voice.blob, voice.duration, voice.peaks);
-      URL.revokeObjectURL(voice.url);
-      setVoice(null);
+      const sent = await onSendVoice(voice.blob, voice.duration, voice.peaks);
+      if (sent) {
+        URL.revokeObjectURL(voice.url);
+        setVoice(null);
+      }
     } else {
       onSendText(text.trim());
       setText('');
@@ -163,7 +169,7 @@ export function ChatComposer({
   ): void => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      handleSend();
+      void handleSend();
     }
   };
 
@@ -396,7 +402,7 @@ export function ChatComposer({
             {hasContent || (isEditing && text.trim()) ? (
               <button
                 type='button'
-                onClick={handleSend}
+                onClick={() => void handleSend()}
                 disabled={sending}
                 aria-label='إرسال'
                 className={cn(

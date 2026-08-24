@@ -106,7 +106,15 @@ export async function downloadToFile(
   url: string,
   filePath: string
 ): Promise<void> {
-  const response = await fetch(url, { headers: { Range: 'bytes=0-' } });
+  const response = await fetch(url, {
+    headers: {
+      Range: 'bytes=0-',
+      Accept: 'video/*,image/*;q=0.9,*/*;q=0.8',
+      // Cloudflare's public R2 endpoint rejects some default server runtimes
+      // with error 1010; use an explicit, stable media-processor identity.
+      'User-Agent': 'Mozilla/5.0 (compatible; AiteMediaProcessor/1.1)'
+    }
+  });
   if (!response.ok && response.status !== 206) {
     throw new Error(`download failed: ${response.status}`);
   }

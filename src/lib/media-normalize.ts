@@ -27,14 +27,17 @@ export async function normalizeVideo(src: string): Promise<string | null> {
     try {
       const idToken = await auth.currentUser?.getIdToken();
       if (!idToken) return null;
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 55_000);
       const response = await fetch('/api/media/normalize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${idToken}`
         },
-        body: JSON.stringify({ src })
-      });
+        body: JSON.stringify({ src }),
+        signal: controller.signal
+      }).finally(() => window.clearTimeout(timeout));
       if (!response.ok) return null;
       const data = (await response.json()) as { src?: string };
       if (!data.src || data.src === src) return null;
@@ -69,14 +72,17 @@ export async function getVideoPoster(src: string): Promise<string | null> {
     try {
       const idToken = await auth.currentUser?.getIdToken();
       if (!idToken) return null;
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 35_000);
       const response = await fetch('/api/media/poster', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${idToken}`
         },
-        body: JSON.stringify({ src })
-      });
+        body: JSON.stringify({ src }),
+        signal: controller.signal
+      }).finally(() => window.clearTimeout(timeout));
       if (!response.ok) return null;
       const data = (await response.json()) as { src?: string };
       return data.src || null;

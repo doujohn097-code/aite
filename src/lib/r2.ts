@@ -52,7 +52,8 @@ export async function getUploadUrl(
     ContentType: contentType
   });
   const uploadUrl = await getSignedUrl(getClient(), command, {
-    expiresIn: 120
+    // Large reels can take several minutes on mobile networks.
+    expiresIn: 30 * 60
   });
   return { uploadUrl, publicUrl: `${publicBase}/${encodeKey(key)}` };
 }

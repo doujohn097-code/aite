@@ -57,13 +57,13 @@ describe('isValidImage', () => {
   });
 
   it('returns false for an image exceeding the 20MB limit', () => {
-    const twentyMB = 20 * Math.pow(1024, 2);
-    expect(isValidImage('photo.png', twentyMB)).toBe(false);
+    const overTwentyMB = 20 * Math.pow(1024, 2) + 1;
+    expect(isValidImage('photo.png', overTwentyMB)).toBe(false);
   });
 
   it('returns true for an image exactly at the size limit', () => {
-    const justUnder = 20 * Math.pow(1024, 2) - 1;
-    expect(isValidImage('photo.jpeg', justUnder)).toBe(true);
+    const twentyMB = 20 * Math.pow(1024, 2);
+    expect(isValidImage('photo.jpeg', twentyMB)).toBe(true);
   });
 
   it('is case-insensitive for extensions', () => {
@@ -76,17 +76,22 @@ describe('isValidMedia', () => {
     expect(isValidMedia('photo.gif', 1024)).toBe(true);
   });
 
-  it('accepts video files under the 50MB limit', () => {
-    expect(isValidMedia('clip.mp4', 1024)).toBe(true);
+  it('accepts video files up to the 100MB limit', () => {
+    const oneHundredMB = 100 * Math.pow(1024, 2);
+    expect(isValidMedia('clip.mp4', oneHundredMB, 'video/mp4')).toBe(true);
   });
 
   it('rejects unsupported video extensions', () => {
-    expect(isValidMedia('clip.flv', 1024)).toBe(false);
+    expect(isValidMedia('clip.flv', 1024, 'video/x-flv')).toBe(false);
   });
 
-  it('rejects media exceeding the 50MB limit', () => {
-    const fiftyMB = 50 * Math.pow(1024, 2);
-    expect(isValidMedia('clip.mp4', fiftyMB)).toBe(false);
+  it('rejects video exceeding the 100MB limit', () => {
+    const overOneHundredMB = 100 * Math.pow(1024, 2) + 1;
+    expect(isValidMedia('clip.mp4', overOneHundredMB, 'video/mp4')).toBe(false);
+  });
+
+  it('infers Android video MIME types from the file extension', () => {
+    expect(isValidMedia('camera-video.mp4', 1024, '')).toBe(true);
   });
 });
 

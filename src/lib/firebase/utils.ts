@@ -18,7 +18,12 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, auth } from './app';
-import { normalizeVideo } from '@lib/media-normalize';
+import {
+  formatFileSize,
+  inferMediaType,
+  maxUploadBytesForType,
+  uploadTimeoutMs
+} from '@lib/media-limits';
 import { sendPushNotification } from '@lib/push';
 import {
   usersCollection,
@@ -218,36 +223,54 @@ export type UploadProgressHandler = (percent: number) => void;
 
 type VideoThumbnail = { sourceId: string; file: File & { id: string } };
 
-/** Builds a real poster before upload so WebView never has to guess a video frame. */
+/** Builds a bounded-size poster without ever blocking the actual upload. */
 async function createVideoThumbnail(
   file: File & { id: string }
 ): Promise<VideoThumbnail | null> {
-  if (!file.type.startsWith('video/')) return null;
+  if (!inferMediaType(file.name, file.type).startsWith('video/')) return null;
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const video = document.createElement('video');
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = 'metadata';
+    let settled = false;
+    const timeout = window.setTimeout(() => finish(null), 6_000);
+
     const cleanup = (): void => {
+      window.clearTimeout(timeout);
+      video.onloadedmetadata = null;
+      video.onseeked = null;
+      video.onerror = null;
+      video.removeAttribute('src');
+      video.load();
       URL.revokeObjectURL(url);
       video.remove();
     };
+    const finish = (value: VideoThumbnail | null): void => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(value);
+    };
+
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'metadata';
     video.onloadedmetadata = () => {
       video.currentTime = Math.min(0.5, Math.max(0.1, video.duration * 0.1));
     };
     video.onseeked = () => {
       try {
+        const sourceWidth = video.videoWidth || 720;
+        const sourceHeight = video.videoHeight || 1280;
+        const scale = Math.min(1, 720 / sourceWidth, 1280 / sourceHeight);
         const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth || 720;
-        canvas.height = video.videoHeight || 1280;
+        canvas.width = Math.max(2, Math.round(sourceWidth * scale));
+        canvas.height = Math.max(2, Math.round(sourceHeight * scale));
         canvas
           .getContext('2d')
           ?.drawImage(video, 0, 0, canvas.width, canvas.height);
         canvas.toBlob(
-          (blob) => {
-            cleanup();
-            resolve(
+          (blob) =>
+            finish(
               blob
                 ? {
                     sourceId: file.id,
@@ -259,22 +282,65 @@ async function createVideoThumbnail(
                     )
                   }
                 : null
-            );
-          },
+            ),
           'image/jpeg',
-          0.86
+          0.82
         );
       } catch {
-        cleanup();
-        resolve(null);
+        finish(null);
       }
     };
-    video.onerror = () => {
-      cleanup();
-      resolve(null);
-    };
+    video.onerror = () => finish(null);
     video.src = url;
   });
+}
+
+function putMediaFile(
+  uploadUrl: string,
+  file: File,
+  contentType: string,
+  onProgress: (percent: number) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('PUT', uploadUrl);
+    request.timeout = uploadTimeoutMs(file.size);
+    request.setRequestHeader('Content-Type', contentType);
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0)
+        onProgress((event.loaded / event.total) * 100);
+    };
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        onProgress(100);
+        resolve();
+      } else reject(new Error(`upload_http_${request.status}`));
+    };
+    request.onerror = () => reject(new Error('upload_network'));
+    request.ontimeout = () => reject(new Error('upload_timeout'));
+    request.onabort = () => reject(new Error('upload_aborted'));
+    request.send(file);
+  });
+}
+
+async function putMediaFileWithRetry(
+  uploadUrl: string,
+  file: File,
+  contentType: string,
+  onProgress: (percent: number) => void
+): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await putMediaFile(uploadUrl, file, contentType, onProgress);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt === 0)
+        await new Promise((resolve) => window.setTimeout(resolve, 700));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('upload_failed');
 }
 
 export async function uploadImages(
@@ -284,6 +350,19 @@ export async function uploadImages(
 ): Promise<ImagesPreview | null> {
   if (!files.length) return null;
 
+  for (const file of files) {
+    const mediaType = inferMediaType(file.name, file.type);
+    if (!mediaType) throw new Error(`صيغة الملف ${file.name} غير مدعومة`);
+    const maxBytes = maxUploadBytesForType(mediaType);
+    if (file.size <= 0) throw new Error(`الملف ${file.name} فارغ`);
+    if (file.size > maxBytes)
+      throw new Error(
+        `حجم ${file.name} هو ${formatFileSize(
+          file.size
+        )} والحد الأقصى ${formatFileSize(maxBytes)}`
+      );
+  }
+
   const thumbnails = (
     await Promise.all(files.map(createVideoThumbnail))
   ).filter((item): item is VideoThumbnail => item !== null);
@@ -291,11 +370,23 @@ export async function uploadImages(
     ...files,
     ...thumbnails.map(({ file }) => file)
   ] as FilesWithId;
-  const perFile = new Array<number>(uploadInput.length).fill(0);
+  const uploadedBytes = new Array<number>(uploadInput.length).fill(0);
+  const totalBytes = uploadInput.reduce((sum, file) => sum + file.size, 0);
   const report = (index: number, percent: number): void => {
-    perFile[index] = Math.min(Math.round(percent), 100);
+    const nextBytes =
+      uploadInput[index].size * (Math.min(Math.max(percent, 0), 100) / 100);
+    uploadedBytes[index] = Math.max(uploadedBytes[index], nextBytes);
     onProgress?.(
-      Math.round(perFile.reduce((acc, p) => acc + p, 0) / uploadInput.length)
+      totalBytes > 0
+        ? Math.min(
+            100,
+            Math.round(
+              (uploadedBytes.reduce((sum, bytes) => sum + bytes, 0) /
+                totalBytes) *
+                100
+            )
+          )
+        : 0
     );
   };
 
@@ -311,16 +402,27 @@ export async function uploadImages(
       Authorization: `Bearer ${idToken}`
     },
     body: JSON.stringify({
-      files: uploadInput.map(({ id, name, type }) => ({ id, name, type }))
+      files: uploadInput.map(({ id, name, type, size }) => ({
+        id,
+        name,
+        type: inferMediaType(name, type),
+        size
+      }))
     })
   });
-  if (!response.ok) throw new Error('تعذر تجهيز رفع الوسائط');
+  if (!response.ok) {
+    const data = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(data?.error || 'تعذر تجهيز رفع الوسائط');
+  }
 
   const { files: uploadFiles } = (await response.json()) as {
     files: {
       id: string;
       alt: string;
       type: string;
+      size: number;
       uploadUrl: string;
       publicUrl: string;
     }[];
@@ -328,19 +430,22 @@ export async function uploadImages(
   if (!uploadFiles?.length || uploadFiles.length !== uploadInput.length)
     throw new Error('استجابة رفع الوسائط غير صالحة');
 
-  await Promise.all(
-    uploadFiles.map(({ uploadUrl }, index) =>
-      fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': uploadInput[index].type },
-        body: uploadInput[index]
-      }).then((result) => {
-        if (!result.ok)
-          throw new Error(`Failed to upload ${uploadInput[index].name}`);
-        report(index, 100);
-      })
-    )
-  );
+  try {
+    await Promise.all(
+      uploadFiles.map(({ uploadUrl, type }, index) =>
+        putMediaFileWithRetry(uploadUrl, uploadInput[index], type, (percent) =>
+          report(index, percent)
+        )
+      )
+    );
+  } catch (error) {
+    const code = error instanceof Error ? error.message : '';
+    if (code === 'upload_timeout')
+      throw new Error('انتهت مهلة الرفع. تحقق من الاتصال وأعد المحاولة');
+    if (code === 'upload_network')
+      throw new Error('انقطع الاتصال أثناء الرفع. أعد المحاولة');
+    throw new Error('فشل رفع الملف إلى التخزين. أعد المحاولة');
+  }
 
   const uploadedById = new Map(uploadFiles.map((item) => [item.id, item]));
   const posterBySource = new Map(
@@ -349,31 +454,21 @@ export async function uploadImages(
       uploadedById.get(file.id)?.publicUrl ?? null
     ])
   );
-  const results = files.map(({ id, name, type }) => {
+  const results = files.map(({ id, name }) => {
     const uploaded = uploadedById.get(id);
     if (!uploaded) throw new Error('ملف مفقود من استجابة الرفع');
     return {
       id,
       src: uploaded.publicUrl,
       alt: name,
-      type,
+      type: uploaded.type,
       thumbnail: posterBySource.get(id) ?? null
     };
   });
 
-  // Raw phone uploads (HEVC, H.264 High@L5.2, .mov, non-faststart MP4) decode
-  // fine on desktop Chrome but fail on some mobile hardware decoders,
-  // which caps at H.264 level 4.x — that is the gray box bug in the app.
-  // Re-encode every video server-side so all devices can play it.
-  const normalized = await Promise.all(
-    results.map(async (item) => {
-      if (!item.type?.startsWith('video/')) return item;
-      const fixed = await normalizeVideo(item.src);
-      return fixed ? { ...item, src: fixed } : item;
-    })
-  );
-
-  return normalized;
+  // لا نؤخر نجاح الرفع بعملية FFmpeg الخادمية. مشغلات الفيديو تطلب نسخة
+  // متوافقة فقط عند فشل الجهاز في تشغيل المصدر الأصلي.
+  return results;
 }
 
 export async function manageReply(
@@ -704,11 +799,12 @@ export async function uploadReel(
   color: string,
   caption: string | null,
   durations?: Record<string, number>,
-  music?: { src: string; name: string } | null
+  music?: { src: string; name: string } | null,
+  onProgress?: UploadProgressHandler
 ): Promise<void> {
   if (!files.length) return;
 
-  const images = await uploadImages(userId, files);
+  const images = await uploadImages(userId, files, onProgress);
 
   if (!images) return;
 

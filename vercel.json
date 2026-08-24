@@ -2,11 +2,11 @@
   "functions": {
     "src/pages/api/media/normalize.ts": {
       "maxDuration": 60,
-      "includeFiles": "**/ffmpeg*"
+      "includeFiles": "src/pages/api/media/ffmpeg-bin/ffmpeg"
     },
     "src/pages/api/media/poster.ts": {
       "maxDuration": 60,
-      "includeFiles": "**/ffmpeg*"
+      "includeFiles": "src/pages/api/media/ffmpeg-bin/ffmpeg"
     }
   }
 }

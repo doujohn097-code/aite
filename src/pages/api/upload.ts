@@ -1,5 +1,6 @@
 import { verifyIdToken, isAdminConfigured } from '@lib/firebase-admin';
 import { getUploadUrl, isR2Configured } from '@lib/r2';
+import { inferMediaType, maxUploadBytesForType } from '@lib/media-limits';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const MAX_FILES = 8;
@@ -13,15 +14,21 @@ const ALLOWED_TYPES = new Set([
   'video/mp4',
   'video/webm',
   'video/quicktime',
+  'video/x-m4v',
+  'video/3gpp',
+  'video/x-matroska',
   'audio/mpeg',
   'audio/wav',
   'audio/ogg',
   'audio/webm',
   'audio/mp4',
-  'audio/aac'
+  'audio/x-m4a',
+  'audio/aac',
+  'audio/3gpp',
+  'audio/opus'
 ]);
 
-type UploadFile = { id: string; name: string; type: string };
+type UploadFile = { id: string; name: string; type: string; size: number };
 type UploadResponseFile = UploadFile & {
   alt: string;
   uploadUrl: string;
@@ -35,19 +42,19 @@ function safeSegment(value: string): string {
     .slice(0, MAX_FILE_NAME_LENGTH);
 }
 
-function normalizedMime(type: string): string {
-  return type.split(';', 1)[0].trim().toLowerCase();
-}
-
 function isValidFile(file: UploadFile): boolean {
+  if (typeof file.name !== 'string' || typeof file.type !== 'string')
+    return false;
+  const mediaType = inferMediaType(file.name, file.type);
   return (
     typeof file.id === 'string' &&
     /^[a-zA-Z0-9_-]{6,80}$/.test(file.id) &&
-    typeof file.name === 'string' &&
     file.name.length > 0 &&
     file.name.length <= MAX_FILE_NAME_LENGTH &&
-    typeof file.type === 'string' &&
-    ALLOWED_TYPES.has(normalizedMime(file.type))
+    ALLOWED_TYPES.has(mediaType) &&
+    Number.isSafeInteger(file.size) &&
+    file.size > 0 &&
+    file.size <= maxUploadBytesForType(mediaType)
   );
 }
 
@@ -94,15 +101,29 @@ export default async function uploadEndpoint(
       files.length > MAX_FILES ||
       !files.every(isValidFile)
     ) {
-      res.status(400).json({ error: 'Invalid media metadata' });
+      res.status(400).json({
+        error: 'الملف غير مدعوم أو يتجاوز الحد المسموح للحجم'
+      });
       return;
     }
     const uploadedFiles = await Promise.all(
-      files.map(async ({ id, name, type }) => {
+      files.map(async ({ id, name, type, size }) => {
         const safeName = safeSegment(name) || 'upload';
         const key = `media/${uid}/${id}-${safeName}`;
-        const { uploadUrl, publicUrl } = await getUploadUrl(key, type);
-        return { id, name, alt: name, type, uploadUrl, publicUrl };
+        const normalizedType = inferMediaType(name, type);
+        const { uploadUrl, publicUrl } = await getUploadUrl(
+          key,
+          normalizedType
+        );
+        return {
+          id,
+          name,
+          alt: name,
+          type: normalizedType,
+          size,
+          uploadUrl,
+          publicUrl
+        };
       })
     );
     res.status(200).json({ files: uploadedFiles });

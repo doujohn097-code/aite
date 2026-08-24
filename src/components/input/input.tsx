@@ -16,6 +16,7 @@ import { useAuth } from '@lib/context/auth-context';
 
 import { getImagesData } from '@lib/validation';
 import { getAudioWaveform } from '@lib/audio';
+import { formatFileSize, MAX_AUDIO_UPLOAD_BYTES } from '@lib/media-limits';
 import { UserAvatar } from '@components/user/user-avatar';
 import { InputForm, fromTop } from './input-form';
 import { ImagePreview } from './image-preview';
@@ -174,7 +175,9 @@ export function Input({
       );
     } catch (error) {
       console.error(error);
-      toast.error('فشل نشر المنشور. حاول مجددًا.');
+      toast.error(
+        error instanceof Error ? error.message : 'فشل نشر المنشور. حاول مجددًا.'
+      );
     } finally {
       setLoading(false);
       setUploadProgress(0);
@@ -199,6 +202,15 @@ export function Input({
         ? files[0]
         : null;
     if (audioFile) {
+      if (audioFile.size > MAX_AUDIO_UPLOAD_BYTES) {
+        toast.error(
+          `حجم الملف الصوتي ${formatFileSize(
+            audioFile.size
+          )} ويتجاوز الحد الأقصى ${formatFileSize(MAX_AUDIO_UPLOAD_BYTES)}`
+        );
+        if (!isClipboardEvent && e.target) e.target.value = '';
+        return;
+      }
       void (async (): Promise<void> => {
         const meta = await getAudioWaveform(audioFile);
         if (audioUrl) URL.revokeObjectURL(audioUrl);

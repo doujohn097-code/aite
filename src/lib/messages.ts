@@ -15,6 +15,12 @@ import {
 import { db } from '@lib/firebase/app';
 import { uploadImages } from '@lib/firebase/utils';
 import { sendPushNotification } from '@lib/push';
+import {
+  formatFileSize,
+  MAX_AUDIO_UPLOAD_BYTES,
+  MAX_VOICE_DURATION_SECONDS,
+  normalizeMediaType
+} from '@lib/media-limits';
 import { getRandomId } from '@lib/random';
 import type { FilesWithId } from '@lib/types/file';
 import { deleteField } from 'firebase/firestore';
@@ -100,8 +106,18 @@ export async function sendMessage(
     if (!text) return;
   } else if (payload.type === 'audio') {
     type = 'audio';
-    const audioType = payload.blob.type || 'audio/webm';
-    const normalizedType = audioType.split(';', 1)[0].toLowerCase();
+    if (payload.blob.size <= 0) throw new Error('التسجيل الصوتي فارغ');
+    if (payload.blob.size > MAX_AUDIO_UPLOAD_BYTES)
+      throw new Error(
+        `حجم التسجيل ${formatFileSize(payload.blob.size)} ويتجاوز الحد المسموح`
+      );
+    if (payload.duration > MAX_VOICE_DURATION_SECONDS + 2)
+      throw new Error('مدة الرسالة الصوتية تتجاوز 10 دقائق');
+
+    const normalizedType = normalizeMediaType(
+      payload.blob.type || 'audio/webm'
+    );
+    const audioType = normalizedType || 'audio/webm';
     const extension =
       normalizedType === 'audio/mp4'
         ? 'm4a'
