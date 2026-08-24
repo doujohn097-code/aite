@@ -31,6 +31,10 @@ export type User = {
   storyViews?: { [userId: string]: Timestamp } | null;
   /** Presence heartbeat — updated every minute while the app is open. */
   lastActiveAt?: Timestamp | null;
+  lastPublishAt?: Timestamp | null;
+  lastPublishRef?: string | null;
+  publishWindowStart?: Timestamp | null;
+  publishWindowCount?: number;
   /** FCM device tokens for the native app push notifications. */
   fcmTokens?: string[];
   /** Accounts this user chose not to see or contact. */

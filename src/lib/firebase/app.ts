@@ -13,6 +13,7 @@ import {
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { isUsingEmulator } from '@lib/env';
 import { getFirebaseConfig } from './config';
+import { maybeInitAppCheck } from './app-check';
 import type { Auth } from 'firebase/auth';
 import type { Functions } from 'firebase/functions';
 import type { Firestore } from 'firebase/firestore';
@@ -27,6 +28,7 @@ type Firebase = {
 
 function initialize(): Firebase {
   const firebaseApp = initializeApp(getFirebaseConfig());
+  maybeInitAppCheck(firebaseApp);
   const auth = getAuth(firebaseApp);
   const firestore = getFirestore(firebaseApp);
   // جلسة دائمة وذاكرة Firestore محلية: عند العودة من الخلفية تظهر آخر حالة

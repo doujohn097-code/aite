@@ -18,6 +18,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, auth } from './app';
+import { appCheckHeaders } from './app-check';
 import { notifyMentions } from '@lib/mentions';
 import {
   formatFileSize,
@@ -40,7 +41,52 @@ import type { Theme, Accent } from '@lib/types/theme';
 import type { Notification } from '@lib/types/notification';
 import type { StoryMusic, StoryText, Story } from '@lib/types/story';
 import { getTimestampMillis } from '@lib/date';
+import { nextPublishQuota } from '@lib/publish-quota';
 import type { Tweet } from '@lib/types/tweet';
+
+async function consumePublishQuota(
+  userId: string,
+  publishRef: string
+): Promise<Record<string, unknown>> {
+  const userRef = doc(usersCollection, userId);
+  const snap = await getDoc(userRef);
+  const data = snap.data();
+  const next = nextPublishQuota({
+    lastPublishAt: data?.lastPublishAt,
+    publishWindowStart: data?.publishWindowStart,
+    publishWindowCount: data?.publishWindowCount
+  });
+  if (!next.allowed) throw new Error(next.message);
+  return {
+    lastPublishAt: serverTimestamp(),
+    lastPublishRef: publishRef,
+    publishWindowCount: next.publishWindowCount,
+    publishWindowStart: next.resetWindow
+      ? serverTimestamp()
+      : data?.publishWindowStart ?? serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+}
+
+export async function createTweet(
+  userId: string,
+  tweetData: WithFieldValue<Omit<Tweet, 'id'>>,
+  options?: { isReply?: boolean }
+): Promise<string> {
+  const tweetRef = doc(tweetsCollection);
+  const quota = await consumePublishQuota(userId, tweetRef.id);
+  const batch = writeBatch(db);
+  batch.set(tweetRef, tweetData);
+  batch.update(doc(usersCollection, userId), {
+    ...quota,
+    ...(options?.isReply
+      ? { totalReplies: increment(1) }
+      : { totalTweets: increment(1) }),
+    ...(tweetData.images ? { totalPhotos: increment(1) } : {})
+  });
+  await batch.commit();
+  return tweetRef.id;
+}
 
 export async function checkUsernameAvailability(
   username: string
@@ -463,7 +509,8 @@ export async function uploadImages(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${idToken}`,
+      ...(await appCheckHeaders())
     },
     body: JSON.stringify({
       files: uploadInput.map(({ id, name, type, size }) => ({
@@ -770,7 +817,8 @@ export async function createNotification(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
+        ...(await appCheckHeaders())
       },
       body: JSON.stringify({
         ...notification,
@@ -809,12 +857,14 @@ export async function uploadStory(
   const batch = writeBatch(db);
   const userRef = doc(usersCollection, userId);
   const now = serverTimestamp();
+  const firstStoryRef = doc(storiesCollection);
+  const quota = await consumePublishQuota(userId, firstStoryRef.id);
 
   const expiresAt = getStoryExpiration();
   const storyIds: string[] = [];
 
-  images.forEach((image) => {
-    const storyRef = doc(storiesCollection);
+  images.forEach((image, index) => {
+    const storyRef = index === 0 ? firstStoryRef : doc(storiesCollection);
     storyIds.push(storyRef.id);
     const storyData: WithFieldValue<Story> = {
       id: storyRef.id,
@@ -836,9 +886,9 @@ export async function uploadStory(
   });
 
   batch.update(userRef, {
+    ...quota,
     storyColor: color,
-    lastStoryAt: now,
-    updatedAt: now
+    lastStoryAt: now
   });
 
   await batch.commit();
@@ -870,41 +920,37 @@ export async function uploadReel(
 
   if (!images) return;
 
+  const image = images[0];
   const batch = writeBatch(db);
   const userRef = doc(usersCollection, userId);
   const now = serverTimestamp();
-
+  const reelRef = doc(storiesCollection);
+  const quota = await consumePublishQuota(userId, reelRef.id);
   const expiresAt = getReelExpiration();
-  const reelIds: string[] = [];
 
-  images.forEach((image) => {
-    const reelRef = doc(storiesCollection);
-    reelIds.push(reelRef.id);
-    const reelData: WithFieldValue<Story> = {
-      id: reelRef.id,
-      userId,
-      images: [image],
-      caption: caption?.trim() || null,
-      color,
-      duration: durations?.[image.id] ?? DEFAULT_STORY_DURATION_MS,
-      music: music ?? null,
-      likes: [],
-      views: [],
-      kind: 'reel',
-      createdAt: now,
-      expiresAt,
-      updatedAt: null
-    };
-    batch.set(reelRef, reelData);
-  });
-
+  const reelData: WithFieldValue<Story> = {
+    id: reelRef.id,
+    userId,
+    images: [image],
+    caption: caption?.trim() || null,
+    color,
+    duration: durations?.[image.id] ?? DEFAULT_STORY_DURATION_MS,
+    music: music ?? null,
+    likes: [],
+    views: [],
+    kind: 'reel',
+    createdAt: now,
+    expiresAt,
+    updatedAt: null
+  };
+  batch.set(reelRef, reelData);
   batch.update(userRef, {
-    storyColor: color,
-    updatedAt: now
+    ...quota,
+    storyColor: color
   });
 
   await batch.commit();
-  await Promise.all(reelIds.map((id) => notifyMentions('reel', id)));
+  await notifyMentions('reel', reelRef.id);
 }
 
 export async function viewStory(
@@ -1103,23 +1149,8 @@ export async function addReelComment(
     userRetweets: []
   };
 
-  const docRef = await addDoc(tweetsCollection, tweetData);
-  await notifyMentions('post', docRef.id);
-
-  // Safely update user total tweets without blocking
-  try {
-    const userRef = doc(usersCollection, userId);
-    await setDoc(
-      userRef,
-      {
-        totalReplies: increment(1),
-        updatedAt: serverTimestamp()
-      },
-      { merge: true }
-    );
-  } catch {
-    // Non-blocking
-  }
+  const commentId = await createTweet(userId, tweetData, { isReply: true });
+  await notifyMentions('post', commentId);
 
   // Notify reel owner
   if (reelOwnerId && reelOwnerId !== userId) {
@@ -1130,7 +1161,7 @@ export async function addReelComment(
           type: 'reply',
           fromUserId: userId,
           toUserId: reelOwnerId,
-          tweetId: docRef.id,
+          tweetId: commentId,
           storyId: reelId,
           context: 'reel',
           read: false
@@ -1142,7 +1173,7 @@ export async function addReelComment(
     }
   }
 
-  return docRef.id;
+  return commentId;
 }
 
 export async function deleteReelComment(

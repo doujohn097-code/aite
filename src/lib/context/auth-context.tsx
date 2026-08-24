@@ -512,6 +512,14 @@ export function AuthContextProvider({
       if (password.length < 6)
         throw new Error('كلمة المرور ضعيفة (6 أحرف على الأقل)');
 
+      try {
+        const last = Number(window.localStorage.getItem('aite:last-signup') ?? '0');
+        if (last && Date.now() - last < 45_000)
+          throw new Error('انتظر قليلاً قبل إنشاء حساب آخر');
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('انتظر')) throw error;
+      }
+
       // تحقق من التوفر مع معالجة أخطاء الصلاحيات
       let isAvailable = true;
       try {
@@ -553,6 +561,11 @@ export function AuthContextProvider({
         email,
         password
       );
+      try {
+        window.localStorage.setItem('aite:last-signup', String(Date.now()));
+      } catch {
+        // ignore
+      }
       pendingProfile.uid = authUser.uid;
 
       try {

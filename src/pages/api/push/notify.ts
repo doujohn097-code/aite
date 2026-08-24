@@ -111,7 +111,7 @@ export default async function handler(
     }
     const decoded = await verifyIdToken(idToken);
     const senderId = decoded.uid;
-    const rate = consumeRateLimit(`push:${senderId}`, 60, 60_000);
+    const rate = consumeRateLimit(`push:${senderId}`, 30, 60_000);
     if (!rate.allowed) {
       res.setHeader('Retry-After', String(rate.retryAfterSeconds));
       res.status(429).json({ error: 'rate_limited' });

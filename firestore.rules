@@ -7,6 +7,44 @@ service cloud.firestore {
     function isAdmin() { return signedIn() && request.auth.token.admin == true; }
     function isOwner(userId) { return signedIn() && request.auth.uid == userId; }
     function isOwnerOrAdmin(userId) { return isOwner(userId) || isAdmin(); }
+    function userPath() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function publishQuotaCore() {
+      let before = get(userPath()).data;
+      let after = getAfter(userPath()).data;
+      let last = before.get('lastPublishAt', timestamp.date(2000, 1, 1));
+      let windowStart = before.get('publishWindowStart', timestamp.date(2000, 1, 1));
+      let count = before.get('publishWindowCount', 0);
+      let newWindow = request.time > windowStart + duration.value(1, 'h');
+      let nextCount = newWindow ? 1 : count + 1;
+      return request.time >= last + duration.value(10, 's')
+        && nextCount <= 25
+        && after.lastPublishAt == request.time
+        && after.lastPublishRef is string
+        && after.lastPublishRef.size() > 0
+        && after.publishWindowCount == nextCount
+        && (newWindow
+          ? after.publishWindowStart == request.time
+          : after.publishWindowStart == windowStart);
+    }
+    function publishQuotaOk(publishId) {
+      return publishQuotaCore() && getAfter(userPath()).data.lastPublishRef == publishId;
+    }
+    function validTweetContentEdit() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return isOwner(resource.data.createdBy)
+        && changed.hasOnly(['text', 'images', 'audio', 'edited', 'editedAt', 'updatedAt'])
+        && validText(request.resource.data.text, 1000)
+        && validImages(request.resource.data.images)
+        && request.resource.data.createdBy == resource.data.createdBy;
+    }
+    function validStoryContentEdit() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return isOwner(resource.data.userId)
+        && changed.hasOnly(['caption', 'images', 'music', 'texts', 'color', 'duration', 'edited', 'editedAt', 'updatedAt'])
+        && validText(request.resource.data.caption, 1000)
+        && validImages(request.resource.data.images)
+        && request.resource.data.userId == resource.data.userId;
+    }
     function validText(value, maxLength) { return value == null || (value is string && value.size() <= maxLength); }
     function validImages(images) { return images == null || (images is list && images.size() <= 4); }
     function onlyCurrentUserChanged(oldList, newList) {
@@ -78,9 +116,9 @@ service cloud.firestore {
         && request.resource.data.userLikes.size() == 0
         && request.resource.data.userRetweets is list
         && request.resource.data.userRetweets.size() == 0
-        && request.resource.data.userReplies == 0;
-      // Authors can edit their own content; everyone else can only change their own reaction.
-      allow update: if isOwnerOrAdmin(resource.data.createdBy) || validTweetInteraction();
+        && request.resource.data.userReplies == 0
+        && (isAdmin() || publishQuotaOk(tweetId));
+      allow update: if isAdmin() || validTweetContentEdit() || validTweetInteraction();
       allow delete: if isOwnerOrAdmin(resource.data.createdBy);
     }
 
@@ -110,7 +148,8 @@ service cloud.firestore {
             'bio', 'name', 'website', 'location', 'photoURL', 'coverPhotoURL',
             'theme', 'accent', 'username', 'pinnedTweet', 'storyColor', 'lastStoryAt',
             'storyViews', 'lastActiveAt', 'fcmTokens', 'blockedUsers', 'totalTweets', 'totalReplies',
-            'totalPhotos', 'gender', 'onboarded', 'updatedAt'
+            'totalPhotos', 'gender', 'onboarded', 'updatedAt',
+            'lastPublishAt', 'lastPublishRef', 'publishWindowStart', 'publishWindowCount'
           ]));
       allow delete: if isAdmin();
 
@@ -201,6 +240,8 @@ service cloud.firestore {
         && request.resource.data.userId == request.auth.uid
         && validText(request.resource.data.caption, 1000)
         && validImages(request.resource.data.images)
+        && request.resource.data.images is list
+        && request.resource.data.images.size() >= 1
         && request.resource.data.likes is list
         && request.resource.data.likes.size() == 0
         && request.resource.data.views is list
@@ -209,8 +250,12 @@ service cloud.firestore {
           || (request.resource.data.userRetweets is list
             && request.resource.data.userRetweets.size() == 0))
         && (!request.resource.data.keys().hasAny(['kind'])
-          || ['story', 'reel'].hasAny([request.resource.data.kind]));
-      allow update: if isOwnerOrAdmin(resource.data.userId) || validStoryInteraction();
+          || ['story', 'reel'].hasAny([request.resource.data.kind]))
+        && (isAdmin()
+          || (request.resource.data.get('kind', 'story') == 'reel'
+            ? publishQuotaOk(storyId)
+            : publishQuotaCore()));
+      allow update: if isAdmin() || validStoryContentEdit() || validStoryInteraction();
       allow delete: if isOwnerOrAdmin(resource.data.userId);
     }
   }

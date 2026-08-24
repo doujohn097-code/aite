@@ -1,4 +1,5 @@
 import { verifyIdToken } from '@lib/firebase-admin';
+import { consumeRateLimit } from '@lib/server/rate-limit';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export type MusicTrack = {
@@ -43,7 +44,13 @@ export default async function musicEndpoint(
   }
 
   try {
-    await verifyIdToken(token);
+    const { uid } = await verifyIdToken(token);
+    const rate = consumeRateLimit(`music:${uid}`, 20, 60_000);
+    if (!rate.allowed) {
+      res.setHeader('Retry-After', String(rate.retryAfterSeconds));
+      res.status(429).json({ error: 'طلبات كثيرة — حاول بعد قليل' });
+      return;
+    }
   } catch {
     res.status(401).json({ error: 'Unauthorized' });
     return;

@@ -3,14 +3,11 @@ import { useState, useEffect, useRef, useId } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
 import { toast } from 'react-hot-toast';
-import { addDoc, serverTimestamp } from 'firebase/firestore';
-import { tweetsCollection } from '@lib/firebase/collections';
+import { serverTimestamp } from 'firebase/firestore';
 import {
   manageReply,
-  manageTotalReplies,
   uploadImages,
-  manageTotalTweets,
-  manageTotalPhotos
+  createTweet
 } from '@lib/firebase/utils';
 import { useAuth } from '@lib/context/auth-context';
 
@@ -148,18 +145,14 @@ export function Input({
         userRetweets: []
       };
 
-      const tweetRef = await addDoc(tweetsCollection, tweetData);
+      const tweetId = await createTweet(userId, tweetData, {
+        isReply: !!isReplying
+      });
       await Promise.all([
-        isReplying
-          ? manageTotalReplies('increment', userId)
-          : manageTotalTweets('increment', userId),
-        tweetData.images && manageTotalPhotos('increment', userId),
         isReplying &&
-          manageReply('increment', parent?.id as string, tweetRef.id),
-        notifyMentions('post', tweetRef.id)
+          manageReply('increment', parent?.id as string, tweetId),
+        notifyMentions('post', tweetId)
       ]);
-
-      const tweetId = tweetRef.id;
 
       if (!modal && !replyModal) discardTweet();
 

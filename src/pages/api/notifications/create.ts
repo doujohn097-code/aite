@@ -4,6 +4,7 @@ import { verifyIdToken } from '@lib/firebase-admin';
 import { extractMentions } from '@lib/mention-parser';
 import { notificationPushCopy } from '@lib/notification-target';
 import { consumeRateLimit } from '@lib/server/rate-limit';
+import { assertAppCheck } from '@lib/server/app-check';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 type ActivityType =
@@ -336,8 +337,14 @@ export default async function handler(
       res.status(401).json({ error: 'unauthorized' });
       return;
     }
+    try {
+      await assertAppCheck(req);
+    } catch {
+      res.status(401).json({ error: 'unauthorized' });
+      return;
+    }
     const { uid: senderId } = await verifyIdToken(token);
-    const rate = consumeRateLimit(`notification:${senderId}`, 40, 60_000);
+    const rate = consumeRateLimit(`notification:${senderId}`, 20, 60_000);
     if (!rate.allowed) {
       res.setHeader('Retry-After', String(rate.retryAfterSeconds));
       res.status(429).json({ error: 'rate_limited' });
