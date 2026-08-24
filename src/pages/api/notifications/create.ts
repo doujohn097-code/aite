@@ -3,8 +3,10 @@ import admin from 'firebase-admin';
 import { verifyIdToken } from '@lib/firebase-admin';
 import { extractMentions } from '@lib/mention-parser';
 import { notificationPushCopy } from '@lib/notification-target';
+import { resolveProfileName } from '@lib/utils';
 import { consumeRateLimit } from '@lib/server/rate-limit';
 import { assertAppCheck } from '@lib/server/app-check';
+import { tx } from '@lib/i18n/tx';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 type ActivityType =
@@ -48,6 +50,23 @@ function asStringArray(value: unknown): string[] {
     : [];
 }
 
+function senderFields(sender: Record<string, unknown>): {
+  fromName: string | null;
+  fromUsername: string | null;
+  fromPhotoURL: string | null;
+} {
+  const name = typeof sender.name === 'string' ? sender.name.trim() : '';
+  const username =
+    typeof sender.username === 'string' ? sender.username.trim() : '';
+  const photoURL =
+    typeof sender.photoURL === 'string' ? sender.photoURL.trim() : '';
+  return {
+    fromName: name ? name.slice(0, 80) : null,
+    fromUsername: username ? username.slice(0, 15) : null,
+    fromPhotoURL: photoURL ? photoURL.slice(0, 500) : null
+  };
+}
+
 async function sendActivityPush(
   target: NotificationTarget,
   sender: Record<string, unknown>
@@ -59,10 +78,13 @@ async function sendActivityPush(
     .slice(0, 20);
   if (!tokens.length) return;
 
-  const senderName = String(sender.name ?? sender.username ?? 'مستخدم').slice(
-    0,
-    80
-  );
+  const senderName = resolveProfileName(
+    {
+      name: typeof sender.name === 'string' ? sender.name : '',
+      username: typeof sender.username === 'string' ? sender.username : ''
+    },
+    tx('common.user')
+  ).slice(0, 80);
   const senderPhoto =
     typeof sender.photoURL === 'string' ? sender.photoURL.slice(0, 500) : null;
   const type = String(target.data.type ?? 'mention') as ActivityType;
@@ -370,7 +392,7 @@ export default async function handler(
           .slice(0, 40);
         const ref = firestore.doc(`users/${target.userId}/notifications/${id}`);
         try {
-          await ref.create(target.data);
+          await ref.create({ ...target.data, ...senderFields(sender) });
           created += 1;
           await sendActivityPush(target, sender);
         } catch (error) {
@@ -384,14 +406,15 @@ export default async function handler(
     }
 
     const target = await validateActivity(senderId, input);
-    await firestore.collection(`users/${target.userId}/notifications`).add({
-      ...target.data,
-      read: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
     const sender = asRecord(
       (await firestore.doc(`users/${senderId}`).get()).data()
     );
+    await firestore.collection(`users/${target.userId}/notifications`).add({
+      ...target.data,
+      ...senderFields(sender),
+      read: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
     await sendActivityPush(target, sender);
     res.status(200).json({ ok: true, created: 1, url: target.url });
   } catch (error) {

@@ -19,6 +19,9 @@ export type Notification = {
   storyId?: string | null;
   storyUserId?: string | null;
   context?: NotificationContext | null;
+  fromName?: string | null;
+  fromUsername?: string | null;
+  fromPhotoURL?: string | null;
   read: boolean;
   createdAt: Timestamp | null;
 };
@@ -32,17 +35,24 @@ export const notificationConverter: FirestoreDataConverter<Notification> = {
   fromFirestore(snapshot, options) {
     const { id } = snapshot;
     const data = snapshot.data(options);
+    const fromUserId =
+      (typeof data.fromUserId === 'string' && data.fromUserId) ||
+      (typeof data.userId === 'string' && data.userId) ||
+      '';
     return {
       id,
       type: 'follow',
-      fromUserId: '',
       toUserId: '',
       tweetId: null,
       storyId: null,
       storyUserId: null,
+      fromName: null,
+      fromUsername: null,
+      fromPhotoURL: null,
       read: false,
       createdAt: null,
-      ...data
+      ...data,
+      fromUserId
     } as Notification;
   }
 };

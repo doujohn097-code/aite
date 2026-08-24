@@ -7,6 +7,7 @@ import { userStatsCollection } from '@lib/firebase/collections';
 import { UserName } from './user-name';
 import type { Variants } from 'framer-motion';
 import { useLanguage } from '@lib/context/language-context';
+import { resolveUsername } from '@lib/utils';
 
 export const variants: Variants = {
   initial: { opacity: 0 },
@@ -77,10 +78,10 @@ export function UserHeader(): JSX.Element {
             verified={user.verified}
           />
           <p className='text-xs text-light-secondary dark:text-dark-secondary'>
-            {isInFollowPage
-              ? `@${user.username}`
-              : isInTweetPage
-              ? `@${user.username}`
+            {isInFollowPage || isInTweetPage
+              ? resolveUsername(user)
+                ? `@${resolveUsername(user)}`
+                : t('common.user')
               : currentPage === 'media'
               ? totalPhotos
                 ? `${totalPhotos} ${

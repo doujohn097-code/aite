@@ -33,6 +33,8 @@ import { ActionModal } from '@components/modal/action-modal';
 import { StoryAvatar } from '@components/stories/story-avatar';
 import { getTimestampMillis } from '@lib/date';
 import { manageBlock } from '@lib/firebase/utils';
+import { blankUser } from '@lib/firebase/users';
+import { resolveProfileName, resolveUsername, profileHref } from '@lib/utils';
 import type { ReactElement, ReactNode, Ref } from 'react';
 import type { Conversation, Message } from '@lib/types/message';
 import type { User } from '@lib/types/user';
@@ -187,9 +189,9 @@ export default function Chat(): JSX.Element {
     const unsubscribe = onSnapshot(
       doc(usersCollection, peerId),
       (snapshot) => {
-        if (snapshot.exists()) setPeer(snapshot.data());
+        setPeer(snapshot.exists() ? snapshot.data() : blankUser(peerId));
       },
-      () => undefined
+      () => setPeer(blankUser(peerId))
     );
     return unsubscribe;
   }, [peerId]);
@@ -339,7 +341,9 @@ export default function Chat(): JSX.Element {
           id: replyTarget.id,
           senderId: replyTarget.senderId,
           senderName:
-            replyTarget.senderId === user.id ? user.name : peer?.name ?? null,
+            replyTarget.senderId === user.id
+              ? resolveProfileName(user, t('common.you'))
+              : resolveProfileName(peer, t('messages.peer')),
           text: replyTarget.text,
           type: replyTarget.type
         }
@@ -415,7 +419,7 @@ export default function Chat(): JSX.Element {
       </main>
     );
 
-  const peerName = peer?.name ?? t('messages.conversation');
+  const peerName = resolveProfileName(peer, t('messages.conversation'));
 
   return (
     <main
@@ -580,10 +584,10 @@ export default function Chat(): JSX.Element {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={peer.photoURL || '/assets/default-avatar.png'}
-                  alt={peer.name}
+                  alt={peerName}
                   className='h-16 w-16 rounded-full object-cover'
                 />
-                <p className='font-bold'>{peer.name}</p>
+                <p className='font-bold'>{peerName}</p>
               </>
             )}
             <p className='text-sm text-light-secondary dark:text-dark-secondary'>
@@ -636,8 +640,8 @@ export default function Chat(): JSX.Element {
                 ? {
                     senderName:
                       replyTarget.senderId === user?.id
-                        ? user?.name ?? t('common.you')
-                        : peer?.name || t('messages.peer'),
+                        ? resolveProfileName(user, t('common.you'))
+                        : resolveProfileName(peer, t('messages.peer')),
                     text: replyTarget.text,
                     type: replyTarget.type
                   }

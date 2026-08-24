@@ -192,11 +192,56 @@ export function isPlaceholderUsername(value?: string | null): boolean {
 }
 
 export function visibleProfileName(value?: string | null): string | null {
-  const name = value?.trim() ?? '';
+  const name = typeof value === 'string' ? value.trim() : '';
   return isPlaceholderProfileName(name) ? null : name;
 }
 
 export function visibleUsername(value?: string | null): string | null {
-  const username = value?.trim() ?? '';
+  const username = typeof value === 'string' ? value.trim() : '';
   return isPlaceholderUsername(username) ? null : username;
+}
+
+export type ProfileLabelSource = {
+  id?: string | null;
+  name?: string | null;
+  username?: string | null;
+};
+
+function asTrimmed(value?: string | null): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/** اسم يظهر للمستخدم بعد التحميل — لا يُرجع فراغًا إذا وُجد أي اسم أو معرف. */
+export function resolveProfileName(
+  profile?: ProfileLabelSource | null,
+  fallback = ''
+): string {
+  const name = asTrimmed(profile?.name);
+  const username = asTrimmed(profile?.username);
+  const visibleName = visibleProfileName(name);
+  if (visibleName) return visibleName;
+  const visibleHandle = visibleUsername(username);
+  if (visibleHandle) return visibleHandle;
+  if (fallback) return fallback;
+  if (name) return name;
+  if (username) return username;
+  return '';
+}
+
+/** اسم المستخدم المخزَّن كما هو، حتى لو كان قديمًا أو مُولَّدًا — أفضل من إخفائه. */
+export function resolveUsername(
+  profile?: ProfileLabelSource | null
+): string | null {
+  const username = asTrimmed(profile?.username);
+  return username || null;
+}
+
+export function profileHref(
+  profile?: ProfileLabelSource | null,
+  fallback = '/home'
+): string {
+  const username = resolveUsername(profile);
+  if (username) return `/user/${username}`;
+  if (profile?.id) return `/user/${profile.id}`;
+  return fallback;
 }

@@ -2,23 +2,19 @@ import Link from 'next/link';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { useLanguage } from '@lib/context/language-context';
-import { useDocument } from '@lib/hooks/useDocument';
-import {
-  usersCollection,
-  notificationsCollection
-} from '@lib/firebase/collections';
+import { notificationsCollection } from '@lib/firebase/collections';
 import { formatDate } from '@lib/date';
 import {
+  notificationActor,
   notificationCopy,
   notificationHref,
   resolveNotificationContext
 } from '@lib/notification-target';
 import { UserAvatar } from '@components/user/user-avatar';
 import { HeroIcon } from '@components/ui/hero-icon';
-import { NotificationSkeleton, Skeleton } from '@components/ui/skeleton';
-import { visibleProfileName, visibleUsername } from '@lib/utils';
 import cn from 'clsx';
 import type { Notification } from '@lib/types/notification';
+import type { User } from '@lib/types/user';
 import type { IconName } from '@components/ui/hero-icon';
 
 const typeStyles: Record<
@@ -52,30 +48,21 @@ const typeStyles: Record<
 };
 
 export function NotificationCard({
-  notification
+  notification,
+  author
 }: {
   notification: Notification;
+  author?: User | null;
 }): JSX.Element {
   const { user: currentUser } = useAuth();
   const { t } = useLanguage();
 
-  const fromUserRef = notification.fromUserId
-    ? doc(usersCollection, notification.fromUserId)
-    : null;
-
-  const { data: fromUser, loading: fromUserLoading } = useDocument(
-    fromUserRef,
-    {
-      allowNull: true,
-      disabled: !notification.fromUserId
-    }
+  const actor = notificationActor(notification, author, t('common.user'));
+  const href = notificationHref(
+    notification,
+    actor.username,
+    notification.fromUserId
   );
-
-  if (fromUserLoading) return <NotificationSkeleton />;
-
-  const name = visibleProfileName(fromUser?.name);
-  const username = visibleUsername(fromUser?.username);
-  const href = notificationHref(notification, username ?? '');
   const context = resolveNotificationContext(notification);
 
   const markAsRead = async (): Promise<void> => {
@@ -98,9 +85,9 @@ export function NotificationCard({
       >
         <div className='relative shrink-0'>
           <UserAvatar
-            src={fromUser?.photoURL ?? '/assets/default-avatar.png'}
-            alt={name ?? ''}
-            username={username ?? ''}
+            src={actor.photoURL}
+            alt={actor.name}
+            username={actor.username}
             size={46}
             showPresence={false}
           />
@@ -116,11 +103,7 @@ export function NotificationCard({
 
         <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
           <p className='text-[15px] text-light-primary dark:text-dark-primary'>
-            {name ? (
-              <span className='font-bold'>{name}</span>
-            ) : (
-              <Skeleton className='inline-block h-3.5 w-20 align-middle' />
-            )}
+            <span className='font-bold'>{actor.name}</span>
             <span className='text-light-secondary dark:text-dark-secondary'>
               {' '}
               {notificationCopy(notification, t)}

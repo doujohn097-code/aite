@@ -1,5 +1,7 @@
 import {
+  doc,
   documentId,
+  getDoc,
   getDocs,
   query,
   Timestamp,

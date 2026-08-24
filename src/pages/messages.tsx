@@ -22,6 +22,7 @@ import { NewMessageModal } from '@components/messages/new-message-modal';
 import { StoriesBar } from '@components/stories/stories-bar';
 import type { ReactElement, ReactNode } from 'react';
 import type { Conversation } from '@lib/types/message';
+import { blankUser } from '@lib/firebase/users';
 import type { User } from '@lib/types/user';
 
 export default function Messages(): JSX.Element {
@@ -69,8 +70,10 @@ export default function Messages(): JSX.Element {
           peerIds.map((id) => getDoc(doc(usersCollection, id)))
         ).then((docs) => {
           const fetched: Record<string, User> = {};
-          docs.forEach((snapshot) => {
-            if (snapshot.exists()) fetched[snapshot.id] = snapshot.data();
+          docs.forEach((snapshot, index) => {
+            fetched[snapshot.id || peerIds[index]] = snapshot.exists()
+              ? snapshot.data()
+              : blankUser(peerIds[index]);
           });
           setPeers((previous) => ({ ...previous, ...fetched }));
         });

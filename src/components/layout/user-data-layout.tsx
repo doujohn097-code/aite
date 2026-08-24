@@ -1,7 +1,9 @@
 import { useRouter } from 'next/router';
-import { query, where, limit } from 'firebase/firestore';
+import { doc, query, where, limit } from 'firebase/firestore';
 import { UserContextProvider } from '@lib/context/user-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useCollection } from '@lib/hooks/useCollection';
+import { useDocument } from '@lib/hooks/useDocument';
 import { usersCollection } from '@lib/firebase/collections';
 import { SEO } from '@components/common/seo';
 import { MainContainer } from '@components/home/main-container';
@@ -10,6 +12,7 @@ import { UserHeader } from '@components/user/user-header';
 import type { LayoutProps } from './common-layout';
 
 export function UserDataLayout({ children }: LayoutProps): JSX.Element {
+  const { t } = useLanguage();
   const {
     query: { id },
     back
@@ -26,12 +29,22 @@ export function UserDataLayout({ children }: LayoutProps): JSX.Element {
     disabled: !username
   });
 
-  const loading = collectionLoading || !username;
-  const user = data ? data[0] : null;
+  const found = data?.[0] ?? null;
+  const tryDocId = !!username && !collectionLoading && !found;
+  const { data: byId, loading: idLoading } = useDocument(
+    tryDocId ? doc(usersCollection, username as string) : null,
+    {
+      allowNull: true,
+      disabled: !tryDocId
+    }
+  );
+
+  const user = found ?? byId ?? null;
+  const loading = !username || collectionLoading || (tryDocId && idLoading);
 
   return (
     <UserContextProvider value={{ user, loading }}>
-      {!user && !loading && <SEO title='المستخدم غير موجود / Aite' />}
+      {!user && !loading && <SEO title={t('profile.missing')} />}
       <MainContainer>
         <MainHeader useActionButton iconName='ArrowRightIcon' action={back}>
           <UserHeader />

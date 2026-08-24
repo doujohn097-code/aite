@@ -1,4 +1,5 @@
 import {
+  notificationActor,
   notificationCopy,
   notificationHref,
   resolveNotificationContext
@@ -39,5 +40,38 @@ describe('notification targeting', () => {
     };
     expect(notificationHref(notification, 'salem')).toBe('/tweet/t1');
     expect(notificationCopy(notification)).toBe('أعجب بمنشورك');
+  });
+
+  it('shows a stored sender name even before the user document loads', () => {
+    const actor = notificationActor(
+      {
+        fromUserId: 'u1',
+        fromName: 'سارة',
+        fromUsername: 'sara',
+        fromPhotoURL: '/photo.png'
+      },
+      null,
+      'المستخدم'
+    );
+    expect(actor.name).toBe('سارة');
+    expect(actor.username).toBe('sara');
+    expect(notificationHref({ type: 'follow' }, actor.username, 'u1')).toBe(
+      '/user/sara'
+    );
+  });
+
+  it('falls back to the username or a label instead of an empty name', () => {
+    const actor = notificationActor(
+      {
+        fromUserId: 'u2',
+        fromName: 'مستخدم',
+        fromUsername: '',
+        fromPhotoURL: null
+      },
+      null,
+      'المستخدم'
+    );
+    expect(actor.name).toBe('المستخدم');
+    expect(notificationHref({ type: 'follow' }, '', 'u2')).toBe('/user/u2');
   });
 });

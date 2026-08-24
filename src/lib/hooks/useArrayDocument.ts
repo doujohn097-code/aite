@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { usersCollection } from '@lib/firebase/collections';
+import { blankUser, loadUsersByIds } from '@lib/firebase/users';
 import type { CollectionReference } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
 
@@ -42,15 +42,13 @@ export function useArrayDocument<T>(
     if (includeUser && !data) setLoading(true);
 
     const populateUser = async (currentData: DataWithRef<T>): Promise<void> => {
-      const dataWithUser = await Promise.all(
-        currentData.map(async (currentData) => {
-          if (!currentData.createdBy) return { ...currentData, user: null };
-          const user = (
-            await getDoc(doc(usersCollection, currentData.createdBy))
-          ).data();
-          return { ...currentData, user };
-        })
+      const users = await loadUsersByIds(
+        currentData.map((item) => item.createdBy)
       );
+      const dataWithUser = currentData.map((item) => ({
+        ...item,
+        user: users.get(item.createdBy) ?? blankUser(item.createdBy || '')
+      }));
       setData(dataWithUser);
       setLoading(false);
     };
@@ -62,8 +60,8 @@ export function useArrayDocument<T>(
         );
 
         const docs = docsSnapshot
-          .filter((doc) => doc.exists())
-          .map((doc) => doc.data({ serverTimestamps: 'estimate' }));
+          .filter((docSnap) => docSnap.exists())
+          .map((docSnap) => docSnap.data({ serverTimestamps: 'estimate' }));
 
         if (!docs.length) {
           setData(null);

@@ -90,7 +90,9 @@ export function StoriesBar(): JSX.Element {
               size={56}
               onClick={(): void => viewUserStories(user.id)}
             />
-            <span className='max-w-[4rem] truncate text-xs'>{user.name}</span>
+            <span className='max-w-[4rem] truncate text-xs'>
+              {user.name?.trim() || user.username || t('common.user')}
+            </span>
           </div>
         ))}
       </motion.section>

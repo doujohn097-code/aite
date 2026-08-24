@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 import { useLanguage } from '@lib/context/language-context';
 import { formatDate } from '@lib/date';
+import { resolveUsername } from '@lib/utils';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ToolTip } from '@components/ui/tooltip';
 import { ExpandableText } from '@components/ui/expandable-text';
@@ -60,7 +61,9 @@ export function UserDetails({
           <GenderBadge gender={gender} />
         </div>
         <div className='flex flex-wrap items-center gap-2 text-light-secondary dark:text-dark-secondary'>
-          <span>@{username}</span>
+          {resolveUsername({ username }) && (
+            <span>@{resolveUsername({ username })}</span>
+          )}
           <UserFollowing userTargetId={id} />
         </div>
       </div>

@@ -10,6 +10,9 @@ import {
   isPlaceholderUsername,
   visibleProfileName,
   visibleUsername,
+  resolveProfileName,
+  resolveUsername,
+  profileHref,
   isSafeInternalPath,
   safeHttpUrl
 } from '../utils';
@@ -169,6 +172,35 @@ describe('placeholder profile detection', () => {
     expect(isPlaceholderUsername('مستخدم125')).toBe(true);
     expect(isPlaceholderUsername('user_8721')).toBe(true);
     expect(isPlaceholderUsername('salem_125')).toBe(false);
+  });
+});
+
+describe('resolve profile labels', () => {
+  it('prefers a real name over a username', () => {
+    expect(resolveProfileName({ name: 'سالم أحمد', username: 'salem' })).toBe(
+      'سالم أحمد'
+    );
+  });
+
+  it('falls back to username instead of hiding the profile', () => {
+    expect(resolveProfileName({ name: 'مستخدم', username: 'salem_125' })).toBe(
+      'salem_125'
+    );
+    expect(resolveProfileName({ name: '', username: 'user_8721' }, 'عضو')).toBe(
+      'عضو'
+    );
+  });
+
+  it('uses the provided fallback only when nothing is stored', () => {
+    expect(resolveProfileName({ name: '', username: '' }, 'User')).toBe('User');
+    expect(resolveUsername({ username: '' })).toBeNull();
+    expect(resolveUsername({ username: 'user_1' })).toBe('user_1');
+  });
+
+  it('builds a profile href from username or id', () => {
+    expect(profileHref({ username: 'salem' })).toBe('/user/salem');
+    expect(profileHref({ id: 'abc123' })).toBe('/user/abc123');
+    expect(profileHref({})).toBe('/home');
   });
 });
 

@@ -1,6 +1,8 @@
 import { translate, type MessageKey } from './i18n';
 import { tx } from './i18n/tx';
+import { profileHref, resolveProfileName, resolveUsername } from './utils';
 import type { Notification } from './types/notification';
+import type { User } from './types/user';
 
 export type NotificationContext = 'post' | 'reel' | 'story';
 
@@ -23,15 +25,61 @@ export function resolveNotificationContext(
   return null;
 }
 
+export function notificationActor(
+  notification: Pick<
+    Notification,
+    'fromUserId' | 'fromName' | 'fromUsername' | 'fromPhotoURL'
+  >,
+  user?: User | null,
+  fallbackName = ''
+): {
+  id: string;
+  name: string;
+  username: string;
+  photoURL: string;
+  href: string;
+} {
+  const name =
+    resolveProfileName(user) ||
+    resolveProfileName(
+      {
+        name: notification.fromName,
+        username: notification.fromUsername
+      },
+      fallbackName
+    );
+  const username =
+    resolveUsername(user) ||
+    resolveUsername({ username: notification.fromUsername }) ||
+    '';
+  const photoURL =
+    user?.photoURL ||
+    notification.fromPhotoURL ||
+    '/assets/default-avatar.png';
+  const id = user?.id || notification.fromUserId || '';
+  return {
+    id,
+    name,
+    username,
+    photoURL,
+    href: profileHref({ id, username }, '/notifications')
+  };
+}
+
 export function notificationHref(
   notification: Pick<
     Notification,
     'type' | 'context' | 'tweetId' | 'storyId' | 'storyUserId'
   >,
-  fromUsername: string
+  fromUsername: string,
+  fromUserId?: string
 ): string {
   if (notification.type === 'follow')
-    return fromUsername ? `/user/${fromUsername}` : '/home';
+    return fromUsername
+      ? `/user/${fromUsername}`
+      : fromUserId
+      ? `/user/${fromUserId}`
+      : '/home';
 
   const context = resolveNotificationContext(notification);
 

@@ -37,9 +37,13 @@ import {
 import { formatNumber } from '@lib/date';
 import { copyText } from '@lib/copy-text';
 import { useLanguage } from '@lib/context/language-context';
-import { preventBubbling, visibleProfileName, visibleUsername } from '@lib/utils';
+import {
+  preventBubbling,
+  profileHref,
+  resolveProfileName,
+  resolveUsername
+} from '@lib/utils';
 import { UserAvatar } from '@components/user/user-avatar';
-import { Skeleton } from '@components/ui/skeleton';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -815,46 +819,37 @@ export function ReelCard({
         }`}
       >
         {/* User profile row with verified badge */}
-        {visibleUsername(user.username) ? (
-          <Link href={`/user/${user.username}`}>
-            <a
-              onClick={(e) => e.stopPropagation()}
-              className='group flex items-center gap-2.5'
-            >
-              <div className='relative shrink-0'>
-                <UserAvatar
-                  src={user.photoURL}
-                  alt={visibleProfileName(user.name) ?? ''}
-                  username={user.username}
-                  size={42}
-                  className='shadow-md ring-2 ring-white/90 transition group-hover:ring-main-accent'
-                />
-              </div>
-              <div className='flex min-w-0 flex-col text-start'>
-                <div className='flex items-center gap-1 truncate'>
-                  {visibleProfileName(user.name) ? (
-                    <span className='truncate text-sm font-bold leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] transition-colors group-hover:text-main-accent'>
-                      {user.name}
-                    </span>
-                  ) : (
-                    <Skeleton className='h-3.5 w-20 bg-white/25' />
-                  )}
-                  {user.verified && visibleProfileName(user.name) && (
-                    <VerifiedBadge className='h-4 w-4 shrink-0' />
-                  )}
-                </div>
-                <span className='truncate text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
-                  @{user.username}
+        <Link href={profileHref(user)}>
+          <a
+            onClick={(e) => e.stopPropagation()}
+            className='group flex items-center gap-2.5'
+          >
+            <div className='relative shrink-0'>
+              <UserAvatar
+                src={user.photoURL || '/assets/default-avatar.png'}
+                alt={resolveProfileName(user, t('common.user'))}
+                username={resolveUsername(user) ?? user.id}
+                size={42}
+                className='shadow-md ring-2 ring-white/90 transition group-hover:ring-main-accent'
+              />
+            </div>
+            <div className='flex min-w-0 flex-col text-start'>
+              <div className='flex items-center gap-1 truncate'>
+                <span className='truncate text-sm font-bold leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] transition-colors group-hover:text-main-accent'>
+                  {resolveProfileName(user, t('common.user'))}
                 </span>
+                {user.verified && (
+                  <VerifiedBadge className='h-4 w-4 shrink-0' />
+                )}
               </div>
-            </a>
-          </Link>
-        ) : (
-          <div className='flex items-center gap-2.5'>
-            <Skeleton shape='circle' className='h-10 w-10 bg-white/20' />
-            <Skeleton className='h-3.5 w-24 bg-white/25' />
-          </div>
-        )}
+              {resolveUsername(user) && (
+                <span className='truncate text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
+                  @{resolveUsername(user)}
+                </span>
+              )}
+            </div>
+          </a>
+        </Link>
 
         {/* Caption with expansion */}
         {captionText && (

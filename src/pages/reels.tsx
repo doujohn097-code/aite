@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { query, where } from 'firebase/firestore';
 import { AnimatePresence } from 'framer-motion';
-import { storiesCollection, usersCollection } from '@lib/firebase/collections';
+import { storiesCollection } from '@lib/firebase/collections';
 import { useAuth } from '@lib/context/auth-context';
 import { useLanguage } from '@lib/context/language-context';
 import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
-import { useCollection } from '@lib/hooks/useCollection';
 import { useRankedFeed } from '@lib/hooks/useRankedFeed';
 import { getTimestampMillis } from '@lib/date';
-import { blankUser } from '@lib/firebase/users';
+import { blankUser, loadUsersByIds } from '@lib/firebase/users';
 import type { RankableItem } from '@lib/feed-rank';
 import type { Story } from '@lib/types/story';
 import { ProtectedLayout } from '@components/layout/common-layout';
@@ -98,20 +96,28 @@ export default function Reels(): JSX.Element {
     [reels]
   );
 
-  const ownersQuery = useMemo(
-    () =>
-      ownerIds.length
-        ? query(usersCollection, where('__name__', 'in', ownerIds.slice(0, 10)))
-        : null,
-    [ownerIds]
-  );
-  const { data: owners } = useCollection(ownersQuery, { allowNull: true });
+  const ownerIdsKey = ownerIds.join(',');
+  const [userById, setUserById] = useState<Map<string, User>>(new Map());
 
-  const userById = useMemo(() => {
-    const map = new Map<string, User>();
-    owners?.forEach((u) => map.set(u.id, u));
+  useEffect(() => {
+    if (!ownerIdsKey) {
+      setUserById(new Map());
+      return;
+    }
+    let cancelled = false;
+    void loadUsersByIds(ownerIdsKey.split(',')).then((next) => {
+      if (!cancelled) setUserById(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ownerIdsKey]);
+
+  const ownersById = useMemo(() => {
+    const map = new Map(userById);
+    if (user?.id) map.set(user.id, user);
     return map;
-  }, [owners]);
+  }, [user, userById]);
 
   useEffect(() => {
     if (activeIndex > reels.length - 1 && reels.length > 0) {
@@ -245,7 +251,7 @@ export default function Reels(): JSX.Element {
             <AnimatePresence mode='popLayout'>
               {reels.map((reel, index) => {
                 const owner =
-                  userById.get(reel.userId) ?? fallbackUser(reel.userId);
+                  ownersById.get(reel.userId) ?? fallbackUser(reel.userId);
                 const isActive = index === activeIndex;
 
                 return (

@@ -6,7 +6,7 @@ import { StoryAvatar } from '@components/stories/story-avatar';
 import { Skeleton } from '@components/ui/skeleton';
 import { useLanguage } from '@lib/context/language-context';
 import { getTimestampMillis, formatClockTime } from '@lib/date';
-import { visibleProfileName, visibleUsername } from '@lib/utils';
+import { resolveProfileName, resolveUsername } from '@lib/utils';
 import type { Conversation } from '@lib/types/message';
 import type { User } from '@lib/types/user';
 
@@ -92,24 +92,22 @@ export function ConversationCard({
         <div className='flex min-w-0 flex-1 flex-col'>
           <div className='flex items-center justify-between gap-2'>
             <div className='flex min-w-0 items-center gap-1'>
-              {visibleProfileName(peer?.name) ? (
+              {peer ? (
                 <p
                   className={cn(
                     'truncate text-[15px]',
                     unreadCount > 0 && 'font-bold'
                   )}
                 >
-                  {visibleProfileName(peer?.name)}
+                  {resolveProfileName(peer, t('common.user'))}
                 </p>
               ) : (
                 <Skeleton className='h-3.5 w-24' />
               )}
-              {peer?.verified && visibleProfileName(peer?.name) && (
-                <VerifiedBadge className='h-4 w-4' />
-              )}
-              {visibleUsername(peer?.username) && (
+              {peer?.verified && <VerifiedBadge className='h-4 w-4' />}
+              {resolveUsername(peer) && (
                 <p className='truncate text-sm text-light-secondary dark:text-dark-secondary'>
-                  @{visibleUsername(peer?.username)}
+                  @{resolveUsername(peer)}
                 </p>
               )}
             </div>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   query,
   orderBy,
@@ -12,6 +12,8 @@ import { useAuth } from '@lib/context/auth-context';
 import { useLanguage } from '@lib/context/language-context';
 import { db } from '@lib/firebase/app';
 import { notificationsCollection } from '@lib/firebase/collections';
+import { loadUsersByIds } from '@lib/firebase/users';
+import type { User } from '@lib/types/user';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { MainContainer } from '@components/home/main-container';
@@ -31,6 +33,7 @@ export default function Notifications(): JSX.Element {
   const [notifications, setNotifications] = useState<Notification[] | null>(
     null
   );
+  const [authors, setAuthors] = useState<Map<string, User>>(new Map());
 
   useEffect(() => {
     if (!user) return;
@@ -80,16 +83,42 @@ export default function Notifications(): JSX.Element {
     void markRead();
   }, [user]);
 
+  const authorIdsKey = useMemo(() => {
+    if (!notifications?.length) return '';
+    return Array.from(
+      new Set(notifications.map((item) => item.fromUserId).filter(Boolean))
+    )
+      .sort()
+      .join(',');
+  }, [notifications]);
+
+  useEffect(() => {
+    if (!authorIdsKey) {
+      setAuthors(new Map());
+      return;
+    }
+    let cancelled = false;
+    void loadUsersByIds(authorIdsKey.split(',')).then((next) => {
+      if (!cancelled) setAuthors(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [authorIdsKey]);
+
   const handleRefresh = useCallback(async (): Promise<void> => {
     if (!user) return;
     const snapshot = await getDocsFromServer(
       query(notificationsCollection(user.id), orderBy('createdAt', 'desc'))
     );
-    setNotifications(
-      snapshot.docs.map((docSnapshot) =>
-        docSnapshot.data({ serverTimestamps: 'estimate' })
-      )
+    const next = snapshot.docs.map((docSnapshot) =>
+      docSnapshot.data({ serverTimestamps: 'estimate' })
     );
+    setNotifications(next);
+    const ids = Array.from(
+      new Set(next.map((item) => item.fromUserId).filter(Boolean))
+    );
+    if (ids.length) setAuthors(await loadUsersByIds(ids));
   }, [user]);
 
   usePageRefresh(handleRefresh);

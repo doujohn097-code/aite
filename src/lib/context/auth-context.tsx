@@ -250,7 +250,7 @@ export function AuthContextProvider({
 
         const userData = {
           bio: null,
-          name: fallbackName,
+          name: (fallbackName || finalUsername).slice(0, 80),
           theme: null,
           accent: null,
           website: null,
