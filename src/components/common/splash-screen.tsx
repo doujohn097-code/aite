@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 type SplashScreenProps = {
   isVisible: boolean;
+  playId?: number;
 };
 
 /**
@@ -10,7 +11,10 @@ type SplashScreenProps = {
  * between → the second logo on the right → credit line underneath.
  * Always rendered on a black canvas since the brand assets use white ink.
  */
-export function SplashScreen({ isVisible }: SplashScreenProps): JSX.Element {
+export function SplashScreen({
+  isVisible,
+  playId = 0
+}: SplashScreenProps): JSX.Element {
   return (
     <AnimatePresence>
       {isVisible && (
