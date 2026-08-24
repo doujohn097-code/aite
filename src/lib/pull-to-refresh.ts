@@ -61,7 +61,7 @@ export function findScrollParent(
   return stopAt ?? window;
 }
 
-/** Only the top edge of the intended scroller — never mid-list. */
+/** Top of the nearest scroller and the window — generous slack for WebView. */
 export function isAtScrollSurface(
   target: EventTarget | null,
   root?: HTMLElement | null,
@@ -69,10 +69,9 @@ export function isAtScrollSurface(
 ): boolean {
   const scroller = findScrollParent(target, root ?? undefined);
   if (elementScrollTop(scroller) > slack) return false;
-  if (root && scroller !== root && scroller !== window)
-    return elementScrollTop(root) <= slack;
-  if (root) return elementScrollTop(root) <= slack;
-  return elementScrollTop(window) <= slack;
+  if (root && elementScrollTop(root) > slack) return false;
+  if (elementScrollTop(window) > slack) return false;
+  return true;
 }
 
 export function shouldArmPull(input: {

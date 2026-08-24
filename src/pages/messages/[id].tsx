@@ -500,6 +500,7 @@ export default function Chat(): JSX.Element {
       {/* الرسائل */}
       <div
         ref={scrollRef}
+        data-scroll-root
         onScroll={handleMessageScroll}
         className='relative flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-clip overscroll-contain bg-main-background px-3 py-4'
       >

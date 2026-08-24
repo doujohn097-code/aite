@@ -19,7 +19,7 @@ import { SEO } from '@components/common/seo';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { NotificationCard } from '@components/notifications/notification-card';
 import { NotificationFeedSkeleton } from '@components/ui/skeleton';
-import { PullToRefresh } from '@components/common/pull-to-refresh';
+import { usePageRefresh } from '@lib/hooks/usePageRefresh';
 import type { ReactElement, ReactNode } from 'react';
 import type { Notification } from '@lib/types/notification';
 
@@ -80,7 +80,6 @@ export default function Notifications(): JSX.Element {
 
   const handleRefresh = useCallback(async (): Promise<void> => {
     if (!user) return;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     const snapshot = await getDocsFromServer(
       query(notificationsCollection(user.id), orderBy('createdAt', 'desc'))
     );
@@ -91,9 +90,10 @@ export default function Notifications(): JSX.Element {
     );
   }, [user]);
 
+  usePageRefresh(handleRefresh);
+
   return (
     <MainContainer>
-      <PullToRefresh onRefresh={handleRefresh}>
       <SEO title='الإشعارات / Aite' />
       <MainHeader title='الإشعارات' />
       {notifications === null ? (
@@ -118,7 +118,6 @@ export default function Notifications(): JSX.Element {
           </p>
         </div>
       )}
-      </PullToRefresh>
     </MainContainer>
   );
 }

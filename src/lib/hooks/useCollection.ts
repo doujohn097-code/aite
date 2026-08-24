@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { onSnapshot, getDocsFromServer } from 'firebase/firestore';
 import { blankUser, loadUsersByIds } from '@lib/firebase/users';
+import { registerPageRefresh } from '@lib/refresh-bus';
 import { useCacheQuery } from './useCacheQuery';
 import type { Query } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
@@ -131,6 +132,11 @@ export function useCollection<T>(
       console.error('useCollection refresh error:', error);
     }
   }, [applyRows, cachedQuery, disabled]);
+
+  useEffect(() => {
+    if (disabled || !cachedQuery) return;
+    return registerPageRefresh(refresh);
+  }, [cachedQuery, disabled, refresh]);
 
   return { data, loading, refresh };
 }

@@ -11,7 +11,6 @@ import { MainHeader } from '@components/home/main-header';
 import { UserCard } from '@components/user/user-card';
 import { UserFeedSkeleton } from '@components/ui/skeleton';
 import { SEO } from '@components/common/seo';
-import { PullToRefresh } from '@components/common/pull-to-refresh';
 import type { ReactElement, ReactNode } from 'react';
 
 export default function Search(): JSX.Element {
@@ -61,21 +60,15 @@ export default function Search(): JSX.Element {
     );
   }, [userId, trimmedQuery]);
 
-  const { data, loading, refresh } = useCollection(usersQuery, {
+  const { data, loading } = useCollection(usersQuery, {
     allowNull: true
   });
 
   const results = data ?? [];
   const isSearching = trimmedQuery.length > 0;
 
-  const handleRefresh = async (): Promise<void> => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    await refresh();
-  };
-
   return (
     <MainContainer>
-      <PullToRefresh onRefresh={handleRefresh}>
       <SEO
         title={isSearching ? `بحث: ${trimmedQuery} / Aite` : 'الأشخاص / Aite'}
       />
@@ -117,7 +110,6 @@ export default function Search(): JSX.Element {
           </div>
         )}
       </section>
-      </PullToRefresh>
     </MainContainer>
   );
 }

@@ -47,7 +47,6 @@ export function usePullToRefresh({
   }, []);
 
   useEffect(() => {
-    const node = listenRef?.current ?? scrollRef?.current ?? document;
     const root = scrollRef?.current ?? null;
 
     const onStart = (event: TouchEvent): void => {
@@ -71,10 +70,6 @@ export function usePullToRefresh({
 
     const onMove = (event: TouchEvent): void => {
       if (!armed.current || refreshingRef.current) return;
-      if (!isAtScrollSurface(event.target, root)) {
-        reset();
-        return;
-      }
       const touch = event.touches[0];
       const dx = touch.clientX - startX.current;
       const dy = touch.clientY - startY.current;
@@ -86,14 +81,19 @@ export function usePullToRefresh({
       const next = resistPull(dy);
       pullRef.current = next;
       setPull(next);
-      if (next > 6 && event.cancelable) event.preventDefault();
+      if (next > 4 && event.cancelable) event.preventDefault();
     };
 
     const onEnd = (): void => {
       if (!armed.current) return;
-      const distance = pullRef.current;
+      const resisted = pullRef.current;
+      const rawDistance = rawRef.current;
       armed.current = false;
-      if (distance < threshold || refreshingRef.current) {
+      if (
+        !shouldTriggerRefresh(rawDistance, resisted, threshold) ||
+        refreshingRef.current
+      ) {
+        rawRef.current = 0;
         pullRef.current = 0;
         setPull(0);
         return;
@@ -112,24 +112,28 @@ export function usePullToRefresh({
         });
     };
 
-    const listen = node as EventTarget;
+    const listen = (listenRef?.current as EventTarget | null) ?? document;
     listen.addEventListener('touchstart', onStart as EventListener, {
-      passive: true
+      passive: true,
+      capture: true
     });
     listen.addEventListener('touchmove', onMove as EventListener, {
-      passive: false
+      passive: false,
+      capture: true
     });
     listen.addEventListener('touchend', onEnd as EventListener, {
-      passive: true
+      passive: true,
+      capture: true
     });
     listen.addEventListener('touchcancel', onEnd as EventListener, {
-      passive: true
+      passive: true,
+      capture: true
     });
     return () => {
-      listen.removeEventListener('touchstart', onStart as EventListener);
-      listen.removeEventListener('touchmove', onMove as EventListener);
-      listen.removeEventListener('touchend', onEnd as EventListener);
-      listen.removeEventListener('touchcancel', onEnd as EventListener);
+      listen.removeEventListener('touchstart', onStart as EventListener, true);
+      listen.removeEventListener('touchmove', onMove as EventListener, true);
+      listen.removeEventListener('touchend', onEnd as EventListener, true);
+      listen.removeEventListener('touchcancel', onEnd as EventListener, true);
     };
   }, [listenRef, reset, scrollRef, threshold]);
 

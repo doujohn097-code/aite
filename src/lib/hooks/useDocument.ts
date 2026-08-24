@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-import { getDoc, doc, onSnapshot } from 'firebase/firestore';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { getDoc, getDocFromServer, doc, onSnapshot } from 'firebase/firestore';
 import { usersCollection } from '@lib/firebase/collections';
 import { blankUser } from '@lib/firebase/users';
+import { registerPageRefresh } from '@lib/refresh-bus';
 import { useCacheRef } from './useCacheRef';
 import type { DocumentReference } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
@@ -100,6 +101,36 @@ export function useDocument<T>(
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cachedDocRef, disabled]);
+
+  const refresh = useCallback(async (): Promise<void> => {
+    if (disabled || !cachedDocRef) return;
+    try {
+      const snapshot = await getDocFromServer(cachedDocRef);
+      const next = snapshot.data({ serverTimestamps: 'estimate' });
+      if (allowNull && !next) {
+        setData(null);
+        return;
+      }
+      if (!includeUser) {
+        setData((next as T) ?? null);
+        return;
+      }
+      const currentData = next as DataWithRef<T>;
+      if (!currentData?.createdBy) return;
+      const userData = await getDoc(doc(usersCollection, currentData.createdBy));
+      setData({
+        ...currentData,
+        user: userData.data() ?? blankUser(currentData.createdBy)
+      });
+    } catch (error) {
+      console.error('useDocument refresh error:', error);
+    }
+  }, [allowNull, cachedDocRef, disabled, includeUser]);
+
+  useEffect(() => {
+    if (disabled || !cachedDocRef) return;
+    return registerPageRefresh(refresh);
+  }, [cachedDocRef, disabled, refresh]);
 
   return { data, loading };
 }
