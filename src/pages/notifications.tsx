@@ -134,6 +134,7 @@ export default function Notifications(): JSX.Element {
           {notifications.map((notification) => (
             <NotificationCard
               notification={notification}
+              author={authors.get(notification.fromUserId) ?? null}
               key={notification.id}
             />
           ))}
