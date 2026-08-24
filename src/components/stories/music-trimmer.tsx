@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import cn from 'clsx';
 import { HeroIcon } from '@components/ui/hero-icon';
+import { useLanguage } from '@lib/context/language-context';
 
 const CLIP_SECONDS = 15;
 const BAR_COUNT = 80;
@@ -53,6 +54,8 @@ export function MusicTrimmer({
   onChange,
   onRemove
 }: MusicTrimmerProps): JSX.Element {
+  const { t } = useLanguage();
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ pointerId: number; offset: number } | null>(null);
@@ -211,7 +214,7 @@ export function MusicTrimmer({
         <button
           type='button'
           onClick={togglePreview}
-          aria-label={playing ? 'إيقاف المعاينة' : 'معاينة المقطع'}
+          aria-label={playing ? t('music.pausePreview') : t('music.clipPreview')}
           className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full
                      bg-white text-black transition active:scale-90'
         >
@@ -235,7 +238,7 @@ export function MusicTrimmer({
         <button
           type='button'
           onClick={onRemove}
-          aria-label='إزالة الموسيقى'
+          aria-label={t('music.remove')}
           className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full
                      bg-white/10 text-white transition hover:bg-white/20 active:scale-90'
         >
@@ -257,7 +260,7 @@ export function MusicTrimmer({
           scrubbing ? 'cursor-grabbing ring-2 ring-white/40' : 'cursor-grab'
         )}
         role='slider'
-        aria-label='اختيار 15 ثانية من المقطع'
+        aria-label={t('music.pick15')}
         aria-valuemin={0}
         aria-valuemax={Math.round(maxStart)}
         aria-valuenow={Math.round(start)}
@@ -315,7 +318,7 @@ export function MusicTrimmer({
       </div>
 
       <p className='text-center text-[11px] text-white/50'>
-        اسحب الشريط — الصوت يعمل مباشرة من موضع إصبعك
+        {t('music.dragHint')}
       </p>
     </div>
   );

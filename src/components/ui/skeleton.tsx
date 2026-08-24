@@ -56,7 +56,7 @@ export function TweetFeedSkeleton({
   count?: number;
 }): JSX.Element {
   return (
-    <div role='status' aria-label='جارٍ التحميل'>
+    <div role='status' aria-label='loading'>
       {Array.from({ length: count }, (_, index) => (
         <TweetSkeleton key={index} />
       ))}
@@ -82,7 +82,7 @@ export function NotificationFeedSkeleton({
   count?: number;
 }): JSX.Element {
   return (
-    <div role='status' aria-label='جارٍ التحميل'>
+    <div role='status' aria-label='loading'>
       {Array.from({ length: count }, (_, index) => (
         <NotificationSkeleton key={index} />
       ))}
@@ -109,7 +109,7 @@ export function UserFeedSkeleton({
   count?: number;
 }): JSX.Element {
   return (
-    <div role='status' aria-label='جارٍ التحميل'>
+    <div role='status' aria-label='loading'>
       {Array.from({ length: count }, (_, index) => (
         <UserRowSkeleton key={index} />
       ))}
@@ -138,7 +138,7 @@ export function ConversationFeedSkeleton({
   count?: number;
 }): JSX.Element {
   return (
-    <div role='status' aria-label='جارٍ التحميل'>
+    <div role='status' aria-label='loading'>
       {Array.from({ length: count }, (_, index) => (
         <ConversationRowSkeleton key={index} />
       ))}
@@ -150,7 +150,7 @@ export function MessageThreadSkeleton(): JSX.Element {
   return (
     <div
       role='status'
-      aria-label='جارٍ التحميل'
+      aria-label='loading'
       className='flex flex-1 flex-col justify-end gap-3 py-2'
     >
       <div className='flex items-end gap-2'>
@@ -198,7 +198,7 @@ export function MessageThreadSkeleton(): JSX.Element {
 
 export function ProfileSkeleton(): JSX.Element {
   return (
-    <div role='status' aria-label='جارٍ التحميل'>
+    <div role='status' aria-label='loading'>
       <Skeleton shape='none' className='h-36 w-full xs:h-48' />
       <div className='px-4 py-3'>
         <Skeleton shape='circle' className='-mt-12 h-24 w-24 ring-4 ring-main-background' />
@@ -219,7 +219,7 @@ export function ReelSkeleton(): JSX.Element {
   return (
     <div
       role='status'
-      aria-label='جارٍ التحميل'
+      aria-label='loading'
       className='relative h-full w-full overflow-hidden bg-black'
     >
       <div className='absolute inset-0 animate-pulse bg-white/10' />

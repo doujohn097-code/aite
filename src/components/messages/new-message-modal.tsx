@@ -9,6 +9,7 @@ import { Loading } from '@components/ui/loading';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { Button } from '@components/ui/button';
 import type { User } from '@lib/types/user';
+import { useLanguage } from '@lib/context/language-context';
 
 const MAX_SHARE_RECIPIENTS = 20;
 
@@ -27,6 +28,8 @@ export function NewMessageModal({
   onSelectMany,
   title
 }: NewMessageModalProps): JSX.Element {
+  const { t } = useLanguage();
+
   const { user } = useAuth();
   const [people, setPeople] = useState<User[] | null>(null);
   const [search, setSearch] = useState('');
@@ -52,7 +55,7 @@ export function NewMessageModal({
     try {
       await onSelect(person);
     } catch {
-      toast.error('تعذر فتح المحادثة، حاول مرة أخرى');
+      toast.error(t('err.openChat'));
       setBusyId(null);
     }
   };
@@ -65,7 +68,7 @@ export function NewMessageModal({
     try {
       await onSelectMany(chosen);
     } catch {
-      toast.error('تعذرت المشاركة — حاول مرة أخرى');
+      toast.error(t('err.shareFail'));
       setSending(false);
     }
   };
@@ -114,11 +117,11 @@ export function NewMessageModal({
   return (
     <div className='flex h-[70vh] max-h-[480px] flex-col'>
       <div className='flex items-center justify-between border-b border-light-border px-4 py-3 dark:border-dark-border'>
-        <h2 className='text-lg font-bold'>{title ?? 'رسالة جديدة'}</h2>
+        <h2 className='text-lg font-bold'>{title ?? t('messages.new')}</h2>
         <button
           type='button'
           onClick={closeModal}
-          aria-label='إغلاق'
+          aria-label={t('common.close')}
           className='custom-button dark-bg-tab p-2 hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
         >
           <HeroIcon className='h-5 w-5' iconName='XMarkIcon' />
@@ -135,7 +138,7 @@ export function NewMessageModal({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={
-              multiSelect ? 'ابحث واختر أكثر من شخص' : 'ابحث عن شخص'
+              multiSelect ? t('chat.searchMany') : t('chat.searchPerson')
             }
             className='w-full bg-transparent text-sm outline-none placeholder:text-light-secondary dark:placeholder:text-dark-secondary'
           />
@@ -233,8 +236,8 @@ export function NewMessageModal({
             {selectedIds.length > 1
               ? `إرسال إلى ${selectedIds.length} أشخاص`
               : selectedIds.length === 1
-              ? 'إرسال إلى شخص واحد'
-              : 'اختر أشخاصاً للإرسال'}
+              ? t('chat.sendOne')
+              : t('chat.pickPeople')}
           </Button>
         </div>
       )}

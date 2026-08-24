@@ -187,7 +187,7 @@ export function ReelCard({
   const toggleLike = useCallback(
     async (forceLike?: boolean): Promise<void> => {
       if (!authUser) {
-        toast.error('يرجى تسجيل الدخول أولاً');
+        toast.error(t('reels.loginFirst'));
         return;
       }
       const nextLiked = forceLike ?? !isLiked;
@@ -284,7 +284,7 @@ export function ReelCard({
       reels: next ? arrayUnion(reel.id) : arrayRemove(reel.id)
     }).catch(() => {
       setOptimisticRetweet(null);
-      toast.error('تعذر تنفيذ العملية، حاول مجدداً');
+      toast.error(t('err.tryAgain'));
     });
 
     // Best-effort public counter on the story doc — needs the updated
@@ -379,27 +379,27 @@ export function ReelCard({
     const reelUrl =
       typeof window !== 'undefined' ? `${window.location.origin}/reels` : '';
     const shareData = {
-      title: `ريل بواسطة ${user.name}`,
-      text: reel.caption || 'شاهد هذا الريل على Aite!',
+      title: t('tweet.byName', { name: user.name }),
+      text: reel.caption || t('tweet.watchReel'),
       url: reelUrl
     };
 
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
       try {
         await navigator.share(shareData);
-        toast.success('تمت المشاركة بنجاح');
+        toast.success(t('reels.sharedOk'));
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
           await navigator.clipboard.writeText(reelUrl);
-          toast.success('تم نسخ رابط الريل');
+          toast.success(t('reels.linkCopied'));
         }
       }
     } else {
       try {
         await navigator.clipboard.writeText(reelUrl);
-        toast.success('تم نسخ رابط الريل إلى الحافظة');
+        toast.success(t('reels.linkCopiedClip'));
       } catch {
-        toast.error('تعذر نسخ الرابط');
+        toast.error(t('reels.linkCopyFail'));
       }
     }
   };
@@ -411,9 +411,9 @@ export function ReelCard({
       typeof window !== 'undefined' ? `${window.location.origin}/reels` : '';
     try {
       await navigator.clipboard.writeText(reelUrl);
-      toast.success('تم نسخ رابط الريل');
+      toast.success(t('reels.linkCopied'));
     } catch {
-      toast.error('تعذر نسخ الرابط');
+      toast.error(t('reels.linkCopyFail'));
     }
   };
 
@@ -423,7 +423,7 @@ export function ReelCard({
   }: EditContentSave): Promise<void> => {
     if (!authUser) return;
     await editReel(reel.id, authUser.id, nextCaption, { images: nextImages });
-    toast.success('تم حفظ تعديل الريل');
+    toast.success(t('reels.saved'));
   };
 
   const confirmDelete = async (): Promise<void> => {
@@ -431,9 +431,9 @@ export function ReelCard({
     setIsDeleting(true);
     try {
       await deleteReel(reel.id, authUser.id);
-      toast.success('تم حذف الريل بنجاح');
+      toast.success(t('reels.deleted'));
     } catch {
-      toast.error('فشل حذف الريل');
+      toast.error(t('reels.deleteFail'));
     } finally {
       setIsDeleting(false);
       closeConfirm();
@@ -487,7 +487,7 @@ export function ReelCard({
               className='h-4 w-4 animate-spin'
               iconName='ArrowPathIcon'
             />
-            جاري إصلاح الفيديو…
+            {t('reels.repair')}
           </div>
         </div>
       )}
@@ -530,7 +530,7 @@ export function ReelCard({
                 className='h-5 w-5 text-main-accent'
                 iconName={isMuted ? 'SpeakerXMarkIcon' : 'SpeakerWaveIcon'}
               />
-              <span>{isMuted ? 'تم كتم الصوت' : 'تم تشغيل الصوت'}</span>
+              <span>{isMuted ? t('reels.muted') : t('reels.unmuted')}</span>
             </div>
           </motion.div>
         )}
@@ -543,7 +543,7 @@ export function ReelCard({
           type='button'
           onClick={toggleMute}
           className='pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white shadow outline-none backdrop-blur-md transition [-webkit-tap-highlight-color:transparent] hover:bg-black/70 focus:outline-none active:scale-90'
-          aria-label={isMuted ? 'تشغيل الصوت' : 'كتم الصوت'}
+          aria-label={isMuted ? t('reels.unmute') : t('reels.mute')}
         >
           <HeroIcon
             className='h-5 w-5'
@@ -632,7 +632,7 @@ export function ReelCard({
             type='button'
             onClick={handleLikeButton}
             className='flex h-10 w-10 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
-            aria-label={isLiked ? 'إلغاء الإعجاب' : 'إعجاب'}
+            aria-label={isLiked ? t('tweet.unlike') : t('action.like')}
           >
             <motion.div
               key={isLiked ? 'liked' : 'unliked'}
@@ -663,7 +663,7 @@ export function ReelCard({
             type='button'
             onClick={openComments}
             className='flex h-10 w-10 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
-            aria-label='التعليقات'
+            aria-label={t('reels.comments')}
           >
             <HeroIcon
               className='h-8 w-8 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] filter transition-colors hover:text-main-accent'
@@ -681,7 +681,7 @@ export function ReelCard({
             type='button'
             onClick={handleRetweet}
             className='flex h-10 w-10 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
-            aria-label={retweeted ? 'تراجع عن إعادة النشر' : 'إعادة نشر'}
+            aria-label={retweeted ? t('reels.unrepost') : t('reels.repost')}
           >
             <HeroIcon
               className={cn(
@@ -718,7 +718,7 @@ export function ReelCard({
                   handleShareToChat(event);
                 }}
                 className='flex h-10 w-10 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
-                aria-label='مشاركة'
+                aria-label={t('action.share')}
               >
                 <HeroIcon
                   className='h-8 w-8 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] filter transition-colors hover:text-main-accent'
@@ -726,7 +726,7 @@ export function ReelCard({
                 />
               </Popover.Button>
               <span className='text-xs font-bold drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
-                مشاركة
+                {t('action.share')}
               </span>
               <AnimatePresence>
                 {open && (
@@ -748,7 +748,7 @@ export function ReelCard({
                       })}
                     >
                       <HeroIcon iconName='ShareIcon' />
-                      مشاركة الريل
+                      {t('action.share')} الريل
                     </Popover.Button>
                     <Popover.Button
                       className='accent-tab flex w-full gap-3 rounded-md p-4 text-light-primary hover:bg-main-sidebar-background dark:text-dark-primary'
@@ -759,7 +759,7 @@ export function ReelCard({
                       })}
                     >
                       <HeroIcon iconName='PaperAirplaneIcon' />
-                      إرسال عبر رسالة
+                      {t('reels.send')}
                     </Popover.Button>
                   </Popover.Panel>
                 )}
@@ -778,7 +778,7 @@ export function ReelCard({
               openMenu();
             }}
             className='flex h-9 w-9 items-center justify-center text-white outline-none transition [-webkit-tap-highlight-color:transparent] hover:scale-110 focus:outline-none focus-visible:outline-none active:scale-75'
-            aria-label='المزيد من الخيارات'
+            aria-label={t('reels.more')}
           >
             <HeroIcon
               className='h-7 w-7 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] filter transition-colors hover:text-main-accent'
@@ -877,12 +877,12 @@ export function ReelCard({
                 }}
                 className='mt-0.5 text-xs font-bold text-main-accent underline hover:brightness-110'
               >
-                {isExpandedCaption ? 'عرض أقل' : 'المزيد...'}
+                {isExpandedCaption ? t('common.less') : t('reels.moreDots')}
               </button>
             )}
             {reel.edited && (
               <span className='mt-1 block text-[11px] font-semibold text-white/70'>
-                تم التعديل
+                {t('common.edited')}
               </span>
             )}
           </div>
@@ -1002,7 +1002,7 @@ export function ReelCard({
         initialImages={reel.images}
         mediaKind='video'
         allowEmpty
-        placeholder='عدّل وصف الريل…  @للإشارة'
+        placeholder={t('media.editReelCaption')}
         onSave={handleEdit}
       />
 
@@ -1018,7 +1018,7 @@ export function ReelCard({
             description={t('reels.deleteBody')}
             mainBtnLabel={t('reels.deleteFinal')}
             mainBtnClassName='bg-accent-red hover:bg-accent-red/90 active:bg-accent-red/75'
-            secondaryBtnLabel='إلغاء'
+            secondaryBtnLabel={t('common.cancel')}
             action={confirmDelete}
             closeModal={closeConfirm}
             loading={isDeleting}

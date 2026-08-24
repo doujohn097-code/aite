@@ -13,6 +13,7 @@ import { MusicTrimmer } from './music-trimmer';
 import type { ChangeEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import type { StoryMusic, StoryText } from '@lib/types/story';
+import { useLanguage } from '@lib/context/language-context';
 
 const TEXT_COLORS = [
   '#FFFFFF',
@@ -103,6 +104,8 @@ export function StoryEditor({
   open,
   closeModal
 }: StoryEditorProps): JSX.Element | null {
+  const { t } = useLanguage();
+
   const { user } = useAuth();
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -279,7 +282,7 @@ export function StoryEditor({
     const imagesData = getImagesData(files, { allowUploadingVideos: true });
 
     if (!imagesData) {
-      toast.error('يرجى اختيار صورة أو فيديو صالح');
+      toast.error(t('stories.invalidMedia'));
       return;
     }
 
@@ -313,7 +316,7 @@ export function StoryEditor({
   const addText = (): void => {
     const newText: StoryText = {
       id: getRandomId(),
-      text: 'اكتب هنا',
+      text: t('stories.writeHere'),
       x: 0.5,
       y: 0.42,
       color: '#FFFFFF',
@@ -436,10 +439,10 @@ export function StoryEditor({
         120_000
       );
 
-      toast.success('تم نشر القصة');
+      toast.success(t('stories.published'));
       closeModal();
     } catch {
-      toast.error('فشل نشر القصة');
+      toast.error(t('stories.publishFail'));
     } finally {
       setLoading(false);
     }
@@ -468,7 +471,7 @@ export function StoryEditor({
       <button
         type='button'
         onClick={closeModal}
-        aria-label='إغلاق'
+        aria-label={t('common.close')}
         className='pt-safe absolute right-3 top-3 z-40 flex h-10 w-10 items-center
                    justify-center rounded-full bg-black/50 text-white backdrop-blur-md
                    transition active:scale-90'
@@ -480,23 +483,23 @@ export function StoryEditor({
       {!!media && !toolbarHidden && (
         <div className='absolute left-3 top-16 z-40 flex flex-col gap-2.5'>
           <ToolButton
-            label='موسيقى'
+            label={t('stories.music')}
             active={!!music}
             onClick={(): void => setPanel('music')}
           >
             <HeroIcon className='h-5 w-5' iconName='MusicalNoteIcon' />
           </ToolButton>
-          <ToolButton label='نص' onClick={addText}>
+          <ToolButton label={t('stories.text')} onClick={addText}>
             <span className='text-base font-black leading-none'>Aa</span>
           </ToolButton>
-          <ToolButton label='لون القصة' onClick={(): void => setPanel('color')}>
+          <ToolButton label={t('stories.storyColor')} onClick={(): void => setPanel('color')}>
             <span
               className='h-5 w-5 rounded-full ring-2 ring-white/70'
               style={{ backgroundColor: ringColor }}
             />
           </ToolButton>
           <ToolButton
-            label='تغيير الوسائط'
+            label={t('stories.changeMedia')}
             onClick={(): void => fileRef.current?.click()}
           >
             <HeroIcon className='h-5 w-5' iconName='PhotoIcon' />
@@ -524,7 +527,7 @@ export function StoryEditor({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={media.src}
-              alt='معاينة القصة'
+              alt={t('stories.preview')}
               className='h-full w-full object-contain'
               draggable={false}
             />
@@ -537,7 +540,7 @@ export function StoryEditor({
                        border-white/25 px-10 py-12 text-white/80 transition hover:bg-white/5'
           >
             <HeroIcon className='h-10 w-10' iconName='PhotoIcon' />
-            <span className='font-bold'>اختر صورة أو فيديو</span>
+            <span className='font-bold'>{t('stories.pickMedia')}</span>
           </button>
         )}
 
@@ -577,7 +580,7 @@ export function StoryEditor({
               {isActive && (
                 <button
                   type='button'
-                  aria-label='تغيير الحجم'
+                  aria-label={t('stories.resize')}
                   onPointerDown={startResize(item)}
                   className='absolute -bottom-3 -left-3 flex h-7 w-7 touch-none items-center
                              justify-center rounded-full bg-white text-black shadow-lg'
@@ -628,7 +631,7 @@ export function StoryEditor({
             ) : (
               <HeroIcon className='h-5 w-5' iconName='PaperAirplaneIcon' />
             )}
-            نشر القصة
+            {t('stories.publish')}
           </button>
         </footer>
       )}
@@ -638,7 +641,7 @@ export function StoryEditor({
         {panel === 'music' && (
           <Sheet
             key='music'
-            title='الموسيقى'
+            title={t('stories.music')}
             onClose={(): void => setPanel('none')}
           >
             {music ? (
@@ -658,7 +661,7 @@ export function StoryEditor({
                   onClick={(): void => setPanel('none')}
                   className='rounded-full bg-main-accent py-2.5 font-bold text-main-accent-contrast'
                 >
-                  تم
+                  {t('stories.done')}
                 </button>
               </div>
             ) : (
@@ -675,7 +678,7 @@ export function StoryEditor({
         {panel === 'color' && (
           <Sheet
             key='color'
-            title='لون القصة'
+            title={t('stories.storyColor')}
             onClose={(): void => setPanel('none')}
           >
             <div className='flex flex-wrap gap-3 pb-2'>
@@ -696,14 +699,14 @@ export function StoryEditor({
               ))}
             </div>
             <p className='mb-3 text-xs text-white/50'>
-              يظهر هذا اللون كحلقة حول صورتك في شريط القصص.
+              {t('stories.colorRing')}
             </p>
             <button
               type='button'
               onClick={(): void => setPanel('none')}
               className='w-full rounded-full bg-main-accent py-2.5 font-bold text-main-accent-contrast'
             >
-              تم
+              {t('stories.done')}
             </button>
           </Sheet>
         )}
@@ -711,13 +714,13 @@ export function StoryEditor({
         {panel === 'text' && activeText && (
           <Sheet
             key='text'
-            title='النص'
+            title={t('stories.text')}
             onClose={(): void => setPanel('none')}
             actions={
               <button
                 type='button'
                 onClick={(): void => removeText(activeText.id)}
-                aria-label='حذف النص'
+                aria-label={t('stories.deleteText')}
                 className='flex h-8 w-8 items-center justify-center rounded-full bg-accent-red/20 text-accent-red'
               >
                 <HeroIcon className='h-4 w-4' iconName='TrashIcon' />
@@ -731,7 +734,7 @@ export function StoryEditor({
               }
               rows={2}
               autoFocus
-              placeholder='اكتب نصك…'
+              placeholder={t('stories.writeText')}
               style={{
                 fontFamily: fontCss(activeText.font),
                 color: activeText.color
@@ -791,12 +794,12 @@ export function StoryEditor({
                     : 'bg-white/10 text-white'
                 )}
               >
-                خلفية
+                {t('stories.bg')}
               </button>
             </div>
 
             <p className='mt-3 text-center text-[11px] text-white/50'>
-              كبّر أو صغّر النص بإصبعين أو من المقبض الأبيض على الزاوية
+              {t('stories.pinchHint')}
             </p>
           </Sheet>
         )}
@@ -844,6 +847,7 @@ type SheetProps = {
 };
 
 function Sheet({ title, onClose, actions, children }: SheetProps): JSX.Element {
+  const { t } = useLanguage();
   return (
     <motion.section
       initial={{ y: '100%' }}
@@ -860,7 +864,7 @@ function Sheet({ title, onClose, actions, children }: SheetProps): JSX.Element {
           <button
             type='button'
             onClick={onClose}
-            aria-label='إغلاق'
+            aria-label={t('common.close')}
             className='flex h-8 w-8 items-center justify-center rounded-full bg-white/10'
           >
             <HeroIcon className='h-4 w-4' iconName='ChevronDownIcon' />

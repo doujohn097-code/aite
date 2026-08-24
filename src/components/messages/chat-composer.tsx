@@ -10,6 +10,7 @@ import { VoicePlayer } from './voice-player';
 import { getRandomId } from '@lib/random';
 import type { FilesWithId } from '@lib/types/file';
 import type { MessageType } from '@lib/types/message';
+import { useLanguage } from '@lib/context/language-context';
 
 type VoiceDraft = {
   url: string;
@@ -52,6 +53,8 @@ export function ChatComposer({
   onSendVoice,
   onTyping
 }: ChatComposerProps): JSX.Element {
+  const { t } = useLanguage();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -181,7 +184,7 @@ export function ChatComposer({
   return (
     <div className='bg-main-background px-2 pb-2 pt-2'>
       <div aria-live='polite' className='sr-only'>
-        {sending ? 'جارٍ إرسال الرسالة' : ''}
+        {sending ? t('chat.sending') : ''}
       </div>
       {/* شريط التعديل */}
       <AnimatePresence>
@@ -215,7 +218,7 @@ export function ChatComposer({
                   setText('');
                   onCancelEdit?.();
                 }}
-                aria-label='إلغاء التعديل'
+                aria-label={t('chat.cancelEdit')}
                 className='shrink-0 rounded-full p-1.5 text-light-secondary transition
                            hover:bg-light-primary/10 dark:text-dark-secondary'
               >
@@ -251,18 +254,18 @@ export function ChatComposer({
                 <span className='truncate text-light-secondary dark:text-dark-secondary'>
                   {replyingTo.text ||
                     (replyingTo.type === 'audio'
-                      ? 'رسالة صوتية'
+                      ? t('messages.voice')
                       : replyingTo.type === 'image'
-                      ? 'صورة'
+                      ? t('messages.image')
                       : replyingTo.type === 'video'
-                      ? 'فيديو'
+                      ? t('messages.video')
                       : '')}
                 </span>
               </div>
               <button
                 type='button'
                 onClick={onCancelReply}
-                aria-label='إلغاء الرد'
+                aria-label={t('chat.cancelReply')}
                 className='shrink-0 rounded-full p-1.5 text-light-secondary transition
                            hover:bg-light-primary/10 dark:text-dark-secondary'
               >
@@ -296,14 +299,14 @@ export function ChatComposer({
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={preview.url}
-                    alt='معاينة'
+                    alt={t('chat.preview')}
                     className='h-20 w-20 rounded-xl object-cover'
                   />
                 )}
                 <button
                   type='button'
                   onClick={() => removeFile(preview.id)}
-                  aria-label='إزالة'
+                  aria-label={t('action.remove')}
                   className='absolute -left-1.5 -top-1.5 flex h-5 w-5 items-center justify-center
                              rounded-full bg-black/80 text-white transition hover:bg-black'
                 >
@@ -334,7 +337,7 @@ export function ChatComposer({
                     URL.revokeObjectURL(voice.url);
                     setVoice(null);
                   }}
-                  aria-label='حذف التسجيل'
+                  aria-label={t('chat.deleteRec')}
                   className='absolute -left-1.5 -top-1.5 flex h-5 w-5 shrink-0 items-center
                              justify-center rounded-full bg-black/80 text-white
                              transition hover:bg-black'
@@ -381,7 +384,7 @@ export function ChatComposer({
             <button
               type='button'
               onClick={() => fileInputRef.current?.click()}
-              aria-label='إرفاق صورة أو فيديو'
+              aria-label={t('chat.attach')}
               disabled={sending}
               className='custom-button dark-bg-tab shrink-0 p-2 text-main-accent-text hover:bg-light-primary/10 disabled:cursor-not-allowed
                          disabled:opacity-40 dark:hover:bg-dark-primary/10'
@@ -398,7 +401,7 @@ export function ChatComposer({
                 else stopTyping();
               }}
               onKeyDown={handleKeyDown}
-              placeholder='اكتب رسالة...  @للإشارة'
+              placeholder={t('chat.placeholder')}
               maxRows={4}
               className='max-h-32 flex-1 resize-none self-center bg-transparent px-2 py-1.5
                          text-[15px] outline-none placeholder:text-light-secondary
@@ -410,7 +413,7 @@ export function ChatComposer({
                 type='button'
                 onClick={() => void handleSend()}
                 disabled={sending}
-                aria-label='إرسال'
+                aria-label={t('comments.send')}
                 className={cn(
                   'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
                   'bg-main-accent text-main-accent-contrast transition hover:brightness-90 active:scale-90',
@@ -431,7 +434,7 @@ export function ChatComposer({
               <button
                 type='button'
                 onClick={() => setRecording(true)}
-                aria-label='تسجيل رسالة صوتية'
+                aria-label={t('chat.record')}
                 className='custom-button dark-bg-tab shrink-0 p-2 text-main-accent-text
                            hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
               >

@@ -1,4 +1,5 @@
 import { getTimestampMillis } from './date';
+import { tx } from './i18n/tx';
 
 export const PUBLISH_COOLDOWN_MS = 10_000;
 export const PUBLISH_HOUR_LIMIT = 25;
@@ -36,7 +37,9 @@ export function nextPublishQuota(
       resetWindow,
       publishWindowCount: count,
       retryAfterMs,
-      message: `انتظر ${Math.max(1, Math.ceil(retryAfterMs / 1000))} ثوانٍ قبل النشر مرة أخرى`
+      message: tx('err.quotaWait', {
+        n: Math.max(1, Math.ceil(retryAfterMs / 1000))
+      })
     };
   }
 
@@ -47,7 +50,7 @@ export function nextPublishQuota(
       resetWindow: false,
       publishWindowCount: count,
       retryAfterMs,
-      message: `وصلت للحد الأقصى (${PUBLISH_HOUR_LIMIT} منشوراً في الساعة). حاول لاحقاً`
+      message: tx('err.quotaHour', { n: PUBLISH_HOUR_LIMIT })
     };
   }
 

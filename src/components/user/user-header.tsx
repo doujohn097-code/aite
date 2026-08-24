@@ -6,6 +6,7 @@ import { useUser } from '@lib/context/user-context';
 import { userStatsCollection } from '@lib/firebase/collections';
 import { UserName } from './user-name';
 import type { Variants } from 'framer-motion';
+import { useLanguage } from '@lib/context/language-context';
 
 export const variants: Variants = {
   initial: { opacity: 0 },
@@ -14,6 +15,8 @@ export const variants: Variants = {
 };
 
 export function UserHeader(): JSX.Element {
+  const { t } = useLanguage();
+
   const {
     pathname,
     query: { id }
@@ -58,7 +61,7 @@ export function UserHeader(): JSX.Element {
         </motion.div>
       ) : !user ? (
         <motion.h2 className='text-xl font-bold' {...variants} key='not-found'>
-          {typeof id === 'string' ? `@${id}` : 'الحساب غير موجود'}
+          {typeof id === 'string' ? `@${id}` : t('profile.seoMissing')}
         </motion.h2>
       ) : (
         <motion.div
@@ -81,12 +84,12 @@ export function UserHeader(): JSX.Element {
               : currentPage === 'media'
               ? totalPhotos
                 ? `${totalPhotos} ${
-                    totalPhotos > 1 ? 'صور و GIF' : 'صورة و GIF'
+                    totalPhotos > 1 ? t('profile.photosManyWord') : t('profile.photosOne')
                   }`
-                : 'لا توجد صور أو GIF'
+                : t('profile.noPhotos')
               : totalLikes
-              ? `${totalLikes} ${totalLikes > 1 ? 'إعجابات' : 'إعجاب'}`
-              : 'لا توجد إعجابات'}
+              ? `${totalLikes} ${totalLikes > 1 ? t('profile.followers') : t('action.like')}`
+              : t('profile.noLikes')}
           </p>
         </motion.div>
       )}

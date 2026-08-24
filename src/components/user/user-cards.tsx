@@ -1,5 +1,6 @@
 import cn from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useLanguage } from '@lib/context/language-context';
 import { StatsEmpty } from '@components/tweet/stats-empty';
 import { Loading } from '@components/ui/loading';
 import { variants } from '@components/user/user-header';
@@ -19,39 +20,38 @@ type UserCardsProps = {
   loading: boolean;
 };
 
-type NoStatsData = Record<CombinedTypes, StatsEmptyProps>;
-
-const allNoStatsData: Readonly<NoStatsData> = {
-  retweets: {
-    title: 'انشر المنشورات التي تعجبك',
-    imageData: { src: '/assets/no-retweets.png', alt: 'لا توجد إعادات نشر' },
-    description:
-      'شارك منشور الآخرين في خطك الزمني بإعادة نشرها. عندما تفعل، ستظهر هنا.'
-  },
-  likes: {
-    title: 'لا توجد إعجابات بعد',
-    imageData: { src: '/assets/no-likes.png', alt: 'لا توجد إعجابات' },
-    description: 'عندما تعجب بمنشور، سيظهر هنا.'
-  },
-  following: {
-    title: 'كن على اطلاع',
-    description:
-      'متابعة الحسابات طريقة سهلة لتنظيم خطك الزمني ومعرفة ما يحدث حول المواضيع والأشخاص المهمين لك.'
-  },
-  followers: {
-    title: 'تبحث عن متابعين؟',
-    imageData: { src: '/assets/no-followers.png', alt: 'لا يوجد متابعون' },
-    description:
-      'عندما يتابعك أحدهم، سيظهر هنا. النشر والتفاعل مع الآخرين يساعدك على زيادة المتابعين.'
-  }
-};
-
 export function UserCards({
   data,
   type,
   follow,
   loading
 }: UserCardsProps): JSX.Element {
+  const { t } = useLanguage();
+  const allNoStatsData: Record<CombinedTypes, StatsEmptyProps> = {
+    retweets: {
+      title: t('cards.repostsTitle'),
+      imageData: { src: '/assets/no-retweets.png', alt: t('cards.repostsAlt') },
+      description: t('cards.repostsDesc')
+    },
+    likes: {
+      title: t('cards.likesTitle'),
+      imageData: { src: '/assets/no-likes.png', alt: t('cards.likesAlt') },
+      description: t('cards.likesDesc')
+    },
+    following: {
+      title: t('cards.followTitle'),
+      description: t('cards.followDesc')
+    },
+    followers: {
+      title: t('cards.followersTitle'),
+      imageData: {
+        src: '/assets/no-followers.png',
+        alt: t('cards.followersAlt')
+      },
+      description: t('cards.followersDesc')
+    }
+  };
+
   const noStatsData = allNoStatsData[type];
   const modal = ['retweets', 'likes'].includes(type);
 

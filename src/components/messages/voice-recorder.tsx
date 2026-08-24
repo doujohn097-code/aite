@@ -5,6 +5,8 @@ import {
   MAX_VOICE_DURATION_SECONDS
 } from '@lib/media-limits';
 import { HeroIcon } from '@components/ui/hero-icon';
+import { useLanguage } from '@lib/context/language-context';
+import { tx } from '@lib/i18n/tx';
 
 type VoiceRecorderProps = {
   onComplete: (blob: Blob, duration: number, peaks: number[]) => void;
@@ -30,21 +32,23 @@ function getMicrophoneError(error: unknown): string {
   const name = error instanceof DOMException ? error.name : '';
 
   if (name === 'NotAllowedError' || name === 'PermissionDeniedError')
-    return 'تم رفض إذن الميكروفون. اسمح لـ Aite باستخدامه ثم أعد المحاولة.';
+    return tx('err.micDenied');
   if (name === 'NotFoundError' || name === 'DevicesNotFoundError')
-    return 'لم يتم العثور على ميكروفون في هذا الجهاز.';
+    return tx('err.micMissing');
   if (name === 'NotReadableError' || name === 'TrackStartError')
-    return 'الميكروفون مستخدم في تطبيق آخر. أغلقه ثم أعد المحاولة.';
+    return tx('err.micBusy');
   if (error instanceof Error && error.message === 'unsupported')
-    return 'إصدار WebView الحالي لا يدعم التسجيل الصوتي. حدّث Android System WebView.';
+    return tx('err.micWebview');
 
-  return 'تعذر تشغيل الميكروفون. تحقق من الأذونات ثم أعد المحاولة.';
+  return tx('err.micGeneric');
 }
 
 export function VoiceRecorder({
   onComplete,
   onCancel
 }: VoiceRecorderProps): JSX.Element {
+  const { t } = useLanguage();
+
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recordedBytesRef = useRef(0);
@@ -141,7 +145,7 @@ export function VoiceRecorder({
           if (recordedBytesRef.current > MAX_AUDIO_UPLOAD_BYTES) {
             cancelledRef.current = true;
             if (recorder.state !== 'inactive') recorder.stop();
-            setError('وصل التسجيل إلى الحد الأقصى للحجم. سجّل رسالة أقصر.');
+            setError(t('err.voiceMax'));
             return;
           }
           chunksRef.current.push(event.data);
@@ -219,7 +223,7 @@ export function VoiceRecorder({
             onClick={() => setRetryVersion((version) => version + 1)}
             className='rounded-full bg-main-accent px-3 py-1.5 text-xs font-bold text-main-accent-contrast'
           >
-            إعادة المحاولة
+            {t('common.retry')}
           </button>
           {isAndroidApp && (
             <button
@@ -236,7 +240,7 @@ export function VoiceRecorder({
             type='button'
             onClick={onCancel}
             className='custom-button dark-bg-tab p-2 hover:bg-light-primary/10 dark:hover:bg-dark-primary/10'
-            aria-label='إغلاق'
+            aria-label={t('common.close')}
           >
             <HeroIcon className='h-5 w-5' iconName='XMarkIcon' />
           </button>
@@ -249,7 +253,7 @@ export function VoiceRecorder({
       <button
         type='button'
         onClick={onCancel}
-        aria-label='حذف التسجيل'
+        aria-label={t('chat.deleteRec')}
         className='custom-button p-2 text-accent-red transition hover:bg-accent-red/10 active:scale-90'
       >
         <HeroIcon className='h-5 w-5' iconName='TrashIcon' />
@@ -273,7 +277,7 @@ export function VoiceRecorder({
       <button
         type='button'
         onClick={finish}
-        aria-label='إنهاء التسجيل'
+        aria-label={t('chat.endRec')}
         className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full
                    bg-main-accent text-main-accent-contrast transition hover:brightness-90 active:scale-90'
       >

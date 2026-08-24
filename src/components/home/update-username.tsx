@@ -14,8 +14,11 @@ import { Modal } from '@components/modal/modal';
 import { UsernameModal } from '@components/modal/username-modal';
 import { InputField } from '@components/input/input-field';
 import type { FormEvent, ChangeEvent } from 'react';
+import { useLanguage } from '@lib/context/language-context';
 
 export function UpdateUsername(): JSX.Element {
+  const { t } = useLanguage();
+
   const [alreadySet, setAlreadySet] = useState(false);
   const [available, setAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -46,7 +49,7 @@ export function UpdateUsername(): JSX.Element {
       if (empty) setAvailable(true);
       else {
         setAvailable(false);
-        setErrorMessage('هذا الاسم مستخدم. يرجى اختيار اسم آخر.');
+        setErrorMessage(t('err.usernameTaken'));
       }
 
       setSearching(false);
@@ -93,10 +96,10 @@ export function UpdateUsername(): JSX.Element {
       setVisited(false);
       setAvailable(false);
 
-      toast.success('تم تحديث اسم المستخدم');
+      toast.success(t('ok.usernameUpdated'));
     } catch (error) {
       console.error(error);
-      toast.error('فشل تحديث اسم المستخدم');
+      toast.error(t('err.usernameUpdate'));
     } finally {
       setLoading(false);
     }
@@ -128,7 +131,7 @@ export function UpdateUsername(): JSX.Element {
           cancelUpdateUsername={cancelUpdateUsername}
         >
           <InputField
-            label='اسم المستخدم'
+            label={t('profile.username')}
             inputId='username'
             inputValue={inputValue}
             errorMessage={errorMessage}
@@ -143,7 +146,7 @@ export function UpdateUsername(): JSX.Element {
         onClick={openModal}
       >
         <HeroIcon className='h-5 w-5' iconName='SparklesIcon' />
-        <ToolTip tip='أفضل المنشورات' />
+        <ToolTip tip={t('profile.bestPosts')} />
       </Button>
     </>
   );

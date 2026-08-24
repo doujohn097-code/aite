@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import cn from 'clsx';
+import { useLanguage } from '@lib/context/language-context';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { Button } from '@components/ui/button';
 import type { ChangeEvent, FormEvent, KeyboardEvent } from 'react';
 
 export function SearchBar(): JSX.Element {
+  const { t } = useLanguage();
   const [inputValue, setInputValue] = useState('');
 
   const { push } = useRouter();
@@ -53,7 +55,7 @@ export function SearchBar(): JSX.Element {
           className='peer flex-1 bg-transparent outline-none 
                      placeholder:text-light-secondary dark:placeholder:text-dark-secondary'
           type='text'
-          placeholder='البحث في Aite'
+          placeholder={t('profile.searchAite')}
           ref={inputRef}
           value={inputValue}
           onChange={handleChange}

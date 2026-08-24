@@ -120,7 +120,7 @@ export function Sidebar(): JSX.Element {
                 className='block h-6 w-6 xl:hidden'
                 iconName='FeatherIcon'
               />
-              <p className='hidden xl:block'>نشر</p>
+              <p className='hidden xl:block'>{t('nav.post')}</p>
             </Button>
           )}
         </section>

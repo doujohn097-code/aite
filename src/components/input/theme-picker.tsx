@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
 import cn from 'clsx';
 import { useTheme } from '@lib/context/theme-context';
+import { useLanguage } from '@lib/context/language-context';
 import { themesList, themesMeta } from '@lib/types/theme';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { MouseEvent } from 'react';
 import type { Theme } from '@lib/types/theme';
+import type { MessageKey } from '@lib/i18n';
 
 type ThemePickerProps = {
   className?: string;
@@ -13,6 +15,7 @@ type ThemePickerProps = {
 /** بطاقات اختيار المظهر — تشمل المظاهر الكلاسيكية والخلفيات السائلة */
 export function ThemePicker({ className }: ThemePickerProps): JSX.Element {
   const { theme: currentTheme, setTheme } = useTheme();
+  const { t } = useLanguage();
 
   const handlePick =
     (theme: Theme) =>
@@ -39,8 +42,9 @@ export function ThemePicker({ className }: ThemePickerProps): JSX.Element {
   return (
     <div className={cn('grid grid-cols-2 gap-2.5 xs:grid-cols-3', className)}>
       {themesList.map((theme) => {
-        const { label, description, preview, thumbnail, dark } =
-          themesMeta[theme];
+        const { preview, thumbnail, dark } = themesMeta[theme];
+        const label = t(`theme.${theme}` as MessageKey);
+        const description = t(`theme.${theme}Desc` as MessageKey);
 
         const isActive = theme === currentTheme;
 
@@ -106,7 +110,7 @@ export function ThemePicker({ className }: ThemePickerProps): JSX.Element {
                     dark ? 'bg-black/50 text-white' : 'bg-white/70 text-black'
                   )}
                 >
-                  {dark ? 'داكن' : 'فاتح'}
+                  {dark ? t('dark.word') : t('light.word')}
                 </span>
               )}
             </span>

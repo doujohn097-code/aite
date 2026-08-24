@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Button } from '@components/ui/button';
 import { StoryAvatar } from '@components/stories/story-avatar';
@@ -17,29 +18,6 @@ import type { NavLink } from '@components/sidebar/sidebar';
 import type { User } from '@lib/types/user';
 
 export type MobileNavLink = Omit<NavLink, 'canBeHidden'>;
-
-const coreNavLinks: Readonly<MobileNavLink[]> = [
-  {
-    href: '/home',
-    linkName: 'الرئيسية',
-    iconName: 'HomeIcon'
-  },
-  {
-    href: '/reels',
-    linkName: 'الريلز',
-    iconName: 'FilmIcon'
-  },
-  {
-    href: '/accounts',
-    linkName: 'الحسابات',
-    iconName: 'UsersIcon'
-  },
-  {
-    href: '/search',
-    linkName: 'الأشخاص',
-    iconName: 'UserGroupIcon'
-  }
-];
 
 type Stats = [string, string, number];
 
@@ -70,6 +48,7 @@ export function MobileSidebarModal({
 }: MobileSidebarModalProps): JSX.Element {
   const { signOut } = useAuth();
   const { theme } = useTheme();
+  const { t, isRtl } = useLanguage();
 
   const { wallpaper } = themesMeta[theme];
   const { open, openModal, closeModal: closeLogOutModal } = useModal();
@@ -79,9 +58,32 @@ export function MobileSidebarModal({
     closeModal: closeSettingsModal
   } = useModal();
 
+  const coreNavLinks: Readonly<MobileNavLink[]> = [
+    {
+      href: '/home',
+      linkName: t('nav.home'),
+      iconName: 'HomeIcon'
+    },
+    {
+      href: '/reels',
+      linkName: t('nav.reels'),
+      iconName: 'FilmIcon'
+    },
+    {
+      href: '/accounts',
+      linkName: t('action.accounts'),
+      iconName: 'UsersIcon'
+    },
+    {
+      href: '/search',
+      linkName: t('nav.people'),
+      iconName: 'UserGroupIcon'
+    }
+  ];
+
   const allStats: Readonly<Stats[]> = [
-    ['following', 'يتابع', following.length],
-    ['followers', 'متابعون', followers.length]
+    ['following', t('profile.following'), following.length],
+    ['followers', t('profile.followers'), followers.length]
   ];
 
   const userLink = `/user/${username}`;
@@ -96,9 +98,9 @@ export function MobileSidebarModal({
         <ActionModal
           useIcon
           focusOnMainBtn
-          title='تسجيل الخروج من Aite؟'
-          description='يمكنك تسجيل الدخول مرة أخرى في أي وقت.'
-          mainBtnLabel='تسجيل الخروج'
+          title={t('profile.logoutTitle')}
+          description={t('profile.logoutBody')}
+          mainBtnLabel={t('action.logout')}
           action={signOut}
           closeModal={closeLogOutModal}
         />
@@ -113,7 +115,6 @@ export function MobileSidebarModal({
       </Modal>
 
       <div className='scroll-native pb-safe flex h-full flex-col overflow-y-auto bg-main-background'>
-        {/* Cover Photo Header */}
         <div className='pt-safe relative w-full shrink-0 overflow-hidden bg-gradient-to-tr from-main-accent/30 via-main-accent/15 to-main-accent/5'>
           <div className='relative h-28 w-full'>
             {coverPhotoURL ? (
@@ -138,21 +139,20 @@ export function MobileSidebarModal({
             />
           </div>
 
-          {/* Frosted Close Button */}
           <button
             type='button'
             onClick={closeModal}
-            aria-label='إغلاق'
-            className='absolute left-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full
-                       bg-black/50 text-white backdrop-blur-md transition hover:bg-black/70 active:scale-95'
+            aria-label={t('common.close')}
+            className={`absolute top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full
+                       bg-black/50 text-white backdrop-blur-md transition hover:bg-black/70 active:scale-95 ${
+                         isRtl ? 'left-3' : 'right-3'
+                       }`}
           >
             <HeroIcon className='h-4 w-4' iconName='XMarkIcon' />
           </button>
         </div>
 
-        {/* User Identity & Avatar Section */}
         <div className='relative px-4 pb-4'>
-          {/* Avatar cleanly overlapping bottom edge of cover */}
           <div className='-mt-10 mb-2.5 flex items-end justify-between'>
             <div className='relative z-10 rounded-full bg-main-background p-1 shadow-md'>
               <StoryAvatar
@@ -193,7 +193,6 @@ export function MobileSidebarModal({
             </a>
           </Link>
 
-          {/* Stats Bar */}
           <div className='mt-3 flex items-center gap-5 text-sm'>
             {allStats.map(([statId, label, stat]) => (
               <Link href={`${userLink}/${statId}`} key={statId}>
@@ -215,7 +214,6 @@ export function MobileSidebarModal({
 
         <div className='mx-4 border-t border-light-border/70 dark:border-dark-border/70' />
 
-        {/* الإعدادات تبقى ظاهرة دائمًا فوق قائمة التنقل */}
         <div className='shrink-0 border-y border-light-border/70 px-3 py-2 dark:border-dark-border/70'>
           <Button
             className='flex w-full items-center gap-3 rounded-xl p-3 font-semibold transition
@@ -224,16 +222,15 @@ export function MobileSidebarModal({
             onClick={openSettingsModal}
           >
             <HeroIcon className='h-5 w-5' iconName='Cog6ToothIcon' />
-            <span>الإعدادات</span>
+            <span>{t('settings.title')}</span>
           </Button>
         </div>
 
-        {/* Navigation List */}
         <nav className='flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-3'>
           <MobileSidebarLink
             href={userLink}
             iconName='UserIcon'
-            linkName='الملف الشخصي'
+            linkName={t('nav.profile')}
             onClick={closeModal}
           />
           {coreNavLinks.map((linkData) => (
@@ -245,7 +242,6 @@ export function MobileSidebarModal({
           ))}
         </nav>
 
-        {/* تسجيل الخروج — آخر زر في القائمة */}
         <div className='mt-auto shrink-0 border-t border-light-border/70 px-3 py-3 dark:border-dark-border/70'>
           <Button
             className='flex w-full items-center gap-3 rounded-xl p-3 font-semibold text-accent-red
@@ -256,7 +252,7 @@ export function MobileSidebarModal({
               className='h-5 w-5 text-accent-red'
               iconName='ArrowRightOnRectangleIcon'
             />
-            <span>تسجيل الخروج</span>
+            <span>{t('action.logout')}</span>
           </Button>
         </div>
       </div>

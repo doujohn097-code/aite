@@ -11,6 +11,7 @@ import {
   parseUpdateProgress,
   shouldOfferUpdate
 } from '@lib/app-update';
+import { tx } from '@lib/i18n/tx';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { AppUpdate } from '@lib/types/app-update';
@@ -26,9 +27,14 @@ async function fetchPublishedUpdate(): Promise<AppUpdate | null> {
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} ب`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} ك.ب`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} م.ب`;
+  const n = bytes < 1024
+    ? String(bytes)
+    : bytes < 1024 * 1024
+    ? (bytes / 1024).toFixed(1)
+    : (bytes / (1024 * 1024)).toFixed(1);
+  if (bytes < 1024) return tx('update.bytes', { n });
+  if (bytes < 1024 * 1024) return tx('update.kb', { n });
+  return tx('update.mb', { n });
 }
 
 async function downloadApkPreview(
@@ -36,7 +42,7 @@ async function downloadApkPreview(
   onProgress: (detail: UpdateProgressDetail & { received?: number; total?: number }) => void
 ): Promise<Blob> {
   const response = await fetch(url, { cache: 'no-store' });
-  if (!response.ok) throw new Error('تعذر بدء التنزيل');
+  if (!response.ok) throw new Error(tx('update.startFail'));
   const total = Number(response.headers.get('content-length') ?? 0);
   if (!response.body) return response.blob();
 
@@ -58,8 +64,8 @@ async function downloadApkPreview(
         total,
         message:
           total > 0
-            ? `${formatBytes(received)} من ${formatBytes(total)}`
-            : `تم تنزيل ${formatBytes(received)}`
+            ? tx('update.of', { a: formatBytes(received), b: formatBytes(total) })
+            : tx('update.downloaded', { n: formatBytes(received) })
       });
     }
   }
@@ -72,7 +78,7 @@ async function downloadApkPreview(
     percent: 100,
     received,
     total: total || received,
-    message: 'اكتمل التنزيل'
+    message: tx('update.done')
   });
   return blob;
 }
@@ -159,9 +165,9 @@ export function AppUpdatePrompt(): JSX.Element | null {
       if (detail.message) setProgressLabel(detail.message);
       if (detail.status === 'error') {
         setPhase('idle');
-        setError(detail.message || 'تعذر تنزيل التحديث');
+        setError(detail.message || t('update.downloadFail'));
       } else if (detail.status === 'done') {
-        setProgressLabel('اكتمل التنزيل، أكمل التثبيت من النافذة التالية');
+        setProgressLabel(t('update.doneInstall'));
       } else {
         setPhase('busy');
       }
@@ -183,13 +189,13 @@ export function AppUpdatePrompt(): JSX.Element | null {
     setPhase('busy');
     setProgress({ status: 'starting', percent: 1 });
     setProgressLabel(
-      native && hasApk ? 'جارٍ تجهيز التنزيل…' : 'جارٍ تطبيق التحديث…'
+      native && hasApk ? t('update.preparing') : t('update.applying')
     );
 
     if (canNativeInstall && update.apkUrl) {
       const started = installNativeUpdate(update.apkUrl);
       if (started) {
-        setProgressLabel('جارٍ تنزيل التحديث… لا تغلق التطبيق');
+        setProgressLabel(t('update.keepOpen'));
         return;
       }
     }
@@ -202,11 +208,11 @@ export function AppUpdatePrompt(): JSX.Element | null {
         });
         saveBlob(blob, `Aite-${update.versionName || 'update'}.apk`);
         setProgress({ status: 'done', percent: 100 });
-        setProgressLabel('تم حفظ الملف. افتحه لتثبيت التحديث ولا تغلق هذه النافذة.');
+        setProgressLabel(t('update.savedFile'));
         setPhase('busy');
         return;
       } catch {
-        setProgressLabel('تعذر العرض المباشر، سيتم فتح رابط التنزيل');
+        setProgressLabel(t('update.openLink'));
         window.location.assign(update.apkUrl);
         return;
       }

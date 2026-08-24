@@ -71,7 +71,7 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
 
   const reauthenticate = async (password: string): Promise<void> => {
     const currentUser = auth.currentUser;
-    if (!currentUser) throw new Error('انتهت الجلسة — سجّل الدخول مجددًا');
+    if (!currentUser) throw new Error(t('settings.sessionEnded'));
     const credential = EmailAuthProvider.credential(
       usernameToInternalEmail(username),
       password
@@ -104,7 +104,7 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
     try {
       await reauthenticate(currentPassword);
       const currentUser = auth.currentUser;
-      if (!currentUser) throw new Error('انتهت الجلسة');
+      if (!currentUser) throw new Error(t('err.session'));
       await updatePassword(currentUser, newPassword);
 
       // نحدّث بيانات العرض فقط؛ كلمات المرور لا تُخزن محليًا.
@@ -124,14 +124,14 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
     } catch (err) {
       const code = (err as { code?: string })?.code ?? '';
       if (code === 'auth/wrong-password' || code === 'auth/invalid-credential')
-        toast.error('كلمة المرور الحالية غير صحيحة');
+        toast.error(t('settings.wrongPass'));
       else if (code === 'auth/too-many-requests')
-        toast.error('محاولات كثيرة — انتظر قليلًا ثم حاول مجددًا');
+        toast.error(t('settings.tooMany'));
       else if (code === 'auth/weak-password')
-        toast.error('كلمة المرور الجديدة ضعيفة');
+        toast.error(t('settings.passWeakNew'));
       else
         toast.error(
-          err instanceof Error && !code ? err.message : 'تعذر تغيير كلمة المرور'
+          err instanceof Error && !code ? err.message : t('settings.changeFailed')
         );
     } finally {
       setLoading(false);
@@ -155,7 +155,7 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
     try {
       await reauthenticate(deletePassword);
       const currentUser = auth.currentUser;
-      if (!currentUser) throw new Error('انتهت الجلسة');
+      if (!currentUser) throw new Error(t('err.session'));
 
       const idToken = await currentUser.getIdToken();
       const response = await fetch('/api/account/delete', {
@@ -170,7 +170,7 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
         const data = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        throw new Error(data?.error ?? 'تعذر حذف الحساب');
+        throw new Error(data?.error ?? t('settings.deleteFailed'));
       }
 
       try {
@@ -179,18 +179,18 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
         // لا يؤثر
       }
 
-      toast.success('تم حذف الحساب نهائيًا');
+      toast.success(t('settings.deleted'));
       closeModal();
       await signOut();
     } catch (err) {
       const code = (err as { code?: string })?.code ?? '';
       if (code === 'auth/wrong-password' || code === 'auth/invalid-credential')
-        toast.error('كلمة المرور غير صحيحة');
+        toast.error(t('settings.wrongPassShort'));
       else if (code === 'auth/too-many-requests')
-        toast.error('محاولات كثيرة — انتظر قليلًا ثم حاول مجددًا');
+        toast.error(t('settings.tooMany'));
       else
         toast.error(
-          err instanceof Error && !code ? err.message : 'تعذر حذف الحساب'
+          err instanceof Error && !code ? err.message : t('settings.deleteFailed')
         );
     } finally {
       setLoading(false);
@@ -252,8 +252,8 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
             </div>
             <HeroIcon
               className='h-4 w-4 text-light-secondary dark:text-dark-secondary'
-              iconName='ChevronLeftIcon'
-            />
+                iconName={isRtl ? 'ChevronLeftIcon' : 'ChevronRightIcon'}
+              />
           </button>
 
           <button
@@ -330,15 +330,17 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
                 iconName='TrashIcon'
               />
               <div>
-                <p className='font-semibold text-accent-red'>حذف الحساب</p>
+                <p className='font-semibold text-accent-red'>
+                  {t('settings.delete')}
+                </p>
                 <p className='text-xs text-light-secondary dark:text-dark-secondary'>
-                  حذف نهائي لحسابك وبياناتك
+                  {t('settings.deleteHint')}
                 </p>
               </div>
             </div>
             <HeroIcon
               className='h-4 w-4 text-light-secondary dark:text-dark-secondary'
-              iconName='ChevronLeftIcon'
+              iconName={isRtl ? 'ChevronLeftIcon' : 'ChevronRightIcon'}
             />
           </button>
         </div>
@@ -462,9 +464,9 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
             className='mt-1 bg-accent-red py-2.5 font-bold text-white transition
                        hover:brightness-90 active:brightness-75'
             loading={loading}
-            disabled={loading || deleteConfirmText.trim() !== 'حذف'}
+            disabled={loading || deleteConfirmText.trim() !== deleteWord}
           >
-            حذف الحساب نهائيًا
+            {t('settings.deleteForever')}
           </Button>
         </form>
       )}

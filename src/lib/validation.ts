@@ -1,3 +1,4 @@
+import { tx } from './i18n/tx';
 import { getRandomId } from './random';
 import {
   MAX_IMAGE_UPLOAD_BYTES,
@@ -94,12 +95,11 @@ export function isValidUsername(
   username: string,
   value: string
 ): string | null {
-  if (value.length < 4) return 'يجب أن يكون اسم المستخدم أطول من 4 أحرف.';
-  if (value.length > 15) return 'يجب أن يكون اسم المستخدم أقصر من 15 حرفًا.';
-  if (!/^\w+$/i.test(value))
-    return "يمكن لاسم المستخدم أن يحتوي فقط على أحرف وأرقام و '_' .";
-  if (!/[a-z]/i.test(value)) return 'يجب تضمين حرف غير رقمي.';
-  if (value === username) return 'هذا اسم المستخدم الحالي.';
+  if (value.length < 4) return tx('valid.userMin');
+  if (value.length > 15) return tx('valid.userMax');
+  if (!/^\w+$/i.test(value)) return tx('valid.userChars');
+  if (!/[a-z]/i.test(value)) return tx('valid.userLetter');
+  if (value === username) return tx('valid.userSame');
 
   return null;
 }

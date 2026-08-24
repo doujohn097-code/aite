@@ -2,6 +2,7 @@ import { Dialog } from '@headlessui/react';
 import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
 import type { ReactNode, FormEvent } from 'react';
+import { useLanguage } from '@lib/context/language-context';
 
 type UsernameModalProps = {
   loading: boolean;
@@ -14,14 +15,14 @@ type UsernameModalProps = {
 
 const usernameModalData = [
   {
-    title: 'كيف نناديك؟',
-    description: 'اسم المستخدم @username فريد. يمكنك تغييره لاحقًا.',
-    cancelLabel: 'تخطي'
+    title: 'onboard.how',
+    description: 'onboard.userHint',
+    cancelLabel: 'action.skip'
   },
   {
-    title: 'تغيير اسم المستخدم؟',
-    description: 'اسم المستخدم @username فريد. يمكنك تغييره هنا في أي وقت.',
-    cancelLabel: 'إلغاء'
+    title: 'onboard.changeUser',
+    description: 'onboard.changeHint',
+    cancelLabel: 'common.cancel'
   }
 ] as const;
 
@@ -33,7 +34,12 @@ export function UsernameModal({
   changeUsername,
   cancelUpdateUsername
 }: UsernameModalProps): JSX.Element {
-  const { title, description, cancelLabel } = usernameModalData[+alreadySet];
+  const { t } = useLanguage();
+
+  const copy = usernameModalData[+alreadySet];
+  const title = t(copy.title);
+  const description = t(copy.description);
+  const cancelLabel = t(copy.cancelLabel);
 
   return (
     <form
@@ -66,7 +72,7 @@ export function UsernameModal({
           loading={loading}
           disabled={!available}
         >
-          تعيين اسم المستخدم
+          {t('onboard.setUsername')}
         </Button>
         <Button
           className='border border-light-line-reply hover:bg-light-primary/10 focus-visible:bg-light-primary/10

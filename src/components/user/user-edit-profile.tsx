@@ -15,6 +15,7 @@ import type { ChangeEvent, KeyboardEvent } from 'react';
 import type { FilesWithId } from '@lib/types/file';
 import type { User, EditableData, EditableUserData } from '@lib/types/user';
 import type { InputFieldProps } from '@components/input/input-field';
+import { useLanguage } from '@lib/context/language-context';
 
 type RequiredInputFieldProps = Omit<InputFieldProps, 'handleChange'> & {
   inputId: EditableData;
@@ -35,6 +36,8 @@ type UserEditProfileProps = {
 };
 
 export function UserEditProfile({ hide }: UserEditProfileProps): JSX.Element {
+  const { t } = useLanguage();
+
   const { user } = useUser();
   const { open, openModal, closeModal } = useModal();
 
@@ -61,7 +64,7 @@ export function UserEditProfile({ hide }: UserEditProfileProps): JSX.Element {
   useEffect(() => cleanImage, []);
 
   const inputNameError = !editUserData.name?.trim()
-    ? 'لا يمكن أن يكون الاسم فارغًا'
+    ? t('valid.nameEmpty')
     : '';
 
   const updateData = async (): Promise<void> => {
@@ -113,9 +116,9 @@ export function UserEditProfile({ hide }: UserEditProfileProps): JSX.Element {
 
       setEditUserData(newUserData);
 
-      toast.success('تم تحديث الملف الشخصي');
+      toast.success(t('profile.updated'));
     } catch (error) {
-      toast.error('فشل تحديث الملف الشخصي');
+      toast.error(t('err.profileUpdate'));
     } finally {
       setLoading(false);
     }
@@ -127,7 +130,7 @@ export function UserEditProfile({ hide }: UserEditProfileProps): JSX.Element {
       const imagesData = getImagesData(files);
 
       if (!imagesData) {
-        toast.error('يرجى اختيار GIF أو صورة صالحة');
+        toast.error(t('err.validImage'));
         return;
       }
 
@@ -207,27 +210,27 @@ export function UserEditProfile({ hide }: UserEditProfileProps): JSX.Element {
 
   const inputFields: Readonly<RequiredInputFieldProps[]> = [
     {
-      label: 'الاسم',
+      label: t('profile.name'),
       inputId: 'name',
       inputValue: editUserData.name,
       inputLimit: 50,
       errorMessage: inputNameError
     },
     {
-      label: 'نبذة',
+      label: t('profile.bio'),
       inputId: 'bio',
       inputValue: editUserData.bio,
       inputLimit: 160,
       useTextArea: true
     },
     {
-      label: 'الموقع',
+      label: t('profile.location'),
       inputId: 'location',
       inputValue: editUserData.location,
       inputLimit: 30
     },
     {
-      label: 'الموقع الإلكتروني',
+      label: t('profile.website'),
       inputId: 'website',
       inputValue: editUserData.website,
       inputLimit: 100

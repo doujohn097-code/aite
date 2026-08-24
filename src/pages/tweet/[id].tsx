@@ -15,8 +15,11 @@ import { TweetFeedSkeleton } from '@components/ui/skeleton';
 import { Error } from '@components/ui/error';
 import { ViewParentTweet } from '@components/view/view-parent-tweet';
 import type { ReactElement, ReactNode } from 'react';
+import { useLanguage } from '@lib/context/language-context';
 
 export default function TweetId(): JSX.Element {
+  const { t } = useLanguage();
+
   const {
     query: { id },
     back
@@ -50,7 +53,7 @@ export default function TweetId(): JSX.Element {
       <MainHeader
         useActionButton
         iconName='ArrowRightIcon'
-        title={parentId ? 'سلسلة' : 'منشور'}
+        title={parentId ? t('tweet.thread') : t('tweet.page')}
         action={back}
       />
       <section>
@@ -58,8 +61,8 @@ export default function TweetId(): JSX.Element {
           <TweetFeedSkeleton count={2} />
         ) : !tweetData ? (
           <>
-            <SEO title='المنشور غير موجود / Aite' />
-            <Error message='المنشور غير موجود' />
+            <SEO title={t('tweet.seoMissing')} />
+            <Error message={t('tweet.notFound')} />
           </>
         ) : (
           <>

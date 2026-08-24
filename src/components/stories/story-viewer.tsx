@@ -21,11 +21,14 @@ import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { StoryEditor, fontCss } from './story-editor';
 import type { Story } from '@lib/types/story';
+import { useLanguage } from '@lib/context/language-context';
 
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_STORY_DURATION_MS = 15000;
 
 export function StoryViewer({ userId }: { userId: string }): JSX.Element {
+  const { t } = useLanguage();
+
   const { push, replace } = useRouter();
   const { user: authUser, markStoryViewed } = useAuth();
   const {
@@ -344,7 +347,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
     setOptimisticLiked(next);
     void likeStory(currentStory.id, authUser.id, userId, next).catch(() => {
       setOptimisticLiked(null);
-      toast.error('تعذر تنفيذ العملية، حاول مجدداً');
+      toast.error(t('err.tryAgain'));
     });
   };
 
@@ -355,7 +358,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
       nextStory();
       await deleteStory(currentStory.id, authUser.id);
     } catch {
-      toast.error('فشل حذف القصة');
+      toast.error(t('stories.deleteFail'));
     } finally {
       setIsDeleting(false);
       closeConfirm();
@@ -399,13 +402,13 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
           </div>
           <h2 className='text-2xl font-bold'>
             {authUser?.id === userId
-              ? 'لا توجد قصص نشطة في حسابك'
-              : 'لا توجد قصص نشطة لهذا المستخدم'}
+              ? t('stories.noneOwn')
+              : t('stories.noneOther')}
           </h2>
           <p className='mt-2 max-w-sm text-sm text-white/60'>
             {authUser?.id === userId
-              ? 'شارك لحظاتك وصورك مع متابعيك، وستظهر هنا لمدة 24 ساعة.'
-              : 'ربما انتهت صلاحية القصة أو تم حذفها مؤخراً.'}
+              ? t('stories.noneOwnHint')
+              : t('stories.noneOtherHint')}
           </p>
           <div className='mt-6 flex items-center gap-3'>
             {authUser?.id === userId && (
@@ -413,14 +416,14 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
                 className='bg-main-accent px-5 py-2.5 font-bold text-main-accent-contrast hover:bg-main-accent/90'
                 onClick={(): void => setCreateModalOpen(true)}
               >
-                + إنشاء قصة جديدة
+                {t('stories.create')}
               </Button>
             )}
             <Button
               className='bg-white/10 px-5 py-2.5 font-medium text-white hover:bg-white/20'
               onClick={(): void => void replace('/home')}
             >
-              العودة للرئيسية
+              {t('stories.home')}
             </Button>
           </div>
         </div>
@@ -445,11 +448,11 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
         modalClassName='w-full max-w-sm rounded-2xl border border-white/20 bg-black/40 p-6 text-white backdrop-blur-xl'
       >
         <ActionModal
-          title='حذف القصة؟'
-          description='لن يمكن التراجع عن حذف هذه القصة.'
-          mainBtnLabel='حذف'
+          title={t('stories.deleteTitle')}
+          description={t('stories.deleteBody')}
+          mainBtnLabel={t('common.delete')}
           mainBtnClassName='bg-accent-red hover:bg-accent-red/90 active:bg-accent-red/75'
-          secondaryBtnLabel='إلغاء'
+          secondaryBtnLabel={t('common.cancel')}
           action={confirmDelete}
           closeModal={closeConfirm}
           loading={isDeleting}
@@ -557,7 +560,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
                       className='h-4 w-4 animate-spin'
                       iconName='ArrowPathIcon'
                     />
-                    جاري إصلاح الفيديو…
+                    {t('reels.repair')}
                   </div>
                 </div>
               )}

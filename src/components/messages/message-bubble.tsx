@@ -51,16 +51,16 @@ const HEART_PARTICLES = [
   { x: 0, y: 58, r: 0, s: 0.68, delay: 0.06 }
 ];
 
-const replyLabels: Record<Exclude<MessageType, 'text'>, string> = {
-  image: 'صورة',
-  video: 'فيديو',
-  audio: 'رسالة صوتية',
-  shared: 'منشور'
-};
+function replyLabel(type: Exclude<MessageType, 'text'>, t: (k: any) => string): string {
+  if (type === 'image') return t('messages.image');
+  if (type === 'video') return t('messages.video');
+  if (type === 'audio') return t('messages.voice');
+  return t('messages.post');
+}
 
 function formatTime(createdAt: Message['createdAt']): string {
   const date = createdAt?.toDate ? createdAt.toDate() : new Date();
-  return new Intl.DateTimeFormat('ar', {
+  return new Intl.DateTimeFormat(undefined, {
     hour: 'numeric',
     minute: 'numeric'
   }).format(date);
@@ -72,6 +72,7 @@ type MessageVideoProps = {
 };
 
 function MessageVideo({ item, onExpand }: MessageVideoProps): JSX.Element {
+  const { t } = useLanguage();
   const { effectiveSrc, repairing, onError } = useRepairableVideo(item.src);
   const posterUrl = useVideoPoster(item.src, item.thumbnail ?? null);
   return (
@@ -93,14 +94,14 @@ function MessageVideo({ item, onExpand }: MessageVideoProps): JSX.Element {
               className='h-3.5 w-3.5 animate-spin'
               iconName='ArrowPathIcon'
             />
-            جاري إصلاح الفيديو…
+            {t('reels.repair')}
           </div>
         </div>
       )}
       <button
         type='button'
         onClick={onExpand}
-        aria-label='فتح معاينة الفيديو'
+        aria-label={t('chat.openVideo')}
         className='absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white opacity-0 shadow-lg backdrop-blur transition group-hover:opacity-100'
       >
         <HeroIcon className='h-5 w-5' iconName='ArrowsPointingOutIcon' />
@@ -307,12 +308,13 @@ export function MessageBubble({
           className='h-3 w-3 rotate-180'
           iconName='ArrowUturnLeftIcon'
         />
-        {replyTo.senderName ?? 'رسالة'}
+        {replyTo.senderName ?? t('messages.message')}
       </span>
       <span className='block truncate opacity-70'>
         {replyTo.text ||
-          replyLabels[replyTo.type as Exclude<MessageType, 'text'>] ||
-          ''}
+          (replyTo.type !== 'text'
+            ? replyLabel(replyTo.type, t)
+            : '')}
       </span>
     </div>
   );
@@ -367,7 +369,7 @@ export function MessageBubble({
           solid
         />
         <span className='text-[10px] font-black'>
-          {swipeReady ? 'حرّر للرد' : 'اسحب'}
+          {swipeReady ? t('messages.release') : t('messages.swipe')}
         </span>
       </motion.div>
 
@@ -436,7 +438,7 @@ export function MessageBubble({
           <>
             <button
               className='fixed inset-0 z-[60] cursor-default'
-              aria-label='إغلاق المنتقي'
+              aria-label={t('common.close')}
               onClick={() => setPickerOpen(false)}
               type='button'
             />
@@ -611,13 +613,13 @@ export function MessageBubble({
                         type='button'
                         onClick={() => setSelectedMediaIndex(index)}
                         className='group relative block cursor-zoom-in overflow-hidden rounded-2xl outline-none'
-                        aria-label='فتح معاينة الصورة'
+                        aria-label={t('chat.openImage')}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           className='block max-h-[360px] w-full rounded-2xl object-contain transition duration-300 group-hover:scale-[1.02]'
                           src={item.src}
-                          alt={item.alt || 'صورة'}
+                          alt={item.alt || t('messages.image')}
                           loading='lazy'
                         />
                         <span className='absolute inset-0 bg-black/0 transition group-hover:bg-black/10' />
@@ -664,7 +666,7 @@ export function MessageBubble({
                             <img
                               className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
                               src={sharedPoster}
-                              alt='معاينة الفيديو'
+                              alt={t('media.previewVideo')}
                               draggable={false}
                             />
                           ) : (
@@ -681,7 +683,7 @@ export function MessageBubble({
                           <img
                             className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
                             src={sharedPost.thumbnail ?? ''}
-                            alt='معاينة المنشور'
+                            alt={t('media.previewPost')}
                             draggable={false}
                           />
                         )}
@@ -697,7 +699,7 @@ export function MessageBubble({
                             </span>
                             {sharedPost.kind === 'reel' && (
                               <span className='absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
-                                ريل
+                                {t('messages.reel')}
                               </span>
                             )}
                           </>
@@ -744,7 +746,7 @@ export function MessageBubble({
                             : 'bg-main-accent/15 text-main-accent-text'
                         )}
                       >
-                        {sharedPost.kind === 'reel' ? 'ريل' : 'منشور'}
+                        {sharedPost.kind === 'reel' ? t('messages.reel') : t('messages.post')}
                       </span>
                     </div>
                     {sharedPost.text && (
@@ -804,7 +806,7 @@ export function MessageBubble({
         )}
       >
         <span>{formatTime(createdAt)}</span>
-        {edited && !deletedAt && <span className='opacity-80'>· معدّل</span>}
+        {edited && !deletedAt && <span className='opacity-80'>· {t('common.editedShort')}</span>}
         {isOwn && (
           <HeroIcon
             className={cn('h-3.5 w-3.5', seen && 'text-main-accent-text')}

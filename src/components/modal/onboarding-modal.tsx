@@ -12,21 +12,22 @@ import { NextImage } from '@components/ui/next-image';
 import { GenderIcon } from '@components/user/gender-badge';
 import type { ChangeEvent } from 'react';
 import type { FilesWithId } from '@lib/types/file';
+import { useLanguage } from '@lib/context/language-context';
 
 type Gender = 'male' | 'female';
 
 const genderOptions: Readonly<
-  { value: Gender; label: string; classes: string }[]
+  { value: Gender; labelKey: 'gender.male' | 'gender.female'; classes: string }[]
 > = [
   {
     value: 'male',
-    label: 'ذكر',
+    labelKey: 'gender.male',
     classes:
       'text-[#1D9BF0] ring-[#1D9BF0]/40 bg-[#1D9BF0]/10 hover:bg-[#1D9BF0]/15'
   },
   {
     value: 'female',
-    label: 'أنثى',
+    labelKey: 'gender.female',
     classes:
       'text-[#F91A82] ring-[#F91A82]/40 bg-[#F91A82]/10 hover:bg-[#F91A82]/15'
   }
@@ -37,6 +38,8 @@ const genderOptions: Readonly<
  * صورة الملف الشخصي + صورة الغلاف + اختيار الجنس (بادج ملوّن).
  */
 export function OnboardingModal(): JSX.Element | null {
+  const { t } = useLanguage();
+
   const { user } = useAuth();
 
   const [open, setOpen] = useState(false);
@@ -60,7 +63,7 @@ export function OnboardingModal(): JSX.Element | null {
       const imagesData = getImagesData(files);
 
       if (!imagesData) {
-        toast.error('يرجى اختيار صورة صالحة');
+        toast.error(t('err.validImage'));
         return;
       }
 
@@ -105,9 +108,9 @@ export function OnboardingModal(): JSX.Element | null {
 
       setOpen(false);
 
-      if (!skip) toast.success('تم إعداد ملفك الشخصي 🎉');
+      if (!skip) toast.success(t('ok.profileSaved'));
     } catch {
-      toast.error('تعذر حفظ البيانات — حاول مجددًا');
+      toast.error(t('err.saveData'));
     } finally {
       setLoading(false);
     }
@@ -127,7 +130,7 @@ export function OnboardingModal(): JSX.Element | null {
               layout='fill'
               imgClassName='object-cover'
               src={coverPreview}
-              alt='الغلاف'
+              alt={t('profile.cover')}
             />
           )}
           <label
@@ -142,12 +145,12 @@ export function OnboardingModal(): JSX.Element | null {
             />
             <span className='flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-bold backdrop-blur'>
               <HeroIcon className='h-4 w-4' iconName='PhotoIcon' />
-              تغيير الغلاف
+              {t('onboard.changeCover')}
             </span>
           </label>
           {!coverPreview && (
             <span className='pointer-events-none absolute bottom-2 left-3 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
-              اضغط لاختيار غلاف
+              {t('onboard.pickCover')}
             </span>
           )}
         </div>
@@ -182,18 +185,18 @@ export function OnboardingModal(): JSX.Element | null {
           </div>
 
           <div className='mb-5 flex flex-col gap-1'>
-            <h2 className='text-xl font-bold'>أهلًا بك في Aite 👋</h2>
+            <h2 className='text-xl font-bold'>{t('onboard.welcome')}</h2>
             <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-              أضِف صورتك وغلافك واختر البادج الذي يظهر بجانب اسمك.
+              {t('onboard.welcomeHint')}
             </p>
           </div>
 
           {/* الجنس */}
           <p className='mb-2 text-sm font-bold text-light-secondary dark:text-dark-secondary'>
-            البادج بجانب الاسم
+            {t('onboard.badge')}
           </p>
           <div className='mb-6 grid grid-cols-2 gap-3'>
-            {genderOptions.map(({ value, label, classes }) => {
+            {genderOptions.map(({ value, labelKey, classes }) => {
               const active = gender === value;
 
               return (
@@ -213,7 +216,7 @@ export function OnboardingModal(): JSX.Element | null {
                     className='h-8 w-8'
                     strokeWidth={1.8}
                   />
-                  <span className='text-sm font-bold'>{label}</span>
+                  <span className='text-sm font-bold'>{t(labelKey)}</span>
                   {active && (
                     <motion.span
                       layoutId='gender-check'
@@ -239,7 +242,7 @@ export function OnboardingModal(): JSX.Element | null {
               disabled={loading}
               onClick={(): Promise<void> => finish(false)}
             >
-              حفظ ومتابعة
+              {t('onboard.save')}
             </Button>
             <Button
               className='py-2 text-sm font-bold text-light-secondary transition
@@ -248,7 +251,7 @@ export function OnboardingModal(): JSX.Element | null {
               disabled={loading}
               onClick={(): Promise<void> => finish(true)}
             >
-              تخطٍ الآن
+              {t('onboard.skipNow')}
             </Button>
           </div>
         </div>

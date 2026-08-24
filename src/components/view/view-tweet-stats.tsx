@@ -8,6 +8,7 @@ import { TweetStatsModal } from '@components/modal/tweet-stats-modal';
 import { NumberStats } from '@components/tweet/number-stats';
 import { UserCards } from '@components/user/user-cards';
 import type { Tweet } from '@lib/types/tweet';
+import { useLanguage } from '@lib/context/language-context';
 
 type viewTweetStats = Pick<Tweet, 'userRetweets' | 'userLikes'> & {
   likeMove: number;
@@ -34,6 +35,8 @@ export function ViewTweetStats({
   currentReplies,
   isStatsVisible
 }: viewTweetStats): JSX.Element {
+  const { t } = useLanguage();
+
   const [statsType, setStatsType] = useState<StatsType | null>(null);
 
   const { open, openModal, closeModal } = useModal();
@@ -59,9 +62,9 @@ export function ViewTweetStats({
   };
 
   const allStats: Readonly<Stats[]> = [
-    ['رد', null, replyMove, currentReplies],
-    ['إعادة نشر', 'retweets', tweetMove, currentTweets],
-    ['إعجاب', 'likes', likeMove, currentLikes]
+    [t('stats.reply'), null, replyMove, currentReplies],
+    [t('reels.repost'), 'retweets', tweetMove, currentTweets],
+    [t('action.like'), 'likes', likeMove, currentLikes]
   ];
 
   return (
@@ -105,15 +108,15 @@ export function ViewTweetStats({
                   <p>
                     {index === 0
                       ? stats > 1
-                        ? 'ردود'
-                        : 'رد'
+                        ? t('stats.replies')
+                        : t('stats.reply')
                       : index === 2
                       ? stats > 1
-                        ? 'إعجابات'
-                        : 'إعجاب'
+                        ? t('stats.likes')
+                        : t('stats.like')
                       : stats > 1
-                      ? 'إعادات نشر'
-                      : 'إعادة نشر'}
+                      ? t('stats.reposts')
+                      : t('stats.repost')}
                   </p>
                 </button>
               )

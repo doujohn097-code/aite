@@ -17,7 +17,7 @@ import type { User } from '@lib/types/user';
 
 export function SidebarProfile(): JSX.Element {
   const { user, signOut } = useAuth();
-  const { t } = useLanguage();
+  const { t, isRtl } = useLanguage();
   const { open, openModal, closeModal } = useModal();
   const {
     open: settingsOpen,
@@ -81,7 +81,11 @@ export function SidebarProfile(): JSX.Element {
             <AnimatePresence>
               {open && (
                 <Menu.Items
-                  className='menu-container fixed bottom-20 left-3 z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl shadow-2xl xl:absolute xl:-top-36 xl:bottom-auto xl:left-0 xl:w-full'
+                  className={`menu-container fixed bottom-20 z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl shadow-2xl xl:absolute xl:-top-36 xl:bottom-auto xl:w-full ${
+                    isRtl
+                      ? 'right-3 xl:right-0'
+                      : 'left-3 xl:left-0'
+                  }`}
                   as={motion.div}
                   {...variants}
                   static

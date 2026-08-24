@@ -12,6 +12,7 @@ import { ToolTip } from '@components/ui/tooltip';
 import { useShareToChat } from '@components/messages/share-to-chat';
 import { variants } from './tweet-actions';
 import type { SharedPostRef } from '@lib/types/message';
+import { useLanguage } from '@lib/context/language-context';
 
 type TweetShareProps = {
   userId: string;
@@ -27,6 +28,8 @@ export function TweetShare({
   viewTweet,
   post
 }: TweetShareProps): JSX.Element {
+  const { t } = useLanguage();
+
   const { openShare, element } = useShareToChat(
     post ?? {
       id: tweetId,
@@ -42,7 +45,7 @@ export function TweetShare({
   const handleCopy = (closeMenu: () => void) => async (): Promise<void> => {
     closeMenu();
     await navigator.clipboard.writeText(`${siteURL}/tweet/${tweetId}`);
-    toast.success('تم نسخ الرابط');
+    toast.success(t('ok.linkCopied'));
   };
 
   return (
@@ -69,7 +72,7 @@ export function TweetShare({
                 className={viewTweet ? 'h-6 w-6' : 'h-5 w-5'}
                 iconName='ArrowUpTrayIcon'
               />
-              {!open && <ToolTip tip='مشاركة' />}
+              {!open && <ToolTip tip={t('action.share')} />}
             </i>
           </Popover.Button>
           <AnimatePresence>

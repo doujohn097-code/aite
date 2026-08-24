@@ -1,3 +1,4 @@
+import { tx } from './i18n/tx';
 import type { SyntheticEvent } from 'react';
 import type { MotionProps } from 'framer-motion';
 
@@ -26,7 +27,7 @@ export function sleep(ms: number): Promise<void> {
 export function withTimeout<T>(
   promise: Promise<T>,
   ms: number,
-  message = 'انتهت المهلة، تحقق من اتصالك وحاول مجددًا'
+  message = tx('err.timeout')
 ): Promise<T> {
   return Promise.race([
     promise,

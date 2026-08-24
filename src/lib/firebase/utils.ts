@@ -41,6 +41,7 @@ import type { Theme, Accent } from '@lib/types/theme';
 import type { Notification } from '@lib/types/notification';
 import type { StoryMusic, StoryText, Story } from '@lib/types/story';
 import { getTimestampMillis } from '@lib/date';
+import { tx } from '@lib/i18n/tx';
 import { nextPublishQuota } from '@lib/publish-quota';
 import type { Tweet } from '@lib/types/tweet';
 
@@ -226,16 +227,16 @@ export async function editTweet(
   const nextImages = options?.images ?? null;
   const hasImages = !!nextImages?.length;
   if (!trimmed && !hasImages && !options?.allowEmpty)
-    throw new Error('لا يمكن حفظ منشور فارغ');
-  if (trimmed.length > 1000) throw new Error('النص أطول من المسموح');
+    throw new Error(tx('err.emptyPost'));
+  if (trimmed.length > 1000) throw new Error(tx('err.longText'));
   if (nextImages && nextImages.length > 4)
-    throw new Error('يمكن إرفاق 4 ملفات كحد أقصى');
+    throw new Error(tx('err.maxFiles'));
 
   const tweetRef = doc(tweetsCollection, tweetId);
   const snap = await getDoc(tweetRef);
   const data = snap.data();
-  if (!data) throw new Error('المنشور غير موجود');
-  if (data.createdBy !== userId) throw new Error('لا يمكنك تعديل هذا المنشور');
+  if (!data) throw new Error(tx('err.postMissing'));
+  if (data.createdBy !== userId) throw new Error(tx('err.cantEditPost'));
 
   const hadImages = !!data.images?.length;
   await updateDoc(tweetRef, {
@@ -259,17 +260,17 @@ export async function editReel(
   options?: { images?: ImagesPreview | null }
 ): Promise<void> {
   const trimmed = caption.trim();
-  if (trimmed.length > 1000) throw new Error('الوصف أطول من المسموح');
+  if (trimmed.length > 1000) throw new Error(tx('err.longCaption'));
 
   const reelRef = doc(storiesCollection, reelId);
   const snap = await getDoc(reelRef);
   const data = snap.data();
-  if (!data) throw new Error('الريل غير موجود');
-  if (data.userId !== userId) throw new Error('لا يمكنك تعديل هذا الريل');
+  if (!data) throw new Error(tx('err.reelMissing'));
+  if (data.userId !== userId) throw new Error(tx('err.cantEditReel'));
 
   const nextImages = options?.images === undefined ? data.images : options.images;
   if (options?.images !== undefined && !nextImages?.length)
-    throw new Error('الريل يحتاج فيديو');
+    throw new Error(tx('err.reelNeedsVideo'));
 
   await updateDoc(reelRef, {
     caption: trimmed || null,
@@ -462,14 +463,16 @@ export async function uploadImages(
 
   for (const file of files) {
     const mediaType = inferMediaType(file.name, file.type);
-    if (!mediaType) throw new Error(`صيغة الملف ${file.name} غير مدعومة`);
+    if (!mediaType) throw new Error(tx('err.unsupportedFile', { name: file.name }));
     const maxBytes = maxUploadBytesForType(mediaType);
-    if (file.size <= 0) throw new Error(`الملف ${file.name} فارغ`);
+    if (file.size <= 0) throw new Error(tx('err.emptyFile', { name: file.name }));
     if (file.size > maxBytes)
       throw new Error(
-        `حجم ${file.name} هو ${formatFileSize(
-          file.size
-        )} والحد الأقصى ${formatFileSize(maxBytes)}`
+        tx('err.fileTooBig', {
+          name: file.name,
+          size: formatFileSize(file.size),
+          max: formatFileSize(maxBytes)
+        })
       );
   }
 
@@ -503,7 +506,7 @@ export async function uploadImages(
   // Cloudflare R2 is the only media backend. A failed signed upload must be
   // surfaced to the UI rather than silently writing to a second provider.
   const idToken = await auth.currentUser?.getIdToken();
-  if (!idToken) throw new Error('يجب تسجيل الدخول قبل رفع الوسائط');
+  if (!idToken) throw new Error(tx('err.loginToUpload'));
 
   const response = await fetch('/api/upload', {
     method: 'POST',
@@ -525,7 +528,7 @@ export async function uploadImages(
     const data = (await response.json().catch(() => null)) as {
       error?: string;
     } | null;
-    throw new Error(data?.error || 'تعذر تجهيز رفع الوسائط');
+    throw new Error(data?.error || tx('err.prepareUpload'));
   }
 
   const { files: uploadFiles } = (await response.json()) as {
@@ -539,7 +542,7 @@ export async function uploadImages(
     }[];
   };
   if (!uploadFiles?.length || uploadFiles.length !== uploadInput.length)
-    throw new Error('استجابة رفع الوسائط غير صالحة');
+    throw new Error(tx('err.badUploadResponse'));
 
   try {
     await Promise.all(
@@ -552,10 +555,10 @@ export async function uploadImages(
   } catch (error) {
     const code = error instanceof Error ? error.message : '';
     if (code === 'upload_timeout')
-      throw new Error('انتهت مهلة الرفع. تحقق من الاتصال وأعد المحاولة');
+      throw new Error(tx('err.uploadTimeout'));
     if (code === 'upload_network')
-      throw new Error('انقطع الاتصال أثناء الرفع. أعد المحاولة');
-    throw new Error('فشل رفع الملف إلى التخزين. أعد المحاولة');
+      throw new Error(tx('err.uploadLost'));
+    throw new Error(tx('err.upload'));
   }
 
   const uploadedById = new Map(uploadFiles.map((item) => [item.id, item]));
@@ -567,7 +570,7 @@ export async function uploadImages(
   );
   const results = files.map(({ id, name }) => {
     const uploaded = uploadedById.get(id);
-    if (!uploaded) throw new Error('ملف مفقود من استجابة الرفع');
+    if (!uploaded) throw new Error(tx('err.missingUploadFile'));
     return {
       id,
       src: uploaded.publicUrl,
@@ -1134,7 +1137,7 @@ export async function addReelComment(
   } | null
 ): Promise<string> {
   const trimmed = text.trim();
-  if (!trimmed) throw new Error('لا يمكن إرسال تعليق فارغ');
+  if (!trimmed) throw new Error(tx('err.emptyComment'));
 
   const tweetData: WithFieldValue<Omit<Tweet, 'id'>> = {
     text: trimmed,

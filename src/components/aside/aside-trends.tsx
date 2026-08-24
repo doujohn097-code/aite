@@ -3,6 +3,7 @@ import cn from 'clsx';
 import { motion } from 'framer-motion';
 import { formatNumber } from '@lib/date';
 import { preventBubbling } from '@lib/utils';
+import { useLanguage } from '@lib/context/language-context';
 import { useTrends } from '@lib/api/trends';
 import { Error } from '@components/ui/error';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -22,6 +23,7 @@ type AsideTrendsProps = {
 };
 
 export function AsideTrends({ inTrendsPage }: AsideTrendsProps): JSX.Element {
+  const { t } = useLanguage();
   const { data, loading } = useTrends(1, inTrendsPage ? 100 : 10, {
     refreshInterval: 30000
   });
@@ -43,7 +45,7 @@ export function AsideTrends({ inTrendsPage }: AsideTrendsProps): JSX.Element {
           {...variants}
         >
           {!inTrendsPage && (
-            <h2 className='text-xl font-extrabold'>المواضيع الرائجة</h2>
+            <h2 className='text-xl font-extrabold'>{t('trends.title')}</h2>
           )}
           {trends.map(({ name, query, tweet_volume, url }) => (
             <Link href={url} key={query}>
@@ -64,18 +66,18 @@ export function AsideTrends({ inTrendsPage }: AsideTrendsProps): JSX.Element {
                                  group-focus-visible:text-accent-blue dark:text-dark-secondary'
                       iconName='EllipsisHorizontalIcon'
                     />
-                    <ToolTip tip='المزيد' />
+                    <ToolTip tip={t('common.more')} />
                   </Button>
                 </div>
                 <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-                  رائج{' '}
+                  {t('trends.trending')}{' '}
                   {location === 'Worldwide'
-                    ? 'عالميًا'
-                    : `في ${location as string}`}
+                    ? t('action.worldwide')
+                    : t('action.inPlace', { location: location as string })}
                 </p>
                 <p className='font-bold'>{name}</p>
                 <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-                  {formatNumber(tweet_volume)} منشور
+                  {formatNumber(tweet_volume)} {t('trends.post')}
                 </p>
               </a>
             </Link>

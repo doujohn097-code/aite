@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useUser } from '@lib/context/user-context';
 import { getOrCreateConversation } from '@lib/messages';
 import { SEO } from '@components/common/seo';
@@ -20,6 +21,7 @@ import type { LayoutProps } from './common-layout';
 
 export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
   const { user, isAdmin } = useAuth();
+  const { t } = useLanguage();
   const { user: userData, loading } = useUser();
 
   const {
@@ -49,7 +51,7 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
       const conversation = await getOrCreateConversation(user.id, userData.id);
       void push(`/messages/${conversation.id}`);
     } catch {
-      toast.error('تعذر فتح المحادثة، حاول مرة أخرى');
+      toast.error(t('err.openChat'));
     } finally {
       setMessaging(false);
     }
@@ -72,9 +74,9 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
                 <p className='text-xl font-bold'>@{id}</p>
               </div>
               <div className='p-8 text-center'>
-                <p className='text-3xl font-bold'>هذا الحساب غير موجود</p>
+                <p className='text-3xl font-bold'>{t('profile.notFound')}</p>
                 <p className='text-light-secondary dark:text-dark-secondary'>
-                  جرب البحث عن حساب آخر.
+                  {t('profile.notFoundHint')}
                 </p>
               </div>
             </div>
@@ -104,7 +106,7 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
                           onClick={() => void openConversation()}
                           loading={messaging}
                         >
-                          مراسلة
+                          {t('profile.message')}
                         </Button>
                       )}
                       <UserShare

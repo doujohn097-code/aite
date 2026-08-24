@@ -6,6 +6,8 @@ import { Modal } from '@components/modal/modal';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { NewMessageModal } from './new-message-modal';
 import type { SharedPostRef } from '@lib/types/message';
+import { useLanguage } from '@lib/context/language-context';
+import { tx } from '@lib/i18n/tx';
 
 /** Bottom-sheet composer shared by posts and reels. */
 export function useShareToChat(shared: SharedPostRef): {
@@ -13,6 +15,7 @@ export function useShareToChat(shared: SharedPostRef): {
   element: JSX.Element;
 } {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const openShare = (): void => {
     if (user) setOpen(true);
@@ -27,9 +30,9 @@ export function useShareToChat(shared: SharedPostRef): {
   const copyLink = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(url);
-      toast.success('تم نسخ الرابط');
+      toast.success(t('ok.linkCopied'));
     } catch {
-      toast.error('تعذر نسخ الرابط');
+      toast.error(t('reels.linkCopyFail'));
     }
   };
 
@@ -51,11 +54,11 @@ export function useShareToChat(shared: SharedPostRef): {
     setOpen(false);
     if (sent && !failed)
       toast.success(
-        sent === 1 ? 'تم الإرسال عبر الرسائل' : `تم الإرسال إلى ${sent} أشخاص`
+        sent === 1 ? t('ok.sentChat') : t('ok.sentMany', { n: sent })
       );
     else if (sent && failed)
-      toast.success(`تم الإرسال إلى ${sent}، وتعذّر ${failed}`);
-    else toast.error('تعذرت المشاركة — حاول مرة أخرى');
+      toast.success(t('ok.sentPartial', { sent, failed }));
+    else toast.error(t('err.shareFail'));
   };
 
   const element = (
@@ -68,10 +71,12 @@ export function useShareToChat(shared: SharedPostRef): {
       <div className='mx-auto mt-3 h-1.5 w-12 rounded-full bg-light-border dark:bg-dark-border' />
       <div className='flex items-center justify-between px-5 pb-3 pt-4'>
         <div>
-          <p className='font-bold'>إرسال إلى</p>
+          <p className='font-bold'>{t('chat.sendTo')}</p>
           <p className='text-xs text-light-secondary dark:text-dark-secondary'>
-            يمكنك اختيار أكثر من شخص لإرسال{' '}
-            {shared.kind === 'reel' ? 'الريل' : 'المنشور'}
+            {t('chat.sendKindHint', {
+              kind:
+                shared.kind === 'reel' ? t('messages.reel') : t('messages.post')
+            })}
           </p>
         </div>
         <button
@@ -79,12 +84,12 @@ export function useShareToChat(shared: SharedPostRef): {
           onClick={() => void copyLink()}
           className='flex items-center gap-2 rounded-full bg-main-accent/15 px-3 py-2 text-sm font-bold text-main-accent-text transition hover:bg-main-accent/25'
         >
-          <HeroIcon className='h-4 w-4' iconName='LinkIcon' /> نسخ الرابط
+          <HeroIcon className='h-4 w-4' iconName='LinkIcon' /> {t('chat.copyLink')}
         </button>
       </div>
       <NewMessageModal
         multiSelect
-        title='اختر المستلمين'
+        title={t('chat.pickRecipients')}
         closeModal={() => setOpen(false)}
         onSelect={(target) => void handleSelectMany([target])}
         onSelectMany={(targets) => void handleSelectMany(targets)}

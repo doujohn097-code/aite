@@ -37,6 +37,7 @@ import { useMentionAssist } from '@lib/hooks/useMentionAssist';
 import { MentionSuggest } from '@components/input/mention-suggest';
 import { LinkifiedText } from '@components/ui/linkified-text';
 import type { TweetWithUser } from '@lib/types/tweet';
+import { useLanguage } from '@lib/context/language-context';
 
 type ReelsCommentsProps = {
   open: boolean;
@@ -65,6 +66,8 @@ export function ReelsComments({
   reelOwnerId,
   closeModal
 }: ReelsCommentsProps): JSX.Element {
+  const { t } = useLanguage();
+
   const { user } = useAuth();
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
@@ -251,7 +254,7 @@ export function ReelsComments({
     }
     const trimmed = comment.trim();
     if (!trimmed || !user) {
-      if (!user) toast.error('يرجى تسجيل الدخول للتعليق');
+      if (!user) toast.error(t('err.loginToComment'));
       return;
     }
 
@@ -326,7 +329,7 @@ export function ReelsComments({
       setOptimisticComments((prev) => prev.filter((c) => c.id !== tempId));
     } catch (err) {
       console.error('Failed to post comment:', err);
-      toast.error('فشل نشر التعليق، يرجى المحاولة مرة أخرى');
+      toast.error(t('err.commentPublish'));
       // Rollback optimistic comment
       setOptimisticComments((prev) => prev.filter((c) => c.id !== tempId));
     } finally {
@@ -337,7 +340,7 @@ export function ReelsComments({
   const handleSaveEdit = async ({ text: nextText }: EditContentSave): Promise<void> => {
     if (!user || !editTarget) return;
     await editTweet(editTarget.id, user.id, nextText);
-    toast.success('تم حفظ تعديل التعليق');
+    toast.success(t('ok.commentSaved'));
     setEditTarget(null);
   };
 
@@ -373,10 +376,10 @@ export function ReelsComments({
 
     try {
       await deleteReelComment(targetId, user.id);
-      toast.success(isReply ? 'تم حذف الرد بنجاح' : 'تم حذف التعليق بنجاح');
+      toast.success(isReply ? t('ok.replyDeleted') : t('ok.commentDeleted'));
     } catch (err) {
       console.error('Failed to delete comment:', err);
-      toast.error('فشل حذف التعليق');
+      toast.error(t('err.commentDelete'));
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);
@@ -393,7 +396,7 @@ export function ReelsComments({
       async (e: React.MouseEvent): Promise<void> => {
         e.stopPropagation();
         if (!user) {
-          toast.error('يرجى تسجيل الدخول أولاً');
+          toast.error(t('reels.loginFirst'));
           return;
         }
 
@@ -413,7 +416,7 @@ export function ReelsComments({
             updatedAt: serverTimestamp()
           });
         } catch {
-          toast.error('تعذر تحديث الإعجاب');
+          toast.error(t('err.commentLike'));
           // Revert optimistic update
           setOptimisticLikes((prev) => ({
             ...prev,
@@ -455,7 +458,7 @@ export function ReelsComments({
             <div className='flex items-center justify-between border-b border-light-border px-5 py-3 dark:border-dark-border'>
               <div className='flex items-center gap-2'>
                 <h2 className='text-base font-bold text-light-primary dark:text-dark-primary'>
-                  التعليقات
+                  {t('reels.comments')}
                 </h2>
                 {!!allComments?.length && (
                   <span className='rounded-full bg-light-line-reply/50 px-2 py-0.5 text-xs font-semibold text-light-secondary dark:bg-dark-line-reply/50 dark:text-dark-secondary'>
@@ -492,10 +495,10 @@ export function ReelsComments({
                     />
                   </div>
                   <p className='text-sm font-semibold text-light-primary dark:text-dark-primary'>
-                    لا توجد تعليقات بعد
+                    {t('empty.comments')}
                   </p>
                   <p className='text-xs opacity-75'>
-                    كن أول من يعلق ويبدأ المحادثة على هذا الريل!
+                    {t('comments.firstReel')}
                   </p>
                 </div>
               ) : (
@@ -554,7 +557,7 @@ export function ReelsComments({
                               )}
                               <span className='mr-auto text-xs text-light-secondary dark:text-dark-secondary'>
                                 {formatDate(item.createdAt, 'message')}
-                                {item.edited ? ' · تم التعديل' : ''}
+                                {item.edited ? ` · ${t('common.edited')}` : ''}
                               </span>
                             </div>
 
@@ -566,7 +569,7 @@ export function ReelsComments({
                                   iconName='ArrowUturnLeftIcon'
                                 />
                                 <span>
-                                  رداً على{' '}
+                                  {t('comments.replyingOn')}{' '}
                                   <strong>@{item.replyTo.username}</strong>
                                 </span>
                               </div>
@@ -590,7 +593,7 @@ export function ReelsComments({
                                   className='h-3.5 w-3.5 rotate-180'
                                   iconName='ArrowUturnLeftIcon'
                                 />
-                                <span>رد</span>
+                                <span>{t('action.reply')}</span>
                               </button>
                               {isCommentAuthor && (
                                 <button
@@ -605,7 +608,7 @@ export function ReelsComments({
                                     className='h-3.5 w-3.5'
                                     iconName='PencilSquareIcon'
                                   />
-                                  <span>تعديل</span>
+                                  <span>{t('common.edit')}</span>
                                 </button>
                               )}
 
@@ -634,8 +637,10 @@ export function ReelsComments({
                                 <span className='h-[1px] w-6 bg-main-accent/60' />
                                 <span>
                                   {isExpanded
-                                    ? 'إخفاء الردود'
-                                    : `عرض الردود (${replies.length})`}
+                                    ? t('comments.hideReplies')
+                                    : t('comments.showReplies', {
+                                        n: replies.length
+                                      })}
                                 </span>
                                 <HeroIcon
                                   className={cn(
@@ -654,7 +659,7 @@ export function ReelsComments({
                             onClick={toggleCommentLike(item.id, item.userLikes)}
                             className='p-1.5 text-light-secondary transition hover:text-rose-500 dark:text-dark-secondary'
                             aria-label={
-                              isLiked ? 'إلغاء إعجاب التعليق' : 'إعجاب بالتعليق'
+                              isLiked ? t('comments.unlike') : t('comments.like')
                             }
                           >
                             <HeroIcon
@@ -735,7 +740,7 @@ export function ReelsComments({
                                       )}
                                       <span className='mr-auto text-[11px] text-light-secondary dark:text-dark-secondary'>
                                         {formatDate(reply.createdAt, 'message')}
-                                        {reply.edited ? ' · تم التعديل' : ''}
+                                        {reply.edited ? ` · ${t('common.edited')}` : ''}
                                       </span>
                                     </div>
 
@@ -745,7 +750,7 @@ export function ReelsComments({
                                         className='h-3 w-3 shrink-0 rotate-180 text-main-accent-text'
                                         iconName='ArrowUturnLeftIcon'
                                       />
-                                      <span>رد على</span>
+                                      <span>{t('comments.replyOn')}</span>
                                       <span className='py-0.2 rounded bg-main-accent/15 px-1.5 text-main-accent-text'>
                                         @
                                         {reply.replyTo?.username ||
@@ -774,7 +779,7 @@ export function ReelsComments({
                                           className='h-3 w-3 rotate-180'
                                           iconName='ArrowUturnLeftIcon'
                                         />
-                                        <span>رد</span>
+                                        <span>{t('action.reply')}</span>
                                       </button>
                                       {isReplyAuthor && (
                                         <button
@@ -789,7 +794,7 @@ export function ReelsComments({
                                             className='h-3 w-3'
                                             iconName='PencilSquareIcon'
                                           />
-                                          <span>تعديل</span>
+                                          <span>{t('common.edit')}</span>
                                         </button>
                                       )}
 
@@ -816,8 +821,8 @@ export function ReelsComments({
                                     className='p-1 text-light-secondary transition hover:text-rose-500 dark:text-dark-secondary'
                                     aria-label={
                                       isReplyLiked
-                                        ? 'إلغاء إعجاب الرد'
-                                        : 'إعجاب بالرد'
+                                        ? t('comments.unlikeReply')
+                                        : t('comments.likeReply')
                                     }
                                   >
                                     <HeroIcon
@@ -872,7 +877,7 @@ export function ReelsComments({
                       iconName='ArrowUturnLeftIcon'
                     />
                     <span className='truncate'>
-                      الرد على <strong>@{replyingTo.username}</strong>
+                      {t('comments.replyingTo')} <strong>@{replyingTo.username}</strong>
                       {replyingTo.text && (
                         <span className='mx-1 truncate font-normal opacity-75'>
                           &ldquo;{replyingTo.text.slice(0, 35)}
@@ -885,7 +890,7 @@ export function ReelsComments({
                     type='button'
                     onClick={cancelReply}
                     className='shrink-0 rounded-full p-1 text-main-accent-text hover:bg-main-accent/20'
-                    aria-label='إلغاء الرد'
+                    aria-label={t('chat.cancelReply')}
                   >
                     <HeroIcon className='h-3.5 w-3.5' iconName='XMarkIcon' />
                   </button>
@@ -909,8 +914,8 @@ export function ReelsComments({
                 onChange={onMentionChange}
                 placeholder={
                   replyingTo
-                    ? `اكتب رداً على @${replyingTo.username}...`
-                    : 'أضف تعليقاً لطيفاً...  @للإشارة'
+                    ? t('comments.replyTo', { username: replyingTo.username })
+                    : t('comments.add')
                 }
                 maxLength={280}
                 className='flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-sm text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent dark:bg-dark-line-reply/50 dark:text-dark-primary'
@@ -921,7 +926,7 @@ export function ReelsComments({
                 disabled={!comment.trim()}
                 className='flex items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm font-bold text-main-accent-contrast shadow-md transition hover:brightness-95 active:scale-95 disabled:pointer-events-none disabled:opacity-40'
               >
-                <span>إرسال</span>
+                <span>{t('comments.send')}</span>
                 <HeroIcon
                   className='h-4 w-4 rotate-180'
                   iconName='PaperAirplaneIcon'
@@ -935,7 +940,7 @@ export function ReelsComments({
       <EditContentModal
         open={!!editTarget}
         closeModal={() => setEditTarget(null)}
-        title={editTarget?.replyTo ? 'تعديل الرد' : 'تعديل التعليق'}
+        title={editTarget?.replyTo ? t('comments.editReply') : t('comments.editComment')}
         initialText={editTarget?.text ?? ''}
         onSave={handleSaveEdit}
       />
@@ -948,15 +953,15 @@ export function ReelsComments({
       >
         <div onClick={preventBubbling()}>
           <ActionModal
-            title={deleteTarget?.isReply ? 'حذف الرد؟' : 'حذف التعليق؟'}
+            title={deleteTarget?.isReply ? t('comments.deleteReply') : t('comments.deleteComment')}
             description={
               deleteTarget?.isReply
-                ? 'هل أنت متأكد من رغبتك في حذف هذا الرد؟ سيتم حذف أي ردود تابعة له أيضاً.'
-                : 'هل أنت متأكد من رغبتك في حذف هذا التعليق؟ سيتم حذف جميع الردود التابعة له أيضاً.'
+                ? t('comments.deleteReplyBody')
+                : t('comments.deleteCommentBody')
             }
-            mainBtnLabel='حذف نهائي'
+            mainBtnLabel={t('reels.deleteFinal')}
             mainBtnClassName='bg-accent-red hover:bg-accent-red/90 active:bg-accent-red/75 text-white'
-            secondaryBtnLabel='إلغاء'
+            secondaryBtnLabel={t('common.cancel')}
             action={confirmDeleteComment}
             closeModal={() => setDeleteTarget(null)}
             loading={isDeleting}

@@ -37,6 +37,7 @@ import { useMentionAssist } from '@lib/hooks/useMentionAssist';
 import { MentionSuggest } from '@components/input/mention-suggest';
 import { LinkifiedText } from '@components/ui/linkified-text';
 import type { TweetWithUser } from '@lib/types/tweet';
+import { useLanguage } from '@lib/context/language-context';
 
 type PostCommentsProps = {
   tweetId: string;
@@ -61,6 +62,8 @@ export function PostComments({
   tweetId,
   ownerId
 }: PostCommentsProps): JSX.Element {
+  const { t } = useLanguage();
+
   const { user } = useAuth();
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
@@ -208,7 +211,7 @@ export function PostComments({
     }
     const trimmed = comment.trim();
     if (!trimmed || !user) {
-      if (!user) toast.error('يرجى تسجيل الدخول للتعليق');
+      if (!user) toast.error(t('err.loginToComment'));
       return;
     }
 
@@ -274,7 +277,7 @@ export function PostComments({
       setOptimisticComments((prev) => prev.filter((c) => c.id !== tempId));
     } catch (err) {
       console.error('Failed to post comment:', err);
-      toast.error('فشل نشر التعليق، يرجى المحاولة مرة أخرى');
+      toast.error(t('err.commentPublish'));
       setOptimisticComments((prev) => prev.filter((c) => c.id !== tempId));
     } finally {
       setSending(false);
@@ -284,7 +287,7 @@ export function PostComments({
   const handleSaveEdit = async ({ text: nextText }: EditContentSave): Promise<void> => {
     if (!user || !editTarget) return;
     await editTweet(editTarget.id, user.id, nextText);
-    toast.success('تم حفظ تعديل التعليق');
+    toast.success(t('ok.commentSaved'));
     setEditTarget(null);
   };
 
@@ -319,10 +322,10 @@ export function PostComments({
 
     try {
       await deleteReelComment(targetId, user.id);
-      toast.success(isReply ? 'تم حذف الرد بنجاح' : 'تم حذف التعليق بنجاح');
+      toast.success(isReply ? t('ok.replyDeleted') : t('ok.commentDeleted'));
     } catch (err) {
       console.error('Failed to delete comment:', err);
-      toast.error('فشل حذف التعليق');
+      toast.error(t('err.commentDelete'));
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);
@@ -339,7 +342,7 @@ export function PostComments({
       async (e: React.MouseEvent): Promise<void> => {
         e.stopPropagation();
         if (!user) {
-          toast.error('يرجى تسجيل الدخول أولاً');
+          toast.error(t('reels.loginFirst'));
           return;
         }
 
@@ -358,7 +361,7 @@ export function PostComments({
             updatedAt: serverTimestamp()
           });
         } catch {
-          toast.error('تعذر تحديث الإعجاب');
+          toast.error(t('err.commentLike'));
           setOptimisticLikes((prev) => ({
             ...prev,
             [commentId]: effectiveLikes
@@ -374,7 +377,7 @@ export function PostComments({
         {/* Header */}
         <div className='flex items-center gap-2 border-y border-light-border px-4 py-3 dark:border-dark-border'>
           <h2 className='text-base font-bold text-light-primary dark:text-dark-primary'>
-            التعليقات
+            {t('reels.comments')}
           </h2>
           {!!allComments.length && (
             <span
@@ -404,10 +407,10 @@ export function PostComments({
                 />
               </div>
               <p className='text-sm font-semibold text-light-primary dark:text-dark-primary'>
-                لا توجد تعليقات بعد
+                {t('empty.comments')}
               </p>
               <p className='text-xs opacity-75'>
-                كن أول من يعلق ويبدأ المحادثة على هذا المنشور!
+                {t('comments.firstPost')}
               </p>
             </div>
           ) : (
@@ -461,7 +464,7 @@ export function PostComments({
                         )}
                         <span className='mr-auto text-xs text-light-secondary dark:text-dark-secondary'>
                           {formatDate(item.createdAt, 'message')}
-                          {item.edited ? ' · تم التعديل' : ''}
+                          {item.edited ? ` · ${t('common.edited')}` : ''}
                         </span>
                       </div>
 
@@ -482,7 +485,7 @@ export function PostComments({
                             className='h-3.5 w-3.5 rotate-180'
                             iconName='ArrowUturnLeftIcon'
                           />
-                          <span>رد</span>
+                          <span>{t('action.reply')}</span>
                         </button>
                         {isCommentAuthor && (
                           <button
@@ -497,7 +500,7 @@ export function PostComments({
                               className='h-3.5 w-3.5'
                               iconName='PencilSquareIcon'
                             />
-                            <span>تعديل</span>
+                            <span>{t('common.edit')}</span>
                           </button>
                         )}
 
@@ -526,8 +529,10 @@ export function PostComments({
                           <span className='h-[1px] w-6 bg-main-accent/60' />
                           <span>
                             {isExpanded
-                              ? 'إخفاء الردود'
-                              : `عرض الردود (${replies.length})`}
+                              ? t('comments.hideReplies')
+                              : t('comments.showReplies', {
+                                  n: replies.length
+                                })}
                           </span>
                           <HeroIcon
                             className={cn(
@@ -545,7 +550,7 @@ export function PostComments({
                       onClick={toggleCommentLike(item.id, item.userLikes)}
                       className='p-1.5 text-light-secondary transition hover:text-rose-500 dark:text-dark-secondary'
                       aria-label={
-                        isLiked ? 'إلغاء إعجاب التعليق' : 'إعجاب بالتعليق'
+                        isLiked ? t('comments.unlike') : t('comments.like')
                       }
                     >
                       <HeroIcon
@@ -617,7 +622,7 @@ export function PostComments({
                                 )}
                                 <span className='mr-auto text-[11px] text-light-secondary dark:text-dark-secondary'>
                                   {formatDate(reply.createdAt, 'message')}
-                                  {reply.edited ? ' · تم التعديل' : ''}
+                                  {reply.edited ? ` · ${t('common.edited')}` : ''}
                                 </span>
                               </div>
 
@@ -626,7 +631,7 @@ export function PostComments({
                                   className='h-3 w-3 shrink-0 rotate-180 text-main-accent-text'
                                   iconName='ArrowUturnLeftIcon'
                                 />
-                                <span>رد على</span>
+                                <span>{t('comments.replyOn')}</span>
                                 <span className='py-0.2 rounded bg-main-accent/15 px-1.5 text-main-accent-text'>
                                   @
                                   {reply.replyTo?.username ||
@@ -653,7 +658,7 @@ export function PostComments({
                                     className='h-3 w-3 rotate-180'
                                     iconName='ArrowUturnLeftIcon'
                                   />
-                                  <span>رد</span>
+                                  <span>{t('action.reply')}</span>
                                 </button>
                                 {isReplyAuthor && (
                                   <button
@@ -668,7 +673,7 @@ export function PostComments({
                                       className='h-3 w-3'
                                       iconName='PencilSquareIcon'
                                     />
-                                    <span>تعديل</span>
+                                    <span>{t('common.edit')}</span>
                                   </button>
                                 )}
 
@@ -694,8 +699,8 @@ export function PostComments({
                               className='p-1 text-light-secondary transition hover:text-rose-500 dark:text-dark-secondary'
                               aria-label={
                                 isReplyLiked
-                                  ? 'إلغاء إعجاب الرد'
-                                  : 'إعجاب بالرد'
+                                  ? t('comments.unlikeReply')
+                                  : t('comments.likeReply')
                               }
                             >
                               <HeroIcon
@@ -739,7 +744,7 @@ export function PostComments({
                     iconName='ArrowUturnLeftIcon'
                   />
                   <span className='truncate'>
-                    الرد على <strong>@{replyingTo.username}</strong>
+                    {t('comments.replyingTo')} <strong>@{replyingTo.username}</strong>
                     {replyingTo.text && (
                       <span className='mx-1 truncate font-normal opacity-75'>
                         &ldquo;{replyingTo.text.slice(0, 35)}
@@ -752,7 +757,7 @@ export function PostComments({
                   type='button'
                   onClick={cancelReply}
                   className='shrink-0 rounded-full p-1 text-main-accent-text hover:bg-main-accent/20'
-                  aria-label='إلغاء الرد'
+                  aria-label={t('chat.cancelReply')}
                 >
                   <HeroIcon className='h-3.5 w-3.5' iconName='XMarkIcon' />
                 </button>
@@ -767,7 +772,7 @@ export function PostComments({
             <span className='shrink-0'>
               <UserAvatar
                 src={user?.photoURL}
-                alt={user?.name ?? 'أنت'}
+                alt={user?.name ?? t('common.you')}
                 username={user?.username ?? ''}
                 size={36}
               />
@@ -778,8 +783,8 @@ export function PostComments({
               onChange={(e) => setComment(e.target.value)}
               placeholder={
                 replyingTo
-                  ? `اكتب رداً على @${replyingTo.username}...`
-                  : 'أضف تعليقاً...'
+                  ? t('comments.replyTo', { username: replyingTo.username })
+                  : t('comments.addShort')
               }
               maxLength={280}
               className='min-w-0 flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-base
@@ -794,7 +799,7 @@ export function PostComments({
                          font-bold text-main-accent-contrast shadow-md transition hover:brightness-95 active:scale-95
                          disabled:pointer-events-none disabled:opacity-40'
             >
-              <span>إرسال</span>
+              <span>{t('comments.send')}</span>
               <HeroIcon
                 className='h-4 w-4 rotate-180'
                 iconName='PaperAirplaneIcon'
@@ -825,7 +830,7 @@ export function PostComments({
       <EditContentModal
         open={!!editTarget}
         closeModal={() => setEditTarget(null)}
-        title={editTarget?.replyTo ? 'تعديل الرد' : 'تعديل التعليق'}
+        title={editTarget?.replyTo ? t('comments.editReply') : t('comments.editComment')}
         initialText={editTarget?.text ?? ''}
         onSave={handleSaveEdit}
       />
@@ -838,15 +843,15 @@ export function PostComments({
       >
         <div onClick={preventBubbling()}>
           <ActionModal
-            title={deleteTarget?.isReply ? 'حذف الرد؟' : 'حذف التعليق؟'}
+            title={deleteTarget?.isReply ? t('comments.deleteReply') : t('comments.deleteComment')}
             description={
               deleteTarget?.isReply
-                ? 'هل أنت متأكد من رغبتك في حذف هذا الرد؟ سيتم حذف أي ردود تابعة له أيضاً.'
-                : 'هل أنت متأكد من رغبتك في حذف هذا التعليق؟ سيتم حذف جميع الردود التابعة له أيضاً.'
+                ? t('comments.deleteReplyBody')
+                : t('comments.deleteCommentBody')
             }
-            mainBtnLabel='حذف نهائي'
+            mainBtnLabel={t('reels.deleteFinal')}
             mainBtnClassName='bg-accent-red hover:bg-accent-red/90 active:bg-accent-red/75 text-white'
-            secondaryBtnLabel='إلغاء'
+            secondaryBtnLabel={t('common.cancel')}
             action={confirmDeleteComment}
             closeModal={() => setDeleteTarget(null)}
             loading={isDeleting}

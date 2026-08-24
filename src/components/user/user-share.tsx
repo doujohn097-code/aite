@@ -10,6 +10,7 @@ import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ToolTip } from '@components/ui/tooltip';
 import { variants } from '@components/tweet/tweet-actions';
+import { useLanguage } from '@lib/context/language-context';
 
 type UserShareProps = {
   username: string;
@@ -17,6 +18,8 @@ type UserShareProps = {
 };
 
 export function UserShare({ username, userId }: UserShareProps): JSX.Element {
+  const { t } = useLanguage();
+
   const { user } = useAuth();
   const isBlocked = !!userId && user?.blockedUsers?.includes(userId);
   const handleBlock = async (closeMenu: () => void): Promise<void> => {
@@ -24,13 +27,13 @@ export function UserShare({ username, userId }: UserShareProps): JSX.Element {
     await manageBlock(isBlocked ? 'unblock' : 'block', user.id, userId);
     closeMenu();
     toast.success(
-      isBlocked ? `تم إلغاء حظر @${username}` : `تم حظر @${username}`
+      isBlocked ? t('ok.unblockedUser', { username }) : t('ok.blockedUser', { username })
     );
   };
   const handleCopy = (closeMenu: () => void) => async (): Promise<void> => {
     closeMenu();
     await navigator.clipboard.writeText(`${siteURL}/user/${username}`);
-    toast.success('تم نسخ الرابط');
+    toast.success(t('ok.linkCopied'));
   };
 
   return (
@@ -47,7 +50,7 @@ export function UserShare({ username, userId }: UserShareProps): JSX.Element {
             )}
           >
             <HeroIcon className='h-5 w-5' iconName='EllipsisHorizontalIcon' />
-            {!open && <ToolTip tip='المزيد' />}
+            {!open && <ToolTip tip={t('common.more')} />}
           </Popover.Button>
           <AnimatePresence>
             {open && (
@@ -64,7 +67,7 @@ export function UserShare({ username, userId }: UserShareProps): JSX.Element {
                   onClick={preventBubbling(handleCopy(close))}
                 >
                   <HeroIcon iconName='LinkIcon' />
-                  نسخ رابط الملف الشخصي
+                  {t('profile.copyLink')}
                 </Popover.Button>
                 {userId && user?.id !== userId && (
                   <Popover.Button
@@ -75,7 +78,7 @@ export function UserShare({ username, userId }: UserShareProps): JSX.Element {
                     <HeroIcon
                       iconName={isBlocked ? 'CheckCircleIcon' : 'NoSymbolIcon'}
                     />
-                    {isBlocked ? `إلغاء حظر @${username}` : `حظر @${username}`}
+                    {isBlocked ? t('profile.unblockUser', { username }) : t('profile.blockUser', { username })}
                   </Popover.Button>
                 )}
               </Popover.Panel>

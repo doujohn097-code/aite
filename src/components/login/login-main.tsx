@@ -91,30 +91,28 @@ export function LoginMain(): JSX.Element {
       if (isSignUp) {
         const cleanedName = name.trim();
         if (!cleanedName || !cleanedUsername || !password) {
-          throw new Error('يرجى ملء جميع الحقول');
+          throw new Error(t('auth.fillAll'));
         }
         if (cleanedUsername.length < 3)
-          throw new Error('اسم المستخدم قصير جدًا (3 أحرف على الأقل)');
+          throw new Error(t('auth.userShort'));
         if (cleanedUsername.length > 15)
-          throw new Error('اسم المستخدم طويل جدًا (15 حرفًا كحد أقصى)');
+          throw new Error(t('auth.userLong'));
         if (!/^\w+$/i.test(cleanedUsername))
-          throw new Error(
-            "اسم المستخدم يمكن أن يحتوي فقط على أحرف وأرقام و '_'"
-          );
+          throw new Error(t('auth.userChars'));
         if (password.length < 6)
-          throw new Error('كلمة المرور ضعيفة (6 أحرف على الأقل)');
+          throw new Error(t('auth.passWeak'));
 
         await signUpWithUsername({
           name: cleanedName,
           username: cleanedUsername,
           password
         });
-        setSuccess('تم إنشاء الحساب بنجاح! جاري التوجيه...');
+        setSuccess(t('auth.created'));
       } else {
         if (!cleanedUsername || !password)
-          throw new Error('يرجى إدخال اسم المستخدم وكلمة المرور');
+          throw new Error(t('auth.needCreds'));
         await signInWithUsername(cleanedUsername, password);
-        setSuccess('تم تسجيل الدخول بنجاح!');
+        setSuccess(t('auth.welcome'));
       }
 
       // حفظ الحساب محليًا للتبديل السريع
@@ -134,7 +132,7 @@ export function LoginMain(): JSX.Element {
       // لا نمسح الحقول فورًا عند النجاح حتى لا يفقد المستخدم الإحساس بالعملية
       setTimeout(() => resetFields(), 500);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'حدث خطأ غير متوقع';
+      const msg = err instanceof Error ? err.message : t('auth.unexpected');
       console.error('login error', err);
       setError(msg);
     } finally {

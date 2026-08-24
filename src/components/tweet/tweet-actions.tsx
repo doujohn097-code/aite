@@ -58,21 +58,6 @@ type TweetActionsProps = Pick<Tweet, 'createdBy'> & {
   viewTweet?: boolean;
 };
 
-type PinModalData = Record<'title' | 'description' | 'mainBtnLabel', string>;
-
-const pinModalData: Readonly<PinModalData[]> = [
-  {
-    title: 'تثبيت المنشور في الملف الشخصي؟',
-    description: 'سيظهر في أعلى ملفك الشخصي ويستبدل أي منشور مثبت سابقًا.',
-    mainBtnLabel: 'تثبيت'
-  },
-  {
-    title: 'إلغاء تثبيت المنشور من الملف الشخصي؟',
-    description: 'لن يظهر تلقائيًا في أعلى ملفك الشخصي بعد الآن.',
-    mainBtnLabel: 'إلغاء التثبيت'
-  }
-];
-
 export function TweetActions({
   isOwner,
   ownerId,
@@ -191,7 +176,9 @@ export function TweetActions({
       await manageFollow(type, userId, targetUserId);
 
       toast.success(
-        `${type === 'follow' ? 'بدأت بمتابعة' : 'ألغيت متابعة'} @${username}`
+        type === 'follow'
+          ? t('tweet.followed', { username })
+          : t('tweet.unfollowed', { username })
       );
     };
 

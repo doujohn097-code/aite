@@ -22,6 +22,7 @@ import {
   normalizeMediaType
 } from '@lib/media-limits';
 import { getRandomId } from '@lib/random';
+import { tx } from '@lib/i18n/tx';
 import type { FilesWithId } from '@lib/types/file';
 import { deleteField } from 'firebase/firestore';
 import type {
@@ -77,13 +78,13 @@ export type SendPayload = { replyTo?: ReplyData | null } & (
   | { type: 'shared'; post: SharedPostRef }
 );
 
-const lastMessageLabels: Record<MessageType, string> = {
-  text: '',
-  image: 'صورة',
-  video: 'فيديو',
-  audio: 'رسالة صوتية',
-  shared: 'شارك منشورًا'
-};
+function lastMessageLabel(type: MessageType): string {
+  if (type === 'image') return tx('messages.image');
+  if (type === 'video') return tx('messages.video');
+  if (type === 'audio') return tx('messages.voice');
+  if (type === 'shared') return tx('messages.shared');
+  return '';
+}
 
 export async function sendMessage(
   conversation: Conversation,
@@ -106,13 +107,15 @@ export async function sendMessage(
     if (!text) return;
   } else if (payload.type === 'audio') {
     type = 'audio';
-    if (payload.blob.size <= 0) throw new Error('التسجيل الصوتي فارغ');
+    if (payload.blob.size <= 0) throw new Error(tx('messages.voiceEmpty'));
     if (payload.blob.size > MAX_AUDIO_UPLOAD_BYTES)
       throw new Error(
-        `حجم التسجيل ${formatFileSize(payload.blob.size)} ويتجاوز الحد المسموح`
+        tx('messages.voiceTooBig', {
+          size: formatFileSize(payload.blob.size)
+        })
       );
     if (payload.duration > MAX_VOICE_DURATION_SECONDS + 2)
-      throw new Error('مدة الرسالة الصوتية تتجاوز 10 دقائق');
+      throw new Error(tx('messages.voiceLong'));
 
     const normalizedType = normalizeMediaType(
       payload.blob.type || 'audio/webm'
@@ -135,7 +138,7 @@ export async function sendMessage(
       (await uploadImages(senderId, [
         Object.assign(file, { id: getRandomId() })
       ] as FilesWithId)) ?? [];
-    if (!uploaded) throw new Error('تعذر رفع الرسالة الصوتية');
+    if (!uploaded) throw new Error(tx('messages.voiceUpload'));
     audio = {
       src: uploaded.src,
       duration: payload.duration,
@@ -145,7 +148,7 @@ export async function sendMessage(
     type = payload.type;
     if (!payload.files.length) return;
     const uploaded = await uploadImages(senderId, payload.files);
-    if (!uploaded?.length) throw new Error('تعذر رفع الوسائط');
+    if (!uploaded?.length) throw new Error(tx('messages.mediaUpload'));
     media = uploaded.map(({ src, alt, type: mediaType, thumbnail }) => ({
       src,
       alt,
@@ -181,7 +184,7 @@ export async function sendMessage(
 
   await updateDoc(doc(db, 'conversations', id), {
     lastMessage: {
-      text: type === 'text' ? (text as string) : lastMessageLabels[type],
+      text: type === 'text' ? (text as string) : lastMessageLabel(type),
       type,
       senderId,
       createdAt: Timestamp.now()
@@ -194,7 +197,7 @@ export async function sendMessage(
   sendPushNotification({
     kind: 'message',
     conversationId: id,
-    preview: type === 'text' ? (text as string) : lastMessageLabels[type]
+    preview: type === 'text' ? (text as string) : lastMessageLabel(type)
   });
 }
 
@@ -230,7 +233,7 @@ export async function toggleMessageReaction(
     lastMessage: {
       senderId: userId,
       type: 'text',
-      text: `تفاعل بـ ${emoji} على رسالتك`,
+      text: tx('messages.reacted', { emoji }),
       createdAt: serverTimestamp()
     }
   });
@@ -256,7 +259,7 @@ export async function deleteMessage(
   await updateDoc(
     doc(db, 'conversations', conversationId, 'messages', messageId),
     {
-      text: 'تم حذف هذه الرسالة',
+      text: tx('messages.deleted'),
       media: null,
       audio: null,
       replyTo: null,

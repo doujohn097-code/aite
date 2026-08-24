@@ -1,4 +1,5 @@
-import { translate } from './i18n';
+import { translate, type MessageKey } from './i18n';
+import { tx } from './i18n/tx';
 import type { Notification } from './types/notification';
 
 export type NotificationContext = 'post' | 'reel' | 'story';
@@ -48,7 +49,7 @@ export function notificationHref(
 
 export function notificationCopy(
   notification: Pick<Notification, 'type' | 'context' | 'storyId' | 'tweetId'>,
-  t?: (key: import('./i18n').MessageKey) => string
+  t?: (key: MessageKey) => string
 ): string {
   const text = t ?? ((key) => translate('ar', key));
   const context = resolveNotificationContext(notification);
@@ -80,60 +81,64 @@ export function notificationPushCopy(
   context: NotificationContext | null,
   senderName: string
 ): { title: string; body: string } {
+  const name = senderName;
   switch (type) {
     case 'follow':
-      return { title: 'متابع جديد', body: `قام ${senderName} بمتابعتك` };
+      return {
+        title: tx('notif.pushFollowTitle'),
+        body: tx('notif.pushFollowBody', { name })
+      };
     case 'like':
       return context === 'reel'
         ? {
-            title: 'تفاعل مع الريلز',
-            body: `قام ${senderName} بالتفاعل مع الريلز الخاص بك`
+            title: tx('notif.pushLikeReelTitle'),
+            body: tx('notif.pushLikeReelBody', { name })
           }
         : {
-            title: 'إعجاب',
-            body: `قام ${senderName} بالتفاعل مع منشورك`
+            title: tx('notif.pushLikeTitle'),
+            body: tx('notif.pushLikeBody', { name })
           };
     case 'retweet':
       return {
-        title: 'إعادة نشر',
-        body: `قام ${senderName} بإعادة نشر منشورك`
+        title: tx('notif.pushRepostTitle'),
+        body: tx('notif.pushRepostBody', { name })
       };
     case 'reply':
       return context === 'reel'
         ? {
-            title: 'تعليق جديد',
-            body: `قام ${senderName} بالتعليق على الريلز الخاص بك`
+            title: tx('notif.pushReplyTitle'),
+            body: tx('notif.pushReplyReelBody', { name })
           }
         : {
-            title: 'تعليق جديد',
-            body: `قام ${senderName} بالتعليق على منشورك`
+            title: tx('notif.pushReplyTitle'),
+            body: tx('notif.pushReplyBody', { name })
           };
     case 'storyLike':
       return context === 'reel'
         ? {
-            title: 'تفاعل مع الريلز',
-            body: `قام ${senderName} بالتفاعل مع الريلز الخاص بك`
+            title: tx('notif.pushLikeReelTitle'),
+            body: tx('notif.pushLikeReelBody', { name })
           }
         : {
-            title: 'تفاعل مع قصتك',
-            body: `قام ${senderName} بالتفاعل مع قصتك`
+            title: tx('notif.pushStoryTitle'),
+            body: tx('notif.pushStoryBody', { name })
           };
     case 'mention':
       return context === 'reel'
         ? {
-            title: 'إشارة جديدة',
-            body: `أشار إليك ${senderName} في ريلز`
+            title: tx('notif.pushMentionTitle'),
+            body: tx('notif.pushMentionReel', { name })
           }
         : context === 'story'
         ? {
-            title: 'إشارة جديدة',
-            body: `أشار إليك ${senderName} في قصة`
+            title: tx('notif.pushMentionTitle'),
+            body: tx('notif.pushMentionStory', { name })
           }
         : {
-            title: 'إشارة جديدة',
-            body: `أشار إليك ${senderName} في منشور`
+            title: tx('notif.pushMentionTitle'),
+            body: tx('notif.pushMentionPost', { name })
           };
     default:
-      return { title: 'Aite', body: `قام ${senderName} بالتفاعل معك` };
+      return { title: 'Aite', body: tx('notif.pushGenericBody', { name }) };
   }
 }

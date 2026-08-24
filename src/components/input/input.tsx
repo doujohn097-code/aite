@@ -29,6 +29,7 @@ import type { Variants } from 'framer-motion';
 import type { User } from '@lib/types/user';
 import type { Tweet } from '@lib/types/tweet';
 import type { FilesWithId, ImagesPreview, ImageData } from '@lib/types/file';
+import { useLanguage } from '@lib/context/language-context';
 
 type InputProps = {
   modal?: boolean;
@@ -54,6 +55,8 @@ export function Input({
   replyModal,
   closeModal
 }: InputProps): JSX.Element {
+  const { t } = useLanguage();
+
   const [selectedImages, setSelectedImages] = useState<FilesWithId>([]);
   const [imagesPreview, setImagesPreview] = useState<ImagesPreview>([]);
   const [inputValue, setInputValue] = useState('');
@@ -161,9 +164,9 @@ export function Input({
       toast.success(
         () => (
           <span className='flex gap-2'>
-            تم نشر منشورك
+            {t('compose.published')}
             <Link href={`/tweet/${tweetId}`}>
-              <a className='custom-underline font-bold'>عرض</a>
+              <a className='custom-underline font-bold'>{t('compose.view')}</a>
             </Link>
           </span>
         ),
@@ -172,7 +175,7 @@ export function Input({
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error ? error.message : 'فشل نشر المنشور. حاول مجددًا.'
+        error instanceof Error ? error.message : t('err.publish')
       );
     } finally {
       setLoading(false);
@@ -224,7 +227,7 @@ export function Input({
     });
 
     if (!imagesData) {
-      toast.error('يرجى اختيار صورة واحدة كحد أقصى 4');
+      toast.error(t('err.maxImages'));
       return;
     }
 
@@ -327,7 +330,7 @@ export function Input({
           className='-mb-2 ml-[75px] mt-2 text-light-secondary dark:text-dark-secondary'
           {...fromTop}
         >
-          رد على{' '}
+          {t('compose.replyingTo')}{' '}
           <Link href={`/user/${parent?.username as string}`}>
             <a className='custom-underline text-main-accent-text'>
               {parent?.username as string}
@@ -349,7 +352,7 @@ export function Input({
       >
         <UserAvatar
           src={photoURL ?? '/assets/default-avatar.png'}
-          alt={name ?? 'المستخدم'}
+          alt={name ?? t('common.user')}
           username={username ?? ''}
         />
         <div className='flex w-full flex-col gap-4'>
@@ -415,7 +418,7 @@ export function Input({
             {loading && uploadProgress > 0 && (
               <div className='flex flex-col gap-1.5 px-1'>
                 <div className='flex items-center justify-between text-xs text-light-secondary dark:text-dark-secondary'>
-                  <span>جارٍ الرفع…</span>
+                  <span>{t('compose.uploading')}</span>
                   <span className='tabular-nums'>{uploadProgress}%</span>
                 </div>
                 <div className='h-1.5 w-full overflow-hidden rounded-full bg-light-border dark:bg-dark-border'>

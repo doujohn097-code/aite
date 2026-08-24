@@ -4,6 +4,7 @@ import cn from 'clsx';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { useRepairableVideo, useVideoPoster } from '@lib/media-normalize';
 import type { IconName } from '@components/ui/hero-icon';
+import { useLanguage } from '@lib/context/language-context';
 
 type CustomVideoPlayerProps = {
   src: string;
@@ -26,6 +27,8 @@ export function CustomVideoPlayer({
   poster,
   autoHideDelay = 2500
 }: CustomVideoPlayerProps): JSX.Element {
+  const { t } = useLanguage();
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -213,7 +216,7 @@ export function CustomVideoPlayer({
             <div className='flex items-center gap-2'>
               {controlButton(
                 playing ? 'PauseIcon' : 'PlayIcon',
-                playing ? 'إيقاف' : 'تشغيل',
+                playing ? t('action.pause') : t('action.play'),
                 togglePlay
               )}
               <input
@@ -227,7 +230,7 @@ export function CustomVideoPlayer({
                   e.preventDefault();
                   e.stopPropagation();
                 }}
-                aria-label='التقدم'
+                aria-label={t('action.progress')}
                 className='h-1 flex-1 cursor-pointer appearance-none rounded-full bg-white/30
                            accent-main-accent [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3
                            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full
@@ -238,12 +241,12 @@ export function CustomVideoPlayer({
               </span>
               {controlButton(
                 muted ? 'SpeakerXMarkIcon' : 'SpeakerWaveIcon',
-                muted ? 'تشغيل الصوت' : 'كتم الصوت',
+                muted ? t('reels.unmute') : t('reels.mute'),
                 toggleMute
               )}
               {controlButton(
                 'ArrowsPointingOutIcon',
-                'ملء الشاشة',
+                t('action.fullscreen'),
                 handleFullscreen
               )}
             </div>

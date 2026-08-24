@@ -3,6 +3,7 @@ import { UserName } from '@components/user/user-name';
 import { ThemePicker } from '@components/input/theme-picker';
 import { Button } from '@components/ui/button';
 import { InputAccentRadio } from '@components/input/input-accent-radio';
+import { useLanguage } from '@lib/context/language-context';
 import type { Accent } from '@lib/types/theme';
 
 type DisplayModalProps = {
@@ -19,12 +20,13 @@ const accentsColor: Readonly<Accent[]> = [
 ];
 
 export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
+  const { t } = useLanguage();
   return (
     <div className='flex flex-col items-center gap-6'>
       <div className='flex flex-col gap-3 text-center'>
-        <h2 className='text-2xl font-bold'>تخصيص العرض</h2>
+        <h2 className='text-2xl font-bold'>{t('display.title')}</h2>
         <p className='text-light-secondary dark:text-dark-secondary'>
-          تؤثر هذه الإعدادات على جميع حسابات المنصة في هذا المتصفح.
+          {t('display.hint')}
         </p>
       </div>
       <article
@@ -45,8 +47,7 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
               </div>
             </div>
             <p className='whitespace-pre-line break-words'>
-              جوهر Aite هي رسائل قصيرة تُسمّى منشورات — مثل هذه — ويمكن أن تتضمن
-              صورًا وفيديوهات وروابط ونصًا ووسوم وإشارات مثل{' '}
+              {t('display.sample')}{' '}
               <span className='text-main-accent-text'>@myplatform</span>.
             </p>
           </div>
@@ -54,7 +55,7 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
       </article>
       <div className='flex w-full flex-col gap-1'>
         <p className='text-sm font-bold text-light-secondary dark:text-dark-secondary'>
-          اللون
+          {t('display.color')}
         </p>
         <div
           className='hover-animation grid grid-cols-3 grid-rows-2 justify-items-center gap-3 
@@ -67,7 +68,7 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
       </div>
       <div className='flex w-full flex-col gap-1'>
         <p className='text-sm font-bold text-light-secondary dark:text-dark-secondary'>
-          الخلفية
+          {t('display.bg')}
         </p>
         <div className='hover-animation rounded-2xl bg-main-sidebar-background px-3 py-3'>
           <ThemePicker />
@@ -78,7 +79,7 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
                    text-main-accent-contrast hover:bg-main-accent/90 active:bg-main-accent/75'
         onClick={closeModal}
       >
-        تم
+        {t('display.done')}
       </Button>
     </div>
   );

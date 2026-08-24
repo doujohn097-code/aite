@@ -7,6 +7,7 @@ import { NextImage } from '@components/ui/next-image';
 import { ToolTip } from '@components/ui/tooltip';
 import type { ReactNode, ChangeEvent } from 'react';
 import type { User } from '@lib/types/user';
+import { useLanguage } from '@lib/context/language-context';
 
 type EditProfileModalProps = Pick<
   User,
@@ -37,6 +38,8 @@ export function EditProfileModal({
   removeCoverImage,
   resetUserEditData
 }: EditProfileModalProps): JSX.Element {
+  const { t } = useLanguage();
+
   const coverInputFileRef = useRef<HTMLInputElement>(null);
   const profileInputFileRef = useRef<HTMLInputElement>(null);
 
@@ -51,9 +54,9 @@ export function EditProfileModal({
         useActionButton
         disableSticky
         iconName='XMarkIcon'
-        tip='إغلاق'
+        tip={t('common.close')}
         className='absolute flex w-full items-center gap-6 rounded-tl-2xl'
-        title='تعديل الملف الشخصي'
+        title={t('profile.edit')}
         action={closeModal}
       >
         <div className='flex items-center gap-3'>
@@ -65,7 +68,7 @@ export function EditProfileModal({
             disabled={loading}
           >
             <HeroIcon className='h-5 w-5' iconName={'ArrowPathIcon'} />
-            <ToolTip tip='إعادة ضبط' />
+            <ToolTip tip={t('action.reset')} />
           </Button>
           <Button
             className='bg-light-primary px-4 py-1 font-bold text-white focus-visible:bg-light-primary/90 
@@ -117,7 +120,7 @@ export function EditProfileModal({
                 className='hover-animation h-6 w-6 text-dark-primary group-hover:text-white'
                 iconName='CameraIcon'
               />
-              <ToolTip groupInner tip='إضافة صورة' />
+              <ToolTip groupInner tip={t('profile.addPhoto')} />
             </Button>
             {coverPhotoURL && (
               <Button
@@ -129,7 +132,7 @@ export function EditProfileModal({
                   className='hover-animation h-6 w-6 text-dark-primary group-hover:text-white'
                   iconName='XMarkIcon'
                 />
-                <ToolTip groupInner tip='إزالة الصورة' />
+                <ToolTip groupInner tip={t('profile.removePhoto')} />
               </Button>
             )}
           </div>
@@ -166,7 +169,7 @@ export function EditProfileModal({
                   className='hover-animation h-6 w-6 text-dark-primary group-hover:text-white'
                   iconName='CameraIcon'
                 />
-                <ToolTip groupInner tip='إضافة صورة' />
+                <ToolTip groupInner tip={t('profile.addPhoto')} />
               </Button>
             </div>
           </div>

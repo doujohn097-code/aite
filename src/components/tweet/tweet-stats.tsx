@@ -9,6 +9,7 @@ import { TweetOption } from './tweet-option';
 import { TweetShare } from './tweet-share';
 import type { Tweet } from '@lib/types/tweet';
 import type { SharedPostRef } from '@lib/types/message';
+import { useLanguage } from '@lib/context/language-context';
 
 type TweetStatsProps = Pick<
   Tweet,
@@ -36,6 +37,8 @@ export function TweetStats({
   openModal,
   shared
 }: TweetStatsProps): JSX.Element {
+  const { t } = useLanguage();
+
   const totalLikes = userLikes?.length ?? 0;
   const totalTweets = userRetweets?.length ?? 0;
 
@@ -105,7 +108,7 @@ export function TweetStats({
     setOptimisticLike(next);
     void manageLike(next ? 'like' : 'unlike', userId, tweetId)().catch(() => {
       setOptimisticLike(null);
-      toast.error('تعذر تنفيذ العملية، حاول مجدداً');
+      toast.error(t('err.tryAgain'));
     });
   };
 
@@ -115,7 +118,7 @@ export function TweetStats({
     void manageRetweet(next ? 'retweet' : 'unretweet', userId, tweetId)().catch(
       () => {
         setOptimisticRetweet(null);
-        toast.error('تعذر تنفيذ العملية، حاول مجدداً');
+        toast.error(t('err.tryAgain'));
       }
     );
   };
@@ -137,7 +140,7 @@ export function TweetStats({
           )}
           iconClassName='group-hover:bg-red-500/10 group-active:bg-red-500/20
                          group-focus-visible:bg-red-500/10 group-focus-visible:ring-red-500/80'
-          tip={liked ? 'إلغاء الإعجاب' : 'إعجاب'}
+          tip={liked ? t('tweet.unlike') : t('action.like')}
           move={likeDelta ? (likeDelta > 0 ? -25 : 25) : likeMove}
           stats={currentLikes + likeDelta}
           iconName='HeartIcon'
@@ -150,7 +153,7 @@ export function TweetStats({
           className='hover:text-accent-blue focus-visible:text-accent-blue'
           iconClassName='group-hover:bg-accent-blue/10 group-active:bg-accent-blue/20 
                          group-focus-visible:bg-accent-blue/10 group-focus-visible:ring-accent-blue/80'
-          tip='تعليق'
+          tip={t('tweet.comment')}
           move={replyMove}
           stats={currentReplies}
           iconName='ChatBubbleOvalLeftIcon'
@@ -165,7 +168,7 @@ export function TweetStats({
           )}
           iconClassName='group-hover:bg-accent-green/10 group-active:bg-accent-green/20
                          group-focus-visible:bg-accent-green/10 group-focus-visible:ring-accent-green/80'
-          tip={retweeted ? 'تراجع عن إعادة النشر' : 'إعادة نشر'}
+          tip={retweeted ? t('reels.unrepost') : t('reels.repost')}
           move={retweetDelta ? (retweetDelta > 0 ? -25 : 25) : tweetMove}
           stats={currentTweets + retweetDelta}
           iconName='ArrowPathRoundedSquareIcon'

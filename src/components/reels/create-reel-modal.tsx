@@ -18,6 +18,7 @@ import { Modal } from '@components/modal/modal';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
+import { useLanguage } from '@lib/context/language-context';
 
 const modalVariants = {
   initial: { opacity: 0, scale: 0.94, y: 15 },
@@ -41,6 +42,8 @@ export function CreateReelModal({
   open,
   closeModal
 }: CreateReelModalProps): JSX.Element {
+  const { t } = useLanguage();
+
   const { user } = useAuth();
 
   const [selectedVideos, setSelectedVideos] = useState<FilesWithId>([]);
@@ -103,12 +106,12 @@ export function CreateReelModal({
 
     const mediaType = inferMediaType(file.name, file.type);
     if (!mediaType.startsWith('video/')) {
-      toast.error('يرجى اختيار ملف فيديو للريل (MP4 أو MOV أو WebM)');
+      toast.error(t('err.validVideo'));
       return;
     }
 
     if (file.size <= 0) {
-      toast.error('ملف الفيديو فارغ أو تالف');
+      toast.error(t('err.emptyVideo'));
       return;
     }
     if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
@@ -125,7 +128,7 @@ export function CreateReelModal({
     });
 
     if (!imagesData || !imagesData.selectedImagesData.length) {
-      toast.error('تعذر معالجة الفيديو، يرجى المحاولة مرة أخرى');
+      toast.error(t('err.processVideo'));
       return;
     }
 
@@ -180,7 +183,7 @@ export function CreateReelModal({
 
   const handleSubmit = async (): Promise<void> => {
     if (!user || !selectedVideos.length) {
-      toast.error('يرجى رفع فيديو للريل أولاً');
+      toast.error(t('err.needVideoFirst'));
       return;
     }
 
@@ -199,16 +202,16 @@ export function CreateReelModal({
           setUploadProgress
         ),
         uploadTimeoutMs(file.size) + 30_000,
-        'استغرق رفع الفيديو وقتًا طويلًا. تحقق من الاتصال وأعد المحاولة'
+        t('err.videoTimeout')
       );
-      toast.success('تم نشر الريل بنجاح!');
+      toast.success(t('ok.reelPublished'));
       closeModal();
     } catch (error) {
       console.error('Failed to upload reel:', error);
       const msg =
         error instanceof Error
           ? error.message
-          : 'فشل نشر الريل، يرجى المحاولة مرة أخرى';
+          : t('err.reelPublish');
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -236,10 +239,10 @@ export function CreateReelModal({
             </div>
             <div>
               <h2 className='text-lg font-bold leading-none text-light-primary dark:text-dark-primary'>
-                إنشاء ريل جديد
+                {t('reels.createNew')}
               </h2>
               <p className='mt-1 text-xs text-light-secondary dark:text-dark-secondary'>
-                شارك مقطع فيديو مميزاً مع متابعيك
+                {t('reels.createHint')}
               </p>
             </div>
           </div>
@@ -273,17 +276,17 @@ export function CreateReelModal({
                 <HeroIcon className='h-8 w-8' iconName='ArrowUpTrayIcon' />
               </div>
               <h3 className='text-base font-bold text-light-primary dark:text-dark-primary'>
-                اسحب وأفلت مقطع الفيديو هنا
+                {t('reels.drop')}
               </h3>
               <p className='mt-1 text-sm text-light-secondary dark:text-dark-secondary'>
-                أو انقر لتصفح واختيار فيديو من جهازك
+                {t('reels.browse')}
               </p>
               <div className='mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-light-secondary dark:text-dark-secondary'>
                 <span className='rounded-full bg-light-line-reply/40 px-3 py-1 dark:bg-dark-line-reply/40'>
-                  صيغة MP4 أو MOV أو WebM
+                  {t('reels.format')}
                 </span>
                 <span className='rounded-full bg-light-line-reply/40 px-3 py-1 dark:bg-dark-line-reply/40'>
-                  أبعاد عمودية (9:16)
+                  {t('reels.vertical')}
                 </span>
               </div>
               <input
@@ -321,7 +324,7 @@ export function CreateReelModal({
                           className='h-3 w-3 animate-spin'
                           iconName='ArrowPathIcon'
                         />
-                        جاري الحساب...
+                        {t('reels.calculating')}
                       </span>
                     ) : (
                       `⏱ ${Math.floor(currentDurationSec / 60)}:${(
@@ -364,7 +367,7 @@ export function CreateReelModal({
                   className='absolute right-3 top-3 flex items-center gap-1 rounded-full bg-red-600/90 px-3 py-1 text-xs font-bold text-white shadow-md backdrop-blur-md transition hover:bg-red-700'
                 >
                   <HeroIcon className='h-3.5 w-3.5' iconName='TrashIcon' />
-                  <span>حذف الفيديو</span>
+                  <span>{t('reels.deleteVideo')}</span>
                 </button>
               </div>
             </div>
@@ -379,7 +382,7 @@ export function CreateReelModal({
             />
             <div className='flex items-center justify-between'>
               <label className='text-sm font-bold text-light-primary dark:text-dark-primary'>
-                وصف الريل
+                {t('reels.caption')}
               </label>
               <span
                 className={`text-xs ${
@@ -396,7 +399,7 @@ export function CreateReelModal({
               ref={captionRef}
               value={caption}
               onChange={onMentionChange}
-              placeholder='اكتب وصفاً جذاباً، واستخدم @ للإشارة إلى مستخدم...'
+              placeholder={t('media.reelDesc')}
               rows={3}
               maxLength={280}
               className='w-full resize-none rounded-2xl border border-light-border bg-light-line-reply/20 p-3.5 text-sm text-light-primary outline-none transition placeholder:text-light-secondary/60 focus:border-main-accent focus:ring-1 focus:ring-main-accent dark:border-dark-border dark:bg-dark-line-reply/20 dark:text-dark-primary dark:placeholder:text-dark-secondary/60'
@@ -405,7 +408,7 @@ export function CreateReelModal({
             {/* Quick Hashtags */}
             <div className='flex flex-wrap items-center gap-1.5 pt-1'>
               <span className='text-xs text-light-secondary dark:text-dark-secondary'>
-                وسوم مقترحة:
+                {t('reels.suggestedTags')}
               </span>
               {SUGGESTED_TAGS.map((tag) => (
                 <button
@@ -428,7 +431,7 @@ export function CreateReelModal({
             className='px-4 py-2 text-sm text-light-secondary hover:bg-light-primary/5 dark:text-dark-secondary dark:hover:bg-dark-primary/5'
             onClick={closeModal}
           >
-            {loading ? 'إغلاق' : 'إلغاء'}
+            {loading ? t('common.close') : t('common.cancel')}
           </Button>
 
           <Button
@@ -443,8 +446,8 @@ export function CreateReelModal({
               {loading
                 ? uploadProgress > 0
                   ? `جارٍ الرفع ${uploadProgress}%`
-                  : 'جارٍ تجهيز الرفع...'
-                : 'نشر الريل الآن'}
+                  : t('media.preparing')
+                : t('media.publishReel')}
             </span>
           </Button>
         </div>

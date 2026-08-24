@@ -37,19 +37,25 @@ import type { ReactElement, ReactNode, Ref } from 'react';
 import type { Conversation, Message } from '@lib/types/message';
 import type { User } from '@lib/types/user';
 import type { FilesWithId } from '@lib/types/file';
+import { useLanguage } from '@lib/context/language-context';
 
 function dayKey(millis: number): string {
   return new Date(millis).toDateString();
 }
 
-function formatDayLabel(millis: number): string {
+function formatDayLabel(
+  millis: number,
+  todayLabel: string,
+  yesterdayLabel: string,
+  locale: string
+): string {
   const d = new Date(millis);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return 'اليوم';
-  if (d.toDateString() === yesterday.toDateString()) return 'أمس';
-  return new Intl.DateTimeFormat('ar', {
+  if (d.toDateString() === today.toDateString()) return todayLabel;
+  if (d.toDateString() === yesterday.toDateString()) return yesterdayLabel;
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric'
@@ -57,6 +63,8 @@ function formatDayLabel(millis: number): string {
 }
 
 export default function Chat(): JSX.Element {
+  const { t, locale } = useLanguage();
+
   const { user } = useAuth();
   const router = useRouter();
   const conversationId = router.query.id as string | undefined;
@@ -68,7 +76,7 @@ export default function Chat(): JSX.Element {
   const [sending, setSending] = useState(false);
   const [forbidden, setForbidden] = useState(false);
 
-  // معرّف أول رسالة غير مقروءة من الطرف الآخر — لعرض فاصل "رسائل جديدة"
+  // معرّف أول رسالة غير مقروءة من الطرف الآخر — لعرض فاصل t('messages.newDivider')
   const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
   // الرسالة قيد الرد عليها عبر السحب
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
@@ -347,7 +355,7 @@ export default function Chat(): JSX.Element {
       toast.error(
         error instanceof Error
           ? error.message
-          : 'تعذر إرسال الرسالة، حاول مرة أخرى'
+          : t('messages.sendFail')
       );
       return false;
     } finally {
@@ -373,11 +381,11 @@ export default function Chat(): JSX.Element {
       await manageBlock(blocked ? 'unblock' : 'block', user.id, peerId);
       // عند نجاح العملية، نمسح الحالة التفاؤلية ليعتمد على البيانات الحقيقية
       setOptimisticBlocked(null);
-      toast.success(blocked ? 'تم إلغاء الحظر' : 'تم حظر المستخدم');
+      toast.success(blocked ? t('messages.unblocked') : t('messages.blocked'));
     } catch {
       // في حالة الفشل، نعيد الحالة
       setOptimisticBlocked(null);
-      toast.error('تعذر تحديث الحظر');
+      toast.error(t('messages.blockFail'));
     } finally {
       setBlockBusy(false);
     }
@@ -386,9 +394,9 @@ export default function Chat(): JSX.Element {
   if (forbidden)
     return (
       <main className='mx-auto flex h-app w-full max-w-xl flex-col items-center justify-center gap-4 border-x border-light-border text-center dark:border-dark-border'>
-        <SEO title='الرسائل / Aite' />
+        <SEO title={t('messages.title')} />
         <HeroIcon className='h-12 w-12' iconName='EnvelopeIcon' />
-        <p className='text-xl font-bold'>المحادثة غير متاحة</p>
+        <p className='text-xl font-bold'>{t('messages.unavailable')}</p>
         {user?.blockedUsers?.includes(peerId ?? '') && (
           <button
             type='button'
@@ -396,18 +404,18 @@ export default function Chat(): JSX.Element {
             disabled={blockBusy}
             className='rounded-full bg-main-accent px-6 py-2 font-bold text-main-accent-contrast disabled:opacity-60'
           >
-            {blockBusy ? 'جارٍ التحديث...' : 'إلغاء الحظر'}
+            {blockBusy ? t('messages.updating') : t('messages.unblock')}
           </button>
         )}
         <Link href='/messages'>
           <a className='rounded-full bg-main-accent px-6 py-2 font-bold text-main-accent-contrast'>
-            العودة للرسائل
+            {t('messages.back')}
           </a>
         </Link>
       </main>
     );
 
-  const peerName = peer?.name ?? 'محادثة';
+  const peerName = peer?.name ?? t('messages.conversation');
 
   return (
     <main
@@ -416,22 +424,22 @@ export default function Chat(): JSX.Element {
                  w-full max-w-xl flex-col border-x-0 border-light-border
                  dark:border-dark-border xs:static xs:border-x'
     >
-      <SEO title={`${peerName} / الرسائل / Aite`} />
+      <SEO title={t('messages.seoPeer', { name: peerName })} />
       <Modal
         open={!!deleteTarget}
         closeModal={() => setDeleteTarget(null)}
         modalClassName='w-full max-w-sm rounded-3xl border border-light-border bg-main-background p-6 shadow-2xl dark:border-dark-border'
       >
         <ActionModal
-          title='حذف الرسالة؟'
-          description='ستُحذف الرسالة للطرفين وتظهر مكانها ملاحظة الحذف.'
-          mainBtnLabel='حذف الرسالة'
+          title={t('messages.deleteTitle')}
+          description={t('messages.deleteBody')}
+          mainBtnLabel={t('messages.deleteBtn')}
           mainBtnClassName='bg-accent-red hover:bg-accent-red/90'
           action={async () => {
             if (!conversationId || !deleteTarget) return;
             await deleteMessage(conversationId, deleteTarget.id);
             setDeleteTarget(null);
-            toast.success('تم حذف الرسالة');
+            toast.success(t('messages.deletedOk'));
           }}
           closeModal={() => setDeleteTarget(null)}
         />
@@ -444,7 +452,7 @@ export default function Chat(): JSX.Element {
       >
         <Link href='/messages'>
           <a
-            aria-label='رجوع'
+            aria-label={t('common.back')}
             className='dark-bg-tab rounded-full p-2 hover:bg-light-primary/10
                        dark:hover:bg-dark-primary/10'
           >
@@ -470,7 +478,7 @@ export default function Chat(): JSX.Element {
                       : 'truncate text-xs text-light-secondary dark:text-dark-secondary'
                   }
                 >
-                  {peerOnline ? 'نشط الآن' : `@${peer.username}`}
+                  {peerOnline ? t('common.online') : `@${peer.username}`}
                 </span>
               </span>
             </a>
@@ -489,7 +497,7 @@ export default function Chat(): JSX.Element {
             type='button'
             onClick={() => void toggleBlockPeer()}
             disabled={blockBusy}
-            aria-label='حظر المستخدم'
+            aria-label={t('messages.block')}
             className='ms-auto rounded-full p-2 text-light-secondary transition hover:bg-accent-red/10 hover:text-accent-red disabled:opacity-50 dark:text-dark-secondary'
           >
             <HeroIcon className='h-5 w-5' iconName='NoSymbolIcon' />
@@ -521,7 +529,12 @@ export default function Chat(): JSX.Element {
                                text-light-secondary shadow-sm backdrop-blur-md
                                dark:text-dark-secondary'
                   >
-                    {formatDayLabel(millis)}
+                    {formatDayLabel(
+                      millis,
+                      t('common.today'),
+                      t('common.yesterday'),
+                      locale
+                    )}
                   </div>
                 )}
                 {message.id === firstUnreadId && (
@@ -531,7 +544,7 @@ export default function Chat(): JSX.Element {
                       className='rounded-full bg-main-accent/15 px-3 py-0.5 text-[11px]
                                  font-bold text-main-accent-text'
                     >
-                      رسائل جديدة
+                      {t('messages.newDivider')}
                     </span>
                     <span className='h-px flex-1 bg-main-accent/40' />
                   </div>
@@ -574,7 +587,7 @@ export default function Chat(): JSX.Element {
               </>
             )}
             <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-              ابدأ المحادثة بإرسال رسالة، صورة، فيديو أو تسجيل صوتي
+              {t('messages.startHint')}
             </p>
           </div>
         )}
@@ -582,7 +595,7 @@ export default function Chat(): JSX.Element {
           <div className='mx-auto my-3 flex max-w-sm items-center gap-2 rounded-2xl border border-accent-red/20 bg-accent-red/10 px-4 py-3 text-center text-sm text-accent-red'>
             <HeroIcon className='h-5 w-5 shrink-0' iconName='NoSymbolIcon' />
             <span className='flex-1'>
-              لقد حظرت هذا المستخدم. تبقى الرسائل مرئية لكن المراسلة متوقفة.
+              {t('messages.blockedBanner')}
             </span>
             <button
               type='button'
@@ -590,7 +603,7 @@ export default function Chat(): JSX.Element {
               className='shrink-0 font-bold underline'
               disabled={blockBusy}
             >
-              إلغاء الحظر
+              {t('messages.unblock')}
             </button>
           </div>
         )}
@@ -607,7 +620,7 @@ export default function Chat(): JSX.Element {
               className='sticky bottom-2 z-20 mx-auto flex w-fit items-center gap-1.5 rounded-full bg-main-accent px-3 py-2 text-xs font-bold text-main-accent-contrast shadow-lg'
             >
               <HeroIcon className='h-4 w-4' iconName='ArrowDownIcon' />
-              أحدث الرسائل
+              {t('messages.latest')}
             </motion.button>
           )}
         </AnimatePresence>
@@ -623,8 +636,8 @@ export default function Chat(): JSX.Element {
                 ? {
                     senderName:
                       replyTarget.senderId === user?.id
-                        ? user?.name ?? 'أنت'
-                        : peer?.name || 'الطرف الآخر',
+                        ? user?.name ?? t('common.you')
+                        : peer?.name || t('messages.peer'),
                     text: replyTarget.text,
                     type: replyTarget.type
                   }
@@ -646,9 +659,9 @@ export default function Chat(): JSX.Element {
               })
                 .then(() => {
                   setEditTarget(null);
-                  toast.success('تم تعديل الرسالة');
+                  toast.success(t('messages.editedOk'));
                 })
-                .catch(() => toast.error('تعذر تعديل الرسالة'));
+                .catch(() => toast.error(t('messages.editFail')));
             }}
             onSendText={(text) => void handleSend({ type: 'text', text })}
             onSendMedia={(files, kind) =>

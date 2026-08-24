@@ -3,6 +3,7 @@ import cn from 'clsx';
 import { auth } from '@lib/firebase/app';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { MusicTrack } from '@pages/api/music';
+import { useLanguage } from '@lib/context/language-context';
 
 type SelectedTrack = {
   src: string;
@@ -20,6 +21,8 @@ export function MusicSearch({
   selected,
   onSelect
 }: MusicSearchProps): JSX.Element {
+  const { t } = useLanguage();
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(false);
@@ -84,7 +87,7 @@ export function MusicSearch({
           }
         } catch {
           if (requestId === requestIdRef.current) {
-            setError('تعذّر البحث عن الموسيقى. حاول مجددًا.');
+            setError(t('music.searchFail'));
             setLoading(false);
           }
         }
@@ -126,13 +129,13 @@ export function MusicSearch({
   return (
     <div>
       <p className='mb-2 text-sm text-light-secondary dark:text-dark-secondary'>
-        ابحث عن أي أغنية على الإنترنت وأضِفها
+        {t('music.searchHint')}
       </p>
       <input
         type='text'
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder='ابحث: اسم الأغنية أو المغني...'
+        placeholder={t('music.placeholder')}
         className='mb-2 w-full rounded-xl bg-light-line-reply/30 p-2 text-sm outline-none
                    dark:bg-dark-line-reply/30'
       />
@@ -140,7 +143,7 @@ export function MusicSearch({
       <div className='max-h-56 overflow-y-auto rounded-xl border border-light-border p-1 dark:border-dark-border'>
         {loading && (
           <p className='p-3 text-center text-sm text-light-secondary dark:text-dark-secondary'>
-            جارٍ البحث...
+            {t('music.searching')}
           </p>
         )}
 
@@ -150,13 +153,13 @@ export function MusicSearch({
 
         {!loading && !error && !query.trim() && (
           <p className='p-3 text-center text-sm text-light-secondary dark:text-dark-secondary'>
-            ابدأ بالكتابة للبحث عن الأغاني
+            {t('music.start')}
           </p>
         )}
 
         {!loading && !error && query.trim() && !results.length && (
           <p className='p-3 text-center text-sm text-light-secondary dark:text-dark-secondary'>
-            لا توجد نتائج
+            {t('music.none')}
           </p>
         )}
 
@@ -179,7 +182,7 @@ export function MusicSearch({
                   type='button'
                   onClick={() => togglePreview(track)}
                   className='relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-light-line-reply dark:bg-dark-line-reply'
-                  aria-label='تشغيل معاينة'
+                  aria-label={t('music.playPreview')}
                 >
                   {track.artwork ? (
                     <img
@@ -238,7 +241,7 @@ export function MusicSearch({
               stopPreview();
             }}
             className='text-light-secondary hover:text-accent-red'
-            aria-label='إزالة الموسيقى'
+            aria-label={t('music.remove')}
           >
             ×
           </button>

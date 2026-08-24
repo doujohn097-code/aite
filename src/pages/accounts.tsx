@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import cn from 'clsx';
 import { getDocs, query, where } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import {
   getSavedAccounts,
   removeSavedAccount,
@@ -22,6 +23,7 @@ import type { SavedAccount } from '@lib/accounts';
 
 export default function Accounts(): JSX.Element {
   const { user, loading: authLoading } = useAuth();
+  const { t, isRtl } = useLanguage();
   const router = useRouter();
 
   const [accounts, setAccounts] = useState<SavedAccount[] | null>(null);
@@ -118,7 +120,7 @@ export default function Accounts(): JSX.Element {
     removeSavedAccount(username);
     setAccounts((prev) => prev?.filter((a) => a.username !== username) ?? []);
     setRemoving(null);
-    toast.success('تمت إزالة الحساب من هذه القائمة');
+    toast.success(t('ok.accountRemoved'));
   };
 
   if (authLoading || accounts === null) {
@@ -131,18 +133,16 @@ export default function Accounts(): JSX.Element {
 
   return (
     <main className='flex min-h-app flex-col items-center justify-center px-4 py-10'>
-      <SEO title='الحسابات المحفوظة / Aite' />
+      <SEO title={t('accounts.title')} />
       <div className='flex w-full max-w-lg flex-col items-center gap-6'>
         <AiteLogo className='h-12 w-12' />
 
         <div className='flex flex-col items-center gap-1 text-center'>
           <h1 className='text-2xl font-bold text-light-primary dark:text-dark-primary'>
-            {user ? 'تبديل الحساب' : 'اختر حساباً للمتابعة'}
+            {user ? t('accounts.switch') : t('accounts.choose')}
           </h1>
           <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-            {accounts.length
-              ? 'الحسابات التي سجلت الدخول بها على هذا الجهاز'
-              : 'لا توجد حسابات محفوظة على هذا الجهاز بعد'}
+            {accounts.length ? t('accounts.saved') : t('accounts.none')}
           </p>
         </div>
 
@@ -164,7 +164,7 @@ export default function Accounts(): JSX.Element {
                       type='button'
                       disabled={!!signingIn || isCurrent}
                       onClick={() => void handlePick(account)}
-                      className='flex flex-1 items-center gap-3 text-right disabled:cursor-default'
+                      className='flex flex-1 items-center gap-3 text-start disabled:cursor-default'
                     >
                       <UserAvatar
                         src={
@@ -181,7 +181,7 @@ export default function Accounts(): JSX.Element {
                           {profiles[account.username]?.name ?? account.name}
                           {isCurrent && (
                             <span className='mr-2 text-xs font-medium text-main-accent-text'>
-                              (الحساب الحالي)
+                              ({t('common.currentAccount')})
                             </span>
                           )}
                         </span>
@@ -195,7 +195,7 @@ export default function Accounts(): JSX.Element {
                         !isCurrent && (
                           <HeroIcon
                             className='h-5 w-5 shrink-0 text-light-secondary dark:text-dark-secondary'
-                            iconName='ChevronLeftIcon'
+                            iconName={isRtl ? 'ChevronLeftIcon' : 'ChevronRightIcon'}
                           />
                         )
                       )}
@@ -203,7 +203,9 @@ export default function Accounts(): JSX.Element {
                     {!isCurrent && (
                       <button
                         type='button'
-                        aria-label={`إزالة @${account.username} من القائمة`}
+                        aria-label={t('accounts.remove', {
+                          username: account.username
+                        })}
                         onClick={() =>
                           removing === account.username
                             ? handleRemove(account.username)
@@ -217,7 +219,7 @@ export default function Accounts(): JSX.Element {
                         )}
                       >
                         {removing === account.username ? (
-                          'تأكيد؟'
+                          t('accounts.confirm')
                         ) : (
                           <HeroIcon className='h-4 w-4' iconName='TrashIcon' />
                         )}
@@ -246,7 +248,7 @@ export default function Accounts(): JSX.Element {
                            transition hover:bg-light-primary/[0.05] dark:border-dark-border
                            dark:text-dark-primary dark:hover:bg-white/[0.05]'
               >
-                {accounts.length ? 'استخدام حساب آخر' : 'تسجيل الدخول'}
+                {accounts.length ? t('accounts.other') : t('accounts.login')}
               </Button>
             </a>
           </Link>
@@ -257,7 +259,7 @@ export default function Accounts(): JSX.Element {
                   className='w-full bg-main-accent py-2.5 font-bold text-main-accent-contrast transition
                              hover:brightness-90 active:brightness-75'
                 >
-                  العودة إلى الرئيسية
+                  {t('common.home')}
                 </Button>
               </a>
             </Link>

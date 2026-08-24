@@ -12,6 +12,7 @@ import { ImagePreview } from '@components/input/image-preview';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
+import { useLanguage } from '@lib/context/language-context';
 
 export type EditMediaKind = 'none' | 'images' | 'video';
 
@@ -42,9 +43,12 @@ export function EditContentModal({
   mediaKind = 'none',
   maxLength,
   allowEmpty,
-  placeholder = 'عدّل النص…  @للإشارة',
+  placeholder,
   onSave
 }: EditContentModalProps): JSX.Element {
+  const { t } = useLanguage();
+  const fieldPlaceholder = placeholder ?? t('media.editCaption');
+
   const { user, isAdmin } = useAuth();
   const limit = maxLength ?? (isAdmin ? 560 : 280);
   const maxFiles = mediaKind === 'video' ? 1 : 4;
@@ -103,8 +107,8 @@ export function EditContentModal({
     if (!imagesData) {
       toast.error(
         mediaKind === 'video'
-          ? 'اختر فيديو واحداً صالحاً'
-          : 'يرجى اختيار صورة أو فيديو (حتى 4)'
+          ? t('media.pickVideo')
+          : t('media.pickMedia')
       );
       return;
     }
@@ -113,7 +117,7 @@ export function EditContentModal({
         (file.type || '').startsWith('video/')
       );
       if (!video) {
-        toast.error('الريل يحتاج ملف فيديو');
+        toast.error(t('media.reelNeedsFile'));
         return;
       }
       newPreview.forEach(({ src }) => {
@@ -154,7 +158,7 @@ export function EditContentModal({
     try {
       let uploaded: ImagesPreview = [];
       if (newFiles.length) {
-        if (!user?.id) throw new Error('يجب تسجيل الدخول');
+        if (!user?.id) throw new Error(t('err.needLogin'));
         uploaded =
           (await uploadImages(user.id, newFiles, setUploadProgress)) ?? [];
       }
@@ -167,7 +171,7 @@ export function EditContentModal({
       closeModal();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'تعذر حفظ التعديل. حاول مجددًا.'
+        error instanceof Error ? error.message : t('err.saveEdit')
       );
     } finally {
       setSaving(false);
@@ -208,7 +212,7 @@ export function EditContentModal({
             ref={inputRef}
             value={value}
             onChange={onMentionChange}
-            placeholder={placeholder}
+            placeholder={fieldPlaceholder}
             minRows={4}
             maxRows={10}
             className='w-full resize-none rounded-2xl border border-light-border bg-light-primary/5 p-3.5 text-base outline-none focus:border-main-accent dark:border-dark-border dark:bg-dark-primary/5'
@@ -255,9 +259,9 @@ export function EditContentModal({
                 <HeroIcon className='h-5 w-5' iconName='PhotoIcon' />
                 {mediaKind === 'video'
                   ? previewImages.length
-                    ? 'استبدال الفيديو'
-                    : 'إضافة فيديو'
-                  : 'إضافة صور أو فيديو'}
+                    ? t('media.replaceVideo')
+                    : t('media.addVideo')
+                  : t('media.addMedia')}
               </Button>
             </div>
           )}
@@ -265,7 +269,7 @@ export function EditContentModal({
           {saving && uploadProgress > 0 && (
             <div className='mt-3 flex flex-col gap-1.5'>
               <div className='flex items-center justify-between text-xs text-light-secondary dark:text-dark-secondary'>
-                <span>جارٍ رفع الوسائط…</span>
+                <span>{t('media.uploadingShort')}</span>
                 <span className='tabular-nums'>{uploadProgress}%</span>
               </div>
               <div className='h-1.5 w-full overflow-hidden rounded-full bg-light-border dark:bg-dark-border'>
@@ -284,7 +288,7 @@ export function EditContentModal({
             onClick={closeModal}
             disabled={saving}
           >
-            إلغاء
+            {t('common.cancel')}
           </Button>
           <Button
             className='rounded-full bg-main-accent px-5 py-2.5 font-bold text-main-accent-contrast disabled:opacity-40'
@@ -292,7 +296,7 @@ export function EditContentModal({
             loading={saving}
             disabled={!canSave}
           >
-            حفظ التعديل
+            {t('media.saveEdit')}
           </Button>
         </div>
       </div>
