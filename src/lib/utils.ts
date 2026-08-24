@@ -84,3 +84,49 @@ export function usernameToInternalEmail(username: string): string {
   const local = base64UrlEncode(normalized).slice(0, 60);
   return `${local}@aite.local`;
 }
+
+/** يستعيد اسم المستخدم من البريد الداخلي الذي ينشئه Aite عند التسجيل. */
+export function internalEmailToUsername(email?: string | null): string | null {
+  if (!email) return null;
+
+  const normalized = email.trim();
+  if (!normalized.toLowerCase().endsWith('@aite.local')) return null;
+
+  // Base64 is case-sensitive, so only the domain may be compared lowercase.
+  const encoded = normalized.slice(0, -'@aite.local'.length);
+  if (!encoded) return null;
+
+  try {
+    const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const binary = atob(base64 + padding);
+    const bytes = Uint8Array.from(binary, (character) =>
+      character.charCodeAt(0)
+    );
+    const username = new TextDecoder().decode(bytes).trim().toLowerCase();
+
+    return /^[a-z0-9_]{3,15}$/i.test(username) ? username : null;
+  } catch {
+    return null;
+  }
+}
+
+/** القيم التي كانت تُكتب سابقًا عند حدوث سباق أثناء إنشاء الحساب. */
+export function isPlaceholderProfileName(value?: string | null): boolean {
+  const name = value?.trim() ?? '';
+  return (
+    !name ||
+    /^(?:مستخدم|مستحدم)(?:[\s_-]*\d+)?$/u.test(name) ||
+    /^user(?:[\s_-]*\d+)?$/i.test(name)
+  );
+}
+
+export function isPlaceholderUsername(value?: string | null): boolean {
+  const username = value?.trim() ?? '';
+  return (
+    !username ||
+    username.toLowerCase() === 'unknown' ||
+    /^(?:مستخدم|مستحدم)(?:[_-]*\d+)?$/u.test(username) ||
+    /^user(?:[_-]*\d+)?$/i.test(username)
+  );
+}

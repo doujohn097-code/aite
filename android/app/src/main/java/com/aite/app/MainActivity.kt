@@ -12,10 +12,10 @@ import android.net.NetworkRequest
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.RenderProcessGoneDetail
-import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -76,18 +76,17 @@ class MainActivity : BridgeActivity() {
   }
 
   private fun requestNativePermissions() {
-    val wanted = buildList {
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        add(Manifest.permission.POST_NOTIFICATIONS)
-      }
-      add(Manifest.permission.CAMERA)
-      add(Manifest.permission.RECORD_AUDIO)
-    }.filter {
-      ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-    }
-
-    if (wanted.isNotEmpty()) {
-      requestPermissions(wanted.toTypedArray(), 2207)
+    // الكاميرا والميكروفون يطلبهما BridgeWebChromeClient عند استعمال الميزة
+    // فعليًا. طلبهما عند تشغيل التطبيق كان يدفع المستخدم لرفضهما قبل معرفة
+    // السبب، ثم يفشل getUserMedia داخل WebView.
+    if (
+      Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+      ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.POST_NOTIFICATIONS
+      ) != PackageManager.PERMISSION_GRANTED
+    ) {
+      requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 2207)
     }
   }
 
@@ -161,6 +160,15 @@ class MainActivity : BridgeActivity() {
         val uri = request.url ?: return false
         val scheme = uri.scheme.orEmpty().lowercase()
         if (scheme in setOf("http", "https")) return false
+
+        if (scheme == "aite" && uri.host == "settings") {
+          startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+              data = Uri.parse("package:$packageName")
+            }
+          )
+          return true
+        }
 
         return try {
           startActivity(Intent(Intent.ACTION_VIEW, uri))

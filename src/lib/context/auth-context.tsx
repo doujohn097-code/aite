@@ -33,7 +33,13 @@ import {
 } from '@lib/firebase/collections';
 import { getRandomId, getRandomInt } from '@lib/random';
 import { checkUsernameAvailability } from '@lib/firebase/utils';
-import { usernameToInternalEmail } from '@lib/utils';
+import {
+  internalEmailToUsername,
+  isPlaceholderProfileName,
+  isPlaceholderUsername,
+  usernameToInternalEmail
+} from '@lib/utils';
+import { getSavedAccounts } from '@lib/accounts';
 import { registerWebPushToken } from '@lib/native-bridge';
 import type { ReactNode } from 'react';
 import type { User as AuthUser } from 'firebase/auth';
@@ -66,6 +72,51 @@ type AuthContextProviderProps = {
   children: ReactNode;
 };
 
+type PendingSignUpProfile = {
+  uid?: string;
+  email?: string;
+  name: string;
+  username: string;
+  createdAt?: number;
+};
+
+const PENDING_SIGN_UP_KEY = 'aite:pending-sign-up';
+const PENDING_SIGN_UP_MAX_AGE_MS = 10 * 60 * 1000;
+
+function readPendingProfile(key: string): PendingSignUpProfile | null {
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as Partial<PendingSignUpProfile>;
+    if (typeof data.name !== 'string' || typeof data.username !== 'string')
+      return null;
+    return {
+      uid: typeof data.uid === 'string' ? data.uid : undefined,
+      email: typeof data.email === 'string' ? data.email : undefined,
+      name: data.name.trim(),
+      username: data.username.trim().toLowerCase(),
+      createdAt: typeof data.createdAt === 'number' ? data.createdAt : undefined
+    };
+  } catch {
+    return null;
+  }
+}
+
+function pendingMatchesUser(
+  profile: PendingSignUpProfile | null,
+  authUser: AuthUser
+): profile is PendingSignUpProfile {
+  if (!profile?.name || !profile.username) return false;
+  if (profile.uid && profile.uid !== authUser.uid) return false;
+  if (profile.email && profile.email !== authUser.email) return false;
+  if (
+    profile.createdAt &&
+    Date.now() - profile.createdAt > PENDING_SIGN_UP_MAX_AGE_MS
+  )
+    return false;
+  return true;
+}
+
 export function AuthContextProvider({
   children
 }: AuthContextProviderProps): JSX.Element {
@@ -74,6 +125,7 @@ export function AuthContextProvider({
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
   const processedUid = useRef<string | null>(null);
+  const pendingSignUpRef = useRef<PendingSignUpProfile | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,22 +139,35 @@ export function AuthContextProvider({
       setLoading(true);
       processedUid.current = uid;
 
-      let pendingData: { name?: string; username?: string } | null = null;
-      try {
-        const storageKey = `aite:pending-profile:${uid}`;
-        const raw = sessionStorage.getItem(storageKey);
-        if (raw) {
-          pendingData = JSON.parse(raw) as {
-            name?: string;
-            username?: string;
-          };
-          sessionStorage.removeItem(storageKey);
-        }
-      } catch {
-        // ignore
-      }
+      // Firebase يطلق onAuthStateChanged فور إنشاء حساب Auth، وقد يصل قبل
+      // updateProfile وكتابة Firestore. نقرأ البيانات المعلّقة من الذاكرة
+      // والجلسة حتى لا يُنشأ الملف باسم «مستخدم» واسم عشوائي.
+      const legacyPending = readPendingProfile(`aite:pending-profile:${uid}`);
+      const storedPending = readPendingProfile(PENDING_SIGN_UP_KEY);
+      const pendingData = [
+        pendingSignUpRef.current,
+        legacyPending,
+        storedPending
+      ].find((profile) => pendingMatchesUser(profile, authUser));
 
-      const fallbackName = pendingData?.name ?? displayName ?? 'مستخدم';
+      const decodedUsername = internalEmailToUsername(authUser.email);
+      const savedAccounts = getSavedAccounts();
+      const savedAccount = savedAccounts.find(
+        (account) =>
+          account.username === (pendingData?.username ?? decodedUsername) ||
+          usernameToInternalEmail(account.username).toLowerCase() ===
+            authUser.email?.toLowerCase()
+      );
+      const recoveredUsername =
+        pendingData?.username ?? decodedUsername ?? savedAccount?.username;
+      const authName = displayName?.trim() ?? '';
+      const savedName = savedAccount?.name?.trim() ?? '';
+      const fallbackName =
+        pendingData?.name ||
+        (!isPlaceholderProfileName(authName) ? authName : '') ||
+        (!isPlaceholderProfileName(savedName) ? savedName : '') ||
+        authName ||
+        'مستخدم';
       const fallbackPhoto = photoURL ?? '/assets/default-avatar.png';
 
       // قراءة الملف مع إعادة محاولة
@@ -145,25 +210,20 @@ export function AuthContextProvider({
       };
 
       if (!userSnapshot.exists()) {
-        let finalUsername = '';
-
-        if (pendingData?.username) {
-          try {
-            const avail = await checkUsernameAvailability(pendingData.username);
-            if (avail) finalUsername = pendingData.username;
-          } catch {
-            // إذا فشل التحقق بسبب الصلاحيات، نستخدم الاسم المُدخل مباشرة
-            finalUsername = pendingData.username;
-          }
-        }
+        // البريد الداخلي مشتق أصلًا من اسم المستخدم وفريد داخل Firebase Auth،
+        // لذلك هو المصدر الأوثق لاستعادة الاسم عند فقدان كتابة Firestore.
+        let finalUsername = recoveredUsername ?? '';
 
         if (!finalUsername) {
           // توليد اسم مستخدم عشوائي متاح
           let tries = 0;
           while (tries < 15) {
             const normalizeName =
-              fallbackName.replace(/\s/g, '').toLowerCase().slice(0, 8) ||
-              'user';
+              fallbackName
+                .replace(/\s/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9_]/g, '')
+                .slice(0, 8) || 'user';
             const randomInt = getRandomInt(1, 10_000);
             const candidate = `${normalizeName}${randomInt}`;
             try {
@@ -215,14 +275,23 @@ export function AuthContextProvider({
 
         try {
           await Promise.all([
-            setDoc(rawUserRef, userData),
-            setDoc(rawStatsRef, userStatsData)
+            setDoc(rawUserRef, userData, { merge: true }),
+            setDoc(rawStatsRef, userStatsData, { merge: true })
           ]);
 
           const newSnap = await getDoc(doc(usersCollection, uid));
           const newUser = newSnap.data();
           if (newUser) setUser({ ...defaultUserData, ...newUser } as User);
           else setUser({ ...defaultUserData, username: finalUsername } as User);
+
+          try {
+            sessionStorage.removeItem(`aite:pending-profile:${uid}`);
+            sessionStorage.removeItem(PENDING_SIGN_UP_KEY);
+          } catch {
+            // التخزين تحسين إضافي فقط
+          }
+          if (pendingMatchesUser(pendingSignUpRef.current, authUser))
+            pendingSignUpRef.current = null;
         } catch (err) {
           console.error('create user doc failed', err);
           setError(err as Error);
@@ -231,7 +300,44 @@ export function AuthContextProvider({
         }
       } else {
         const userData = userSnapshot.data();
-        setUser({ ...defaultUserData, ...userData } as User);
+        const repairs: { name?: string; username?: string } = {};
+
+        // إصلاح الحسابات التي تأثرت بالسباق في الإصدارات السابقة. لا نغيّر
+        // اسمًا حقيقيًا اختاره المستخدم؛ نصلح القيم الافتراضية المعروفة فقط.
+        if (
+          isPlaceholderProfileName(userData.name) &&
+          !isPlaceholderProfileName(fallbackName)
+        )
+          repairs.name = fallbackName;
+
+        if (
+          recoveredUsername &&
+          isPlaceholderUsername(userData.username) &&
+          recoveredUsername !== userData.username
+        )
+          repairs.username = recoveredUsername;
+
+        if (Object.keys(repairs).length) {
+          await updateDoc(doc(db, 'users', uid), {
+            ...repairs,
+            updatedAt: serverTimestamp()
+          }).catch(() => undefined);
+          if (repairs.name && repairs.name !== authName)
+            await updateProfile(authUser, { displayName: repairs.name }).catch(
+              () => undefined
+            );
+        }
+
+        setUser({ ...defaultUserData, ...userData, ...repairs } as User);
+
+        try {
+          sessionStorage.removeItem(`aite:pending-profile:${uid}`);
+          sessionStorage.removeItem(PENDING_SIGN_UP_KEY);
+        } catch {
+          // ignore
+        }
+        if (pendingMatchesUser(pendingSignUpRef.current, authUser))
+          pendingSignUpRef.current = null;
       }
 
       if (!cancelled) setLoading(false);
@@ -423,17 +529,40 @@ export function AuthContextProvider({
       }
 
       const email = usernameToInternalEmail(cleanedUsername);
+      const pendingProfile: PendingSignUpProfile = {
+        email,
+        name: cleanedName,
+        username: cleanedUsername,
+        createdAt: Date.now()
+      };
+
+      // يجب حفظ بيانات الملف قبل إنشاء حساب Auth: مستمع المصادقة قد يعمل
+      // قبل أن يعود createUserWithEmailAndPassword إلى هذا السطر.
+      pendingSignUpRef.current = pendingProfile;
+      try {
+        sessionStorage.setItem(
+          PENDING_SIGN_UP_KEY,
+          JSON.stringify(pendingProfile)
+        );
+      } catch {
+        // الذاكرة الداخلية تكفي في الجلسة الحالية
+      }
 
       const { user: authUser } = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
+      pendingProfile.uid = authUser.uid;
 
       try {
         sessionStorage.setItem(
+          PENDING_SIGN_UP_KEY,
+          JSON.stringify(pendingProfile)
+        );
+        sessionStorage.setItem(
           `aite:pending-profile:${authUser.uid}`,
-          JSON.stringify({ name: cleanedName, username: cleanedUsername })
+          JSON.stringify(pendingProfile)
         );
       } catch {
         // ignore
@@ -482,15 +611,31 @@ export function AuthContextProvider({
 
       try {
         await Promise.all([
-          setDoc(rawUserRef, userData),
-          setDoc(rawStatsRef, userStatsData)
+          setDoc(rawUserRef, userData, { merge: true }),
+          setDoc(rawStatsRef, userStatsData, { merge: true })
         ]);
+
+        try {
+          sessionStorage.removeItem(PENDING_SIGN_UP_KEY);
+          sessionStorage.removeItem(`aite:pending-profile:${authUser.uid}`);
+        } catch {
+          // ignore
+        }
+        if (pendingMatchesUser(pendingSignUpRef.current, authUser))
+          pendingSignUpRef.current = null;
       } catch (err) {
         console.error('setDoc failed', err);
-        // حتى لو فشل إنشاء الوثيقة، سيحاول manageUser إنشاءها مرة أخرى
-        // لا نرمي خطأ هنا لأن حساب Auth تم إنشاؤه بنجاح
+        // نبقي البيانات المعلّقة ليعيد manageUser المحاولة دون اسم افتراضي.
+        processedUid.current = null;
       }
     } catch (err) {
+      pendingSignUpRef.current = null;
+      try {
+        sessionStorage.removeItem(PENDING_SIGN_UP_KEY);
+      } catch {
+        // ignore
+      }
+
       const arabic =
         err instanceof Error && err.message.includes('اسم المستخدم')
           ? err

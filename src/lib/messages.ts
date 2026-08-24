@@ -100,9 +100,21 @@ export async function sendMessage(
     if (!text) return;
   } else if (payload.type === 'audio') {
     type = 'audio';
-    const file = new File([payload.blob], `voice-${getRandomId()}.webm`, {
-      type: payload.blob.type || 'audio/webm'
-    });
+    const audioType = payload.blob.type || 'audio/webm';
+    const normalizedType = audioType.split(';', 1)[0].toLowerCase();
+    const extension =
+      normalizedType === 'audio/mp4'
+        ? 'm4a'
+        : normalizedType === 'audio/ogg'
+        ? 'ogg'
+        : normalizedType === 'audio/aac'
+        ? 'aac'
+        : 'webm';
+    const file = new File(
+      [payload.blob],
+      `voice-${getRandomId()}.${extension}`,
+      { type: audioType }
+    );
     const [uploaded] =
       (await uploadImages(senderId, [
         Object.assign(file, { id: getRandomId() })

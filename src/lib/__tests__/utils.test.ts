@@ -4,7 +4,10 @@ import {
   getStatsMove,
   isPlural,
   withoutId,
-  usernameToInternalEmail
+  usernameToInternalEmail,
+  internalEmailToUsername,
+  isPlaceholderProfileName,
+  isPlaceholderUsername
 } from '../utils';
 
 describe('preventBubbling', () => {
@@ -132,5 +135,35 @@ describe('usernameToInternalEmail', () => {
 
   it('maps the same username to the same email deterministically', () => {
     expect(usernameToInternalEmail('bob')).toBe(usernameToInternalEmail('bob'));
+  });
+
+  it('can restore a valid username from the internal email', () => {
+    const email = usernameToInternalEmail('salem_125');
+    expect(internalEmailToUsername(email)).toBe('salem_125');
+  });
+
+  it('does not decode unrelated or malformed email addresses', () => {
+    expect(internalEmailToUsername('person@example.com')).toBeNull();
+    expect(internalEmailToUsername('%%%@@aite.local')).toBeNull();
+  });
+});
+
+describe('placeholder profile detection', () => {
+  it('recognizes legacy Arabic and English generated names', () => {
+    expect(isPlaceholderProfileName('مستخدم')).toBe(true);
+    expect(isPlaceholderProfileName('مستحدم_125')).toBe(true);
+    expect(isPlaceholderProfileName('user-942')).toBe(true);
+  });
+
+  it('keeps real display names unchanged', () => {
+    expect(isPlaceholderProfileName('سالم أحمد')).toBe(false);
+    expect(isPlaceholderProfileName('Salem')).toBe(false);
+  });
+
+  it('recognizes generated usernames without touching real usernames', () => {
+    expect(isPlaceholderUsername('unknown')).toBe(true);
+    expect(isPlaceholderUsername('مستخدم125')).toBe(true);
+    expect(isPlaceholderUsername('user_8721')).toBe(true);
+    expect(isPlaceholderUsername('salem_125')).toBe(false);
   });
 });
