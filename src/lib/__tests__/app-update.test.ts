@@ -1,5 +1,6 @@
 import {
   isSafeApkUrl,
+  parseUpdateProgress,
   shouldOfferUpdate,
   updateAppliesTo
 } from '../app-update';
@@ -51,5 +52,33 @@ describe('app update helpers', () => {
         versionName: '1.2.0'
       })
     ).toBe(true);
+    expect(
+      shouldOfferUpdate(update({ versionCode: 6 }), {
+        versionCode: 6,
+        versionName: '1.2.1'
+      })
+    ).toBe(false);
+  });
+
+  it('hides the prompt on the current web build', () => {
+    expect(shouldOfferUpdate(update({ versionCode: 6 }), null)).toBe(false);
+    expect(shouldOfferUpdate(update({ versionCode: 7 }), null)).toBe(true);
+  });
+
+  it('waits for the native bridge before offering an android update', () => {
+    expect(
+      shouldOfferUpdate(update({ versionCode: 7 }), null, {
+        waitForNative: true
+      })
+    ).toBe(false);
+  });
+
+  it('parses native download progress events', () => {
+    expect(parseUpdateProgress({ status: 'downloading', percent: 42 })).toEqual({
+      status: 'downloading',
+      percent: 42,
+      message: undefined
+    });
+    expect(parseUpdateProgress({ status: 'nope', percent: 10 })).toBeNull();
   });
 });

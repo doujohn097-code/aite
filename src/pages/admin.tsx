@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { auth } from '@lib/firebase/app';
 import { useAuth } from '@lib/context/auth-context';
+import { APP_VERSION_CODE, APP_VERSION_NAME } from '@lib/app-version';
 import { UserAvatar } from '@components/user/user-avatar';
 import { UserName } from '@components/user/user-name';
 import { Button } from '@components/ui/button';
@@ -465,9 +466,10 @@ export default function Admin(): JSX.Element {
               </p>
             )}
             <p className='text-sm leading-relaxed text-light-secondary dark:text-dark-secondary'>
-              عند الإطلاق يظهر للمستخدمين خيار التثبيت فوراً. على أندرويد
-              يُنزَّل ملف APK ويُفتح مثبّت النظام. على الموقع يكفي زر تحديث
-              لإعادة تحميل المنصة.
+              يظهر الإعلان فقط لمن نسخته أقدم من رمز الإصدار الذي تدخله.
+              النسخة الحالية للمنصة {APP_VERSION_NAME} (رمز {APP_VERSION_CODE})
+              — استخدم رقماً أكبر. أثناء التنزيل تختفي «لاحقاً» ويظهر شريط
+              التقدم حتى لا يخرج المستخدم.
             </p>
             <input
               value={updateForm.versionName}

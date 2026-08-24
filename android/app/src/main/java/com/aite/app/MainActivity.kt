@@ -519,6 +519,19 @@ class MainActivity : BridgeActivity() {
     runOnUiThread { UpdateInstaller.start(this, url) }
   }
 
+  fun reportUpdateProgress(percent: Int, status: String, message: String) {
+    val safePercent = percent.coerceIn(0, 100)
+    val script =
+      "window.dispatchEvent(new CustomEvent('aite:update-progress',{detail:{" +
+        "percent:$safePercent," +
+        "status:${JSONObject.quote(status)}," +
+        "message:${JSONObject.quote(message)}" +
+        "}}));"
+    runOnUiThread {
+      bridge?.webView?.evaluateJavascript(script, null)
+    }
+  }
+
   private fun dp(value: Int): Int =
     (value * resources.displayMetrics.density).toInt()
 

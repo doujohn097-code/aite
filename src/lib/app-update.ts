@@ -1,8 +1,10 @@
 import { Capacitor } from '@capacitor/core';
+import { APP_VERSION_CODE, APP_VERSION_NAME } from './app-version';
 import type { AppUpdate, AppUpdateTarget } from './types/app-update';
 
 const DISMISS_KEY = 'aite:dismissed-update';
 const APPLIED_KEY = 'aite:applied-update';
+const APPLIED_CODE_KEY = 'aite:applied-version-code';
 
 export type NativeAppInfo = {
   versionCode: number;
@@ -39,6 +41,15 @@ export function getNativeAppInfo(): NativeAppInfo | null {
   return { versionCode: code, versionName: name || String(code) };
 }
 
+export function getInstalledAppInfo(): NativeAppInfo {
+  return (
+    getNativeAppInfo() ?? {
+      versionCode: APP_VERSION_CODE,
+      versionName: APP_VERSION_NAME
+    }
+  );
+}
+
 export function canInstallNativeUpdate(): boolean {
   return typeof androidBridge()?.installUpdate === 'function';
 }
@@ -61,13 +72,16 @@ export function updateAppliesTo(
 
 export function shouldOfferUpdate(
   update: AppUpdate | null,
-  nativeInfo: NativeAppInfo | null
+  nativeInfo: NativeAppInfo | null,
+  options?: { waitForNative?: boolean }
 ): boolean {
   if (!update?.active) return false;
+  if (options?.waitForNative) return false;
   const native = !!nativeInfo || isNativeAndroid();
   if (!updateAppliesTo(update.target, native)) return false;
-  if (native && nativeInfo && update.versionCode <= nativeInfo.versionCode)
-    return false;
+  const installedCode = nativeInfo?.versionCode ?? APP_VERSION_CODE;
+  if (update.versionCode <= installedCode) return false;
+  if (readAppliedVersionCode() >= update.versionCode) return false;
   if (readAppliedId() === update.id) return false;
   if (!update.force && readDismissedId() === update.id) return false;
   return true;
@@ -99,12 +113,59 @@ export function readAppliedId(): string | null {
   }
 }
 
-export function markUpdateApplied(id: string): void {
+export function markUpdateApplied(id: string, versionCode?: number): void {
   try {
     window.localStorage.setItem(APPLIED_KEY, id);
+    if (typeof versionCode === 'number' && versionCode > 0)
+      window.localStorage.setItem(APPLIED_CODE_KEY, String(versionCode));
   } catch {
     /* private mode */
   }
+}
+
+export function readAppliedVersionCode(): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = Number(window.localStorage.getItem(APPLIED_CODE_KEY));
+    return Number.isFinite(raw) && raw > 0 ? raw : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export type UpdateProgressStatus =
+  | 'starting'
+  | 'downloading'
+  | 'installing'
+  | 'done'
+  | 'error';
+
+export type UpdateProgressDetail = {
+  percent: number;
+  status: UpdateProgressStatus;
+  message?: string;
+};
+
+export function parseUpdateProgress(
+  value: unknown
+): UpdateProgressDetail | null {
+  if (!value || typeof value !== 'object') return null;
+  const detail = value as Partial<UpdateProgressDetail>;
+  const status = detail.status;
+  if (
+    status !== 'starting' &&
+    status !== 'downloading' &&
+    status !== 'installing' &&
+    status !== 'done' &&
+    status !== 'error'
+  )
+    return null;
+  const percent = Number(detail.percent);
+  return {
+    status,
+    percent: Number.isFinite(percent) ? Math.max(0, Math.min(100, percent)) : 0,
+    message: typeof detail.message === 'string' ? detail.message : undefined
+  };
 }
 
 export function isSafeApkUrl(value: string): boolean {

@@ -40,6 +40,7 @@ object UpdateInstaller {
       return
     }
 
+    activity.reportUpdateProgress(1, "starting", "جارٍ تجهيز التنزيل")
     activity.runOnUiThread {
       Toast.makeText(activity, "جارٍ تنزيل التحديث…", Toast.LENGTH_SHORT).show()
     }
@@ -47,8 +48,11 @@ object UpdateInstaller {
     io.execute {
       try {
         val file = download(activity, url)
+        activity.reportUpdateProgress(100, "installing", "اكتمل التنزيل، افتح المثبّت")
         activity.runOnUiThread { launchInstaller(activity, file) }
+        activity.reportUpdateProgress(100, "done", "أكمل التثبيت من نافذة النظام")
       } catch (_: Exception) {
+        activity.reportUpdateProgress(0, "error", "تعذر تنزيل التحديث")
         activity.runOnUiThread {
           Toast.makeText(activity, "تعذر تنزيل التحديث", Toast.LENGTH_LONG).show()
         }
@@ -86,8 +90,28 @@ object UpdateInstaller {
     try {
       if (connection.responseCode !in 200..299)
         throw IllegalStateException("http_${connection.responseCode}")
+      val total = connection.contentLengthLong.takeIf { it > 0 } ?: 0L
       connection.inputStream.use { input ->
-        file.outputStream().use { output -> input.copyTo(output) }
+        file.outputStream().use { output ->
+          val buffer = ByteArray(64 * 1024)
+          var copied = 0L
+          var lastReported = -1
+          while (true) {
+            val read = input.read(buffer)
+            if (read <= 0) break
+            output.write(buffer, 0, read)
+            copied += read
+            val percent = if (total > 0) ((copied * 100) / total).toInt() else 0
+            if (percent != lastReported && (percent == 100 || percent - lastReported >= 2)) {
+              lastReported = percent
+              activity.reportUpdateProgress(
+                percent.coerceIn(1, 99),
+                "downloading",
+                "جارٍ التنزيل"
+              )
+            }
+          }
+        }
       }
     } finally {
       connection.disconnect()
