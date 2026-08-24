@@ -237,7 +237,11 @@ class MainActivity : BridgeActivity() {
         view: WebView,
         detail: RenderProcessGoneDetail
       ): Boolean {
-        if (hasNetwork()) loadAliveUrl(lastGoodUrl) else showOfflineOverlay()
+        // A WebView whose renderer died cannot be reused. Persist the route and
+        // rebuild the Activity only for this exceptional crash path.
+        persistCurrentUrl()
+        view.destroy()
+        runOnUiThread { recreate() }
         return true
       }
     })
@@ -506,10 +510,8 @@ class MainActivity : BridgeActivity() {
     const val ORIGIN = "https://aite-app-one.vercel.app"
     private const val KEY_LAST_URL = "last_url"
 
-    fun isAllowedHost(host: String?): Boolean {
-      val value = host.orEmpty().lowercase()
-      return value == HOST || value.endsWith(".$HOST")
-    }
+    fun isAllowedHost(host: String?): Boolean =
+      host.orEmpty().equals(HOST, ignoreCase = true)
 
     fun isAllowedUrl(url: String?): Boolean {
       if (url.isNullOrBlank()) return false

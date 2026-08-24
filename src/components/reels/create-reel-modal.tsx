@@ -12,7 +12,9 @@ import {
   uploadTimeoutMs
 } from '@lib/media-limits';
 import { getImagesData } from '@lib/validation';
+import { useMentionAssist } from '@lib/hooks/useMentionAssist';
 import { Modal } from '@components/modal/modal';
+import { MentionSuggest } from '@components/input/mention-suggest';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
@@ -54,6 +56,9 @@ export function CreateReelModal({
 
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const captionRef = useRef<HTMLTextAreaElement>(null);
+  const { mentionQuery, onMentionChange, insertMention, closeMentions } =
+    useMentionAssist(caption, setCaption, captionRef);
 
   useEffect(() => {
     if (!open) {
@@ -65,8 +70,9 @@ export function CreateReelModal({
       setUploadProgress(0);
       setComputingDuration(false);
       setIsDragging(false);
+      closeMentions();
     }
-  }, [open]);
+  }, [open, closeMentions]);
 
   useEffect(() => {
     if (!selectedVideos.length) return;
@@ -365,7 +371,12 @@ export function CreateReelModal({
           )}
 
           {/* Caption & Tags Section */}
-          <div className='flex flex-col gap-2'>
+          <div className='relative flex flex-col gap-2'>
+            <MentionSuggest
+              query={mentionQuery}
+              onSelect={insertMention}
+              onClose={closeMentions}
+            />
             <div className='flex items-center justify-between'>
               <label className='text-sm font-bold text-light-primary dark:text-dark-primary'>
                 وصف الريل
@@ -382,9 +393,10 @@ export function CreateReelModal({
             </div>
 
             <textarea
+              ref={captionRef}
               value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder='اكتب وصفاً جذاباً للريل، يمكنك إضافة وسوم مثل #ريلز...'
+              onChange={onMentionChange}
+              placeholder='اكتب وصفاً جذاباً، واستخدم @ للإشارة إلى مستخدم...'
               rows={3}
               maxLength={280}
               className='w-full resize-none rounded-2xl border border-light-border bg-light-line-reply/20 p-3.5 text-sm text-light-primary outline-none transition placeholder:text-light-secondary/60 focus:border-main-accent focus:ring-1 focus:ring-main-accent dark:border-dark-border dark:bg-dark-line-reply/20 dark:text-dark-primary dark:placeholder:text-dark-secondary/60'

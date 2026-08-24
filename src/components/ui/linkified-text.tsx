@@ -67,9 +67,8 @@ export function LinkifiedText({
           );
         }
 
-        const href = part.value.startsWith('http')
-          ? part.value
-          : `https://${part.value}`;
+        const href = safeHttpUrl(part.value);
+        if (!href) return part.value;
         return (
           <a
             key={index}

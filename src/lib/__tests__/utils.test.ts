@@ -8,7 +8,8 @@ import {
   internalEmailToUsername,
   isPlaceholderProfileName,
   isPlaceholderUsername,
-  isSafeInternalPath
+  isSafeInternalPath,
+  safeHttpUrl
 } from '../utils';
 
 describe('preventBubbling', () => {
@@ -178,5 +179,22 @@ describe('safe internal redirects', () => {
     expect(isSafeInternalPath('//evil.example')).toBe(false);
     expect(isSafeInternalPath('/%2Fevil.example')).toBe(false);
     expect(isSafeInternalPath('/\\evil.example')).toBe(false);
+  });
+});
+
+describe('safe external links', () => {
+  it('allows public http links and normalizes www links', () => {
+    expect(safeHttpUrl('https://example.com/path')).toBe(
+      'https://example.com/path'
+    );
+    expect(safeHttpUrl('www.example.com')).toBe('https://www.example.com/');
+  });
+
+  it('blocks credentials and private-network targets', () => {
+    expect(safeHttpUrl('https://user:pass@example.com')).toBeNull();
+    expect(safeHttpUrl('http://127.0.0.1/admin')).toBeNull();
+    expect(safeHttpUrl('http://192.168.1.10')).toBeNull();
+    expect(safeHttpUrl('http://172.16.0.5')).toBeNull();
+    expect(safeHttpUrl('http://[::1]')).toBeNull();
   });
 });

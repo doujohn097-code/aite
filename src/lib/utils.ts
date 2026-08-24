@@ -70,14 +70,29 @@ export function safeHttpUrl(raw: string): string | null {
     const url = new URL(href);
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
     if (url.username || url.password) return null;
-    const host = url.hostname.toLowerCase();
+    const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    const ipv4 = host.split('.').map(Number);
+    const privateIpv4 =
+      ipv4.length === 4 &&
+      ipv4.every(
+        (part) => Number.isInteger(part) && part >= 0 && part <= 255
+      ) &&
+      (ipv4[0] === 0 ||
+        ipv4[0] === 10 ||
+        ipv4[0] === 127 ||
+        (ipv4[0] === 169 && ipv4[1] === 254) ||
+        (ipv4[0] === 172 && ipv4[1] >= 16 && ipv4[1] <= 31) ||
+        (ipv4[0] === 192 && ipv4[1] === 168));
+    const privateIpv6 =
+      host === '::1' ||
+      host.startsWith('fc') ||
+      host.startsWith('fd') ||
+      host.startsWith('fe80:');
     if (
       host === 'localhost' ||
       host.endsWith('.local') ||
-      host.startsWith('127.') ||
-      host.startsWith('10.') ||
-      host.startsWith('192.168.') ||
-      host.startsWith('169.254.')
+      privateIpv4 ||
+      privateIpv6
     )
       return null;
     return url.toString();
