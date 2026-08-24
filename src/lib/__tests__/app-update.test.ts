@@ -22,6 +22,11 @@ const update = (partial: Partial<AppUpdate>): AppUpdate => ({
 describe('app update helpers', () => {
   it('accepts https apk urls and rejects private hosts', () => {
     expect(isSafeApkUrl('https://files.example.com/app.apk')).toBe(true);
+    expect(
+      isSafeApkUrl(
+        'https://pub-ac6ca2c23fe44a8c93e7a74791c80260.r2.dev/Aite.apk'
+      )
+    ).toBe(true);
     expect(isSafeApkUrl('http://files.example.com/app.apk')).toBe(false);
     expect(isSafeApkUrl('https://127.0.0.1/app.apk')).toBe(false);
   });

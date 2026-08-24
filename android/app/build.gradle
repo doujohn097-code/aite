@@ -26,15 +26,28 @@ android {
         jvmTarget = '17'
     }
 
+    signingConfigs {
+        release {
+            def keystoreFile = file("${rootDir}/keystore/aite.jks")
+            if (keystoreFile.exists()) {
+                storeFile keystoreFile
+                storePassword "aite-release-2026"
+                keyAlias "aite"
+                keyPassword "aite-release-2026"
+            }
+        }
+    }
+
     buildTypes {
         debug {
             minifyEnabled false
+            signingConfig signingConfigs.release.storeFile ? signingConfigs.release : signingConfigs.debug
         }
         release {
             minifyEnabled true
             shrinkResources true
             zipAlignEnabled true
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release.storeFile ? signingConfigs.release : signingConfigs.debug
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

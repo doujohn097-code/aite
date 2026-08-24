@@ -1,18 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { onSnapshot } from 'firebase/firestore';
-import { appUpdateDoc } from '@lib/firebase/collections';
 import {
   canInstallNativeUpdate,
   dismissUpdate,
   getNativeAppInfo,
   installNativeUpdate,
   isNativeAndroid,
+  markUpdateApplied,
   shouldOfferUpdate
 } from '@lib/app-update';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { AppUpdate } from '@lib/types/app-update';
+
+async function fetchPublishedUpdate(): Promise<AppUpdate | null> {
+  const response = await fetch('/api/update', { cache: 'no-store' });
+  if (!response.ok) return null;
+  const data = (await response.json()) as { update?: AppUpdate | null };
+  return data.update ?? null;
+}
 
 export function AppUpdatePrompt(): JSX.Element | null {
   const router = useRouter();
@@ -26,16 +32,28 @@ export function AppUpdatePrompt(): JSX.Element | null {
     router.pathname !== '/admin' &&
     shouldOfferUpdate(update, nativeInfo);
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      appUpdateDoc,
-      (snap) => {
-        setUpdate(snap.exists() ? snap.data() ?? null : null);
-      },
-      () => setUpdate(null)
-    );
-    return unsubscribe;
+  const refresh = useCallback(async (): Promise<void> => {
+    try {
+      setUpdate(await fetchPublishedUpdate());
+    } catch {
+      /* keep last known value */
+    }
   }, []);
+
+  useEffect(() => {
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 15_000);
+    const onVisible = (): void => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [refresh]);
 
   if (!visible || !update) return null;
 
@@ -46,7 +64,7 @@ export function AppUpdatePrompt(): JSX.Element | null {
     if (canNativeInstall && update.apkUrl) {
       setBusy(true);
       const started = installNativeUpdate(update.apkUrl);
-      if (!started && update.apkUrl) window.open(update.apkUrl, '_blank');
+      if (!started) window.open(update.apkUrl, '_blank');
       window.setTimeout(() => setBusy(false), 1200);
       return;
     }
@@ -54,6 +72,7 @@ export function AppUpdatePrompt(): JSX.Element | null {
       window.location.assign(update.apkUrl);
       return;
     }
+    markUpdateApplied(update.id);
     window.location.reload();
   };
 

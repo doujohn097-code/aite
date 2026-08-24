@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import type { AppUpdate, AppUpdateTarget } from './types/app-update';
 
 const DISMISS_KEY = 'aite:dismissed-update';
+const APPLIED_KEY = 'aite:applied-update';
 
 export type NativeAppInfo = {
   versionCode: number;
@@ -67,6 +68,7 @@ export function shouldOfferUpdate(
   if (!updateAppliesTo(update.target, native)) return false;
   if (native && nativeInfo && update.versionCode <= nativeInfo.versionCode)
     return false;
+  if (readAppliedId() === update.id) return false;
   if (!update.force && readDismissedId() === update.id) return false;
   return true;
 }
@@ -83,6 +85,23 @@ export function readDismissedId(): string | null {
 export function dismissUpdate(id: string): void {
   try {
     window.localStorage.setItem(DISMISS_KEY, id);
+  } catch {
+    /* private mode */
+  }
+}
+
+export function readAppliedId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(APPLIED_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function markUpdateApplied(id: string): void {
+  try {
+    window.localStorage.setItem(APPLIED_KEY, id);
   } catch {
     /* private mode */
   }
