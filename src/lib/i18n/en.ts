@@ -540,6 +540,9 @@ export const en: { [K in keyof typeof ar]: string } = {
   'accounts.confirm': 'Confirm?',
   'accounts.other': 'Use another account',
   'accounts.login': 'Log in',
+  'accounts.savedShort': 'Accounts on this device',
+  'accounts.manage': 'Manage accounts',
+  'seo.copyright': '© 2026 Aite — All rights reserved',
 
   'update.bytes': '{n} B',
   'update.kb': '{n} KB',

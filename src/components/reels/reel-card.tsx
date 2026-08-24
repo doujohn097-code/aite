@@ -737,7 +737,9 @@ export function ReelCard({
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.85, y: 8 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    className='menu-container absolute bottom-14 w-max max-w-xs'
+                    className={`menu-container absolute bottom-14 z-30 w-max max-w-[min(16rem,calc(100vw-2rem))] ${
+                      isRtl ? 'left-0' : 'right-0'
+                    }`}
                   >
                     <Popover.Button
                       className='accent-tab flex w-full gap-3 rounded-md p-4 text-light-primary hover:bg-main-sidebar-background dark:text-dark-primary'
@@ -748,7 +750,7 @@ export function ReelCard({
                       })}
                     >
                       <HeroIcon iconName='ShareIcon' />
-                      {t('action.share')} الريل
+                      {t('reels.share')}
                     </Popover.Button>
                     <Popover.Button
                       className='accent-tab flex w-full gap-3 rounded-md p-4 text-light-primary hover:bg-main-sidebar-background dark:text-dark-primary'
@@ -828,7 +830,7 @@ export function ReelCard({
                   className='shadow-md ring-2 ring-white/90 transition group-hover:ring-main-accent'
                 />
               </div>
-              <div className='flex min-w-0 flex-col text-right'>
+              <div className='flex min-w-0 flex-col text-start'>
                 <div className='flex items-center gap-1 truncate'>
                   {visibleProfileName(user.name) ? (
                     <span className='truncate text-sm font-bold leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] transition-colors group-hover:text-main-accent'>

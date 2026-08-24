@@ -11,14 +11,102 @@ type Kind = 'posts' | 'comments' | 'reels' | 'stories';
 
 type DocItem = Record<string, unknown> & { id: string };
 
+type Author = {
+  id: string;
+  name: string;
+  username: string;
+  photoURL: string | null;
+  verified: boolean;
+};
+
 function asRecord(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null
     ? (value as Record<string, unknown>)
     : {};
 }
 
+function toMillis(value: unknown): number | null {
+  if (!value) return null;
+  if (typeof value === 'number') return value;
+  const rec = asRecord(value);
+  if (typeof rec.toMillis === 'function')
+    return (rec as { toMillis: () => number }).toMillis();
+  if (typeof rec.toDate === 'function')
+    return (rec as { toDate: () => Date }).toDate().getTime();
+  if (typeof rec.seconds === 'number')
+    return rec.seconds * 1000 + Math.round(((rec.nanoseconds as number) ?? 0) / 1e6);
+  if (typeof rec._seconds === 'number')
+    return rec._seconds * 1000 + Math.round(((rec._nanoseconds as number) ?? 0) / 1e6);
+  return null;
+}
+
+function mediaList(value: unknown): { src: string; thumbnail: string | null; type: string }[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => {
+      const rec = asRecord(entry);
+      const src = String(rec.src ?? rec.url ?? '');
+      if (!src) return null;
+      return {
+        src,
+        thumbnail: rec.thumbnail ? String(rec.thumbnail) : null,
+        type: String(rec.type ?? '')
+      };
+    })
+    .filter((item): item is { src: string; thumbnail: string | null; type: string } => !!item);
+}
+
 function toDocItem(id: string, data: unknown): DocItem {
   return { id, ...asRecord(data) };
+}
+
+async function loadAuthors(ids: string[]): Promise<Record<string, Author>> {
+  if (!adminFirestore || !ids.length) return {};
+  const unique = Array.from(new Set(ids.filter(Boolean)));
+  const authors: Record<string, Author> = {};
+  for (let i = 0; i < unique.length; i += 30) {
+    const chunk = unique.slice(i, i + 30);
+    const refs = chunk.map((id) => adminFirestore!.collection('users').doc(id));
+    const snaps = await adminFirestore!.getAll(...refs);
+    snaps.forEach((snap) => {
+      const data = asRecord(snap.data());
+      authors[snap.id] = {
+        id: snap.id,
+        name: String(data.name ?? ''),
+        username: String(data.username ?? ''),
+        photoURL: data.photoURL ? String(data.photoURL) : null,
+        verified: Boolean(data.verified)
+      };
+    });
+  }
+  return authors;
+}
+
+function presentItem(item: DocItem, authors: Record<string, Author>) {
+  const authorId = String(item.createdBy ?? item.userId ?? '');
+  const parent = asRecord(item.parent);
+  const likes = Array.isArray(item.userLikes)
+    ? item.userLikes.length
+    : Array.isArray(item.likes)
+    ? item.likes.length
+    : 0;
+  const views = Array.isArray(item.views) ? item.views.length : 0;
+  return {
+    id: item.id,
+    text: item.text ?? null,
+    caption: item.caption ?? null,
+    createdBy: authorId || null,
+    userId: item.userId ?? null,
+    kind: item.kind ?? null,
+    parentId: parent.id ? String(parent.id) : null,
+    parentUsername: parent.username ? String(parent.username) : null,
+    createdAt: toMillis(item.createdAt),
+    media: mediaList(item.images),
+    likes,
+    replies: typeof item.userReplies === 'number' ? item.userReplies : 0,
+    views,
+    author: authors[authorId] ?? null
+  };
 }
 
 export default async function handler(
@@ -48,18 +136,28 @@ export default async function handler(
           .orderBy('createdAt', 'desc')
           .limit(120)
           .get();
-        const items = snap.docs
+        const raw = snap.docs
           .map((doc) => toDocItem(doc.id, doc.data()))
           .filter((item) =>
             kind === 'reels' ? item.kind === 'reel' : item.kind !== 'reel'
-          )
+          );
+        const authors = await loadAuthors(
+          raw.map((item) => String(item.userId ?? ''))
+        );
+        const items = raw
+          .map((item) => presentItem(item, authors))
           .filter((item) => {
             if (!q) return true;
-            const caption = String(item.caption ?? '').toLowerCase();
-            const userId = String(item.userId ?? '').toLowerCase();
-            return (
-              caption.includes(q) || userId.includes(q) || item.id.includes(q)
-            );
+            const hay = [
+              item.caption,
+              item.id,
+              item.createdBy,
+              item.author?.name,
+              item.author?.username
+            ]
+              .join(' ')
+              .toLowerCase();
+            return hay.includes(q);
           })
           .slice(0, limit);
         res.status(200).json({ items });
@@ -71,19 +169,29 @@ export default async function handler(
         .orderBy('createdAt', 'desc')
         .limit(160)
         .get();
-      const items = snap.docs
+      const raw = snap.docs
         .map((doc) => toDocItem(doc.id, doc.data()))
         .filter((item) => {
           const isComment = Boolean(asRecord(item.parent).id);
           return kind === 'comments' ? isComment : !isComment;
-        })
+        });
+      const authors = await loadAuthors(
+        raw.map((item) => String(item.createdBy ?? ''))
+      );
+      const items = raw
+        .map((item) => presentItem(item, authors))
         .filter((item) => {
           if (!q) return true;
-          const text = String(item.text ?? '').toLowerCase();
-          const createdBy = String(item.createdBy ?? '').toLowerCase();
-          return (
-            text.includes(q) || createdBy.includes(q) || item.id.includes(q)
-          );
+          const hay = [
+            item.text,
+            item.id,
+            item.createdBy,
+            item.author?.name,
+            item.author?.username
+          ]
+            .join(' ')
+            .toLowerCase();
+          return hay.includes(q);
         })
         .slice(0, limit);
       res.status(200).json({ items });

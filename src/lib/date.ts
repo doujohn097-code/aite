@@ -45,6 +45,15 @@ export function formatDate(
   return getShortTime(date);
 }
 
+export function formatClockTime(date: Date, locale?: ReturnType<typeof getActiveLocale>): string {
+  const active = locale ?? getActiveLocale();
+  return new Intl.DateTimeFormat(intlLocale(active), {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: active !== 'fr'
+  }).format(date);
+}
+
 export function formatNumber(number: number): string {
   return new Intl.NumberFormat(intlLocale(getActiveLocale()), {
     notation: number > 10_000 ? 'compact' : 'standard',
@@ -96,10 +105,7 @@ function getJoinedTime(date: Date): string {
 }
 
 function getShortTime(date: Date): string {
-  const time = new Intl.DateTimeFormat(loc(), {
-    hour: 'numeric',
-    minute: 'numeric'
-  }).format(date);
+  const time = formatClockTime(date);
 
   if (isToday(date)) return tDate('date.todayAt', { time });
   if (isYesterday(date)) return tDate('date.yesterdayAt', { time });

@@ -55,7 +55,7 @@ export function UserShare({ username, userId }: UserShareProps): JSX.Element {
           <AnimatePresence>
             {open && (
               <Popover.Panel
-                className='menu-container group absolute left-0 top-11 w-max max-w-xs
+                className='menu-container group absolute end-0 top-11 z-30 w-max max-w-[min(18rem,calc(100vw-1.5rem))]
                            break-words text-light-primary dark:text-dark-primary'
                 as={motion.div}
                 {...variants}

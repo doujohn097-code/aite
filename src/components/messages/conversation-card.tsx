@@ -5,8 +5,7 @@ import { VerifiedBadge } from '@components/ui/verified-badge';
 import { StoryAvatar } from '@components/stories/story-avatar';
 import { Skeleton } from '@components/ui/skeleton';
 import { useLanguage } from '@lib/context/language-context';
-import { intlLocale } from '@lib/i18n';
-import { getTimestampMillis } from '@lib/date';
+import { getTimestampMillis, formatClockTime } from '@lib/date';
 import { visibleProfileName, visibleUsername } from '@lib/utils';
 import type { Conversation } from '@lib/types/message';
 import type { User } from '@lib/types/user';
@@ -118,7 +117,7 @@ export function ConversationCard({
               <span className='shrink-0 text-xs text-light-secondary dark:text-dark-secondary'>
                 {formatListTime(
                   lastMessage.createdAt,
-                  intlLocale(locale),
+                  locale,
                   t('common.yesterday')
                 )}
               </span>

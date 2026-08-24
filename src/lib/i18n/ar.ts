@@ -539,6 +539,9 @@ export const ar = {
   'accounts.confirm': 'تأكيد؟',
   'accounts.other': 'استخدام حساب آخر',
   'accounts.login': 'تسجيل الدخول',
+  'accounts.savedShort': 'حسابات هذا الجهاز',
+  'accounts.manage': 'إدارة الحسابات',
+  'seo.copyright': '© 2026 Aite — جميع الحقوق محفوظة',
 
   'update.bytes': '{n} ب',
   'update.kb': '{n} ك.ب',

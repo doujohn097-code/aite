@@ -10,6 +10,7 @@ import {
 } from 'framer-motion';
 import { copyText } from '@lib/copy-text';
 import { useLanguage } from '@lib/context/language-context';
+import { formatClockTime } from '@lib/date';
 import { toast } from 'react-hot-toast';
 import { TweetAudioPlayer } from '@components/tweet/tweet-audio';
 import { Modal } from '@components/modal/modal';
@@ -58,12 +59,12 @@ function replyLabel(type: Exclude<MessageType, 'text'>, t: (k: any) => string): 
   return t('messages.post');
 }
 
-function formatTime(createdAt: Message['createdAt']): string {
+function formatTime(
+  createdAt: Message['createdAt'],
+  locale: 'ar' | 'en' | 'fr'
+): string {
   const date = createdAt?.toDate ? createdAt.toDate() : new Date();
-  return new Intl.DateTimeFormat(undefined, {
-    hour: 'numeric',
-    minute: 'numeric'
-  }).format(date);
+  return formatClockTime(date, locale);
 }
 
 type MessageVideoProps = {
@@ -119,7 +120,7 @@ export function MessageBubble({
   onDelete,
   onEdit
 }: MessageBubbleProps): JSX.Element {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const {
     type,
     text,
@@ -730,7 +731,7 @@ export function MessageBubble({
                           {sharedPost.authorName ||
                             (sharedPost.authorUsername
                               ? `@${sharedPost.authorUsername}`
-                              : 'منشور')}
+                              : t('messages.post'))}
                         </p>
                         {sharedPost.authorUsername && (
                           <p className='truncate text-[11px] opacity-60'>
@@ -805,7 +806,7 @@ export function MessageBubble({
           isOwn ? 'flex-row-reverse' : 'flex-row'
         )}
       >
-        <span>{formatTime(createdAt)}</span>
+        <span>{formatTime(createdAt, locale)}</span>
         {edited && !deletedAt && <span className='opacity-80'>· {t('common.editedShort')}</span>}
         {isOwn && (
           <HeroIcon

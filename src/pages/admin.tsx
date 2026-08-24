@@ -18,15 +18,42 @@ import type { User } from '@lib/types/user';
 
 type Tab = 'users' | 'posts' | 'comments' | 'reels' | 'updates';
 
+type Author = {
+  id: string;
+  name: string;
+  username: string;
+  photoURL: string | null;
+  verified: boolean;
+};
+
+type ContentMedia = { src: string; thumbnail: string | null; type: string };
+
 type ContentItem = {
   id: string;
   text?: string | null;
   caption?: string | null;
-  createdBy?: string;
-  userId?: string;
-  kind?: string;
-  parent?: { id?: string } | null;
+  createdBy?: string | null;
+  userId?: string | null;
+  kind?: string | null;
+  parentId?: string | null;
+  parentUsername?: string | null;
+  createdAt?: number | null;
+  media?: ContentMedia[];
+  likes?: number;
+  replies?: number;
+  views?: number;
+  author?: Author | null;
 };
+
+function formatAdminTime(ms?: number | null): string {
+  if (!ms) return 'بدون تاريخ';
+  return new Intl.DateTimeFormat('ar', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(ms));
+}
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'users', label: 'المستخدمون', icon: 'UsersIcon' },
@@ -419,7 +446,9 @@ export default function Admin(): JSX.Element {
               value={query}
               onChange={(event): void => setQuery(event.target.value)}
               placeholder={
-                tab === 'users' ? 'ابحث بالاسم أو المعرف...' : 'ابحث في النص...'
+                tab === 'users'
+                  ? 'ابحث بالاسم أو المعرف...'
+                  : 'ابحث بالنص أو اسم الناشر...'
               }
               className='min-w-0 flex-1 rounded-full bg-light-line-reply/40 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-main-accent dark:bg-dark-line-reply/40'
             />
@@ -572,90 +601,188 @@ export default function Admin(): JSX.Element {
               لا يوجد مستخدمون
             </p>
           ) : (
-            filteredUsers.map((targetUser) => (
-              <div
-                key={targetUser.id}
-                className='hover-animation flex flex-col gap-3 border-b border-light-border px-4 py-3 dark:border-dark-border xs:flex-row xs:items-center xs:justify-between'
-              >
-                <div className='flex items-center gap-3 overflow-hidden'>
-                  <UserAvatar
-                    src={targetUser.photoURL}
-                    alt={targetUser.name}
-                    username={targetUser.username}
-                    size={40}
-                  />
-                  <UserName
-                    name={targetUser.name}
-                    username={targetUser.username}
-                    verified={targetUser.verified}
-                  />
+            <div className='flex flex-col'>
+              <p className='px-5 py-2 text-xs font-bold text-light-secondary dark:text-dark-secondary'>
+                {filteredUsers.length} حساب
+              </p>
+              {filteredUsers.map((targetUser) => (
+                <div
+                  key={targetUser.id}
+                  className='hover-animation flex flex-col gap-3 border-b border-light-border px-4 py-4 dark:border-dark-border xs:flex-row xs:items-center xs:justify-between'
+                >
+                  <div className='flex min-w-0 items-center gap-3'>
+                    <UserAvatar
+                      src={targetUser.photoURL}
+                      alt={targetUser.name}
+                      username={targetUser.username}
+                      size={44}
+                    />
+                    <div className='min-w-0'>
+                      <UserName
+                        name={targetUser.name}
+                        username={targetUser.username}
+                        verified={targetUser.verified}
+                      />
+                      <p className='mt-0.5 text-[11px] text-light-secondary dark:text-dark-secondary'>
+                        {(targetUser.following?.length ?? 0)} يتابع ·{' '}
+                        {(targetUser.followers?.length ?? 0)} متابع ·{' '}
+                        {targetUser.totalTweets ?? 0} منشور
+                      </p>
+                    </div>
+                  </div>
+                  <div className='flex flex-wrap gap-2'>
+                    <Button
+                      className='bg-main-accent px-3 py-1.5 text-sm font-bold text-main-accent-contrast'
+                      onClick={(): Promise<void> => toggleVerified(targetUser)}
+                      loading={processing[targetUser.id]}
+                      disabled={processing[targetUser.id]}
+                    >
+                      {targetUser.verified ? 'نزع التحقق' : 'منح التحقق'}
+                    </Button>
+                    <Button
+                      className='border border-light-border px-3 py-1.5 text-sm font-bold dark:border-dark-border'
+                      onClick={(): void => {
+                        setPasswordUser(targetUser);
+                        setNewPassword('');
+                      }}
+                      disabled={processing[targetUser.id]}
+                    >
+                      كلمة المرور
+                    </Button>
+                    <Button
+                      className='bg-accent-red px-3 py-1.5 text-sm font-bold text-white'
+                      onClick={(): Promise<void> => deleteUser(targetUser)}
+                      loading={processing[targetUser.id]}
+                      disabled={processing[targetUser.id]}
+                    >
+                      حذف الحساب
+                    </Button>
+                  </div>
                 </div>
-                <div className='flex flex-wrap gap-2'>
-                  <Button
-                    className='bg-main-accent px-3 py-1.5 text-sm font-bold text-main-accent-contrast'
-                    onClick={(): Promise<void> => toggleVerified(targetUser)}
-                    loading={processing[targetUser.id]}
-                    disabled={processing[targetUser.id]}
-                  >
-                    {targetUser.verified ? 'نزع التحقق' : 'منح التحقق'}
-                  </Button>
-                  <Button
-                    className='border border-light-border px-3 py-1.5 text-sm font-bold dark:border-dark-border'
-                    onClick={(): void => {
-                      setPasswordUser(targetUser);
-                      setNewPassword('');
-                    }}
-                    disabled={processing[targetUser.id]}
-                  >
-                    كلمة المرور
-                  </Button>
-                  <Button
-                    className='bg-accent-red px-3 py-1.5 text-sm font-bold text-white'
-                    onClick={(): Promise<void> => deleteUser(targetUser)}
-                    loading={processing[targetUser.id]}
-                    disabled={processing[targetUser.id]}
-                  >
-                    حذف الحساب
-                  </Button>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )
         ) : items.length === 0 ? (
           <p className='p-8 text-center text-light-secondary dark:text-dark-secondary'>
             لا توجد عناصر
           </p>
         ) : (
-          items.map((item) => {
-            const body = String(item.text ?? item.caption ?? '').trim();
-            return (
-              <div
-                key={item.id}
-                className='flex flex-col gap-3 border-b border-light-border px-4 py-3 dark:border-dark-border xs:flex-row xs:items-start xs:justify-between'
-              >
-                <div className='min-w-0 flex-1'>
-                  <p className='text-[11px] text-light-secondary dark:text-dark-secondary'>
-                    {item.createdBy || item.userId} · {item.id}
-                  </p>
-                  <p className='mt-1 whitespace-pre-line break-words text-sm'>
-                    {body ? (
-                      <LinkifiedText text={body} />
-                    ) : (
-                      <span className='text-light-secondary'>بدون نص</span>
-                    )}
-                  </p>
-                </div>
-                <Button
-                  className='shrink-0 bg-accent-red px-3 py-1.5 text-sm font-bold text-white'
-                  onClick={(): Promise<void> => deleteContent(item)}
-                  loading={processing[item.id]}
-                  disabled={processing[item.id]}
+          <div className='flex flex-col'>
+            <p className='px-5 py-2 text-xs font-bold text-light-secondary dark:text-dark-secondary'>
+              {items.length}{' '}
+              {tab === 'reels'
+                ? 'ريل'
+                : tab === 'comments'
+                ? 'تعليق'
+                : 'منشور'}
+            </p>
+            {items.map((item) => {
+              const body = String(item.text ?? item.caption ?? '').trim();
+              const author = item.author;
+              const href =
+                tab === 'reels'
+                  ? `/reels?video=${item.id}`
+                  : `/tweet/${item.parentId || item.id}`;
+              const thumb = item.media?.[0];
+              const thumbSrc = thumb?.thumbnail || thumb?.src || null;
+              return (
+                <article
+                  key={item.id}
+                  className='flex flex-col gap-3 border-b border-light-border px-4 py-4 dark:border-dark-border'
                 >
-                  حذف
-                </Button>
-              </div>
-            );
-          })
+                  <div className='flex items-start gap-3'>
+                    {author ? (
+                      <UserAvatar
+                        src={author.photoURL}
+                        alt={author.name}
+                        username={author.username}
+                        size={40}
+                      />
+                    ) : (
+                      <span className='h-10 w-10 shrink-0 rounded-full bg-light-line-reply dark:bg-dark-line-reply' />
+                    )}
+                    <div className='min-w-0 flex-1'>
+                      <div className='flex flex-wrap items-center gap-x-2 gap-y-1'>
+                        {author ? (
+                          <UserName
+                            name={author.name || author.username}
+                            username={author.username}
+                            verified={author.verified}
+                          />
+                        ) : (
+                          <p className='text-sm font-bold'>حساب محذوف</p>
+                        )}
+                        <span className='rounded-full bg-main-accent/10 px-2 py-0.5 text-[10px] font-bold text-main-accent-text'>
+                          {tab === 'reels'
+                            ? 'ريل'
+                            : tab === 'comments'
+                            ? 'تعليق'
+                            : 'منشور'}
+                        </span>
+                        <span className='text-[11px] text-light-secondary dark:text-dark-secondary'>
+                          {formatAdminTime(item.createdAt)}
+                        </span>
+                      </div>
+                      {tab === 'comments' && item.parentId && (
+                        <p className='mt-1 text-[11px] text-light-secondary dark:text-dark-secondary'>
+                          رد على {item.parentUsername ? `@${item.parentUsername}` : 'منشور'}
+                        </p>
+                      )}
+                      <p className='mt-2 whitespace-pre-line break-words text-sm leading-relaxed'>
+                        {body ? (
+                          <LinkifiedText text={body} />
+                        ) : (
+                          <span className='text-light-secondary'>بدون نص</span>
+                        )}
+                      </p>
+                      {thumbSrc && (
+                        <div className='mt-3 overflow-hidden rounded-2xl border border-light-border dark:border-dark-border'>
+                          {thumb?.type?.startsWith('video/') ? (
+                            <video
+                              src={thumb.src}
+                              poster={thumb.thumbnail ?? undefined}
+                              className='max-h-56 w-full bg-black object-contain'
+                              controls
+                              playsInline
+                              preload='metadata'
+                            />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={thumbSrc}
+                              alt=''
+                              className='max-h-56 w-full object-cover'
+                            />
+                          )}
+                        </div>
+                      )}
+                      <div className='mt-3 flex flex-wrap items-center gap-3 text-[11px] text-light-secondary dark:text-dark-secondary'>
+                        <span>{item.likes ?? 0} إعجاب</span>
+                        {tab !== 'reels' && <span>{item.replies ?? 0} رد</span>}
+                        {tab === 'reels' && <span>{item.views ?? 0} مشاهدة</span>}
+                        <a
+                          href={href}
+                          target='_blank'
+                          rel='noreferrer'
+                          className='font-bold text-main-accent-text hover:underline'
+                        >
+                          فتح
+                        </a>
+                      </div>
+                    </div>
+                    <Button
+                      className='shrink-0 bg-accent-red px-3 py-1.5 text-sm font-bold text-white'
+                      onClick={(): Promise<void> => deleteContent(item)}
+                      loading={processing[item.id]}
+                      disabled={processing[item.id]}
+                    >
+                      حذف
+                    </Button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         )}
       </section>
 

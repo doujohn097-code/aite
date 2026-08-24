@@ -5,6 +5,7 @@ import { useLanguage } from '@lib/context/language-context';
 import type { AppLocale } from '@lib/i18n';
 import { auth } from '@lib/firebase/app';
 import { saveAccount } from '@lib/accounts';
+import { SavedAccountsStrip } from './saved-accounts-strip';
 import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
 import { InputField } from '@components/input/input-field';
@@ -190,6 +191,17 @@ export function LoginMain(): JSX.Element {
             />
             <i className='w-full border-b border-light-border dark:border-dark-border' />
           </div>
+          <SavedAccountsStrip
+            onPick={(account): void => {
+              setIsSignUp(false);
+              setUsername(account.username);
+              setError(null);
+              setSuccess(null);
+              window.setTimeout(() => {
+                document.getElementById('password')?.focus();
+              }, 40);
+            }}
+          />
           <form onSubmit={handleSubmit} className='grid gap-3'>
             {isSignUp && (
               <InputField

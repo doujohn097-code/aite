@@ -542,6 +542,9 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'accounts.confirm': 'Confirmer ?',
   'accounts.other': 'Utiliser un autre compte',
   'accounts.login': 'Connexion',
+  'accounts.savedShort': 'Comptes sur cet appareil',
+  'accounts.manage': 'Gérer les comptes',
+  'seo.copyright': '© 2026 Aite — Tous droits réservés',
 
   'update.bytes': '{n} o',
   'update.kb': '{n} Ko',
