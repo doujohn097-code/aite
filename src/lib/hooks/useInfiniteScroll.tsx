@@ -13,12 +13,14 @@ type InfiniteScroll<T> = {
   data: T[] | null;
   loading: boolean;
   LoadMore: () => JSX.Element;
+  refresh: () => Promise<void>;
 };
 
 type InfiniteScrollWithUser<T> = {
   data: (T & { user: User })[] | null;
   loading: boolean;
   LoadMore: () => JSX.Element;
+  refresh: () => Promise<void>;
 };
 
 export function useInfiniteScroll<T>(
@@ -46,12 +48,20 @@ export function useInfiniteScroll<T>(
   const [tweetsLimit, setTweetsLimit] = useState(initialSize ?? 20);
   const [reachedLimit, setReachedLimit] = useState(false);
   const [loadMoreInView, setLoadMoreInView] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const justIncreased = useRef(false);
 
   const { data, loading } = useCollection(
     query(collection, ...(queryConstraints ?? []), limit(tweetsLimit)),
-    { ...fetchOptions, preserve: true }
+    { ...fetchOptions, preserve: true, refreshKey }
   );
+
+  const refresh = useCallback(async (): Promise<void> => {
+    setTweetsLimit(initialSize ?? 20);
+    setReachedLimit(false);
+    setRefreshKey((key) => key + 1);
+    await new Promise((resolve) => window.setTimeout(resolve, 420));
+  }, [initialSize]);
 
   useEffect(() => {
     if (loading || data === null) return;
@@ -87,5 +97,5 @@ export function useInfiniteScroll<T>(
     [reachedLimit, loading]
   );
 
-  return { data, loading, LoadMore };
+  return { data, loading, LoadMore, refresh };
 }

@@ -18,6 +18,7 @@ import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ReelCard } from '@components/reels/reel-card';
 import { CreateReelModal } from '@components/reels/create-reel-modal';
+import { PullToRefresh } from '@components/common/pull-to-refresh';
 import type { ReactElement, ReactNode } from 'react';
 import type { User } from '@lib/types/user';
 
@@ -75,7 +76,8 @@ export default function Reels(): JSX.Element {
   const {
     data: rawReels,
     loading: reelsLoading,
-    LoadMore
+    LoadMore,
+    refresh
   } = useInfiniteScroll(
     storiesCollection,
     reelsConstraints,
@@ -211,6 +213,16 @@ export default function Reels(): JSX.Element {
     }
   };
 
+  const handleRefresh = async (): Promise<void> => {
+    const container = containerRef.current;
+    if (container) {
+      container.style.scrollBehavior = 'auto';
+      container.scrollTop = 0;
+    }
+    setActiveIndex(0);
+    await refresh();
+  };
+
   return (
     <MainLayout>
       <SEO title='الريلز / Aite' />
@@ -256,6 +268,13 @@ export default function Reels(): JSX.Element {
             </Button>
           </div>
         ) : (
+          <PullToRefresh
+            onRefresh={handleRefresh}
+            scrollRef={containerRef}
+            disabled={createOpen || activeIndex > 0}
+            variant='dark'
+            className='h-full w-full'
+          >
           <div
             ref={containerRef}
             className={`h-full w-full select-none snap-y snap-mandatory overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth outline-none transition-opacity duration-150 [-webkit-tap-highlight-color:transparent] focus:outline-none ${
@@ -283,6 +302,7 @@ export default function Reels(): JSX.Element {
             </AnimatePresence>
             <LoadMore />
           </div>
+          </PullToRefresh>
         )}
 
         <CreateReelModal

@@ -18,6 +18,7 @@ import { SEO } from '@components/common/seo';
 import { Loading } from '@components/ui/loading';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { NotificationCard } from '@components/notifications/notification-card';
+import { PullToRefresh } from '@components/common/pull-to-refresh';
 import type { ReactElement, ReactNode } from 'react';
 import type { Notification } from '@lib/types/notification';
 
@@ -76,8 +77,14 @@ export default function Notifications(): JSX.Element {
     void markRead();
   }, [user]);
 
+  const handleRefresh = async (): Promise<void> => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    await new Promise((resolve) => window.setTimeout(resolve, 380));
+  };
+
   return (
     <MainContainer>
+      <PullToRefresh onRefresh={handleRefresh}>
       <SEO title='الإشعارات / Aite' />
       <MainHeader title='الإشعارات' />
       {notifications === null ? (
@@ -102,6 +109,7 @@ export default function Notifications(): JSX.Element {
           </p>
         </div>
       )}
+      </PullToRefresh>
     </MainContainer>
   );
 }

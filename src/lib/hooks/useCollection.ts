@@ -18,6 +18,7 @@ export type UseCollectionOptions = {
   allowNull?: boolean;
   disabled?: boolean;
   preserve?: boolean;
+  refreshKey?: number;
 };
 
 export function useCollection<T>(
@@ -27,6 +28,7 @@ export function useCollection<T>(
     allowNull?: boolean;
     disabled?: boolean;
     preserve?: boolean;
+    refreshKey?: number;
   }
 ): DataWithUser<T>;
 
@@ -45,7 +47,8 @@ export function useCollection<T>(
 
   const cachedQuery = useCacheQuery(query);
 
-  const { includeUser, allowNull, disabled, preserve } = options ?? {};
+  const { includeUser, allowNull, disabled, preserve, refreshKey } =
+    options ?? {};
 
   useEffect(() => {
     if (disabled || !cachedQuery) {
@@ -127,7 +130,7 @@ export function useCollection<T>(
 
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cachedQuery, disabled]);
+  }, [cachedQuery, disabled, refreshKey]);
 
   return { data, loading };
 }

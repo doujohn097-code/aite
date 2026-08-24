@@ -18,6 +18,7 @@ import { Tweet } from '@components/tweet/tweet';
 import { Loading } from '@components/ui/loading';
 import { Error } from '@components/ui/error';
 import { HeroIcon } from '@components/ui/hero-icon';
+import { PullToRefresh } from '@components/common/pull-to-refresh';
 import type { ReactElement, ReactNode } from 'react';
 import type { RankableItem } from '@lib/feed-rank';
 import type { TweetWithUser } from '@lib/types/tweet';
@@ -38,7 +39,7 @@ export default function Home(): JSX.Element {
   const { isMobile } = useWindow();
   const { user } = useAuth();
 
-  const { data, loading, LoadMore } = useInfiniteScroll(
+  const { data, loading, LoadMore, refresh } = useInfiniteScroll(
     tweetsCollection,
     [where('parent', '==', null), orderBy('createdAt', 'desc')],
     { includeUser: true, allowNull: true, preserve: true },
@@ -52,8 +53,14 @@ export default function Home(): JSX.Element {
     kind: 'post'
   });
 
+  const handleRefresh = async (): Promise<void> => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    await refresh();
+  };
+
   return (
     <MainContainer>
+      <PullToRefresh onRefresh={handleRefresh}>
       <SEO title='الرئيسية / Aite' />
       <MainHeader
         useMobileSidebar
@@ -92,6 +99,7 @@ export default function Home(): JSX.Element {
           </>
         )}
       </section>
+      </PullToRefresh>
     </MainContainer>
   );
 }
