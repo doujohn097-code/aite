@@ -37,6 +37,7 @@ import {
 import { formatNumber } from '@lib/date';
 import { preventBubbling, visibleProfileName, visibleUsername } from '@lib/utils';
 import { UserAvatar } from '@components/user/user-avatar';
+import { Skeleton } from '@components/ui/skeleton';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -825,7 +826,7 @@ export function ReelCard({
                       {user.name}
                     </span>
                   ) : (
-                    <span className='h-3.5 w-20 animate-pulse rounded bg-white/25' />
+                    <Skeleton className='h-3.5 w-20 bg-white/25' />
                   )}
                   {user.verified && visibleProfileName(user.name) && (
                     <VerifiedBadge className='h-4 w-4 shrink-0' />
@@ -839,8 +840,8 @@ export function ReelCard({
           </Link>
         ) : (
           <div className='flex items-center gap-2.5'>
-            <span className='h-10 w-10 animate-pulse rounded-full bg-white/20' />
-            <span className='h-3.5 w-24 animate-pulse rounded bg-white/25' />
+            <Skeleton shape='circle' className='h-10 w-10 bg-white/20' />
+            <Skeleton className='h-3.5 w-24 bg-white/25' />
           </div>
         )}
 

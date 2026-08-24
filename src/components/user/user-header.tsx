@@ -48,13 +48,13 @@ export function UserHeader(): JSX.Element {
     <AnimatePresence mode='popLayout'>
       {loading ? (
         <motion.div
-          className='-mb-1 inner:animate-pulse inner:rounded-lg 
-                     inner:bg-light-secondary dark:inner:bg-dark-secondary'
+          className='-mb-1 inner:animate-pulse inner:rounded-full
+                     inner:bg-light-secondary/20 dark:inner:bg-dark-secondary/30'
           {...variants}
           key='loading'
         >
           <div className='-mt-1 mb-1 h-5 w-24' />
-          <div className='h-4 w-12' />
+          <div className='h-3.5 w-12' />
         </motion.div>
       ) : !user ? (
         <motion.h2 className='text-xl font-bold' {...variants} key='not-found'>

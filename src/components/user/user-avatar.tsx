@@ -35,7 +35,8 @@ export function UserAvatar({
     <span className='relative inline-flex shrink-0'>
       <NextImage
         useSkeleton
-        imgClassName='rounded-full'
+        className='overflow-hidden rounded-full'
+        imgClassName='rounded-full object-cover'
         width={pictureSize}
         height={pictureSize}
         src={normalizedSrc}

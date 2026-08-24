@@ -14,7 +14,7 @@ import {
 } from '@lib/notification-target';
 import { UserAvatar } from '@components/user/user-avatar';
 import { HeroIcon } from '@components/ui/hero-icon';
-import { NotificationSkeleton } from '@components/ui/skeleton';
+import { NotificationSkeleton, Skeleton } from '@components/ui/skeleton';
 import { visibleProfileName, visibleUsername } from '@lib/utils';
 import cn from 'clsx';
 import type { Notification } from '@lib/types/notification';
@@ -117,7 +117,7 @@ export function NotificationCard({
             {name ? (
               <span className='font-bold'>{name}</span>
             ) : (
-              <span className='inline-block h-3.5 w-20 animate-pulse rounded bg-light-secondary/20 dark:bg-dark-secondary/30' />
+              <Skeleton className='inline-block h-3.5 w-20 align-middle' />
             )}
             <span className='text-light-secondary dark:text-dark-secondary'>
               {' '}

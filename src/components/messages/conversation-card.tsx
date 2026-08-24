@@ -83,7 +83,7 @@ export function ConversationCard({
           {peer ? (
             <StoryAvatar user={peer} size={48} />
           ) : (
-            <Skeleton className='h-12 w-12 rounded-full' />
+            <Skeleton shape='circle' className='h-12 w-12' />
           )}
         </div>
 
@@ -100,7 +100,7 @@ export function ConversationCard({
                   {visibleProfileName(peer?.name)}
                 </p>
               ) : (
-                <Skeleton className='h-4 w-24' />
+                <Skeleton className='h-3.5 w-24' />
               )}
               {peer?.verified && visibleProfileName(peer?.name) && (
                 <VerifiedBadge className='h-4 w-4' />

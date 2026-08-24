@@ -10,7 +10,7 @@ export function Placeholder(): JSX.Element {
         image='/home.png'
       />
       <div className='border-b border-light-border px-4 py-3 dark:border-dark-border'>
-        <div className='h-6 w-20 animate-pulse rounded bg-light-secondary/20 dark:bg-dark-secondary/30' />
+        <div className='h-6 w-20 animate-pulse rounded-full bg-light-secondary/20 dark:bg-dark-secondary/30' />
       </div>
       <TweetFeedSkeleton />
     </main>

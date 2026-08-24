@@ -486,7 +486,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
             {user.name ? (
               <span className='font-bold'>{user.name}</span>
             ) : (
-              <span className='h-4 w-24 animate-pulse rounded bg-white/20' />
+              <span className='h-4 w-24 animate-pulse overflow-hidden rounded-full bg-white/20' />
             )}
             {user.username ? (
               <span className='text-sm opacity-80'>@{user.username}</span>

@@ -33,7 +33,7 @@ export function UserName({
         {safeName ? (
           <CustomTag className='truncate'>{safeName}</CustomTag>
         ) : (
-          <Skeleton className='h-4 w-24' />
+          <Skeleton className='h-3.5 w-24' />
         )}
         {verified && safeName && (
           <VerifiedBadge

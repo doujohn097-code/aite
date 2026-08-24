@@ -22,7 +22,7 @@ import {
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { SEO } from '@components/common/seo';
-import { ConversationFeedSkeleton } from '@components/ui/skeleton';
+import { MessageThreadSkeleton, Skeleton } from '@components/ui/skeleton';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { MessageBubble } from '@components/messages/message-bubble';
@@ -452,7 +452,7 @@ export default function Chat(): JSX.Element {
           </a>
         </Link>
 
-        {peer && (
+        {peer ? (
           <Link href={`/user/${peer.username}`}>
             <a className='flex min-w-0 items-center gap-3'>
               <span className='relative shrink-0'>
@@ -475,6 +475,14 @@ export default function Chat(): JSX.Element {
               </span>
             </a>
           </Link>
+        ) : (
+          <div className='flex min-w-0 items-center gap-3'>
+            <Skeleton shape='circle' className='h-10 w-10' />
+            <div className='flex flex-col gap-1.5'>
+              <Skeleton className='h-3.5 w-28' />
+              <Skeleton className='h-2.5 w-16' />
+            </div>
+          </div>
         )}
         {user && peerId && (
           <button
@@ -496,7 +504,7 @@ export default function Chat(): JSX.Element {
         className='relative flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-clip overscroll-contain bg-main-background px-3 py-4'
       >
         {!messages ? (
-          <ConversationFeedSkeleton count={4} />
+          <MessageThreadSkeleton />
         ) : shownMessages.length ? (
           shownMessages.map((message, index) => {
             const millis = toMillis(message.createdAt);
