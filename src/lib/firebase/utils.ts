@@ -980,7 +980,7 @@ export async function likeReel(
         fromUserId: userId,
         toUserId: reelOwnerId,
         storyId: reelId,
-        storyUserId: reelOwnerId,
+        context: 'reel',
         read: false
       },
       'reel'
@@ -1066,6 +1066,8 @@ export async function addReelComment(
           fromUserId: userId,
           toUserId: reelOwnerId,
           tweetId: docRef.id,
+          storyId: reelId,
+          context: 'reel',
           read: false
         },
         'reel'

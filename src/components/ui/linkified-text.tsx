@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { isMentionToken } from '@lib/mention-parser';
 import { safeHttpUrl } from '@lib/utils';
+import { HeroIcon } from './hero-icon';
 
 const TOKEN_PATTERN =
   /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+|@[a-zA-Z0-9_]{3,15}\b)/g;
@@ -24,7 +25,6 @@ function tokenize(text: string): TextPart[] {
     const isMention = isMentionToken(value);
     const previous = match.index > 0 ? text[match.index - 1] : '';
 
-    // لا نحوّل @ داخل بريد إلكتروني أو اسم مركّب إلى إشارة.
     if (isMention && /[a-zA-Z0-9_@]/.test(previous)) continue;
 
     if (match.index > cursor)
@@ -41,13 +41,22 @@ function tokenize(text: string): TextPart[] {
   return parts;
 }
 
+function linkLabel(href: string, raw: string): string {
+  try {
+    const host = new URL(href).hostname.replace(/^www\./, '');
+    return host || raw;
+  } catch {
+    return raw;
+  }
+}
+
 export function LinkifiedText({
   text,
   linkClassName
 }: LinkifiedTextProps): JSX.Element {
-  const classes =
+  const mentionClass =
     linkClassName ??
-    'break-all text-main-accent-text underline decoration-main-accent/60 underline-offset-2 transition hover:decoration-main-accent';
+    'font-bold text-main-accent-text transition hover:underline';
 
   return (
     <>
@@ -58,8 +67,10 @@ export function LinkifiedText({
           return (
             <Link href={`/user/${encodeURIComponent(username)}`} key={index}>
               <a
-                className={classes}
-                onClick={(event) => event.stopPropagation()}
+                className={mentionClass}
+                onClick={(event): void => {
+                  event.stopPropagation();
+                }}
               >
                 {part.value}
               </a>
@@ -76,10 +87,16 @@ export function LinkifiedText({
             target='_blank'
             rel='noopener noreferrer nofollow'
             referrerPolicy='no-referrer'
-            onClick={(event) => event.stopPropagation()}
-            className={classes}
+            onClick={(event): void => {
+              event.stopPropagation();
+            }}
+            className={
+              linkClassName ??
+              'bg-main-accent/12 mx-0.5 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 align-middle text-[13px] font-semibold text-main-accent-text ring-1 ring-main-accent/20 transition hover:bg-main-accent/20'
+            }
           >
-            {part.value}
+            <HeroIcon className='h-3.5 w-3.5 shrink-0' iconName='LinkIcon' />
+            <span className='truncate'>{linkLabel(href, part.value)}</span>
           </a>
         );
       })}

@@ -8,6 +8,8 @@ export type NotificationType =
   | 'storyLike'
   | 'mention';
 
+export type NotificationContext = 'post' | 'reel' | 'story';
+
 export type Notification = {
   id: string;
   type: NotificationType;
@@ -16,6 +18,7 @@ export type Notification = {
   tweetId?: string | null;
   storyId?: string | null;
   storyUserId?: string | null;
+  context?: NotificationContext | null;
   read: boolean;
   createdAt: Timestamp | null;
 };

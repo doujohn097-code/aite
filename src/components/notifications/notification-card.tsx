@@ -7,21 +7,16 @@ import {
   notificationsCollection
 } from '@lib/firebase/collections';
 import { formatDate } from '@lib/date';
+import {
+  notificationCopy,
+  notificationHref,
+  resolveNotificationContext
+} from '@lib/notification-target';
 import { UserAvatar } from '@components/user/user-avatar';
 import { HeroIcon } from '@components/ui/hero-icon';
 import cn from 'clsx';
 import type { Notification } from '@lib/types/notification';
 import type { IconName } from '@components/ui/hero-icon';
-
-const notificationText: Record<Notification['type'], (name: string) => string> =
-  {
-    like: () => 'أعجب بمنشورك',
-    retweet: () => 'أعاد نشر منشورك',
-    follow: () => 'بدأ بمتابعتك',
-    reply: () => 'رد على منشورك',
-    storyLike: () => 'أعجب بقصتك',
-    mention: () => 'أشار إليك في محتوى'
-  };
 
 const typeStyles: Record<
   Notification['type'],
@@ -71,21 +66,8 @@ export function NotificationCard({
 
   const name = fromUser?.name ?? 'مستخدم';
   const username = fromUser?.username ?? 'unknown';
-
-  const href =
-    notification.type === 'follow'
-      ? `/user/${username}`
-      : notification.type === 'mention' && notification.storyId
-      ? notification.storyUserId
-        ? `/stories/${notification.storyUserId}?storyId=${notification.storyId}`
-        : `/reels?video=${notification.storyId}`
-      : notification.type === 'storyLike' && notification.storyUserId
-      ? `/stories/${notification.storyUserId}?storyId=${
-          notification.storyId ?? ''
-        }`
-      : notification.tweetId
-      ? `/tweet/${notification.tweetId}`
-      : '/home';
+  const href = notificationHref(notification, username);
+  const context = resolveNotificationContext(notification);
 
   const markAsRead = async (): Promise<void> => {
     if (!currentUser) return;
@@ -105,7 +87,6 @@ export function NotificationCard({
         )}
         onClick={markAsRead}
       >
-        {/* Avatar with type badge */}
         <div className='relative shrink-0'>
           <UserAvatar
             src={fromUser?.photoURL ?? '/assets/default-avatar.png'}
@@ -124,23 +105,33 @@ export function NotificationCard({
           </span>
         </div>
 
-        {/* Text */}
         <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
           <p className='text-[15px] text-light-primary dark:text-dark-primary'>
             <span className='font-bold'>{name}</span>
             <span className='text-light-secondary dark:text-dark-secondary'>
               {' '}
-              {notificationText[notification.type](name)}
+              {notificationCopy(notification)}
             </span>
           </p>
-          {notification.createdAt && (
-            <p className='mt-0.5 text-xs text-light-secondary/80 dark:text-dark-secondary/80'>
-              {formatDate(notification.createdAt, 'tweet')}
-            </p>
-          )}
+          <div className='mt-0.5 flex flex-wrap items-center gap-2'>
+            {context === 'reel' && (
+              <span className='rounded-full bg-main-accent/15 px-2 py-0.5 text-[10px] font-bold text-main-accent-text'>
+                ريلز
+              </span>
+            )}
+            {context === 'story' && (
+              <span className='rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-300'>
+                قصة
+              </span>
+            )}
+            {notification.createdAt && (
+              <p className='text-xs text-light-secondary/80 dark:text-dark-secondary/80'>
+                {formatDate(notification.createdAt, 'tweet')}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Unread indicator */}
         {unread && (
           <span className='h-2 w-2 shrink-0 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]' />
         )}

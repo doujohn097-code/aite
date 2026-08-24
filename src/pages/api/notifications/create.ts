@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import admin from 'firebase-admin';
 import { verifyIdToken } from '@lib/firebase-admin';
 import { extractMentions } from '@lib/mention-parser';
+import { notificationPushCopy } from '@lib/notification-target';
 import { consumeRateLimit } from '@lib/server/rate-limit';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -64,34 +65,21 @@ async function sendActivityPush(
   const senderPhoto =
     typeof sender.photoURL === 'string' ? sender.photoURL.slice(0, 500) : null;
   const type = String(target.data.type ?? 'mention') as ActivityType;
-  const copy: Record<ActivityType, { title: string; body: string }> = {
-    follow: {
-      title: 'متابع جديد',
-      body: `قام ${senderName} بمتابعتك`
-    },
-    like: { title: 'إعجاب', body: `قام ${senderName} بالتفاعل مع منشورك` },
-    retweet: {
-      title: 'إعادة نشر',
-      body: `قام ${senderName} بإعادة نشر منشورك`
-    },
-    reply: { title: 'رد جديد', body: `قام ${senderName} بالرد على محتواك` },
-    storyLike: {
-      title: 'تفاعل جديد',
-      body: `قام ${senderName} بالتفاعل مع محتواك`
-    },
-    mention: {
-      title: 'إشارة جديدة',
-      body: `أشار إليك ${senderName} في محتوى`
-    }
-  };
+  const context =
+    target.data.context === 'reel' ||
+    target.data.context === 'story' ||
+    target.data.context === 'post'
+      ? target.data.context
+      : null;
+  const copy = notificationPushCopy(type, context, senderName);
 
   await admin
     .messaging()
     .sendEachForMulticast({
       tokens,
       data: {
-        title: copy[type].title,
-        body: copy[type].body,
+        title: copy.title,
+        body: copy.body,
         url: target.url,
         channel: type === 'mention' ? 'mentions' : 'activity',
         tag: `${type}-${String(
@@ -128,8 +116,20 @@ async function mentionTargets(
       throw new Error('forbidden');
     text = typeof data.text === 'string' ? data.text : '';
     sourceId = tweetId;
-    baseData = { tweetId };
-    url = `/tweet/${tweetId}`;
+    const parentId = cleanId(asRecord(data.parent).id);
+    if (parentId) {
+      const parentStory = await firestore.doc(`stories/${parentId}`).get();
+      if (parentStory.exists && asRecord(parentStory.data()).kind === 'reel') {
+        baseData = { tweetId, storyId: parentId, context: 'reel' };
+        url = `/reels?video=${parentId}`;
+      } else {
+        baseData = { tweetId: parentId, context: 'post' };
+        url = `/tweet/${parentId}`;
+      }
+    } else {
+      baseData = { tweetId, context: 'post' };
+      url = `/tweet/${tweetId}`;
+    }
   } else if (context === 'reel' || context === 'story') {
     const storyId = cleanId(input.storyId);
     if (!storyId) throw new Error('invalid_target');
@@ -145,6 +145,7 @@ async function mentionTargets(
     sourceId = storyId;
     baseData = {
       storyId,
+      context,
       ...(context === 'story' ? { storyUserId: senderId } : {})
     };
     url =
@@ -212,7 +213,12 @@ async function validateActivity(
     if (!followers.includes(senderId)) throw new Error('forbidden');
     return {
       userId: recipientId,
-      data: { type, fromUserId: senderId, toUserId: recipientId },
+      data: {
+        type,
+        fromUserId: senderId,
+        toUserId: recipientId,
+        context: 'post'
+      },
       url: '/notifications'
     };
   }
@@ -237,6 +243,7 @@ async function validateActivity(
         fromUserId: senderId,
         toUserId: recipientId,
         storyId,
+        context: isReel ? 'reel' : 'story',
         ...(isReel ? {} : { storyUserId: recipientId })
       },
       url: isReel
@@ -259,7 +266,13 @@ async function validateActivity(
       throw new Error('forbidden');
     return {
       userId: recipientId,
-      data: { type, fromUserId: senderId, toUserId: recipientId, tweetId },
+      data: {
+        type,
+        fromUserId: senderId,
+        toUserId: recipientId,
+        tweetId,
+        context: 'post'
+      },
       url: `/tweet/${tweetId}`
     };
   }
@@ -279,7 +292,9 @@ async function validateActivity(
           type,
           fromUserId: senderId,
           toUserId: recipientId,
-          storyId: parentId
+          storyId: parentId,
+          tweetId,
+          context: 'reel'
         },
         url: `/reels?video=${parentId}`
       };
@@ -290,8 +305,14 @@ async function validateActivity(
       throw new Error('forbidden');
     return {
       userId: recipientId,
-      data: { type, fromUserId: senderId, toUserId: recipientId, tweetId },
-      url: `/tweet/${tweetId}`
+      data: {
+        type,
+        fromUserId: senderId,
+        toUserId: recipientId,
+        tweetId: parentId,
+        context: 'post'
+      },
+      url: `/tweet/${parentId}`
     };
   }
 

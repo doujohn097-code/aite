@@ -25,6 +25,9 @@ import { Loading } from '@components/ui/loading';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { preventBubbling } from '@lib/utils';
+import { useMentionAssist } from '@lib/hooks/useMentionAssist';
+import { MentionSuggest } from '@components/input/mention-suggest';
+import { LinkifiedText } from '@components/ui/linkified-text';
 import type { TweetWithUser } from '@lib/types/tweet';
 
 type ReelsCommentsProps = {
@@ -70,6 +73,8 @@ export function ReelsComments({
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { mentionQuery, onMentionChange, insertMention, closeMentions } =
+    useMentionAssist(comment, setComment, inputRef);
   const listContainerRef = useRef<HTMLDivElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastLongPressTimeRef = useRef<number>(0);
@@ -551,7 +556,7 @@ export function ReelsComments({
                             )}
 
                             <p className='mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-light-primary dark:text-dark-primary'>
-                              {item.text}
+                              {item.text && <LinkifiedText text={item.text} />}
                             </p>
 
                             {/* Action row: Reply button, Likes count */}
@@ -716,7 +721,9 @@ export function ReelsComments({
 
                                     {/* Reply text body */}
                                     <p className='mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-light-primary dark:text-dark-primary'>
-                                      {reply.text}
+                                      {reply.text && (
+                                        <LinkifiedText text={reply.text} />
+                                      )}
                                     </p>
 
                                     {/* Reply action row */}
@@ -839,16 +846,21 @@ export function ReelsComments({
             {/* Input Form */}
             <form
               onSubmit={handleSubmit}
-              className='flex items-center gap-2 border-t border-light-border bg-main-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-dark-border'
+              className='relative flex items-center gap-2 border-t border-light-border bg-main-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-dark-border'
             >
+              <MentionSuggest
+                query={mentionQuery}
+                onSelect={insertMention}
+                onClose={closeMentions}
+              />
               <input
                 ref={inputRef}
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={onMentionChange}
                 placeholder={
                   replyingTo
                     ? `اكتب رداً على @${replyingTo.username}...`
-                    : 'أضف تعليقاً لطيفاً...'
+                    : 'أضف تعليقاً لطيفاً...  @للإشارة'
                 }
                 maxLength={280}
                 className='flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-sm text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent dark:bg-dark-line-reply/50 dark:text-dark-primary'

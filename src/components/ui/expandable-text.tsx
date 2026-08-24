@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import cn from 'clsx';
+import { LinkifiedText } from './linkified-text';
 
 type ExpandableTextProps = {
   text: string;
@@ -35,7 +36,7 @@ export function ExpandableText({
           transition={{ duration: 0.2 }}
           className='whitespace-pre-line break-words'
         >
-          {shown}
+          <LinkifiedText text={shown} />
         </motion.p>
       </AnimatePresence>
       {isLong && (

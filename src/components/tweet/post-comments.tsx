@@ -25,6 +25,9 @@ import { Loading } from '@components/ui/loading';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { preventBubbling } from '@lib/utils';
+import { useMentionAssist } from '@lib/hooks/useMentionAssist';
+import { MentionSuggest } from '@components/input/mention-suggest';
+import { LinkifiedText } from '@components/ui/linkified-text';
 import type { TweetWithUser } from '@lib/types/tweet';
 
 type PostCommentsProps = {
@@ -66,6 +69,8 @@ export function PostComments({
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { mentionQuery, onMentionChange, insertMention, closeMentions } =
+    useMentionAssist(comment, setComment, inputRef);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastLongPressTimeRef = useRef<number>(0);
 
@@ -444,7 +449,7 @@ export function PostComments({
                       </div>
 
                       <p className='mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-light-primary dark:text-dark-primary'>
-                        {item.text}
+                        {item.text && <LinkifiedText text={item.text} />}
                       </p>
 
                       <div className='mt-2 flex items-center gap-4 text-xs font-semibold text-light-secondary dark:text-dark-secondary'>
@@ -596,7 +601,9 @@ export function PostComments({
                               </div>
 
                               <p className='mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-light-primary dark:text-dark-primary'>
-                                {reply.text}
+                                {reply.text && (
+                                  <LinkifiedText text={reply.text} />
+                                )}
                               </p>
 
                               <div className='mt-2 flex items-center gap-3 text-[11px] font-semibold text-light-secondary dark:text-dark-secondary'>
