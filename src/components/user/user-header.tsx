@@ -46,7 +46,7 @@ export function UserHeader(): JSX.Element {
 
   return (
     <AnimatePresence mode='popLayout'>
-      {loading || statsLoading ? (
+      {loading ? (
         <motion.div
           className='-mb-1 inner:animate-pulse inner:rounded-lg 
                      inner:bg-light-secondary dark:inner:bg-dark-secondary'
@@ -58,7 +58,7 @@ export function UserHeader(): JSX.Element {
         </motion.div>
       ) : !user ? (
         <motion.h2 className='text-xl font-bold' {...variants} key='not-found'>
-          {isInFollowPage ? `@${id as string}` : 'مستخدم'}
+          {typeof id === 'string' ? `@${id}` : 'الحساب غير موجود'}
         </motion.h2>
       ) : (
         <motion.div

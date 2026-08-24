@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { getDoc, doc, onSnapshot, Timestamp } from 'firebase/firestore';
-import { usersCollection } from '@lib/firebase/collections';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { onSnapshot, getDocsFromServer } from 'firebase/firestore';
+import { blankUser, loadUsersByIds } from '@lib/firebase/users';
 import { useCacheQuery } from './useCacheQuery';
 import type { Query } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
@@ -8,6 +8,7 @@ import type { User } from '@lib/types/user';
 type UseCollection<T> = {
   data: T[] | null;
   loading: boolean;
+  refresh: () => Promise<void>;
 };
 
 type DataWithRef<T> = (T & { createdBy: string })[];
@@ -44,85 +45,70 @@ export function useCollection<T>(
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState(true);
   const hasLiveData = useRef(false);
+  const applyId = useRef(0);
 
   const cachedQuery = useCacheQuery(query);
 
   const { includeUser, allowNull, disabled, preserve, refreshKey } =
     options ?? {};
 
+  const applyRows = useCallback(
+    async (rows: T[]): Promise<void> => {
+      const token = ++applyId.current;
+
+      if (allowNull && !rows.length) {
+        setData([]);
+        setLoading(false);
+        return;
+      }
+
+      if (!includeUser) {
+        setData(rows);
+        setLoading(false);
+        return;
+      }
+
+      const withRef = rows as DataWithRef<T>;
+      const users = await loadUsersByIds(
+        withRef.map((item) => item.createdBy)
+      );
+      if (token !== applyId.current) return;
+
+      setData(
+        withRef.map((item) => ({
+          ...item,
+          user: users.get(item.createdBy) ?? blankUser(item.createdBy || '')
+        })) as T[]
+      );
+      setLoading(false);
+    },
+    [allowNull, includeUser]
+  );
+
   useEffect(() => {
     if (disabled || !cachedQuery) {
       setLoading(false);
+      if (!preserve) setData(null);
       return;
     }
 
-    if (!preserve && data) {
+    if (!preserve) {
       hasLiveData.current = false;
       setData(null);
       setLoading(true);
     }
 
-    const populateUser = async (currentData: DataWithRef<T>): Promise<void> => {
-      const dataWithUser = await Promise.all(
-        currentData.map(async (currentData) => {
-          const fallbackUser: User = {
-            id: currentData.createdBy || '',
-            name: 'مستخدم مجهول',
-            username: 'unknown',
-            photoURL: '/assets/default-avatar.png',
-            verified: false,
-            bio: null,
-            theme: null,
-            accent: null,
-            website: null,
-            location: null,
-            following: [],
-            followers: [],
-            createdAt: Timestamp.now(),
-            updatedAt: Timestamp.now(),
-            totalTweets: 0,
-            totalPhotos: 0,
-            pinnedTweet: null,
-            coverPhotoURL: null
-          };
-
-          if (!currentData.createdBy)
-            return { ...currentData, user: fallbackUser };
-
-          const userDoc = await getDoc(
-            doc(usersCollection, currentData.createdBy)
-          );
-          const user = userDoc.data() ?? fallbackUser;
-          return { ...currentData, user };
-        })
-      );
-      setData(dataWithUser);
-      setLoading(false);
-    };
-
     const unsubscribe = onSnapshot(
       cachedQuery,
       (snapshot) => {
         hasLiveData.current = true;
-        const data = snapshot.docs.map((doc) =>
-          doc.data({ serverTimestamps: 'estimate' })
+        const rows = snapshot.docs.map((docSnapshot) =>
+          docSnapshot.data({ serverTimestamps: 'estimate' })
         );
-
-        if (allowNull && !data.length) {
-          setData(null);
-          setLoading(false);
-          return;
-        }
-
-        if (includeUser) void populateUser(data as DataWithRef<T>);
-        else {
-          setData(data);
-          setLoading(false);
-        }
+        void applyRows(rows);
       },
       (error) => {
         console.error('useCollection snapshot error:', error);
-        // انقطاع مؤقت بعد استئناف التطبيق لا يمسح آخر بيانات سليمة.
         if (!hasLiveData.current) setData([]);
         setLoading(false);
       }
@@ -130,7 +116,21 @@ export function useCollection<T>(
 
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cachedQuery, disabled, refreshKey]);
+  }, [cachedQuery, disabled, refreshKey, applyRows]);
 
-  return { data, loading };
+  const refresh = useCallback(async (): Promise<void> => {
+    if (disabled || !cachedQuery) return;
+    try {
+      const snapshot = await getDocsFromServer(cachedQuery);
+      hasLiveData.current = true;
+      const rows = snapshot.docs.map((docSnapshot) =>
+        docSnapshot.data({ serverTimestamps: 'estimate' })
+      );
+      await applyRows(rows);
+    } catch (error) {
+      console.error('useCollection refresh error:', error);
+    }
+  }, [applyRows, cachedQuery, disabled]);
+
+  return { data, loading, refresh };
 }

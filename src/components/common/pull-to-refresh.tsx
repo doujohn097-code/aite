@@ -34,7 +34,7 @@ export function PullToRefresh({
   const dark = variant === 'dark';
 
   return (
-    <div ref={hostRef} className={cn('relative', className)}>
+    <div ref={hostRef} className={cn('relative touch-pan-y', className)}>
       <div
         aria-hidden={!visible}
         className={cn(

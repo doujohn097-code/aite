@@ -11,7 +11,7 @@ import { MainHeader } from '@components/home/main-header';
 import { PostComments } from '@components/tweet/post-comments';
 import { ViewTweet } from '@components/view/view-tweet';
 import { SEO } from '@components/common/seo';
-import { Loading } from '@components/ui/loading';
+import { TweetFeedSkeleton } from '@components/ui/skeleton';
 import { Error } from '@components/ui/error';
 import { ViewParentTweet } from '@components/view/view-parent-tweet';
 import type { ReactElement, ReactNode } from 'react';
@@ -55,7 +55,7 @@ export default function TweetId(): JSX.Element {
       />
       <section>
         {tweetLoading ? (
-          <Loading className='mt-5' />
+          <TweetFeedSkeleton count={2} />
         ) : !tweetData ? (
           <>
             <SEO title='المنشور غير موجود / Aite' />

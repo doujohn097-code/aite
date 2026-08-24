@@ -12,7 +12,7 @@ import { MainLayout } from '@components/layout/main-layout';
 import { MainContainer } from '@components/home/main-container';
 import { MainHeader } from '@components/home/main-header';
 import { SEO } from '@components/common/seo';
-import { Loading } from '@components/ui/loading';
+import { ConversationFeedSkeleton } from '@components/ui/skeleton';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { Modal } from '@components/modal/modal';
 import { useModal } from '@lib/hooks/useModal';
@@ -158,7 +158,7 @@ export default function Messages(): JSX.Element {
       )}
 
       {!conversations ? (
-        <Loading className='mt-5' />
+        <ConversationFeedSkeleton />
       ) : !filtered?.length && conversations.length ? (
         <p className='p-12 text-center text-light-secondary dark:text-dark-secondary'>
           لا توجد نتائج مطابقة

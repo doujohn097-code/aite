@@ -189,3 +189,13 @@ export function isPlaceholderUsername(value?: string | null): boolean {
     /^user(?:[_-]*\d+)?$/i.test(username)
   );
 }
+
+export function visibleProfileName(value?: string | null): string | null {
+  const name = value?.trim() ?? '';
+  return isPlaceholderProfileName(name) ? null : name;
+}
+
+export function visibleUsername(value?: string | null): string | null {
+  const username = value?.trim() ?? '';
+  return isPlaceholderUsername(username) ? null : username;
+}

@@ -35,7 +35,7 @@ import {
   type EditContentSave
 } from '@components/modal/edit-content-modal';
 import { formatNumber } from '@lib/date';
-import { preventBubbling } from '@lib/utils';
+import { preventBubbling, visibleProfileName, visibleUsername } from '@lib/utils';
 import { UserAvatar } from '@components/user/user-avatar';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { Button } from '@components/ui/button';
@@ -803,35 +803,46 @@ export function ReelCard({
         className='absolute bottom-8 right-4 z-20 flex max-w-[65%] flex-col items-start gap-2 text-right text-white'
       >
         {/* User profile row with verified badge */}
-        <Link href={`/user/${user.username}`}>
-          <a
-            onClick={(e) => e.stopPropagation()}
-            className='group flex items-center gap-2.5'
-          >
-            <div className='relative shrink-0'>
-              <UserAvatar
-                src={user.photoURL}
-                alt={user.name}
-                username={user.username}
-                size={42}
-                className='shadow-md ring-2 ring-white/90 transition group-hover:ring-main-accent'
-              />
-            </div>
-            <div className='flex min-w-0 flex-col text-right'>
-              <div className='flex items-center gap-1 truncate'>
-                <span className='truncate text-sm font-bold leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] transition-colors group-hover:text-main-accent'>
-                  {user.name}
-                </span>
-                {user.verified && (
-                  <VerifiedBadge className='h-4 w-4 shrink-0' />
-                )}
+        {visibleUsername(user.username) ? (
+          <Link href={`/user/${user.username}`}>
+            <a
+              onClick={(e) => e.stopPropagation()}
+              className='group flex items-center gap-2.5'
+            >
+              <div className='relative shrink-0'>
+                <UserAvatar
+                  src={user.photoURL}
+                  alt={visibleProfileName(user.name) ?? ''}
+                  username={user.username}
+                  size={42}
+                  className='shadow-md ring-2 ring-white/90 transition group-hover:ring-main-accent'
+                />
               </div>
-              <span className='truncate text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
-                @{user.username}
-              </span>
-            </div>
-          </a>
-        </Link>
+              <div className='flex min-w-0 flex-col text-right'>
+                <div className='flex items-center gap-1 truncate'>
+                  {visibleProfileName(user.name) ? (
+                    <span className='truncate text-sm font-bold leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] transition-colors group-hover:text-main-accent'>
+                      {user.name}
+                    </span>
+                  ) : (
+                    <span className='h-3.5 w-20 animate-pulse rounded bg-white/25' />
+                  )}
+                  {user.verified && visibleProfileName(user.name) && (
+                    <VerifiedBadge className='h-4 w-4 shrink-0' />
+                  )}
+                </div>
+                <span className='truncate text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
+                  @{user.username}
+                </span>
+              </div>
+            </a>
+          </Link>
+        ) : (
+          <div className='flex items-center gap-2.5'>
+            <span className='h-10 w-10 animate-pulse rounded-full bg-white/20' />
+            <span className='h-3.5 w-24 animate-pulse rounded bg-white/25' />
+          </div>
+        )}
 
         {/* Caption with expansion */}
         {captionText && (

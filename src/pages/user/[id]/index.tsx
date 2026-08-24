@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { doc, query, where, orderBy, documentId } from 'firebase/firestore';
-import { AnimatePresence } from 'framer-motion';
 import cn from 'clsx';
 import { useUser } from '@lib/context/user-context';
 import { useAuth } from '@lib/context/auth-context';
@@ -17,7 +16,7 @@ import { MainLayout } from '@components/layout/main-layout';
 import { UserDataLayout } from '@components/layout/user-data-layout';
 import { UserHomeLayout } from '@components/layout/user-home-layout';
 import { StatsEmpty } from '@components/tweet/stats-empty';
-import { Loading } from '@components/ui/loading';
+import { TweetFeedSkeleton } from '@components/ui/skeleton';
 import { Tweet } from '@components/tweet/tweet';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { IconName } from '@components/ui/hero-icon';
@@ -144,7 +143,7 @@ export default function UserTweets(): JSX.Element {
           </p>
         </div>
       ) : loading ? (
-        <Loading className='mt-5' />
+        <TweetFeedSkeleton count={3} />
       ) : tab === 'posts' ? (
         !ownerOnlyTweets?.length ? (
           <StatsEmpty
@@ -152,14 +151,14 @@ export default function UserTweets(): JSX.Element {
             description='عندما ينشر، ستظهر منشوراته هنا.'
           />
         ) : (
-          <AnimatePresence mode='popLayout'>
+          <>
             {pinnedData && (
               <Tweet pinned {...pinnedData} key={`pinned-${pinnedData.id}`} />
             )}
             {ownerOnlyTweets.map((tweet) => (
               <Tweet {...tweet} profile={user} key={tweet.id} />
             ))}
-          </AnimatePresence>
+          </>
         )
       ) : tab === 'retweets' ? (
         !filteredPeopleTweets?.length ? (
@@ -168,11 +167,11 @@ export default function UserTweets(): JSX.Element {
             description='عندما يعيد النشر، ستظهر هنا.'
           />
         ) : (
-          <AnimatePresence mode='popLayout'>
+          <>
             {filteredPeopleTweets.map((tweet) => (
               <Tweet {...tweet} profile={user} key={tweet.id} />
             ))}
-          </AnimatePresence>
+          </>
         )
       ) : !reels?.length ? (
         <StatsEmpty

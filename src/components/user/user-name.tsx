@@ -1,6 +1,8 @@
 import cn from 'clsx';
 import Link from 'next/link';
+import { visibleProfileName, visibleUsername } from '@lib/utils';
 import { VerifiedBadge } from '@components/ui/verified-badge';
+import { Skeleton } from '@components/ui/skeleton';
 
 type UserNameProps = {
   tag?: keyof JSX.IntrinsicElements;
@@ -22,15 +24,18 @@ export function UserName({
   disableLink
 }: UserNameProps): JSX.Element {
   const CustomTag = tag ? tag : 'p';
-  // Snapshots can arrive before optional profile fields are populated.
-  const safeName = name?.trim() || 'مستخدم';
-  const safeUsername = username?.trim();
+  const safeName = visibleProfileName(name);
+  const safeUsername = visibleUsername(username);
 
   const nameContent = (
     <span className='flex flex-col truncate'>
       <span className='flex items-center gap-1'>
-        <CustomTag className='truncate'>{safeName}</CustomTag>
-        {verified && (
+        {safeName ? (
+          <CustomTag className='truncate'>{safeName}</CustomTag>
+        ) : (
+          <Skeleton className='h-4 w-24' />
+        )}
+        {verified && safeName && (
           <VerifiedBadge
             className={cn('shrink-0', iconClassName ?? 'h-4 w-4')}
           />

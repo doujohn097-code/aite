@@ -29,9 +29,9 @@ export type TweetProps = Tweet & {
 };
 
 export const variants: Variants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1, transition: { duration: 0.8 } },
-  exit: { opacity: 0, transition: { duration: 0.2 } }
+  initial: { opacity: 1 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0, transition: { duration: 0.15 } }
 };
 
 export function Tweet(tweet: TweetProps): JSX.Element {
@@ -63,8 +63,8 @@ export function Tweet(tweet: TweetProps): JSX.Element {
     photoURL
   } = tweetUserData ?? {
     id: createdBy,
-    name: 'مستخدم مجهول',
-    username: 'unknown',
+    name: '',
+    username: '',
     verified: false,
     gender: null,
     photoURL: '/assets/default-avatar.png'

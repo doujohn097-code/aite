@@ -1,11 +1,19 @@
-export const PULL_THRESHOLD = 72;
-export const PULL_MAX = 132;
-export const PULL_SURFACE_PX = 4;
+export const PULL_THRESHOLD = 64;
+export const PULL_MAX = 120;
+export const PULL_SURFACE_PX = 8;
+export const PULL_RAW_TRIGGER = 72;
 
 export function resistPull(distance: number, max = PULL_MAX): number {
   if (distance <= 0) return 0;
-  const eased = Math.pow(distance, 0.82) * 0.62;
-  return Math.min(max, eased);
+  return Math.min(max, distance * 0.78);
+}
+
+export function shouldTriggerRefresh(
+  rawDistance: number,
+  resisted: number,
+  threshold = PULL_THRESHOLD
+): boolean {
+  return rawDistance >= PULL_RAW_TRIGGER || resisted >= threshold;
 }
 
 export function isMostlyVertical(
@@ -19,7 +27,12 @@ export function isMostlyVertical(
 
 export function elementScrollTop(el: HTMLElement | Window): number {
   if (el === window)
-    return window.scrollY || document.documentElement.scrollTop || 0;
+    return (
+      window.scrollY ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0
+    );
   return (el as HTMLElement).scrollTop;
 }
 

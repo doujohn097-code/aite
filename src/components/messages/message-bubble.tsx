@@ -699,7 +699,10 @@ export function MessageBubble({
                       )}
                       <div className='min-w-0 flex-1 leading-tight'>
                         <p className='truncate text-sm font-bold'>
-                          {sharedPost.authorName ?? 'مستخدم'}
+                          {sharedPost.authorName ||
+                            (sharedPost.authorUsername
+                              ? `@${sharedPost.authorUsername}`
+                              : 'منشور')}
                         </p>
                         {sharedPost.authorUsername && (
                           <p className='truncate text-[11px] opacity-60'>

@@ -166,8 +166,8 @@ export function AuthContextProvider({
         pendingData?.name ||
         (!isPlaceholderProfileName(authName) ? authName : '') ||
         (!isPlaceholderProfileName(savedName) ? savedName : '') ||
-        authName ||
-        'مستخدم';
+        recoveredUsername ||
+        '';
       const fallbackPhoto = photoURL ?? '/assets/default-avatar.png';
 
       // قراءة الملف مع إعادة محاولة

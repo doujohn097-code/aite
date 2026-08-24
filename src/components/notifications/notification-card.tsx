@@ -14,6 +14,8 @@ import {
 } from '@lib/notification-target';
 import { UserAvatar } from '@components/user/user-avatar';
 import { HeroIcon } from '@components/ui/hero-icon';
+import { NotificationSkeleton } from '@components/ui/skeleton';
+import { visibleProfileName, visibleUsername } from '@lib/utils';
 import cn from 'clsx';
 import type { Notification } from '@lib/types/notification';
 import type { IconName } from '@components/ui/hero-icon';
@@ -59,14 +61,19 @@ export function NotificationCard({
     ? doc(usersCollection, notification.fromUserId)
     : null;
 
-  const { data: fromUser } = useDocument(fromUserRef, {
-    allowNull: true,
-    disabled: !notification.fromUserId
-  });
+  const { data: fromUser, loading: fromUserLoading } = useDocument(
+    fromUserRef,
+    {
+      allowNull: true,
+      disabled: !notification.fromUserId
+    }
+  );
 
-  const name = fromUser?.name ?? 'مستخدم';
-  const username = fromUser?.username ?? 'unknown';
-  const href = notificationHref(notification, username);
+  if (fromUserLoading) return <NotificationSkeleton />;
+
+  const name = visibleProfileName(fromUser?.name);
+  const username = visibleUsername(fromUser?.username);
+  const href = notificationHref(notification, username ?? '');
   const context = resolveNotificationContext(notification);
 
   const markAsRead = async (): Promise<void> => {
@@ -90,8 +97,8 @@ export function NotificationCard({
         <div className='relative shrink-0'>
           <UserAvatar
             src={fromUser?.photoURL ?? '/assets/default-avatar.png'}
-            alt={name}
-            username={username}
+            alt={name ?? ''}
+            username={username ?? ''}
             size={46}
             showPresence={false}
           />
@@ -107,7 +114,11 @@ export function NotificationCard({
 
         <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
           <p className='text-[15px] text-light-primary dark:text-dark-primary'>
-            <span className='font-bold'>{name}</span>
+            {name ? (
+              <span className='font-bold'>{name}</span>
+            ) : (
+              <span className='inline-block h-3.5 w-20 animate-pulse rounded bg-light-secondary/20 dark:bg-dark-secondary/30' />
+            )}
             <span className='text-light-secondary dark:text-dark-secondary'>
               {' '}
               {notificationCopy(notification)}

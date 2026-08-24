@@ -22,7 +22,7 @@ import {
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { SEO } from '@components/common/seo';
-import { Loading } from '@components/ui/loading';
+import { ConversationFeedSkeleton } from '@components/ui/skeleton';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { MessageBubble } from '@components/messages/message-bubble';
@@ -496,7 +496,7 @@ export default function Chat(): JSX.Element {
         className='relative flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-clip overscroll-contain bg-main-background px-3 py-4'
       >
         {!messages ? (
-          <Loading className='mt-5' />
+          <ConversationFeedSkeleton count={4} />
         ) : shownMessages.length ? (
           shownMessages.map((message, index) => {
             const millis = toMillis(message.createdAt);
@@ -615,7 +615,7 @@ export default function Chat(): JSX.Element {
                     senderName:
                       replyTarget.senderId === user?.id
                         ? user?.name ?? 'أنت'
-                        : peer?.name ?? 'مستخدم',
+                        : peer?.name || 'الطرف الآخر',
                     text: replyTarget.text,
                     type: replyTarget.type
                   }

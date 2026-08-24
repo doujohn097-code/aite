@@ -3,7 +3,9 @@ import cn from 'clsx';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { StoryAvatar } from '@components/stories/story-avatar';
+import { Skeleton } from '@components/ui/skeleton';
 import { getTimestampMillis } from '@lib/date';
+import { visibleProfileName, visibleUsername } from '@lib/utils';
 import type { Conversation } from '@lib/types/message';
 import type { User } from '@lib/types/user';
 
@@ -81,30 +83,33 @@ export function ConversationCard({
           {peer ? (
             <StoryAvatar user={peer} size={48} />
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src='/assets/default-avatar.png'
-              alt='مستخدم'
-              className='h-12 w-12 rounded-full object-cover'
-            />
+            <Skeleton className='h-12 w-12 rounded-full' />
           )}
         </div>
 
         <div className='flex min-w-0 flex-1 flex-col'>
           <div className='flex items-center justify-between gap-2'>
             <div className='flex min-w-0 items-center gap-1'>
-              <p
-                className={cn(
-                  'truncate text-[15px]',
-                  unreadCount > 0 && 'font-bold'
-                )}
-              >
-                {peer?.name ?? 'مستخدم'}
-              </p>
-              {peer?.verified && <VerifiedBadge className='h-4 w-4' />}
-              <p className='truncate text-sm text-light-secondary dark:text-dark-secondary'>
-                @{peer?.username ?? 'unknown'}
-              </p>
+              {visibleProfileName(peer?.name) ? (
+                <p
+                  className={cn(
+                    'truncate text-[15px]',
+                    unreadCount > 0 && 'font-bold'
+                  )}
+                >
+                  {visibleProfileName(peer?.name)}
+                </p>
+              ) : (
+                <Skeleton className='h-4 w-24' />
+              )}
+              {peer?.verified && visibleProfileName(peer?.name) && (
+                <VerifiedBadge className='h-4 w-4' />
+              )}
+              {visibleUsername(peer?.username) && (
+                <p className='truncate text-sm text-light-secondary dark:text-dark-secondary'>
+                  @{visibleUsername(peer?.username)}
+                </p>
+              )}
             </div>
             {lastMessage && (
               <span className='shrink-0 text-xs text-light-secondary dark:text-dark-secondary'>

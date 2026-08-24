@@ -1,4 +1,3 @@
-import { AnimatePresence } from 'framer-motion';
 import { where, orderBy } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { useWindow } from '@lib/context/window-context';
@@ -15,7 +14,7 @@ import { NotificationsButton } from '@components/home/notifications-button';
 import { MainHeader } from '@components/home/main-header';
 import { StoriesBar } from '@components/stories/stories-bar';
 import { Tweet } from '@components/tweet/tweet';
-import { Loading } from '@components/ui/loading';
+import { TweetFeedSkeleton } from '@components/ui/skeleton';
 import { Error } from '@components/ui/error';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { PullToRefresh } from '@components/common/pull-to-refresh';
@@ -73,8 +72,8 @@ export default function Home(): JSX.Element {
       <StoriesBar />
       {!isMobile && <Input />}
       <section className='mt-0.5 xs:mt-0'>
-        {loading ? (
-          <Loading className='mt-5' />
+        {loading && !data ? (
+          <TweetFeedSkeleton />
         ) : !data ? (
           <Error message='حدث خطأ ما. حاول إعادة التحميل.' />
         ) : !ranked.length ? (
@@ -90,11 +89,9 @@ export default function Home(): JSX.Element {
           </div>
         ) : (
           <>
-            <AnimatePresence mode='popLayout'>
-              {ranked.map((tweet) => (
-                <Tweet {...tweet} key={tweet.id} />
-              ))}
-            </AnimatePresence>
+            {ranked.map((tweet) => (
+              <Tweet {...tweet} key={tweet.id} />
+            ))}
             <LoadMore />
           </>
         )}

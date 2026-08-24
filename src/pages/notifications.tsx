@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   query,
   orderBy,
   where,
   onSnapshot,
   getDocs,
+  getDocsFromServer,
   writeBatch
 } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
@@ -15,9 +16,9 @@ import { MainLayout } from '@components/layout/main-layout';
 import { MainContainer } from '@components/home/main-container';
 import { MainHeader } from '@components/home/main-header';
 import { SEO } from '@components/common/seo';
-import { Loading } from '@components/ui/loading';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { NotificationCard } from '@components/notifications/notification-card';
+import { NotificationFeedSkeleton } from '@components/ui/skeleton';
 import { PullToRefresh } from '@components/common/pull-to-refresh';
 import type { ReactElement, ReactNode } from 'react';
 import type { Notification } from '@lib/types/notification';
@@ -77,10 +78,18 @@ export default function Notifications(): JSX.Element {
     void markRead();
   }, [user]);
 
-  const handleRefresh = async (): Promise<void> => {
+  const handleRefresh = useCallback(async (): Promise<void> => {
+    if (!user) return;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    await new Promise((resolve) => window.setTimeout(resolve, 380));
-  };
+    const snapshot = await getDocsFromServer(
+      query(notificationsCollection(user.id), orderBy('createdAt', 'desc'))
+    );
+    setNotifications(
+      snapshot.docs.map((docSnapshot) =>
+        docSnapshot.data({ serverTimestamps: 'estimate' })
+      )
+    );
+  }, [user]);
 
   return (
     <MainContainer>
@@ -88,7 +97,7 @@ export default function Notifications(): JSX.Element {
       <SEO title='الإشعارات / Aite' />
       <MainHeader title='الإشعارات' />
       {notifications === null ? (
-        <Loading className='mt-5' />
+        <NotificationFeedSkeleton />
       ) : notifications.length ? (
         <section>
           {notifications.map((notification) => (

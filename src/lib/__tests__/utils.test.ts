@@ -8,6 +8,8 @@ import {
   internalEmailToUsername,
   isPlaceholderProfileName,
   isPlaceholderUsername,
+  visibleProfileName,
+  visibleUsername,
   isSafeInternalPath,
   safeHttpUrl
 } from '../utils';

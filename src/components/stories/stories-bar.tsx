@@ -54,8 +54,6 @@ export function StoriesBar(): JSX.Element {
         closeModal={(): void => setCreateModalOpen(false)}
       />
       <motion.section
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
         className='glass-panel flex gap-4 overflow-x-auto border-b border-light-border
                    px-4 py-3 dark:border-dark-border'
       >

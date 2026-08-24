@@ -1,30 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { getDoc, doc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { usersCollection } from '@lib/firebase/collections';
+import { blankUser } from '@lib/firebase/users';
 import { useCacheRef } from './useCacheRef';
 import type { DocumentReference } from 'firebase/firestore';
 import type { User } from '@lib/types/user';
-
-const defaultUser: User = {
-  id: '',
-  bio: null,
-  name: 'مستخدم مجهول',
-  theme: null,
-  accent: null,
-  website: null,
-  location: null,
-  username: 'unknown',
-  photoURL: '/assets/default-avatar.png',
-  verified: false,
-  following: [],
-  followers: [],
-  createdAt: Timestamp.now(),
-  updatedAt: null,
-  totalTweets: 0,
-  totalPhotos: 0,
-  pinnedTweet: null,
-  coverPhotoURL: null
-};
 
 type UseDocument<T> = {
   data: T | null;
@@ -68,10 +48,8 @@ export function useDocument<T>(
     setLoading(true);
 
     const populateUser = async (currentData: DataWithRef<T>): Promise<void> => {
-      const fallbackUser = { ...defaultUser, id: currentData.createdBy || '' };
-
       if (!currentData.createdBy) {
-        setData({ ...currentData, user: fallbackUser });
+        setData({ ...currentData, user: blankUser() });
         setLoading(false);
         return;
       }
@@ -80,15 +58,16 @@ export function useDocument<T>(
         const userData = await getDoc(
           doc(usersCollection, currentData.createdBy)
         );
-        const dataWithUser = {
+        setData({
           ...currentData,
-          user: userData.data() ?? fallbackUser
-        };
-
-        setData(dataWithUser);
+          user: userData.data() ?? blankUser(currentData.createdBy)
+        });
       } catch (error) {
         console.error('populateUser error:', error);
-        setData({ ...currentData, user: fallbackUser });
+        setData({
+          ...currentData,
+          user: blankUser(currentData.createdBy)
+        });
       }
       setLoading(false);
     };
@@ -97,17 +76,17 @@ export function useDocument<T>(
       cachedDocRef,
       (snapshot) => {
         hasLiveData.current = true;
-        const data = snapshot.data({ serverTimestamps: 'estimate' });
+        const next = snapshot.data({ serverTimestamps: 'estimate' });
 
-        if (allowNull && !data) {
+        if (allowNull && !next) {
           setData(null);
           setLoading(false);
           return;
         }
 
-        if (includeUser) void populateUser(data as DataWithRef<T>);
+        if (includeUser) void populateUser(next as DataWithRef<T>);
         else {
-          setData(data as T);
+          setData(next as T);
           setLoading(false);
         }
       },
@@ -120,7 +99,7 @@ export function useDocument<T>(
 
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cachedDocRef]);
+  }, [cachedDocRef, disabled]);
 
   return { data, loading };
 }

@@ -5,8 +5,7 @@ import { useAuth } from '@lib/context/auth-context';
 import { useCollection } from '@lib/hooks/useCollection';
 import { usersCollection } from '@lib/firebase/collections';
 import { UserCard } from '@components/user/user-card';
-import { Loading } from '@components/ui/loading';
-import { Error } from '@components/ui/error';
+import { UserFeedSkeleton } from '@components/ui/skeleton';
 import { variants } from './aside-trends';
 
 export function Suggestions(): JSX.Element {
@@ -25,8 +24,8 @@ export function Suggestions(): JSX.Element {
   return (
     <section className='hover-animation rounded-2xl bg-main-sidebar-background'>
       {suggestionsLoading ? (
-        <Loading className='flex h-52 items-center justify-center p-4' />
-      ) : suggestionsData ? (
+        <UserFeedSkeleton count={3} />
+      ) : (
         <motion.div className='inner:px-4 inner:py-3' {...variants}>
           <h2 className='text-xl font-bold'>اقتراحات المتابعة</h2>
           {suggestionsData?.map((userData) => (
@@ -41,8 +40,6 @@ export function Suggestions(): JSX.Element {
             </a>
           </Link>
         </motion.div>
-      ) : (
-        <Error />
       )}
     </section>
   );

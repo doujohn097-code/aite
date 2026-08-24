@@ -5,7 +5,8 @@ import {
   isAtScrollSurface,
   isMostlyVertical,
   resistPull,
-  shouldArmPull
+  shouldArmPull,
+  shouldTriggerRefresh
 } from '@lib/pull-to-refresh';
 
 type Options = {
@@ -28,6 +29,7 @@ export function usePullToRefresh({
   const armed = useRef(false);
   const startX = useRef(0);
   const startY = useRef(0);
+  const rawRef = useRef(0);
   const pullRef = useRef(0);
   const refreshingRef = useRef(false);
   const onRefreshRef = useRef(onRefresh);
@@ -39,6 +41,7 @@ export function usePullToRefresh({
 
   const reset = useCallback((): void => {
     armed.current = false;
+    rawRef.current = 0;
     pullRef.current = 0;
     setPull(0);
   }, []);
@@ -61,6 +64,7 @@ export function usePullToRefresh({
       });
       startX.current = touch.clientX;
       startY.current = touch.clientY;
+      rawRef.current = 0;
       pullRef.current = 0;
       if (!armed.current) setPull(0);
     };
@@ -78,10 +82,11 @@ export function usePullToRefresh({
         if (Math.abs(dx) > 18 && Math.abs(dx) > dy) reset();
         return;
       }
+      rawRef.current = dy;
       const next = resistPull(dy);
       pullRef.current = next;
       setPull(next);
-      if (next > 8 && event.cancelable) event.preventDefault();
+      if (next > 6 && event.cancelable) event.preventDefault();
     };
 
     const onEnd = (): void => {
@@ -101,6 +106,7 @@ export function usePullToRefresh({
         .finally(() => {
           refreshingRef.current = false;
           setRefreshing(false);
+          rawRef.current = 0;
           pullRef.current = 0;
           setPull(0);
         });

@@ -8,12 +8,13 @@ import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useRankedFeed } from '@lib/hooks/useRankedFeed';
 import { getTimestampMillis } from '@lib/date';
+import { blankUser } from '@lib/firebase/users';
 import type { RankableItem } from '@lib/feed-rank';
 import type { Story } from '@lib/types/story';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { SEO } from '@components/common/seo';
-import { Loading } from '@components/ui/loading';
+import { ReelSkeleton } from '@components/ui/skeleton';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ReelCard } from '@components/reels/reel-card';
@@ -23,29 +24,7 @@ import type { ReactElement, ReactNode } from 'react';
 import type { User } from '@lib/types/user';
 
 function fallbackUser(userId: string): User {
-  return {
-    id: userId,
-    name: 'مستخدم',
-    username: 'unknown',
-    photoURL: '/assets/default-avatar.png',
-    verified: false,
-    bio: null,
-    theme: null,
-    accent: null,
-    website: null,
-    location: null,
-    following: [],
-    followers: [],
-    createdAt: undefined as unknown as User['createdAt'],
-    updatedAt: null,
-    totalTweets: 0,
-    totalPhotos: 0,
-    pinnedTweet: null,
-    coverPhotoURL: null,
-    storyColor: null,
-    lastStoryAt: null,
-    storyViews: null
-  };
+  return blankUser(userId);
 }
 
 function mapReel(reel: Story): RankableItem {
@@ -242,11 +221,8 @@ export default function Reels(): JSX.Element {
         </div>
 
         {reelsLoading ? (
-          <div className='flex flex-col items-center gap-3 text-white'>
-            <Loading className='text-main-accent' />
-            <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-              جاري تحميل الريلز...
-            </p>
+          <div className='h-full w-full max-w-md'>
+            <ReelSkeleton />
           </div>
         ) : !reels.length ? (
           <div className='flex max-w-sm flex-col items-center gap-5 px-6 text-center text-white'>

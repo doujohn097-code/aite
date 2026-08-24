@@ -1,20 +1,18 @@
-import { CustomIcon } from '@components/ui/custom-icon';
 import { SEO } from './seo';
+import { TweetFeedSkeleton } from '@components/ui/skeleton';
 
 export function Placeholder(): JSX.Element {
   return (
-    <main className='flex min-h-app items-center justify-center bg-main-background'>
+    <main className='mx-auto min-h-app w-full max-w-xl bg-main-background'>
       <SEO
         title='Aite'
         description='شارك أفكارك وتابع الآخرين في Aite.'
         image='/home.png'
       />
-      <div className='flex items-center justify-center'>
-        <CustomIcon
-          className='h-24 w-24 select-none object-contain'
-          iconName='AiteIcon'
-        />
+      <div className='border-b border-light-border px-4 py-3 dark:border-dark-border'>
+        <div className='h-6 w-20 animate-pulse rounded bg-light-secondary/20 dark:bg-dark-secondary/30' />
       </div>
+      <TweetFeedSkeleton />
     </main>
   );
 }

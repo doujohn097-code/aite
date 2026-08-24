@@ -9,7 +9,7 @@ import { MainLayout } from '@components/layout/main-layout';
 import { MainContainer } from '@components/home/main-container';
 import { MainHeader } from '@components/home/main-header';
 import { UserCard } from '@components/user/user-card';
-import { Loading } from '@components/ui/loading';
+import { UserFeedSkeleton } from '@components/ui/skeleton';
 import { SEO } from '@components/common/seo';
 import { PullToRefresh } from '@components/common/pull-to-refresh';
 import type { ReactElement, ReactNode } from 'react';
@@ -61,10 +61,8 @@ export default function Search(): JSX.Element {
     );
   }, [userId, trimmedQuery]);
 
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { data, loading } = useCollection(usersQuery, {
-    allowNull: true,
-    refreshKey
+  const { data, loading, refresh } = useCollection(usersQuery, {
+    allowNull: true
   });
 
   const results = data ?? [];
@@ -72,8 +70,7 @@ export default function Search(): JSX.Element {
 
   const handleRefresh = async (): Promise<void> => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setRefreshKey((key) => key + 1);
-    await new Promise((resolve) => window.setTimeout(resolve, 380));
+    await refresh();
   };
 
   return (
@@ -102,7 +99,7 @@ export default function Search(): JSX.Element {
       </form>
       <section className='mt-0.5'>
         {loading ? (
-          <Loading className='mt-5' />
+          <UserFeedSkeleton />
         ) : results.length ? (
           results.map((userData) => (
             <UserCard {...userData} follow key={userData.id} />

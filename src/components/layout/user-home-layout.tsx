@@ -10,7 +10,7 @@ import { Button } from '@components/ui/button';
 import { UserHomeCover } from '@components/user/user-home-cover';
 import { UserHomeAvatar } from '@components/user/user-home-avatar';
 import { UserDetails } from '@components/user/user-details';
-import { Loading } from '@components/ui/loading';
+import { ProfileSkeleton } from '@components/ui/skeleton';
 import { FollowButton } from '@components/ui/follow-button';
 import { variants } from '@components/user/user-header';
 import { UserEditProfile } from '@components/user/user-edit-profile';
@@ -62,7 +62,7 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
       )}
       <motion.section {...variants} exit={undefined}>
         {loading ? (
-          <Loading className='mt-5' />
+          <ProfileSkeleton />
         ) : !userData ? (
           <>
             <UserHomeCover />

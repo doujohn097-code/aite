@@ -51,7 +51,7 @@ export function useInfiniteScroll<T>(
   const [refreshKey, setRefreshKey] = useState(0);
   const justIncreased = useRef(false);
 
-  const { data, loading } = useCollection(
+  const { data, loading, refresh: refreshCollection } = useCollection(
     query(collection, ...(queryConstraints ?? []), limit(tweetsLimit)),
     { ...fetchOptions, preserve: true, refreshKey }
   );
@@ -60,8 +60,8 @@ export function useInfiniteScroll<T>(
     setTweetsLimit(initialSize ?? 20);
     setReachedLimit(false);
     setRefreshKey((key) => key + 1);
-    await new Promise((resolve) => window.setTimeout(resolve, 420));
-  }, [initialSize]);
+    await refreshCollection();
+  }, [initialSize, refreshCollection]);
 
   useEffect(() => {
     if (loading || data === null) return;

@@ -428,8 +428,8 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
     );
 
   const user = userData ?? {
-    name: 'مستخدم',
-    username: 'unknown',
+    name: '',
+    username: '',
     photoURL: '/assets/default-avatar.png',
     verified: false
   };
@@ -483,8 +483,14 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
             size={40}
           />
           <div className='flex flex-col text-white'>
-            <span className='font-bold'>{user.name}</span>
-            <span className='text-sm opacity-80'>@{user.username}</span>
+            {user.name ? (
+              <span className='font-bold'>{user.name}</span>
+            ) : (
+              <span className='h-4 w-24 animate-pulse rounded bg-white/20' />
+            )}
+            {user.username ? (
+              <span className='text-sm opacity-80'>@{user.username}</span>
+            ) : null}
           </div>
         </div>
         <div className='flex items-center gap-2'>

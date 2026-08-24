@@ -1,10 +1,12 @@
 import {
   PULL_MAX,
+  PULL_THRESHOLD,
   elementScrollTop,
   isAtScrollSurface,
   isMostlyVertical,
   resistPull,
-  shouldArmPull
+  shouldArmPull,
+  shouldTriggerRefresh
 } from '../pull-to-refresh';
 
 describe('resistPull', () => {
@@ -15,7 +17,14 @@ describe('resistPull', () => {
 
   it('grows slower than the raw finger distance', () => {
     expect(resistPull(80)).toBeLessThan(80);
-    expect(resistPull(80)).toBeGreaterThan(20);
+    expect(resistPull(80)).toBeGreaterThan(40);
+  });
+
+  it('lets a normal swipe reach the trigger', () => {
+    expect(shouldTriggerRefresh(80, resistPull(80), PULL_THRESHOLD)).toBe(true);
+    expect(shouldTriggerRefresh(20, resistPull(20), PULL_THRESHOLD)).toBe(
+      false
+    );
   });
 
   it('never exceeds the max', () => {

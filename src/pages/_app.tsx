@@ -30,7 +30,6 @@ declare global {
 }
 
 const SPLASH_DURATION_MS = 3200;
-const SPLASH_RESUME_AFTER_MS = 12_000;
 const NATIVE_ROUTE_KEY = 'aite:native-last-route';
 const MAX_SAVED_ROUTE_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -53,30 +52,13 @@ export default function App({
   useViewportFix();
 
   const [showSplash, setShowSplash] = useState(true);
-  const [splashPlay, setSplashPlay] = useState(0);
 
   useEffect(() => {
-    setShowSplash(true);
     const timer = window.setTimeout(
       () => setShowSplash(false),
       SPLASH_DURATION_MS
     );
     return () => window.clearTimeout(timer);
-  }, [splashPlay]);
-
-  useEffect(() => {
-    let hiddenAt = 0;
-    const onVisibility = (): void => {
-      if (document.visibilityState === 'hidden') {
-        hiddenAt = Date.now();
-        return;
-      }
-      if (hiddenAt && Date.now() - hiddenAt >= SPLASH_RESUME_AFTER_MS)
-        setSplashPlay((play) => play + 1);
-      hiddenAt = 0;
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
   useEffect(() => {
@@ -144,10 +126,11 @@ export default function App({
   return (
     <>
       <AppHead />
-      <SplashScreen isVisible={showSplash} playId={splashPlay} />
+      <SplashScreen isVisible={showSplash} />
       <AuthContextProvider>
         <ThemeContextProvider>
           <ThemeBackground />
+          <AppUpdatePrompt />
           {getLayout(<Component {...pageProps} />)}
         </ThemeContextProvider>
       </AuthContextProvider>
