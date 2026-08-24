@@ -50,6 +50,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
     parentTweet,
     userReplies = 0,
     userRetweets = [],
+    edited,
     user: tweetUserData
   } = tweet;
 
@@ -170,7 +171,11 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                       className='text-light-primary dark:text-dark-primary'
                     />
                   </UserTooltip>
-                  <TweetDate tweetLink={tweetLink} createdAt={createdAt} />
+                  <TweetDate
+                    tweetLink={tweetLink}
+                    createdAt={createdAt}
+                    edited={!!edited}
+                  />
                 </div>
                 <div className='shrink-0'>
                   {!modal && (
@@ -181,6 +186,8 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                       parentId={parentId}
                       username={username}
                       hasImages={!!images}
+                      hasAudio={!!audio}
+                      text={text}
                       createdBy={createdBy}
                     />
                   )}

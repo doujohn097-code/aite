@@ -36,6 +36,7 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
     createdAt,
     userRetweets = [],
     userReplies = 0,
+    edited,
     viewTweetRef,
     user: tweetUserData
   } = tweet;
@@ -113,6 +114,8 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
               parentId={parentId}
               username={username}
               hasImages={!!images}
+              hasAudio={!!audio}
+              text={text}
               createdBy={createdBy}
             />
           </div>

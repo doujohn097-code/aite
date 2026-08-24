@@ -7,12 +7,14 @@ import type { Tweet } from '@lib/types/tweet';
 type TweetDateProps = Pick<Tweet, 'createdAt'> & {
   tweetLink: string;
   viewTweet?: boolean;
+  edited?: boolean;
 };
 
 export function TweetDate({
   createdAt,
   tweetLink,
-  viewTweet
+  viewTweet,
+  edited
 }: TweetDateProps): JSX.Element {
   return (
     <div className={cn('flex gap-1', viewTweet && 'py-4')}>
@@ -34,6 +36,11 @@ export function TweetDate({
           tip={formatDate(createdAt, 'full')}
         />
       </div>
+      {edited && (
+        <span className='whitespace-nowrap text-xs text-light-secondary dark:text-dark-secondary'>
+          · تم التعديل
+        </span>
+      )}
     </div>
   );
 }

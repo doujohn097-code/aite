@@ -44,6 +44,8 @@ export type Story = {
   createdAt: Timestamp;
   expiresAt: Timestamp;
   updatedAt: Timestamp | null;
+  edited?: boolean;
+  editedAt?: Timestamp | null;
 };
 
 export type StoryView = {
@@ -75,6 +77,8 @@ export const storyConverter: FirestoreDataConverter<Story> = {
       createdAt: Timestamp.now(),
       expiresAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000),
       updatedAt: null,
+      edited: false,
+      editedAt: null,
       ...data
     } as Story;
   }

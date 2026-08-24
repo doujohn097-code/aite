@@ -3,8 +3,14 @@ import { useRouter } from 'next/router';
 import { query, where } from 'firebase/firestore';
 import { AnimatePresence } from 'framer-motion';
 import { storiesCollection, usersCollection } from '@lib/firebase/collections';
+import { useAuth } from '@lib/context/auth-context';
 import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 import { useCollection } from '@lib/hooks/useCollection';
+import { useRankedFeed } from '@lib/hooks/useRankedFeed';
+import { getTimestampMillis } from '@lib/date';
+import { FeedModeBar } from '@components/home/feed-mode-bar';
+import type { RankableItem } from '@lib/feed-rank';
+import type { Story } from '@lib/types/story';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { SEO } from '@components/common/seo';
@@ -42,7 +48,21 @@ function fallbackUser(userId: string): User {
   };
 }
 
+function mapReel(reel: Story): RankableItem {
+  return {
+    id: reel.id,
+    authorId: reel.userId,
+    createdAtMs: getTimestampMillis(reel.createdAt),
+    likes: reel.likes?.length ?? 0,
+    replies: 0,
+    reposts: reel.userRetweets?.length ?? 0,
+    views: reel.views?.length ?? 0,
+    hasMedia: true
+  };
+}
+
 export default function Reels(): JSX.Element {
+  const { user } = useAuth();
   const router = useRouter();
   const deepLinkId =
     typeof router.query.video === 'string' ? router.query.video : null;
@@ -64,48 +84,34 @@ export default function Reels(): JSX.Element {
     { initialSize: 50, stepSize: 25 }
   );
 
-  const reels = useMemo(() => {
+  const visibleReels = useMemo(() => {
     if (!rawReels) return [];
     const nowMs = Date.now();
-    return rawReels
-      .filter((s) => {
-        const isReelOrVideo =
-          s.kind === 'reel' ||
-          s.images?.some((img) => img.type?.startsWith('video/')) ||
-          s.images?.some(
-            (img) =>
-              img.src?.includes('.mp4') ||
-              img.src?.includes('.mov') ||
-              img.src?.includes('.webm')
-          );
+    return rawReels.filter((s) => {
+      const isReelOrVideo =
+        s.kind === 'reel' ||
+        s.images?.some((img) => img.type?.startsWith('video/')) ||
+        s.images?.some(
+          (img) =>
+            img.src?.includes('.mp4') ||
+            img.src?.includes('.mov') ||
+            img.src?.includes('.webm')
+        );
 
-        if (!isReelOrVideo) return false;
-
-        if (!s.expiresAt) return true;
-        const exp =
-          typeof s.expiresAt.toMillis === 'function'
-            ? s.expiresAt.toMillis()
-            : (s.expiresAt as unknown as { seconds?: number })?.seconds
-            ? (s.expiresAt as unknown as { seconds: number }).seconds * 1000
-            : Infinity;
-        return exp > nowMs;
-      })
-      .sort((a, b) => {
-        const aTime =
-          typeof a.createdAt?.toMillis === 'function'
-            ? a.createdAt.toMillis()
-            : (a.createdAt as unknown as { seconds?: number })?.seconds
-            ? (a.createdAt as unknown as { seconds: number }).seconds * 1000
-            : 0;
-        const bTime =
-          typeof b.createdAt?.toMillis === 'function'
-            ? b.createdAt.toMillis()
-            : (b.createdAt as unknown as { seconds?: number })?.seconds
-            ? (b.createdAt as unknown as { seconds: number }).seconds * 1000
-            : 0;
-        return bTime - aTime;
-      });
+      if (!isReelOrVideo) return false;
+      if (!s.expiresAt) return true;
+      const exp = getTimestampMillis(s.expiresAt) || Infinity;
+      return exp > nowMs;
+    });
   }, [rawReels]);
+
+  const { mode, setMode, ranked: reels } = useRankedFeed(visibleReels, {
+    storageKey: 'aite:reels-feed-mode',
+    mapItem: mapReel,
+    viewerId: user?.id ?? null,
+    following: user?.following ?? [],
+    kind: 'reel'
+  });
 
   // resolve owners for visible reels
   const ownerIds = useMemo(
@@ -116,7 +122,7 @@ export default function Reels(): JSX.Element {
   const ownersQuery = useMemo(
     () =>
       ownerIds.length
-        ? query(usersCollection, where('__name__', 'in', ownerIds))
+        ? query(usersCollection, where('__name__', 'in', ownerIds.slice(0, 10)))
         : null,
     [ownerIds]
   );
@@ -213,7 +219,7 @@ export default function Reels(): JSX.Element {
       <div className='relative flex h-app-nav w-full items-center justify-center overflow-hidden bg-black xs:h-app'>
         {/* Top Floating Header & Create Button */}
         <div
-          className='pointer-events-auto absolute left-4 top-4 z-40 flex items-center gap-3'
+          className='pointer-events-auto absolute left-4 right-4 top-4 z-40 flex items-start justify-between gap-3'
           style={{ marginTop: 'env(safe-area-inset-top)' }}
         >
           <Button
@@ -223,6 +229,9 @@ export default function Reels(): JSX.Element {
             <HeroIcon className='h-5 w-5' iconName='PlusIcon' />
             <span>إنشاء ريل</span>
           </Button>
+          <div className='max-w-[60%] rounded-full bg-black/35 backdrop-blur-md'>
+            <FeedModeBar mode={mode} onChange={setMode} variant='dark' />
+          </div>
         </div>
 
         {reelsLoading ? (

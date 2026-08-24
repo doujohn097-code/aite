@@ -29,7 +29,8 @@ import {
   storiesCollection,
   userStatsCollection
 } from '@lib/firebase/collections';
-import { likeReel, viewReel, deleteReel } from '@lib/firebase/utils';
+import { likeReel, viewReel, deleteReel, editReel } from '@lib/firebase/utils';
+import { EditContentModal } from '@components/modal/edit-content-modal';
 import { formatNumber } from '@lib/date';
 import { preventBubbling } from '@lib/utils';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -82,6 +83,11 @@ export function ReelCard({
     open: menuOpen,
     openModal: openMenu,
     closeModal: closeMenu
+  } = useModal();
+  const {
+    open: editOpen,
+    openModal: openEdit,
+    closeModal: closeEdit
   } = useModal();
   const {
     open: commentsOpen,
@@ -402,6 +408,12 @@ export function ReelCard({
     } catch {
       toast.error('تعذر نسخ الرابط');
     }
+  };
+
+  const handleEdit = async (nextCaption: string): Promise<void> => {
+    if (!authUser) return;
+    await editReel(reel.id, authUser.id, nextCaption);
+    toast.success('تم حفظ تعديل الريل');
   };
 
   const confirmDelete = async (): Promise<void> => {
@@ -841,6 +853,11 @@ export function ReelCard({
                 {isExpandedCaption ? 'عرض أقل' : 'المزيد...'}
               </button>
             )}
+            {reel.edited && (
+              <span className='mt-1 block text-[11px] font-semibold text-white/70'>
+                تم التعديل
+              </span>
+            )}
           </div>
         )}
 
@@ -874,20 +891,36 @@ export function ReelCard({
       >
         <div className='flex flex-col gap-2' onClick={preventBubbling()}>
           {isOwner && (
-            <button
-              type='button'
-              onClick={() => {
-                closeMenu();
-                openConfirm();
-              }}
-              className='active:scale-98 flex w-full items-center gap-3 rounded-2xl p-3 text-sm font-bold text-accent-red transition hover:bg-accent-red/10'
-            >
-              <HeroIcon
-                className='h-5 w-5 text-accent-red'
-                iconName='TrashIcon'
-              />
-              <span>حذف الريل</span>
-            </button>
+            <>
+              <button
+                type='button'
+                onClick={() => {
+                  closeMenu();
+                  openEdit();
+                }}
+                className='active:scale-98 flex w-full items-center gap-3 rounded-2xl p-3 text-sm font-bold text-light-primary transition hover:bg-light-primary/10 dark:text-dark-primary dark:hover:bg-dark-primary/10'
+              >
+                <HeroIcon
+                  className='h-5 w-5 text-light-secondary dark:text-dark-secondary'
+                  iconName='PencilSquareIcon'
+                />
+                <span>تعديل الوصف</span>
+              </button>
+              <button
+                type='button'
+                onClick={() => {
+                  closeMenu();
+                  openConfirm();
+                }}
+                className='active:scale-98 flex w-full items-center gap-3 rounded-2xl p-3 text-sm font-bold text-accent-red transition hover:bg-accent-red/10'
+              >
+                <HeroIcon
+                  className='h-5 w-5 text-accent-red'
+                  iconName='TrashIcon'
+                />
+                <span>حذف الريل</span>
+              </button>
+            </>
           )}
           <button
             type='button'
@@ -913,6 +946,16 @@ export function ReelCard({
           </button>
         </div>
       </Modal>
+
+      <EditContentModal
+        open={editOpen}
+        closeModal={closeEdit}
+        title='تعديل وصف الريل'
+        initialText={reel.caption ?? ''}
+        allowEmpty
+        placeholder='عدّل وصف الريل…  @للإشارة'
+        onSave={handleEdit}
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal

@@ -170,6 +170,55 @@ export async function manageFollow(
     });
 }
 
+export async function editTweet(
+  tweetId: string,
+  userId: string,
+  text: string,
+  options?: { allowEmpty?: boolean }
+): Promise<void> {
+  const trimmed = text.trim();
+  if (!trimmed && !options?.allowEmpty)
+    throw new Error('لا يمكن حفظ منشور فارغ');
+  if (trimmed.length > 1000) throw new Error('النص أطول من المسموح');
+
+  const tweetRef = doc(tweetsCollection, tweetId);
+  const snap = await getDoc(tweetRef);
+  const data = snap.data();
+  if (!data) throw new Error('المنشور غير موجود');
+  if (data.createdBy !== userId) throw new Error('لا يمكنك تعديل هذا المنشور');
+
+  await updateDoc(tweetRef, {
+    text: trimmed || null,
+    edited: true,
+    editedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+  await notifyMentions('post', tweetId);
+}
+
+export async function editReel(
+  reelId: string,
+  userId: string,
+  caption: string
+): Promise<void> {
+  const trimmed = caption.trim();
+  if (trimmed.length > 1000) throw new Error('الوصف أطول من المسموح');
+
+  const reelRef = doc(storiesCollection, reelId);
+  const snap = await getDoc(reelRef);
+  const data = snap.data();
+  if (!data) throw new Error('الريل غير موجود');
+  if (data.userId !== userId) throw new Error('لا يمكنك تعديل هذا الريل');
+
+  await updateDoc(reelRef, {
+    caption: trimmed || null,
+    edited: true,
+    editedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  } as Partial<WithFieldValue<Story>>);
+  await notifyMentions('reel', reelId);
+}
+
 export async function removeTweet(tweetId: string): Promise<void> {
   const idsToDelete = new Set<string>([tweetId]);
   let currentBatch = [tweetId];

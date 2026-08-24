@@ -15,7 +15,12 @@ import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
 import { useCollection } from '@lib/hooks/useCollection';
 import { tweetsCollection } from '@lib/firebase/collections';
-import { addReelComment, deleteReelComment } from '@lib/firebase/utils';
+import {
+  addReelComment,
+  deleteReelComment,
+  editTweet
+} from '@lib/firebase/utils';
+import { EditContentModal } from '@components/modal/edit-content-modal';
 import { formatDate } from '@lib/date';
 import { UserAvatar } from '@components/user/user-avatar';
 import { VerifiedBadge } from '@components/ui/verified-badge';
@@ -71,6 +76,7 @@ export function ReelsComments({
     Record<string, boolean>
   >({});
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
+  const [editTarget, setEditTarget] = useState<TweetWithUser | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { mentionQuery, onMentionChange, insertMention, closeMentions } =
@@ -325,6 +331,13 @@ export function ReelsComments({
     }
   };
 
+  const handleSaveEdit = async (nextText: string): Promise<void> => {
+    if (!user || !editTarget) return;
+    await editTweet(editTarget.id, user.id, nextText);
+    toast.success('تم حفظ تعديل التعليق');
+    setEditTarget(null);
+  };
+
   const handleDeletePrompt = (commentId: string, isReply = false): void => {
     setDeleteTarget({ id: commentId, isReply });
   };
@@ -575,6 +588,22 @@ export function ReelsComments({
                                 />
                                 <span>رد</span>
                               </button>
+                              {isCommentAuthor && (
+                                <button
+                                  type='button'
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditTarget(item);
+                                  }}
+                                  className='flex items-center gap-1 transition hover:text-main-accent-text active:scale-95'
+                                >
+                                  <HeroIcon
+                                    className='h-3.5 w-3.5'
+                                    iconName='PencilSquareIcon'
+                                  />
+                                  <span>تعديل</span>
+                                </button>
+                              )}
 
                               {!!currentLikes.length && (
                                 <span className='flex items-center gap-1 font-medium text-rose-500'>
@@ -742,6 +771,22 @@ export function ReelsComments({
                                         />
                                         <span>رد</span>
                                       </button>
+                                      {isReplyAuthor && (
+                                        <button
+                                          type='button'
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditTarget(reply);
+                                          }}
+                                          className='flex items-center gap-1 transition hover:text-main-accent-text active:scale-95'
+                                        >
+                                          <HeroIcon
+                                            className='h-3 w-3'
+                                            iconName='PencilSquareIcon'
+                                          />
+                                          <span>تعديل</span>
+                                        </button>
+                                      )}
 
                                       {!!replyLikes.length && (
                                         <span className='flex items-center gap-1 font-medium text-rose-500'>

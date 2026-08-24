@@ -9,6 +9,7 @@ import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { tweetsCollection } from '@lib/firebase/collections';
 import {
+  editTweet,
   removeTweet,
   manageReply,
   manageTotalReplies,
@@ -18,6 +19,7 @@ import {
   manageTotalPhotos
 } from '@lib/firebase/utils';
 import { delayScroll, preventBubbling, sleep } from '@lib/utils';
+import { EditContentModal } from '@components/modal/edit-content-modal';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { Button } from '@components/ui/button';
@@ -44,6 +46,8 @@ type TweetActionsProps = Pick<Tweet, 'createdBy'> & {
   username: string;
   parentId?: string;
   hasImages: boolean;
+  hasAudio?: boolean;
+  text?: string | null;
   viewTweet?: boolean;
 };
 
@@ -69,6 +73,8 @@ export function TweetActions({
   parentId,
   username,
   hasImages,
+  hasAudio,
+  text,
   viewTweet,
   createdBy
 }: TweetActionsProps): JSX.Element | null {
@@ -87,6 +93,12 @@ export function TweetActions({
     closeModal: pinCloseModal
   } = useModal();
 
+  const {
+    open: editOpen,
+    openModal: editOpenModal,
+    closeModal: editCloseModal
+  } = useModal();
+
   const tweetIsPinned = user?.pinnedTweet === tweetId;
 
   const currentPinModalData = useMemo(
@@ -97,7 +109,7 @@ export function TweetActions({
 
   if (!user) return null;
 
-  const { id: userId, following = [], pinnedTweet = null } = user;
+  const { id: userId, following = [] } = user;
 
   const isInAdminControl = isAdmin && !isOwner;
 
@@ -126,6 +138,13 @@ export function TweetActions({
     );
 
     removeCloseModal();
+  };
+
+  const handleEdit = async (nextText: string): Promise<void> => {
+    await editTweet(tweetId, userId, nextText, {
+      allowEmpty: hasImages || !!hasAudio
+    });
+    toast.success('تم حفظ تعديل المنشور');
   };
 
   const handlePin = async (): Promise<void> => {
@@ -189,6 +208,14 @@ export function TweetActions({
           closeModal={pinCloseModal}
         />
       </Modal>
+      <EditContentModal
+        open={editOpen}
+        closeModal={editCloseModal}
+        title='تعديل المنشور'
+        initialText={text ?? ''}
+        allowEmpty={hasImages || !!hasAudio}
+        onSave={handleEdit}
+      />
       <Popover className='relative'>
         {({ open, close }): JSX.Element => (
           <>
@@ -218,10 +245,22 @@ export function TweetActions({
                   {...variants}
                   static
                 >
+                  {isOwner && (
+                    <Popover.Button
+                      className='accent-tab flex w-full gap-3 rounded-md rounded-b-none p-4 hover:bg-main-sidebar-background'
+                      as={Button}
+                      onClick={preventBubbling(editOpenModal)}
+                    >
+                      <HeroIcon iconName='PencilSquareIcon' />
+                      تعديل
+                    </Popover.Button>
+                  )}
                   {(isAdmin || isOwner) && (
                     <Popover.Button
-                      className='accent-tab flex w-full gap-3 rounded-md rounded-b-none p-4 text-accent-red
-                                 hover:bg-main-sidebar-background'
+                      className={cn(
+                        'accent-tab flex w-full gap-3 p-4 text-accent-red hover:bg-main-sidebar-background',
+                        isOwner ? 'rounded-none' : 'rounded-md rounded-b-none'
+                      )}
                       as={Button}
                       onClick={preventBubbling(removeOpenModal)}
                     >

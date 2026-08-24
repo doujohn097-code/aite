@@ -24,6 +24,8 @@ export type Tweet = {
   createdBy: string;
   createdAt: Timestamp;
   updatedAt: Timestamp | null;
+  edited?: boolean;
+  editedAt?: Timestamp | null;
   userReplies: number;
   userRetweets: string[];
 };
@@ -50,6 +52,8 @@ export const tweetConverter: FirestoreDataConverter<Tweet> = {
       createdBy: '',
       createdAt: Timestamp.now(),
       updatedAt: null,
+      edited: false,
+      editedAt: null,
       userReplies: 0,
       userRetweets: [],
       ...data
