@@ -41,6 +41,7 @@ import {
 } from '@lib/utils';
 import { getSavedAccounts } from '@lib/accounts';
 import { registerWebPushToken } from '@lib/native-bridge';
+import { tx } from '@lib/i18n/tx';
 import type { ReactNode } from 'react';
 import type { User as AuthUser } from 'firebase/auth';
 import type { WithFieldValue } from 'firebase/firestore';
@@ -446,30 +447,29 @@ export function AuthContextProvider({
     const code = (error as { code?: string })?.code ?? '';
     const message = (error as { message?: string })?.message ?? '';
     const map: Record<string, string> = {
-      'auth/invalid-credential': 'اسم المستخدم أو كلمة المرور غير صحيحة',
-      'auth/wrong-password': 'اسم المستخدم أو كلمة المرور غير صحيحة',
-      'auth/user-not-found': 'لا يوجد حساب بهذا الاسم',
-      'auth/too-many-requests': 'محاولات كثيرة — انتظر قليلًا ثم حاول مجددًا',
-      'auth/network-request-failed': 'تحقق من اتصالك بالإنترنت',
-      'auth/email-already-in-use': 'اسم المستخدم مسجل مسبقًا',
-      'auth/weak-password': 'كلمة المرور ضعيفة (6 أحرف على الأقل)',
-      'auth/popup-closed-by-user': 'أُلغي تسجيل الدخول',
-      'auth/invalid-email': 'اسم المستخدم غير صالح',
-      'auth/operation-not-allowed': 'التسجيل غير مفعل حاليًا',
-      'auth/unauthorized-domain': 'حدث خطأ مؤقت — حاول مجددًا لاحقًا',
-      'permission-denied': 'تعذر حفظ البيانات — حاول مجددًا',
-      'firestore/permission-denied': 'تعذر حفظ البيانات — حاول مجددًا'
+      'auth/invalid-credential': tx('err.wrongUserPass'),
+      'auth/wrong-password': tx('err.wrongUserPass'),
+      'auth/user-not-found': tx('err.noAccount'),
+      'auth/too-many-requests': tx('settings.tooMany'),
+      'auth/network-request-failed': tx('err.network'),
+      'auth/email-already-in-use': tx('err.userExists'),
+      'auth/weak-password': tx('auth.passWeak'),
+      'auth/popup-closed-by-user': tx('common.cancel'),
+      'auth/invalid-email': tx('auth.userChars'),
+      'auth/operation-not-allowed': tx('err.temp'),
+      'auth/unauthorized-domain': tx('err.temp'),
+      'permission-denied': tx('err.saveData'),
+      'firestore/permission-denied': tx('err.saveData')
     };
 
-    // رسائل مخصصة لبعض الحالات
     if (message.includes('projectId') || message.includes('aite-76'))
-      return new Error('حدث خطأ مؤقت — يرجى إعادة تحميل الصفحة');
+      return new Error(tx('err.reloadPage'));
 
     return new Error(
       map[code] ??
         (code
-          ? `${map[code] ?? 'تعذر تسجيل الدخول'} (${code})`
-          : 'تعذر تسجيل الدخول — حاول مرة أخرى')
+          ? `${map[code] ?? tx('err.loginFail')} (${code})`
+          : tx('err.loginFail'))
     );
   };
 
@@ -480,7 +480,7 @@ export function AuthContextProvider({
     try {
       const cleaned = username.trim().replace(/\s+/g, '').toLowerCase();
       if (!cleaned || !password)
-        throw new Error('يرجى إدخال اسم المستخدم وكلمة المرور');
+        throw new Error(tx('auth.needCreds'));
       const email = usernameToInternalEmail(cleaned);
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
@@ -500,24 +500,24 @@ export function AuthContextProvider({
       const cleanedName = name.trim();
 
       if (!cleanedName || !cleanedUsername || !password)
-        throw new Error('يرجى ملء جميع الحقول');
+        throw new Error(tx('auth.fillAll'));
 
       if (cleanedUsername.length < 3)
-        throw new Error('اسم المستخدم قصير جدًا (3 أحرف على الأقل)');
+        throw new Error(tx('auth.userShort'));
       if (cleanedUsername.length > 15)
-        throw new Error('اسم المستخدم طويل جدًا (15 حرفًا كحد أقصى)');
+        throw new Error(tx('auth.userLong'));
       if (!/^\w+$/i.test(cleanedUsername))
-        throw new Error("اسم المستخدم يمكن أن يحتوي فقط على أحرف وأرقام و '_'");
+        throw new Error(tx('auth.userChars'));
 
       if (password.length < 6)
-        throw new Error('كلمة المرور ضعيفة (6 أحرف على الأقل)');
+        throw new Error(tx('auth.passWeak'));
 
       try {
         const last = Number(window.localStorage.getItem('aite:last-signup') ?? '0');
         if (last && Date.now() - last < 45_000)
-          throw new Error('انتظر قليلاً قبل إنشاء حساب آخر');
+          throw new Error(tx('err.waitSignup'));
       } catch (error) {
-        if (error instanceof Error && error.message.includes('انتظر')) throw error;
+        if (error instanceof Error && error.message === tx('err.waitSignup')) throw error;
       }
 
       // تحقق من التوفر مع معالجة أخطاء الصلاحيات
@@ -531,7 +531,7 @@ export function AuthContextProvider({
       }
 
       if (!isAvailable) {
-        const error = new Error('اسم المستخدم غير متاح');
+        const error = new Error(tx('err.userUnavailable'));
         setError(error);
         throw error;
       }
@@ -650,7 +650,13 @@ export function AuthContextProvider({
       }
 
       const arabic =
-        err instanceof Error && err.message.includes('اسم المستخدم')
+        err instanceof Error &&
+        (err.message === tx('auth.userShort') ||
+          err.message === tx('auth.userLong') ||
+          err.message === tx('auth.userChars') ||
+          err.message === tx('err.userUnavailable') ||
+          err.message === tx('auth.fillAll') ||
+          err.message === tx('err.waitSignup'))
           ? err
           : toArabicAuthError(err);
       setError(arabic);

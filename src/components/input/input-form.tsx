@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import TextArea from 'react-textarea-autosize';
+import { useLanguage } from '@lib/context/language-context';
 import { useModal } from '@lib/hooks/useModal';
 import { useMentionAssist } from '@lib/hooks/useMentionAssist';
 import { Modal } from '@components/modal/modal';
@@ -69,6 +70,7 @@ export function InputForm({
   handleChange,
   handleImageUpload
 }: InputFormProps): JSX.Element {
+  const { t } = useLanguage();
   const { open, openModal, closeModal } = useModal();
   const { mentionQuery, onMentionChange, insertMention, closeMentions } =
     useMentionAssist(
@@ -126,10 +128,10 @@ export function InputForm({
         closeModal={closeModal}
       >
         <ActionModal
-          title='تجاهل المنشور؟'
-          description='لن يمكن التراجع وسوف تفقد مسودتك.'
+          title={t('compose.discardTitle')}
+          description={t('compose.discardBody')}
           mainBtnClassName='bg-accent-red hover:bg-accent-red/90 active:bg-accent-red/75'
-          mainBtnLabel='تجاهل'
+          mainBtnLabel={t('action.discard')}
           action={handleClose}
           closeModal={closeModal}
         />
@@ -165,7 +167,7 @@ export function InputForm({
               className='cursor-pointer bg-main-accent px-4 py-1.5 font-bold text-main-accent-contrast opacity-50'
               onClick={handleFocus}
             >
-              رد
+              {t('action.reply')}
             </Button>
           )}
         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { doc, query, where, orderBy, documentId } from 'firebase/firestore';
 import cn from 'clsx';
+import { useLanguage } from '@lib/context/language-context';
 import { useUser } from '@lib/context/user-context';
 import { useAuth } from '@lib/context/auth-context';
 import { useCollection } from '@lib/hooks/useCollection';
@@ -24,19 +25,24 @@ import type { ReactElement, ReactNode } from 'react';
 
 type ProfileTab = 'posts' | 'retweets' | 'reels';
 
-const TABS: { id: ProfileTab; label: string; icon: IconName }[] = [
-  { id: 'posts', label: 'المنشورات', icon: 'DocumentTextIcon' },
+const TAB_DEFS: {
+  id: ProfileTab;
+  labelKey: 'profile.posts' | 'profile.reposts' | 'profile.reels';
+  icon: IconName;
+}[] = [
+  { id: 'posts', labelKey: 'profile.posts', icon: 'DocumentTextIcon' },
   {
     id: 'retweets',
-    label: 'المُعاد نشرها',
+    labelKey: 'profile.reposts',
     icon: 'ArrowPathRoundedSquareIcon'
   },
-  { id: 'reels', label: 'الريلز المعاد نشرها', icon: 'PlayIcon' }
+  { id: 'reels', labelKey: 'profile.reels', icon: 'PlayIcon' }
 ];
 
 export default function UserTweets(): JSX.Element {
   const { user } = useUser();
   const { user: authUser } = useAuth();
+  const { t } = useLanguage();
   const { id, username, pinnedTweet } = user ?? {};
   const isBlocked = !!id && authUser?.blockedUsers?.includes(id);
 
@@ -113,7 +119,7 @@ export default function UserTweets(): JSX.Element {
                    p-1.5 backdrop-blur-xl
                    backdrop-saturate-150'
       >
-        {TABS.map(({ id: tabId, label, icon }) => (
+        {TAB_DEFS.map(({ id: tabId, labelKey, icon }) => (
           <button
             key={tabId}
             type='button'
@@ -126,7 +132,7 @@ export default function UserTweets(): JSX.Element {
             )}
           >
             <HeroIcon className='h-4 w-4' iconName={icon} />
-            <span className='leading-tight'>{label}</span>
+            <span className='leading-tight'>{t(labelKey)}</span>
           </button>
         ))}
       </div>
@@ -137,9 +143,9 @@ export default function UserTweets(): JSX.Element {
             className='h-10 w-10 text-light-secondary dark:text-dark-secondary'
             iconName='NoSymbolIcon'
           />
-          <p className='font-bold'>لقد حظرت هذا الحساب</p>
+          <p className='font-bold'>{t('profile.blocked')}</p>
           <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-            لن تظهر منشوراته أو محتواه في خلاصتك.
+            {t('profile.blockedHint')}
           </p>
         </div>
       ) : loading ? (
@@ -147,8 +153,8 @@ export default function UserTweets(): JSX.Element {
       ) : tab === 'posts' ? (
         !ownerOnlyTweets?.length ? (
           <StatsEmpty
-            title={`@${username as string} لم ينشر`}
-            description='عندما ينشر، ستظهر منشوراته هنا.'
+            title={t('profile.noPosts', { username: username as string })}
+            description={t('profile.noPostsHint')}
           />
         ) : (
           <>
@@ -175,8 +181,8 @@ export default function UserTweets(): JSX.Element {
         )
       ) : !reels?.length ? (
         <StatsEmpty
-          title='لا توجد ريلز معاد نشرها'
-          description='عندما يعيد نشر ريلاً، ستظهر هنا.'
+          title={t('profile.noReels')}
+          description={t('profile.noReelsHint')}
         />
       ) : (
         <div className='grid grid-cols-3 gap-0.5 py-0.5'>

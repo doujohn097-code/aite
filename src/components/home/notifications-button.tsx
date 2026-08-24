@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { useAuth } from '@lib/context/auth-context';
+import { useT } from '@lib/context/language-context';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ToolTip } from '@components/ui/tooltip';
 
 export function NotificationsButton(): JSX.Element {
   const { unreadNotifications } = useAuth();
+  const t = useT();
   const showBadge =
     typeof unreadNotifications === 'number' && unreadNotifications > 0;
 
@@ -29,7 +31,7 @@ export function NotificationsButton(): JSX.Element {
             </span>
           )}
         </span>
-        <ToolTip tip='التنبيهات' />
+        <ToolTip tip={t('action.alerts')} />
       </a>
     </Link>
   );

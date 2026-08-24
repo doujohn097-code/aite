@@ -1,3 +1,4 @@
+import { useT } from '@lib/context/language-context';
 import { HeroIcon } from './hero-icon';
 
 type ErrorProps = {
@@ -5,6 +6,7 @@ type ErrorProps = {
 };
 
 export function Error({ message }: ErrorProps): JSX.Element {
+  const t = useT();
   return (
     <div
       className='flex flex-col items-center justify-center 
@@ -13,7 +15,7 @@ export function Error({ message }: ErrorProps): JSX.Element {
       <i>
         <HeroIcon className='h-10 w-10' iconName='ExclamationTriangleIcon' />
       </i>
-      <p>{message ?? 'حدث خطأ ما. حاول إعادة التحميل.'}</p>
+      <p>{message ?? t('err.reload')}</p>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Menu } from '@headlessui/react';
 import cn from 'clsx';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
@@ -16,6 +17,7 @@ import type { User } from '@lib/types/user';
 
 export function SidebarProfile(): JSX.Element {
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const { open, openModal, closeModal } = useModal();
   const {
     open: settingsOpen,
@@ -35,9 +37,9 @@ export function SidebarProfile(): JSX.Element {
         <ActionModal
           useIcon
           focusOnMainBtn
-          title='تسجيل الخروج من Aite؟'
-          description='يمكنك تسجيل الدخول مرة أخرى في أي وقت.'
-          mainBtnLabel='تسجيل الخروج'
+          title={t('profile.logoutTitle')}
+          description={t('profile.logoutBody')}
+          mainBtnLabel={t('action.logout')}
           action={signOut}
           closeModal={closeModal}
         />
@@ -118,7 +120,7 @@ export function SidebarProfile(): JSX.Element {
                         onClick={openSettingsModal}
                       >
                         <HeroIcon iconName='Cog6ToothIcon' />
-                        الإعدادات
+                        {t('settings.title')}
                       </Button>
                     )}
                   </Menu.Item>
@@ -132,7 +134,7 @@ export function SidebarProfile(): JSX.Element {
                         onClick={openModal}
                       >
                         <HeroIcon iconName='ArrowRightOnRectangleIcon' />
-                        تسجيل الخروج @{username}
+                        {t('action.logout')} @{username}
                       </Button>
                     )}
                   </Menu.Item>

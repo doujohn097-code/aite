@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import cn from 'clsx';
 import { Dialog } from '@headlessui/react';
+import { useT } from '@lib/context/language-context';
 import { Button } from '@components/ui/button';
 import { CustomIcon } from '@components/ui/custom-icon';
 
@@ -31,6 +32,7 @@ export function ActionModal({
   closeModal,
   loading: loadingProp
 }: ActionModalProps): JSX.Element {
+  const t = useT();
   const mainBtn = useRef<HTMLButtonElement>(null);
   const [internalLoading, setInternalLoading] = useState(false);
   const isLoading = loadingProp ?? internalLoading;

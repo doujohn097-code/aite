@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useT } from '@lib/context/language-context';
 import { motion } from 'framer-motion';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -8,16 +9,11 @@ import { ProgressBar } from './progress-bar';
 import type { ChangeEvent, ClipboardEvent } from 'react';
 import type { IconName } from '@components/ui/hero-icon';
 
-type Options = {
-  name: string;
-  iconName: IconName;
-  disabled: boolean;
-  onClick?: () => void;
-}[];
-
-const options: Readonly<Options> = [
+const options: Readonly<
+  { nameKey: 'compose.media'; iconName: IconName; disabled: boolean }[]
+> = [
   {
-    name: 'وسائط',
+    nameKey: 'compose.media',
     iconName: 'PhotoIcon',
     disabled: false
   }
@@ -48,6 +44,7 @@ export function InputOptions({
   onRecordVoice,
   handleImageUpload
 }: InputOptionsProps): JSX.Element {
+  const t = useT();
   const inputFileRef = useRef<HTMLInputElement>(null);
 
   const onClick = (): void => inputFileRef.current?.click();
@@ -63,15 +60,15 @@ export function InputOptions({
           ref={inputFileRef}
           multiple
         />
-        {options.map(({ name, iconName }) => (
+        {options.map(({ nameKey, iconName }) => (
           <Button
             className='accent-tab accent-bg-tab group relative rounded-full p-2
                        hover:bg-main-accent/10 active:bg-main-accent/20'
             onClick={onClick}
-            key={name}
+            key={nameKey}
           >
             <HeroIcon className='h-5 w-5' iconName={iconName} />
-            <ToolTip tip={name} modal={modal} />
+            <ToolTip tip={t(nameKey)} modal={modal} />
           </Button>
         ))}
         {onRecordVoice && (
@@ -81,7 +78,7 @@ export function InputOptions({
             onClick={onRecordVoice}
           >
             <HeroIcon className='h-5 w-5' iconName='MicrophoneIcon' />
-            <ToolTip tip='تسجيل صوتي' modal={modal} />
+            <ToolTip tip={t('compose.voice')} modal={modal} />
           </Button>
         )}
       </div>
@@ -107,7 +104,7 @@ export function InputOptions({
           disabled={!isValidTweet}
           loading={loading}
         >
-          {reply ? 'رد' : 'نشر'}
+          {reply ? t('action.reply') : t('compose.publish')}
         </Button>
       </div>
     </motion.div>

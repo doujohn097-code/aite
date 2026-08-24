@@ -4,6 +4,8 @@ import { HeroIcon } from '@components/ui/hero-icon';
 import { VerifiedBadge } from '@components/ui/verified-badge';
 import { StoryAvatar } from '@components/stories/story-avatar';
 import { Skeleton } from '@components/ui/skeleton';
+import { useLanguage } from '@lib/context/language-context';
+import { intlLocale } from '@lib/i18n';
 import { getTimestampMillis } from '@lib/date';
 import { visibleProfileName, visibleUsername } from '@lib/utils';
 import type { Conversation } from '@lib/types/message';
@@ -16,20 +18,20 @@ type ConversationCardProps = {
   active?: boolean;
 };
 
-function formatListTime(timestamp: unknown): string {
+function formatListTime(timestamp: unknown, locale: string, yesterdayLabel: string): string {
   const millis = getTimestampMillis(timestamp);
   if (!millis) return '';
   const date = new Date(millis);
   const now = new Date();
   if (date.toDateString() === now.toDateString())
-    return new Intl.DateTimeFormat('ar', {
+    return new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
       minute: 'numeric'
     }).format(date);
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) return 'أمس';
-  return new Intl.DateTimeFormat('ar', {
+  if (date.toDateString() === yesterday.toDateString()) return yesterdayLabel;
+  return new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'short'
   }).format(date);
@@ -41,6 +43,7 @@ export function ConversationCard({
   currentUserId,
   active
 }: ConversationCardProps): JSX.Element {
+  const { t, locale } = useLanguage();
   const { id, lastMessage, unread } = conversation;
   const unreadCount = unread?.[currentUserId] ?? 0;
   const isOwnLast = lastMessage?.senderId === currentUserId;
@@ -60,15 +63,15 @@ export function ConversationCard({
   const previewText = lastMessage
     ? lastMessage.text ||
       (lastMessage.type === 'audio'
-        ? 'رسالة صوتية'
+        ? t('messages.voice')
         : lastMessage.type === 'image'
-        ? 'صورة'
+        ? t('messages.image')
         : lastMessage.type === 'video'
-        ? 'فيديو'
+        ? t('messages.video')
         : lastMessage.type === 'shared'
-        ? 'شارك منشورًا'
+        ? t('messages.shared')
         : '')
-    : 'ابدأ المحادثة الآن';
+    : t('messages.start');
 
   return (
     <Link href={`/messages/${id}`}>
@@ -113,7 +116,11 @@ export function ConversationCard({
             </div>
             {lastMessage && (
               <span className='shrink-0 text-xs text-light-secondary dark:text-dark-secondary'>
-                {formatListTime(lastMessage.createdAt)}
+                {formatListTime(
+                  lastMessage.createdAt,
+                  intlLocale(locale),
+                  t('common.yesterday')
+                )}
               </span>
             )}
           </div>
@@ -127,13 +134,15 @@ export function ConversationCard({
                   : 'text-light-secondary dark:text-dark-secondary'
               )}
             >
-              {isOwnLast && lastMessage && <span>أنت: </span>}
+              {isOwnLast && lastMessage && <span>{t('common.you')}: </span>}
               {typeIcon && (
                 <HeroIcon className='h-4 w-4 shrink-0' iconName={typeIcon} />
               )}
               <span className='truncate'>{previewText}</span>
               {lastMessage?.edited && (
-                <span className='shrink-0 text-[11px] opacity-75'>· معدّل</span>
+                <span className='shrink-0 text-[11px] opacity-75'>
+                  · {t('common.edited')}
+                </span>
               )}
             </p>
             {unreadCount > 0 && (

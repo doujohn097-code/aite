@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useT } from '@lib/context/language-context';
 import { motion, AnimatePresence } from 'framer-motion';
 import cn from 'clsx';
 import { LinkifiedText } from './linkified-text';
@@ -20,6 +21,7 @@ export function ExpandableText({
   className,
   buttonClassName
 }: ExpandableTextProps): JSX.Element {
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
   const isLong = text.length > maxChars;
 
@@ -48,7 +50,7 @@ export function ExpandableText({
             buttonClassName
           )}
         >
-          {expanded ? 'عرض أقل' : 'عرض المزيد'}
+          {expanded ? t('common.less') : t('search.more')}
         </button>
       )}
     </div>

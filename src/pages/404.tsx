@@ -1,6 +1,7 @@
 import { ThemeContext } from '@lib/context/theme-context';
 import { SEO } from '@components/common/seo';
 import { useContext } from 'react';
+import { tx } from '@lib/i18n/tx';
 
 export default function NotFound(): JSX.Element {
   // The 404 page is statically generated outside the app providers during
@@ -14,8 +15,8 @@ export default function NotFound(): JSX.Element {
   return (
     <>
       <SEO
-        title='الصفحة غير موجودة / Aite'
-        description='عذرًا، لم نتمكن من العثور على الصفحة التي تبحث عنها.'
+        title={tx('err.pageTitle')}
+        description={tx('err.pageMissing')}
         image='/404.png'
       />
       <div
@@ -23,7 +24,7 @@ export default function NotFound(): JSX.Element {
         style={{ background: isDarkMode ? '#000' : '#fff' }}
       >
         <h1 className='text-4xl font-bold'>٤٠٤</h1>
-        <p className='text-xl'>الصفحة غير موجودة</p>
+        <p className='text-xl'>{tx('err.pageMissing')}</p>
       </div>
     </>
   );

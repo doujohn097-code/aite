@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
+import { useLanguage } from '@lib/context/language-context';
 import { useModal } from '@lib/hooks/useModal';
 import { manageFollow } from '@lib/firebase/utils';
 import { preventBubbling } from '@lib/utils';
@@ -18,6 +19,7 @@ export function FollowButton({
   userTargetUsername
 }: FollowButtonProps): JSX.Element | null {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { open, openModal, closeModal } = useModal();
   const [optimisticFollowing, setOptimisticFollowing] = useState<
     boolean | null
@@ -42,7 +44,7 @@ export function FollowButton({
     setOptimisticFollowing(true);
     void manageFollow('follow', userId, userTargetId).catch(() => {
       setOptimisticFollowing(null);
-      toast.error('تعذرت المتابعة، حاول مجدداً');
+      toast.error(t('err.follow'));
     });
   };
 
@@ -51,7 +53,7 @@ export function FollowButton({
     closeModal();
     void manageFollow('unfollow', userId, userTargetId).catch(() => {
       setOptimisticFollowing(null);
-      toast.error('تعذر إلغاء المتابعة، حاول مجدداً');
+      toast.error(t('err.unfollow'));
     });
   };
 
@@ -63,9 +65,9 @@ export function FollowButton({
         closeModal={closeModal}
       >
         <ActionModal
-          title={`إلغاء متابعة @${userTargetUsername}؟`}
-          description='لن تظهر منشوراتهم في الخط الزمني. يمكنك استعراض ملفهم الشخصي ما لم تكن المنشورات محمية.'
-          mainBtnLabel='إلغاء المتابعة'
+          title={t('unfollow.title', { username: userTargetUsername })}
+          description={t('unfollow.body')}
+          mainBtnLabel={t('action.unfollow')}
           mainBtnClassName='bg-accent-red text-white hover:bg-accent-red/90 focus-visible:bg-accent-red/90 active:bg-accent-red/80'
           action={handleUnfollow}
           closeModal={closeModal}
@@ -78,8 +80,8 @@ export function FollowButton({
                      hover:text-accent-red dark:border-light-secondary'
           onClick={preventBubbling(openModal)}
         >
-          <span className='group-hover:hidden'>يتابع</span>
-          <span className='hidden group-hover:inline'>إلغاء المتابعة</span>
+          <span className='group-hover:hidden'>{t('action.followingNow')}</span>
+          <span className='hidden group-hover:inline'>{t('action.unfollow')}</span>
         </Button>
       ) : (
         <Button

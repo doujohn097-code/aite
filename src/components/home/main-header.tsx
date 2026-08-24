@@ -1,4 +1,5 @@
 import cn from 'clsx';
+import { useLanguage } from '@lib/context/language-context';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ToolTip } from '@components/ui/tooltip';
@@ -32,6 +33,7 @@ export function MainHeader({
   useMobileSidebar,
   action
 }: HomeHeaderProps): JSX.Element {
+  const { t, isRtl } = useLanguage();
   return (
     <header
       className={cn(
@@ -51,9 +53,11 @@ export function MainHeader({
           >
             <HeroIcon
               className='h-5 w-5'
-              iconName={iconName ?? 'ArrowLeftIcon'}
+              iconName={
+                iconName ?? (isRtl ? 'ArrowRightIcon' : 'ArrowLeftIcon')
+              }
             />
-            <ToolTip tip={tip ?? 'رجوع'} />
+            <ToolTip tip={tip ?? t('common.back')} />
           </Button>
         )}
         {useMobileSidebar && (
@@ -68,8 +72,8 @@ export function MainHeader({
         {logo ? (
           <button
             onClick={() => window.location.replace('/home')}
-            title='الرئيسية + تحديث'
-            aria-label='الرئيسية'
+            title={t('nav.homeRefresh')}
+            aria-label={t('nav.home')}
             className='cursor-pointer'
           >
             <AiteWordmark className='h-8 max-h-9 w-auto max-w-[140px]' />
