@@ -1,4 +1,4 @@
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import { userConverter } from '@lib/types/user';
 import { tweetConverter } from '@lib/types/tweet';
 import { bookmarkConverter } from '@lib/types/bookmark';
@@ -6,6 +6,7 @@ import { statsConverter } from '@lib/types/stats';
 import { notificationConverter } from '@lib/types/notification';
 import { storyConverter } from '@lib/types/story';
 import { conversationConverter, messageConverter } from '@lib/types/message';
+import { appUpdateConverter } from '@lib/types/app-update';
 import { db } from './app';
 import type { CollectionReference } from 'firebase/firestore';
 import type { Bookmark } from '@lib/types/bookmark';
@@ -49,6 +50,11 @@ export const conversationsCollection = collection(
   db,
   'conversations'
 ).withConverter(conversationConverter);
+
+export const appUpdateDoc = doc(
+  collection(db, 'config').withConverter(appUpdateConverter),
+  'appUpdate'
+);
 
 export function conversationMessagesCollection(
   id: string

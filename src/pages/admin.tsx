@@ -15,7 +15,7 @@ import cn from 'clsx';
 import type { ChangeEvent, FormEvent } from 'react';
 import type { User } from '@lib/types/user';
 
-type Tab = 'users' | 'posts' | 'comments' | 'reels';
+type Tab = 'users' | 'posts' | 'comments' | 'reels' | 'updates';
 
 type ContentItem = {
   id: string;
@@ -31,7 +31,8 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'users', label: 'المستخدمون', icon: 'UsersIcon' },
   { id: 'posts', label: 'المنشورات', icon: 'ChatBubbleBottomCenterTextIcon' },
   { id: 'comments', label: 'التعليقات', icon: 'ChatBubbleOvalLeftIcon' },
-  { id: 'reels', label: 'الريلز', icon: 'FilmIcon' }
+  { id: 'reels', label: 'الريلز', icon: 'FilmIcon' },
+  { id: 'updates', label: 'التحديث', icon: 'ArrowDownTrayIcon' }
 ];
 
 export default function Admin(): JSX.Element {
@@ -51,6 +52,20 @@ export default function Admin(): JSX.Element {
   const [processing, setProcessing] = useState<Record<string, boolean>>({});
   const [passwordUser, setPasswordUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState('');
+  const [updateForm, setUpdateForm] = useState({
+    versionName: '',
+    versionCode: '',
+    title: 'تحديث جديد',
+    message: '',
+    apkUrl: '',
+    force: false,
+    target: 'all'
+  });
+  const [currentUpdate, setCurrentUpdate] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
+  const [publishing, setPublishing] = useState(false);
 
   const adminFetch = async (
     url: string,
@@ -83,6 +98,14 @@ export default function Admin(): JSX.Element {
         if (!response.ok)
           throw new Error(data.error ?? 'لا تملك صلاحية الإدارة.');
         setUsers(data.users ?? []);
+      } else if (nextTab === 'updates') {
+        const response = await adminFetch('/api/admin/update', {}, key);
+        const data = (await response.json()) as {
+          update?: Record<string, unknown> | null;
+          error?: string;
+        };
+        if (!response.ok) throw new Error(data.error ?? 'تعذر جلب التحديث');
+        setCurrentUpdate(data.update ?? null);
       } else {
         const params = new URLSearchParams({
           kind: nextTab,
@@ -217,6 +240,50 @@ export default function Admin(): JSX.Element {
     }
   };
 
+  const publishUpdate = async (): Promise<void> => {
+    setPublishing(true);
+    setError(null);
+    try {
+      const response = await adminFetch('/api/admin/update', {
+        method: 'POST',
+        body: JSON.stringify({
+          versionName: updateForm.versionName,
+          versionCode: Number(updateForm.versionCode),
+          title: updateForm.title,
+          message: updateForm.message,
+          apkUrl: updateForm.apkUrl.trim() || null,
+          force: updateForm.force,
+          target: updateForm.target
+        })
+      });
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+        update?: Record<string, unknown>;
+      } | null;
+      if (!response.ok) throw new Error(data?.error ?? 'تعذر إطلاق التحديث');
+      setCurrentUpdate(data?.update ?? null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'حدث خطأ');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const stopUpdate = async (): Promise<void> => {
+    setPublishing(true);
+    try {
+      const response = await adminFetch('/api/admin/update', {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('تعذر إيقاف التحديث');
+      setCurrentUpdate((prev) => (prev ? { ...prev, active: false } : prev));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'حدث خطأ');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const deleteContent = async (item: ContentItem): Promise<void> => {
     const label =
       tab === 'reels' ? 'الريل' : tab === 'comments' ? 'التعليق' : 'المنشور';
@@ -339,28 +406,30 @@ export default function Admin(): JSX.Element {
           ))}
         </div>
 
-        <form
-          className='flex gap-2 border-b border-light-border px-4 py-3 dark:border-dark-border'
-          onSubmit={(event): void => {
-            event.preventDefault();
-            void loadTab();
-          }}
-        >
-          <input
-            value={query}
-            onChange={(event): void => setQuery(event.target.value)}
-            placeholder={
-              tab === 'users' ? 'ابحث بالاسم أو المعرف...' : 'ابحث في النص...'
-            }
-            className='min-w-0 flex-1 rounded-full bg-light-line-reply/40 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-main-accent dark:bg-dark-line-reply/40'
-          />
-          <Button
-            type='submit'
-            className='rounded-full bg-main-accent px-4 py-2 text-sm font-bold text-main-accent-contrast'
+        {tab !== 'updates' && (
+          <form
+            className='flex gap-2 border-b border-light-border px-4 py-3 dark:border-dark-border'
+            onSubmit={(event): void => {
+              event.preventDefault();
+              void loadTab();
+            }}
           >
-            بحث
-          </Button>
-        </form>
+            <input
+              value={query}
+              onChange={(event): void => setQuery(event.target.value)}
+              placeholder={
+                tab === 'users' ? 'ابحث بالاسم أو المعرف...' : 'ابحث في النص...'
+              }
+              className='min-w-0 flex-1 rounded-full bg-light-line-reply/40 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-main-accent dark:bg-dark-line-reply/40'
+            />
+            <Button
+              type='submit'
+              className='rounded-full bg-main-accent px-4 py-2 text-sm font-bold text-main-accent-contrast'
+            >
+              بحث
+            </Button>
+          </form>
+        )}
 
         {error && (
           <div className='m-4 rounded-2xl border border-accent-red/30 bg-accent-red/10 p-4 text-sm text-accent-red'>
@@ -370,6 +439,131 @@ export default function Admin(): JSX.Element {
 
         {loading ? (
           <Loading className='mt-5' />
+        ) : tab === 'updates' ? (
+          <div className='flex flex-col gap-4 px-4 py-5'>
+            {currentUpdate?.active ? (
+              <div className='rounded-2xl border border-main-accent/30 bg-main-accent/10 p-4 text-sm'>
+                <p className='font-bold text-main-accent-text'>
+                  تحديث نشط الآن
+                </p>
+                <p className='mt-1'>
+                  {String(currentUpdate.title ?? 'تحديث')} ·{' '}
+                  {String(currentUpdate.versionName ?? '')} (
+                  {String(currentUpdate.versionCode ?? '')})
+                </p>
+                <Button
+                  className='mt-3 rounded-full bg-accent-red px-4 py-2 text-sm font-bold text-white'
+                  loading={publishing}
+                  onClick={(): Promise<void> => stopUpdate()}
+                >
+                  إيقاف الإعلان
+                </Button>
+              </div>
+            ) : (
+              <p className='text-sm text-light-secondary dark:text-dark-secondary'>
+                لا يوجد تحديث ظاهر للمستخدمين حالياً.
+              </p>
+            )}
+            <p className='text-sm leading-relaxed text-light-secondary dark:text-dark-secondary'>
+              عند الإطلاق يظهر للمستخدمين خيار التثبيت فوراً. على أندرويد
+              يُنزَّل ملف APK ويُفتح مثبّت النظام. على الموقع يكفي زر تحديث
+              لإعادة تحميل المنصة.
+            </p>
+            <input
+              value={updateForm.versionName}
+              onChange={(event): void =>
+                setUpdateForm((prev) => ({
+                  ...prev,
+                  versionName: event.target.value
+                }))
+              }
+              placeholder='اسم الإصدار مثل 1.3.0'
+              className='rounded-2xl border border-light-border bg-transparent px-4 py-2.5 outline-none focus:ring-2 focus:ring-main-accent dark:border-dark-border'
+            />
+            <input
+              value={updateForm.versionCode}
+              onChange={(event): void =>
+                setUpdateForm((prev) => ({
+                  ...prev,
+                  versionCode: event.target.value
+                }))
+              }
+              inputMode='numeric'
+              placeholder='رمز الإصدار (أكبر من النسخة الحالية، مثل 6)'
+              className='rounded-2xl border border-light-border bg-transparent px-4 py-2.5 outline-none focus:ring-2 focus:ring-main-accent dark:border-dark-border'
+            />
+            <input
+              value={updateForm.title}
+              onChange={(event): void =>
+                setUpdateForm((prev) => ({
+                  ...prev,
+                  title: event.target.value
+                }))
+              }
+              placeholder='عنوان الإعلان'
+              className='rounded-2xl border border-light-border bg-transparent px-4 py-2.5 outline-none focus:ring-2 focus:ring-main-accent dark:border-dark-border'
+            />
+            <textarea
+              value={updateForm.message}
+              onChange={(event): void =>
+                setUpdateForm((prev) => ({
+                  ...prev,
+                  message: event.target.value
+                }))
+              }
+              placeholder='ماذا يتضمن التحديث؟'
+              rows={4}
+              className='rounded-2xl border border-light-border bg-transparent px-4 py-2.5 outline-none focus:ring-2 focus:ring-main-accent dark:border-dark-border'
+            />
+            <input
+              value={updateForm.apkUrl}
+              onChange={(event): void =>
+                setUpdateForm((prev) => ({
+                  ...prev,
+                  apkUrl: event.target.value
+                }))
+              }
+              placeholder='رابط APK المباشر (https://...apk)'
+              className='rounded-2xl border border-light-border bg-transparent px-4 py-2.5 outline-none focus:ring-2 focus:ring-main-accent dark:border-dark-border'
+            />
+            <select
+              value={updateForm.target}
+              onChange={(event): void =>
+                setUpdateForm((prev) => ({
+                  ...prev,
+                  target: event.target.value
+                }))
+              }
+              className='rounded-2xl border border-light-border bg-transparent px-4 py-2.5 outline-none dark:border-dark-border'
+            >
+              <option value='all'>الجميع (أندرويد + الموقع)</option>
+              <option value='android'>تطبيق أندرويد فقط</option>
+              <option value='web'>الموقع فقط</option>
+            </select>
+            <label className='flex items-center gap-2 text-sm'>
+              <input
+                type='checkbox'
+                checked={updateForm.force}
+                onChange={(event): void =>
+                  setUpdateForm((prev) => ({
+                    ...prev,
+                    force: event.target.checked
+                  }))
+                }
+              />
+              تحديث إجباري (لا يمكن إخفاؤه)
+            </label>
+            <Button
+              className='rounded-full bg-main-accent py-3 font-bold text-main-accent-contrast'
+              loading={publishing}
+              disabled={
+                !updateForm.versionName.trim() || !updateForm.versionCode.trim()
+              }
+              onClick={(): Promise<void> => publishUpdate()}
+            >
+              إطلاق التحديث للمستخدمين
+            </Button>
+          </div>
         ) : tab === 'users' ? (
           filteredUsers.length === 0 ? (
             <p className='p-8 text-center text-light-secondary dark:text-dark-secondary'>

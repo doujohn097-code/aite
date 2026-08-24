@@ -15,6 +15,10 @@
 }
 -keep class com.aite.app.MainActivity { *; }
 -keep class com.aite.app.AiteFirebaseMessagingService { *; }
+-keep class com.aite.app.AiteUpdateBridge { *; }
+-keepclassmembers class com.aite.app.AiteUpdateBridge {
+    @android.webkit.JavascriptInterface <methods>;
+}
 -assumenosideeffects class android.util.Log {
     public static *** d(...);
     public static *** v(...);

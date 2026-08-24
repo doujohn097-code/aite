@@ -13,12 +13,8 @@ import {
 } from '@lib/media-limits';
 import { getImagesData } from '@lib/validation';
 import { useMentionAssist } from '@lib/hooks/useMentionAssist';
-<<<<<<< HEAD
-=======
 import { MentionSuggest } from '@components/input/mention-suggest';
->>>>>>> a464c38 (Distinguish reel notifications and complete the admin console.)
 import { Modal } from '@components/modal/modal';
-import { MentionSuggest } from '@components/input/mention-suggest';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';

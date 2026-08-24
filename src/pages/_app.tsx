@@ -9,6 +9,7 @@ import { isSafeInternalPath } from '@lib/utils';
 import { ThemeContextProvider } from '@lib/context/theme-context';
 import { AppHead } from '@components/common/app-head';
 import { SplashScreen } from '@components/common/splash-screen';
+import { AppUpdatePrompt } from '@components/common/app-update-prompt';
 import { ThemeBackground } from '@components/common/theme-background';
 import type { ReactElement, ReactNode } from 'react';
 import type { NextPage } from 'next';

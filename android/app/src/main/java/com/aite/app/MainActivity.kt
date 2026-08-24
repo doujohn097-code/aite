@@ -167,6 +167,7 @@ class MainActivity : BridgeActivity() {
 
     CookieManager.getInstance().setAcceptCookie(true)
     CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false)
+    webView.addJavascriptInterface(AiteUpdateBridge(this), "AiteUpdate")
 
     webView.setWebViewClient(object : BridgeWebViewClient(activeBridge) {
       override fun onPageFinished(view: WebView, url: String) {
@@ -292,6 +293,18 @@ class MainActivity : BridgeActivity() {
           }, true);
         }
         window.__aiteAlive = true;
+        window.AiteAndroid = window.AiteAndroid || {};
+        window.AiteAndroid.versionCode = ${BuildConfig.VERSION_CODE};
+        window.AiteAndroid.versionName = ${JSONObject.quote(BuildConfig.VERSION_NAME)};
+        window.AiteAndroid.getVersionCode = function() {
+          try { return window.AiteUpdate.versionCode(); } catch (e) { return window.AiteAndroid.versionCode; }
+        };
+        window.AiteAndroid.getVersionName = function() {
+          try { return window.AiteUpdate.versionName(); } catch (e) { return window.AiteAndroid.versionName; }
+        };
+        window.AiteAndroid.installUpdate = function(url) {
+          try { window.AiteUpdate.install(String(url || '')); } catch (e) {}
+        };
         try { sessionStorage.setItem('aite:splash-shown', '1'); } catch (e) {}
         if (document.visibilityState === 'visible') {
           window.dispatchEvent(new CustomEvent('aite:resume'));
@@ -500,6 +513,10 @@ class MainActivity : BridgeActivity() {
       startActivity(Intent(Intent.ACTION_VIEW, uri))
     } catch (_: ActivityNotFoundException) {
     }
+  }
+
+  fun enqueueApkInstall(url: String) {
+    runOnUiThread { UpdateInstaller.start(this, url) }
   }
 
   private fun dp(value: Int): Int =
