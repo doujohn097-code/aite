@@ -246,7 +246,10 @@
   font-family: inherit;
   font-style: italic;
   font-weight: 600;
-  color: #d08a6a;
+  color: transparent;
+  background-image: linear-gradient(120deg, #c084fc 0%, #7c3aed 48%, #5b21b6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 /* منع أي تمدد أفقي في كامل التطبيق (clip لا يكسر position: sticky) */
