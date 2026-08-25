@@ -1,9 +1,8 @@
 import { auth } from '@lib/firebase/app';
 import {
-  buildChromeIntentUrl,
-  buildChromeNavigateUrl,
   filenameFromMedia,
-  isEmbeddedAndroidApp
+  isEmbeddedAndroidApp,
+  isOutsideAppHost
 } from '@lib/media-download';
 
 export type MediaSaveResult = 'chrome' | boolean;
@@ -40,30 +39,29 @@ function absoluteUrl(path: string): string {
   return `${origin}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-function openDownloadInChrome(httpsUrl: string): boolean {
-  const chromeUrl = buildChromeNavigateUrl(httpsUrl);
-  const intentUrl = buildChromeIntentUrl(httpsUrl);
+function openOutsideApp(httpsUrl: string): boolean {
+  if (!isOutsideAppHost(httpsUrl)) return false;
   try {
     const link = document.createElement('a');
-    link.href = chromeUrl;
-    link.rel = 'noopener';
-    link.style.display = 'none';
+    link.href = httpsUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
     document.body.appendChild(link);
     link.click();
     link.remove();
   } catch {
-    // نكمل بالمسار الاحتياطي
+    // نكمل بتعيين العنوان
   }
   try {
-    window.location.assign(chromeUrl);
+    window.open(httpsUrl, '_blank', 'noopener,noreferrer');
+  } catch {
+    // بعض WebView تمنع النوافذ
+  }
+  try {
+    window.location.assign(httpsUrl);
     return true;
   } catch {
-    try {
-      window.location.assign(intentUrl);
-      return true;
-    } catch {
-      return false;
-    }
+    return false;
   }
 }
 
@@ -135,12 +133,15 @@ export async function downloadRemoteMedia(
   if (ticketResponse?.ok) {
     const data = (await ticketResponse.json().catch(() => null)) as {
       ticket?: string;
+      openUrl?: string | null;
     } | null;
-    if (data?.ticket) {
+    if (useChrome && data?.openUrl && openOutsideApp(data.openUrl)) {
+      return 'chrome';
+    }
+    if (data?.ticket && !useChrome) {
       const ticketUrl = absoluteUrl(
         `/api/media/download?ticket=${encodeURIComponent(data.ticket)}`
       );
-      if (useChrome && openDownloadInChrome(ticketUrl)) return 'chrome';
       const iframe = document.createElement('iframe');
       iframe.hidden = true;
       iframe.src = ticketUrl;
@@ -149,6 +150,12 @@ export async function downloadRemoteMedia(
       return true;
     }
   }
+
+  if (useChrome && isOutsideAppHost(src) && openOutsideApp(src)) {
+    return 'chrome';
+  }
+
+  if (useChrome) return false;
 
   const proxy = `/api/media/download?url=${encodeURIComponent(
     src
@@ -161,7 +168,6 @@ export async function downloadRemoteMedia(
   try {
     if (await saveWithPicker(blob, filename)) return true;
   } catch {
-    // المستخدم ألغى نافذة الحفظ
     return false;
   }
 

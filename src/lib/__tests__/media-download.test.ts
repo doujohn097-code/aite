@@ -1,9 +1,9 @@
 import {
-  buildChromeIntentUrl,
-  buildChromeNavigateUrl,
   filenameFromMedia,
   isAllowedMediaDownloadUrl,
-  isEmbeddedAndroidApp
+  isEmbeddedAndroidApp,
+  isOutsideAppHost,
+  r2ObjectKeyFromPublicUrl
 } from '../media-download';
 
 describe('media download allowlist', () => {
@@ -42,8 +42,13 @@ describe('media download filename', () => {
 });
 
 describe('android chrome handoff', () => {
-  it('detects the native Android shell and builds Chrome URLs', () => {
-    expect(isEmbeddedAndroidApp('Mozilla/5.0 (Windows NT 10.0)', { capacitor: false, aiteBridge: false })).toBe(false);
+  it('detects the native Android shell and only leaves the app host', () => {
+    expect(
+      isEmbeddedAndroidApp('Mozilla/5.0 (Windows NT 10.0)', {
+        capacitor: false,
+        aiteBridge: false
+      })
+    ).toBe(false);
     expect(
       isEmbeddedAndroidApp(
         'Mozilla/5.0 (Linux; Android 14; wv) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36',
@@ -51,15 +56,39 @@ describe('android chrome handoff', () => {
       )
     ).toBe(true);
     expect(
-      isEmbeddedAndroidApp('Mozilla/5.0 (Linux; Android 14)', { capacitor: true })
+      isEmbeddedAndroidApp('Mozilla/5.0 (Linux; Android 14)', {
+        capacitor: true
+      })
     ).toBe(true);
 
-    const file =
-      'https://aite-app-one.vercel.app/api/media/download?ticket=abc.def';
-    expect(buildChromeNavigateUrl(file)).toBe(
-      `googlechrome://navigate?url=${encodeURIComponent(file)}`
-    );
-    expect(buildChromeIntentUrl(file)).toContain('package=com.android.chrome');
-    expect(buildChromeIntentUrl(file)).toContain('intent://aite-app-one.vercel.app/');
+    expect(
+      isOutsideAppHost(
+        'https://pub-ac6ca2c23fe44a8c93e7a74791c80260.r2.dev/media/u1/pic.jpg',
+        'aite-app-one.vercel.app'
+      )
+    ).toBe(true);
+    expect(
+      isOutsideAppHost(
+        'https://aite-app-one.vercel.app/api/media/download?ticket=abc',
+        'aite-app-one.vercel.app'
+      )
+    ).toBe(false);
+
+    expect(
+      r2ObjectKeyFromPublicUrl(
+        'https://pub-ac6ca2c23fe44a8c93e7a74791c80260.r2.dev/media/u1/pic.jpg',
+        {
+          publicBase: 'https://pub-ac6ca2c23fe44a8c93e7a74791c80260.r2.dev',
+          bucket: 'aite'
+        }
+      )
+    ).toBe('media/u1/pic.jpg');
+    expect(
+      r2ObjectKeyFromPublicUrl(
+        'https://abc.r2.cloudflarestorage.com/aite/media/u1/pic.jpg',
+        { bucket: 'aite' }
+      )
+    ).toBe('media/u1/pic.jpg');
+    expect(r2ObjectKeyFromPublicUrl('https://evil.example/pic.jpg')).toBe(null);
   });
 });

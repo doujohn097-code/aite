@@ -90,17 +90,48 @@ export function isEmbeddedAndroidApp(
   return /Android/i.test(userAgent) && /;\s*wv\)/i.test(userAgent);
 }
 
-export function buildChromeNavigateUrl(httpsUrl: string): string {
-  return `googlechrome://navigate?url=${encodeURIComponent(httpsUrl)}`;
+export function isOutsideAppHost(
+  targetUrl: string,
+  appHost = typeof window === 'undefined' ? '' : window.location.hostname
+): boolean {
+  try {
+    const host = new URL(targetUrl).hostname.toLowerCase();
+    return Boolean(host) && host !== appHost.toLowerCase();
+  } catch {
+    return false;
+  }
 }
 
-export function buildChromeIntentUrl(httpsUrl: string): string {
-  const stripped = httpsUrl.replace(/^https:\/\//i, '');
-  return (
-    `intent://${stripped}#Intent;scheme=https;package=com.android.chrome;` +
-    `action=android.intent.action.VIEW;` +
-    `S.browser_fallback_url=${encodeURIComponent(httpsUrl)};end`
-  );
+export function r2ObjectKeyFromPublicUrl(
+  src: string,
+  options?: { publicBase?: string; bucket?: string }
+): string | null {
+  try {
+    const url = new URL(src);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    const host = url.hostname.toLowerCase();
+    const publicHost = options?.publicBase
+      ? hostnameOf(options.publicBase)
+      : null;
+    const isR2 =
+      host.endsWith('.r2.dev') ||
+      host.endsWith('.r2.cloudflarestorage.com') ||
+      Boolean(publicHost && host === publicHost);
+    if (!isR2) return null;
+
+    let key = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
+    const bucket = options?.bucket?.replace(/^\/+|\/+$/g, '');
+    if (
+      bucket &&
+      host.endsWith('.r2.cloudflarestorage.com') &&
+      key.startsWith(`${bucket}/`)
+    ) {
+      key = key.slice(bucket.length + 1);
+    }
+    return key || null;
+  } catch {
+    return null;
+  }
 }
 
 export function filenameFromMedia(

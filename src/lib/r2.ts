@@ -1,10 +1,12 @@
 import {
   S3Client,
   PutObjectCommand,
+  GetObjectCommand,
   ListObjectsV2Command,
   DeleteObjectsCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { r2ObjectKeyFromPublicUrl } from '@lib/media-download';
 
 const accountId = process.env.R2_ACCOUNT_ID;
 const bucket = process.env.R2_BUCKET_NAME;
@@ -56,6 +58,32 @@ export async function getUploadUrl(
     expiresIn: 30 * 60
   });
   return { uploadUrl, publicUrl: `${publicBase}/${encodeKey(key)}` };
+}
+
+export async function getAttachmentDownloadUrl(
+  src: string,
+  filename: string
+): Promise<string | null> {
+  if (!isR2Configured() || !bucket) return null;
+  const key = r2ObjectKeyFromPublicUrl(src, {
+    publicBase: publicBase || undefined,
+    bucket
+  });
+  if (!key) return null;
+  const asciiName = filename.replace(/[^\w.\-]+/g, '_') || 'aite-media';
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      ResponseContentDisposition: `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(
+        filename
+      )}`,
+      ResponseContentType: 'application/octet-stream'
+    });
+    return await getSignedUrl(getClient(), command, { expiresIn: 90 });
+  } catch {
+    return null;
+  }
 }
 
 /** حذف كل ملفات مستخدم من Cloudflare R2 (بادئات media/<uid>/ وmedia/normalized/<uid>/) */

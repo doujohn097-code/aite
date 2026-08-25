@@ -4,6 +4,7 @@ import {
   filenameFromMedia,
   isAllowedMediaDownloadUrl
 } from '@lib/media-download';
+import { getAttachmentDownloadUrl } from '@lib/r2';
 import { consumeRateLimit } from '@lib/server/rate-limit';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -137,7 +138,11 @@ export default async function handler(
         rawUrl,
         typeof body.name === 'string' ? body.name : ''
       );
-      res.status(200).json({ ticket: makeTicket(rawUrl, name, uid) });
+      const openUrl = await getAttachmentDownloadUrl(rawUrl, name);
+      res.status(200).json({
+        ticket: makeTicket(rawUrl, name, uid),
+        openUrl
+      });
       return;
     }
 
