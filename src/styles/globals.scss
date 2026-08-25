@@ -235,12 +235,18 @@
 
 /* Splash screen credit font */
 .font-splash-credit {
-  font-family: 'IBM Plex Sans Arabic', 'Poppins', system-ui, -apple-system,
-    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Playfair Display', 'Times New Roman', Times, Georgia, serif;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  font-style: normal;
+  letter-spacing: 0.01em;
   color: #ffffff;
-  text-shadow: 0 1px 10px rgb(0 0 0 / 0.45);
+}
+
+.font-splash-credit em {
+  font-family: inherit;
+  font-style: italic;
+  font-weight: 600;
+  color: #d08a6a;
 }
 
 /* منع أي تمدد أفقي في كامل التطبيق (clip لا يكسر position: sticky) */

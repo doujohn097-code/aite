@@ -62,12 +62,12 @@ export function SplashScreen({
             </div>
 
             <motion.p
-              className='font-splash-credit text-[22px] font-semibold leading-snug tracking-[0.14em] text-white'
+              className='font-splash-credit text-[26px] leading-snug text-white sm:text-[30px]'
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, ease: 'easeOut', delay: 1.7 }}
             >
-              from Salem Ahmed
+              from <em>Salem Ahmed</em>
             </motion.p>
           </div>
         </motion.div>
