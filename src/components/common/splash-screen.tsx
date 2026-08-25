@@ -28,32 +28,29 @@ export function SplashScreen({
             transition: { duration: 0.5, ease: 'easeInOut' }
           }}
         >
-          <div className='flex items-center gap-7'>
-            {/* 1. Icon mark on the left */}
-            <motion.img
-              src='/assets/logo.png'
-              alt='Aite'
-              className='h-16 w-16 object-contain'
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{
-                type: 'spring',
-                stiffness: 260,
-                damping: 20,
-                delay: 0.15
-              }}
-            />
+          <div className='flex flex-col items-center gap-7'>
+            <div className='flex items-center gap-7'>
+              <motion.img
+                src='/assets/logo.png'
+                alt='Aite'
+                className='h-16 w-16 object-contain'
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 260,
+                  damping: 20,
+                  delay: 0.15
+                }}
+              />
 
-            {/* 2. Divider line blooming between the two marks */}
-            <motion.div
-              className='h-16 w-px origin-center bg-white/70'
-              initial={{ scaleY: 0, opacity: 0 }}
-              animate={{ scaleY: 1, opacity: 1 }}
-              transition={{ duration: 0.45, ease: 'easeOut', delay: 0.8 }}
-            />
+              <motion.div
+                className='h-16 w-px origin-center bg-white/70'
+                initial={{ scaleY: 0, opacity: 0 }}
+                animate={{ scaleY: 1, opacity: 1 }}
+                transition={{ duration: 0.45, ease: 'easeOut', delay: 0.8 }}
+              />
 
-            {/* 3. Second logo on the right + credit underneath it */}
-            <div className='flex flex-col gap-1.5'>
               <motion.img
                 src='/assets/home-logo.png'
                 alt='Aite'
@@ -62,15 +59,16 @@ export function SplashScreen({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, ease: 'easeOut', delay: 1.25 }}
               />
-              <motion.p
-                className='font-splash-credit text-lg leading-none text-white/90'
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: 'easeOut', delay: 1.9 }}
-              >
-                from salem ahmed
-              </motion.p>
             </div>
+
+            <motion.p
+              className='font-splash-credit text-[22px] font-semibold leading-snug tracking-[0.14em] text-white'
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: 'easeOut', delay: 1.7 }}
+            >
+              from Salem Ahmed
+            </motion.p>
           </div>
         </motion.div>
       )}

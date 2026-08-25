@@ -235,7 +235,12 @@
 
 /* Splash screen credit font */
 .font-splash-credit {
-  font-family: 'Great Vibes', 'Segoe Script', 'Brush Script MT', cursive;
+  font-family: 'IBM Plex Sans Arabic', 'Poppins', system-ui, -apple-system,
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #ffffff;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.45);
 }
 
 /* منع أي تمدد أفقي في كامل التطبيق (clip لا يكسر position: sticky) */

@@ -96,10 +96,11 @@ class OfflineActivity : Activity() {
     })
 
     brandTextCol.addView(TextView(this).apply {
-      text = "from salem ahmed"
-      textSize = 14f
-      setTextColor(Color.argb(230, 255, 255, 255))
-      typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
+      text = "from Salem Ahmed"
+      textSize = 18f
+      setTextColor(Color.WHITE)
+      typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+      letterSpacing = 0.12f
       layoutParams = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
