@@ -5,6 +5,8 @@ import { useLanguage } from '@lib/context/language-context';
 import type { AppLocale } from '@lib/i18n';
 import { auth } from '@lib/firebase/app';
 import { saveAccount } from '@lib/accounts';
+import { resumeSavedAccount } from '@lib/resume-saved-account';
+import { accountMatchesSession } from '@lib/saved-account';
 import { SavedAccountsStrip } from './saved-accounts-strip';
 import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
@@ -194,17 +196,40 @@ export function LoginMain(): JSX.Element {
           </div>
           <SavedAccountsStrip
             onPick={(account): void => {
-              if (user?.username === account.username) {
-                void router.replace('/home');
-                return;
-              }
-              setIsSignUp(false);
-              setUsername(account.username);
-              setError(null);
-              setSuccess(null);
-              window.setTimeout(() => {
-                document.getElementById('password')?.focus();
-              }, 40);
+              void (async (): Promise<void> => {
+                if (
+                  accountMatchesSession(
+                    account.username,
+                    user?.username,
+                    auth.currentUser?.email
+                  )
+                ) {
+                  await router.replace('/home');
+                  return;
+                }
+                setLoading(true);
+                setError(null);
+                try {
+                  const opened = await resumeSavedAccount(
+                    account.username,
+                    user?.username
+                  );
+                  if (opened) {
+                    await router.replace('/home');
+                    return;
+                  }
+                } catch {
+                  // يحتاج كلمة مرور
+                } finally {
+                  setLoading(false);
+                }
+                setIsSignUp(false);
+                setUsername(account.username);
+                setSuccess(null);
+                window.setTimeout(() => {
+                  document.getElementById('password')?.focus();
+                }, 40);
+              })();
             }}
           />
           <form onSubmit={handleSubmit} className='grid gap-3'>

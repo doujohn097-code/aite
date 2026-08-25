@@ -1,3 +1,5 @@
+import { clearResumeToken } from './account-session';
+
 export type SavedAccount = {
   username: string;
   name: string;
@@ -93,6 +95,7 @@ export function removeSavedAccount(username: string): void {
     (saved) => saved.username !== username
   );
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  clearResumeToken(username);
 }
 
 export type PublicSavedProfile = {

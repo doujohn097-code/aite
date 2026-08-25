@@ -44,6 +44,7 @@ import {
   usernameToInternalEmail
 } from '@lib/utils';
 import { getSavedAccounts, saveAccount } from '@lib/accounts';
+import { getResumeToken, setResumeToken } from '@lib/account-session';
 import { clearImpersonation, isImpersonating } from '@lib/impersonation';
 import { registerWebPushToken } from '@lib/native-bridge';
 import { tx } from '@lib/i18n/tx';
@@ -377,6 +378,20 @@ export function AuthContextProvider({
     } catch {
       // التخزين المحلي تحسين فقط
     }
+
+    if (getResumeToken(user.username)) return;
+    void (async (): Promise<void> => {
+      const token = await auth.currentUser?.getIdToken().catch(() => null);
+      if (!token) return;
+      const response = await fetch('/api/account/session', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      }).catch(() => null);
+      const data = (await response?.json().catch(() => null)) as {
+        resumeToken?: string;
+      } | null;
+      if (data?.resumeToken) setResumeToken(user.username, data.resumeToken);
+    })();
   }, [user?.id, user?.username, user?.name, user?.photoURL]);
 
   useEffect(() => {

@@ -10,6 +10,9 @@ import {
   hydrateSavedAccounts,
   removeSavedAccount
 } from '@lib/accounts';
+import { auth } from '@lib/firebase/app';
+import { resumeSavedAccount } from '@lib/resume-saved-account';
+import { accountMatchesSession } from '@lib/saved-account';
 import { isSafeInternalPath } from '@lib/utils';
 import { SEO } from '@components/common/seo';
 import { AiteLogo } from '@components/ui/aite-logo';
@@ -47,11 +50,26 @@ export default function Accounts(): JSX.Element {
 
   const handlePick = async (account: SavedAccount): Promise<void> => {
     if (signingIn) return;
-    if (user?.username === account.username) {
+    if (
+      accountMatchesSession(
+        account.username,
+        user?.username,
+        auth.currentUser?.email
+      )
+    ) {
       await router.replace(getRedirectTarget());
       return;
     }
     setSigningIn(account.username);
+    try {
+      const opened = await resumeSavedAccount(account.username, user?.username);
+      if (opened) {
+        await router.replace(getRedirectTarget());
+        return;
+      }
+    } catch {
+      // نرجع لصفحة كلمة المرور
+    }
     if (user) await signOut();
     await router.push({
       pathname: '/',
