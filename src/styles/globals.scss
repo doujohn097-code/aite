@@ -546,6 +546,7 @@ video:not([src]) {
 .glass-panel,
 .glass-strong {
   margin: 6px 0;
+  overflow: visible;
   border: 1px solid rgb(var(--main-accent) / 0.1);
   border-radius: 22px;
   background-color: rgb(var(--main-background));

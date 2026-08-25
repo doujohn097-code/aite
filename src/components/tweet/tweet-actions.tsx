@@ -1,9 +1,6 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { doc, getDoc } from 'firebase/firestore';
-import { Popover } from '@headlessui/react';
-import { AnimatePresence, motion } from 'framer-motion';
-import cn from 'clsx';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
@@ -29,6 +26,7 @@ import type { ImagesPreview } from '@lib/types/file';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { Button } from '@components/ui/button';
+import { OverflowMenu } from '@components/ui/overflow-menu';
 import { ToolTip } from '@components/ui/tooltip';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { CustomIcon } from '@components/ui/custom-icon';
@@ -238,117 +236,104 @@ export function TweetActions({
         allowEmpty={!!hasAudio}
         onSave={handleEdit}
       />
-      <Popover className='relative'>
-        {({ open, close }): JSX.Element => (
+      <OverflowMenu
+        aria-label={t('common.more')}
+        buttonClassName='main-tab group rounded-full p-2 hover:bg-accent-blue/10
+                         focus-visible:bg-accent-blue/10 focus-visible:!ring-accent-blue/80
+                         active:bg-accent-blue/20'
+        button={
+          <div className='group relative'>
+            <HeroIcon
+              className='h-5 w-5 text-light-secondary group-hover:text-accent-blue
+                         group-focus-visible:text-accent-blue dark:text-dark-secondary/80'
+              iconName='EllipsisHorizontalIcon'
+            />
+            <ToolTip tip={t('common.more')} />
+          </div>
+        }
+      >
+        {(close): JSX.Element => (
           <>
-            <Popover.Button
-              as={Button}
-              className={cn(
-                `main-tab group p-2 hover:bg-accent-blue/10 focus-visible:bg-accent-blue/10
-                 focus-visible:!ring-accent-blue/80 active:bg-accent-blue/20`,
-                open && 'bg-accent-blue/10 [&>div>svg]:text-accent-blue'
-              )}
-            >
-              <div className='group relative'>
-                <HeroIcon
-                  className='h-5 w-5 text-light-secondary group-hover:text-accent-blue
-                             group-focus-visible:text-accent-blue dark:text-dark-secondary/80'
-                  iconName='EllipsisHorizontalIcon'
-                />
-                {!open && <ToolTip tip={t('common.more')} />}
-              </div>
-            </Popover.Button>
-            <AnimatePresence>
-              {open && (
-                <Popover.Panel
-                  className='menu-container group absolute end-0 top-full z-30 w-max max-w-[min(18rem,calc(100vw-1.5rem))]
-                             break-words rounded-md bg-main-background text-light-primary dark:text-dark-primary'
-                  as={motion.div}
-                  {...variants}
-                  static
-                >
-                  {isOwner && (
-                    <Popover.Button
-                      className='accent-tab flex w-full gap-3 rounded-md rounded-b-none p-4 hover:bg-main-sidebar-background'
-                      as={Button}
-                      onClick={preventBubbling(editOpenModal)}
-                    >
-                      <HeroIcon iconName='PencilSquareIcon' />
-                      {t('common.edit')}
-                    </Popover.Button>
-                  )}
-                  {!!text?.trim() && (
-                    <Popover.Button
-                      className='accent-tab flex w-full gap-3 p-4 hover:bg-main-sidebar-background'
-                      as={Button}
-                      onClick={preventBubbling(() => {
-                        void handleCopy();
-                      })}
-                    >
-                      <HeroIcon iconName='ClipboardDocumentIcon' />
-                      {t('tweet.copy')}
-                    </Popover.Button>
-                  )}
-                  {(isAdmin || isOwner) && (
-                    <Popover.Button
-                      className={cn(
-                        'accent-tab flex w-full gap-3 p-4 text-accent-red hover:bg-main-sidebar-background',
-                        isOwner ? 'rounded-none' : 'rounded-md rounded-b-none'
-                      )}
-                      as={Button}
-                      onClick={preventBubbling(removeOpenModal)}
-                    >
-                      <HeroIcon iconName='TrashIcon' />
-                      {t('common.delete')}
-                    </Popover.Button>
-                  )}
-                  {isOwner ? (
-                    <Popover.Button
-                      className='accent-tab flex w-full gap-3 rounded-md rounded-t-none p-4 hover:bg-main-sidebar-background'
-                      as={Button}
-                      onClick={preventBubbling(pinOpenModal)}
-                    >
-                      {tweetIsPinned ? (
-                        <>
-                          <CustomIcon iconName='PinOffIcon' />
-                          {t('tweet.unpinFromProfile')}
-                        </>
-                      ) : (
-                        <>
-                          <CustomIcon iconName='PinIcon' />
-                          {t('tweet.pinToProfile')}
-                        </>
-                      )}
-                    </Popover.Button>
-                  ) : userIsFollowed ? (
-                    <Popover.Button
-                      className='accent-tab flex w-full gap-3 rounded-md rounded-t-none p-4 hover:bg-main-sidebar-background'
-                      as={Button}
-                      onClick={preventBubbling(
-                        handleFollow(close, 'unfollow', userId, createdBy)
-                      )}
-                    >
-                      <HeroIcon iconName='UserMinusIcon' />
-                      {t('tweet.unfollow', { username })}
-                    </Popover.Button>
-                  ) : (
-                    <Popover.Button
-                      className='accent-tab flex w-full gap-3 rounded-md rounded-t-none p-4 hover:bg-main-sidebar-background'
-                      as={Button}
-                      onClick={preventBubbling(
-                        handleFollow(close, 'follow', userId, createdBy)
-                      )}
-                    >
-                      <HeroIcon iconName='UserPlusIcon' />
-                      {t('tweet.follow', { username })}
-                    </Popover.Button>
-                  )}
-                </Popover.Panel>
-              )}
-            </AnimatePresence>
+            {isOwner && (
+              <Button
+                className='accent-tab flex w-full justify-start gap-3 rounded-none p-4 hover:bg-main-sidebar-background'
+                onClick={preventBubbling(() => {
+                  close();
+                  editOpenModal();
+                })}
+              >
+                <HeroIcon iconName='PencilSquareIcon' />
+                {t('common.edit')}
+              </Button>
+            )}
+            {!!text?.trim() && (
+              <Button
+                className='accent-tab flex w-full justify-start gap-3 rounded-none p-4 hover:bg-main-sidebar-background'
+                onClick={preventBubbling(() => {
+                  close();
+                  void handleCopy();
+                })}
+              >
+                <HeroIcon iconName='ClipboardDocumentIcon' />
+                {t('tweet.copy')}
+              </Button>
+            )}
+            {(isAdmin || isOwner) && (
+              <Button
+                className='accent-tab flex w-full justify-start gap-3 rounded-none p-4 text-accent-red hover:bg-main-sidebar-background'
+                onClick={preventBubbling(() => {
+                  close();
+                  removeOpenModal();
+                })}
+              >
+                <HeroIcon iconName='TrashIcon' />
+                {t('common.delete')}
+              </Button>
+            )}
+            {isOwner ? (
+              <Button
+                className='accent-tab flex w-full justify-start gap-3 rounded-none p-4 hover:bg-main-sidebar-background'
+                onClick={preventBubbling(() => {
+                  close();
+                  pinOpenModal();
+                })}
+              >
+                {tweetIsPinned ? (
+                  <>
+                    <CustomIcon iconName='PinOffIcon' />
+                    {t('tweet.unpinFromProfile')}
+                  </>
+                ) : (
+                  <>
+                    <CustomIcon iconName='PinIcon' />
+                    {t('tweet.pinToProfile')}
+                  </>
+                )}
+              </Button>
+            ) : userIsFollowed ? (
+              <Button
+                className='accent-tab flex w-full justify-start gap-3 rounded-none p-4 hover:bg-main-sidebar-background'
+                onClick={preventBubbling(
+                  handleFollow(close, 'unfollow', userId, createdBy)
+                )}
+              >
+                <HeroIcon iconName='UserMinusIcon' />
+                {t('tweet.unfollow', { username })}
+              </Button>
+            ) : (
+              <Button
+                className='accent-tab flex w-full justify-start gap-3 rounded-none p-4 hover:bg-main-sidebar-background'
+                onClick={preventBubbling(
+                  handleFollow(close, 'follow', userId, createdBy)
+                )}
+              >
+                <HeroIcon iconName='UserPlusIcon' />
+                {t('tweet.follow', { username })}
+              </Button>
+            )}
           </>
         )}
-      </Popover>
+      </OverflowMenu>
     </>
   );
 }

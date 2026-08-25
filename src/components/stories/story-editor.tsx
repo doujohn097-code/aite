@@ -15,6 +15,7 @@ import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import type { StoryMusic, StoryText } from '@lib/types/story';
 import { useLanguage } from '@lib/context/language-context';
 import { TEXT_FONTS, fontCss as sharedFontCss } from '@lib/text-fonts';
+import { FontPicker } from '@components/input/font-picker';
 
 const TEXT_COLORS = [
   '#FFFFFF',
@@ -726,24 +727,13 @@ export function StoryEditor({
                          outline-none ring-1 ring-white/15 placeholder:text-white/40'
             />
 
-            {/* الخطوط — كل اسم مكتوب بخطه */}
-            <div className='mb-3 flex gap-2 overflow-x-auto pb-1'>
-              {STORY_FONTS.map(({ id, label, css }) => (
-                <button
-                  key={id}
-                  type='button'
-                  onClick={(): void => updateText(activeText.id, { font: id })}
-                  style={{ fontFamily: css }}
-                  className={cn(
-                    'shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-base transition',
-                    activeText.font === id
-                      ? 'bg-white text-black'
-                      : 'bg-white/10 text-white hover:bg-white/20'
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className='mb-3'>
+              <FontPicker
+                dark
+                compact
+                value={activeText.font}
+                onChange={(id): void => updateText(activeText.id, { font: id })}
+              />
             </div>
 
             {/* الألوان */}

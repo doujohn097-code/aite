@@ -66,7 +66,12 @@ export function FontPicker({
           ))}
         </div>
       </div>
-      <div className={cn('flex gap-2 overflow-x-auto pb-1', compact && 'gap-1.5')}>
+      <div
+        className={cn(
+          'grid gap-1.5',
+          compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'
+        )}
+      >
         {fonts.map((font) => {
           const active = selected === font.id;
           return (
@@ -74,9 +79,9 @@ export function FontPicker({
               key={font.id}
               type='button'
               onClick={(): void => onChange(font.id)}
+              title={font.sample}
               className={cn(
-                'shrink-0 rounded-2xl border px-3 py-2 text-start transition',
-                compact ? 'min-w-[7.5rem]' : 'min-w-[8.5rem]',
+                'min-w-0 rounded-xl border px-2.5 py-2 text-center transition',
                 active
                   ? dark
                     ? 'border-white bg-white text-black'
@@ -87,25 +92,10 @@ export function FontPicker({
               )}
             >
               <span
-                className='block truncate text-[13px] font-bold leading-tight'
+                className='block truncate text-[13px] font-semibold leading-tight'
                 style={{ fontFamily: font.css }}
               >
                 {font.label}
-              </span>
-              <span
-                className={cn(
-                  'mt-0.5 block truncate text-[11px] leading-tight',
-                  active
-                    ? dark
-                      ? 'text-black/70'
-                      : 'text-light-secondary dark:text-dark-secondary'
-                    : dark
-                    ? 'text-white/55'
-                    : 'text-light-secondary dark:text-dark-secondary'
-                )}
-                style={{ fontFamily: font.css }}
-              >
-                {font.sample}
               </span>
             </button>
           );
