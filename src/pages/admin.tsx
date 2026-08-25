@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
+import { signInWithCustomToken } from 'firebase/auth';
 import { auth } from '@lib/firebase/app';
+import { writeImpersonation } from '@lib/impersonation';
 import { useAuth } from '@lib/context/auth-context';
 import { APP_VERSION_CODE, APP_VERSION_NAME } from '@lib/app-version';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -64,6 +67,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 ];
 
 export default function Admin(): JSX.Element {
+  const router = useRouter();
   const { loading: authLoading } = useAuth();
 
   const [adminKey, setAdminKey] = useState<string | null>(null);
@@ -215,6 +219,40 @@ export default function Admin(): JSX.Element {
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ');
+    } finally {
+      setProcessing((prev) => ({ ...prev, [targetUser.id]: false }));
+    }
+  };
+
+  const enterAccount = async (targetUser: User): Promise<void> => {
+    const confirmed = confirm(
+      `الدخول إلى حساب ${targetUser.name} (@${targetUser.username})؟\n\nستُفتح جلسته كما يراها هو. يمكنك إنهاؤها من الشريط الأصفر.`
+    );
+    if (!confirmed) return;
+    setProcessing((prev) => ({ ...prev, [targetUser.id]: true }));
+    setError(null);
+    try {
+      const response = await adminFetch('/api/admin/impersonate', {
+        method: 'POST',
+        body: JSON.stringify({ userId: targetUser.id })
+      });
+      const data = (await response.json().catch(() => null)) as {
+        token?: string;
+        error?: string;
+      } | null;
+      if (!response.ok || !data?.token)
+        throw new Error(data?.error ?? 'تعذر فتح الحساب');
+      writeImpersonation({
+        userId: targetUser.id,
+        username: targetUser.username,
+        name: targetUser.name
+      });
+      await signInWithCustomToken(auth, data.token);
+      void router.replace(
+        targetUser.username ? `/user/${targetUser.username}` : '/home'
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'تعذر فتح الحساب');
     } finally {
       setProcessing((prev) => ({ ...prev, [targetUser.id]: false }));
     }

@@ -12,6 +12,7 @@ import { AppHead } from '@components/common/app-head';
 import { SplashScreen } from '@components/common/splash-screen';
 import { AppUpdatePrompt } from '@components/common/app-update-prompt';
 import { GlobalPullToRefresh } from '@components/common/global-pull-to-refresh';
+import { ImpersonationBanner } from '@components/common/impersonation-banner';
 import { ThemeBackground } from '@components/common/theme-background';
 import type { ReactElement, ReactNode } from 'react';
 import type { NextPage } from 'next';
@@ -135,6 +136,7 @@ export default function App({
             <ThemeBackground />
             <AppUpdatePrompt />
             <GlobalPullToRefresh />
+            <ImpersonationBanner />
             {getLayout(<Component {...pageProps} />)}
           </ThemeContextProvider>
         </AuthContextProvider>

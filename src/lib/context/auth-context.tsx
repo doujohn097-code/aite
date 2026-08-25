@@ -44,6 +44,7 @@ import {
   usernameToInternalEmail
 } from '@lib/utils';
 import { getSavedAccounts, saveAccount } from '@lib/accounts';
+import { clearImpersonation, isImpersonating } from '@lib/impersonation';
 import { registerWebPushToken } from '@lib/native-bridge';
 import { tx } from '@lib/i18n/tx';
 import type { ReactNode } from 'react';
@@ -366,6 +367,7 @@ export function AuthContextProvider({
 
   useEffect(() => {
     if (!user || !isReadyProfile(user)) return;
+    if (isImpersonating(user.id)) return;
     try {
       saveAccount({
         username: user.username,
@@ -710,6 +712,7 @@ export function AuthContextProvider({
 
   const signOut = async (): Promise<void> => {
     try {
+      clearImpersonation();
       if (typeof window !== 'undefined') {
         window.sessionStorage.setItem('aite:post-logout', '1');
         window.localStorage.removeItem('aite:native-last-route');
