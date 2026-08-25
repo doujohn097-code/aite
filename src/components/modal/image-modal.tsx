@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 import cn from 'clsx';
 import { useLanguage } from '@lib/context/language-context';
+import { downloadRemoteMedia } from '@lib/download-media';
 import { preventBubbling } from '@lib/utils';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
@@ -41,30 +43,22 @@ export function ImageModal({
   const { t } = useLanguage();
   const [indexes, setIndexes] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const { src, alt, type, thumbnail } = imageData;
 
   const isVideo = type?.includes('video');
   const saveMedia = async (): Promise<void> => {
+    if (saving) return;
+    setSaving(true);
     try {
-      const response = await fetch(src);
-      if (!response.ok) throw new Error('download failed');
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = alt || (isVideo ? 'aite-video' : 'aite-image');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
+      const ok = await downloadRemoteMedia(src, { alt, type });
+      if (ok) toast.success(t('media.savedOk'));
+      else toast.error(t('media.saveFail'));
     } catch {
-      // Download attribute provides the browser fallback when a remote bucket
-      // does not allow an in-memory fetch.
-      const link = document.createElement('a');
-      link.href = src;
-      link.download = alt || 'aite-media';
-      link.click();
+      toast.error(t('media.saveFail'));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -171,14 +165,22 @@ export function ImageModal({
               <button
                 type='button'
                 aria-label={t('media.save')}
-                className='flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-black/80 active:scale-95'
+                disabled={saving}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-black/80 active:scale-95 disabled:opacity-60'
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
                   void saveMedia();
                 }}
               >
-                <HeroIcon className='h-5 w-5' iconName='ArrowDownTrayIcon' />
+                {saving ? (
+                  <HeroIcon
+                    className='h-5 w-5 animate-spin'
+                    iconName='ArrowPathIcon'
+                  />
+                ) : (
+                  <HeroIcon className='h-5 w-5' iconName='ArrowDownTrayIcon' />
+                )}
               </button>
               {onClose && (
                 <button

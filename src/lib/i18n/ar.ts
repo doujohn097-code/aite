@@ -518,6 +518,8 @@ export const ar = {
   'stats.repost': 'إعادة نشر',
 
   'media.save': 'حفظ الوسيط على الجهاز',
+  'media.savedOk': 'تم بدء تحميل الملف',
+  'media.saveFail': 'تعذر تحميل الملف. حاول مجددًا',
   'media.closePreview': 'إغلاق المعاينة',
   'media.replaceVideo': 'استبدال الفيديو',
   'media.addVideo': 'إضافة فيديو',

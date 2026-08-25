@@ -10,6 +10,9 @@
     },
     "src/pages/api/account/delete.ts": {
       "maxDuration": 60
+    },
+    "src/pages/api/media/download.ts": {
+      "maxDuration": 60
     }
   }
 }
