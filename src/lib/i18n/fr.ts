@@ -550,6 +550,7 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'accounts.login': 'Connexion',
   'accounts.savedShort': 'Comptes sur cet appareil',
   'accounts.manage': 'Gérer les comptes',
+  'accounts.enterPass': 'Saisissez le mot de passe pour aller à l’accueil',
   'seo.copyright': '© 2026 Aite — Tous droits réservés',
 
   'update.bytes': '{n} o',

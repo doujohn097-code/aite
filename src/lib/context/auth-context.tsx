@@ -43,7 +43,7 @@ import {
   isReadyProfile,
   usernameToInternalEmail
 } from '@lib/utils';
-import { getSavedAccounts } from '@lib/accounts';
+import { getSavedAccounts, saveAccount } from '@lib/accounts';
 import { registerWebPushToken } from '@lib/native-bridge';
 import { tx } from '@lib/i18n/tx';
 import type { ReactNode } from 'react';
@@ -363,6 +363,19 @@ export function AuthContextProvider({
       unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!user || !isReadyProfile(user)) return;
+    try {
+      saveAccount({
+        username: user.username,
+        name: user.name,
+        photoURL: user.photoURL || null
+      });
+    } catch {
+      // التخزين المحلي تحسين فقط
+    }
+  }, [user?.id, user?.username, user?.name, user?.photoURL]);
 
   useEffect(() => {
     const userId = user?.id;

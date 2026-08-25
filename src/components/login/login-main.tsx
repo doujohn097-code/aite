@@ -15,6 +15,7 @@ import { themesMeta } from '@lib/types/theme';
 export function LoginMain(): JSX.Element {
   const router = useRouter();
   const {
+    user,
     signInWithUsername,
     signUpWithUsername,
     error: authError
@@ -193,6 +194,10 @@ export function LoginMain(): JSX.Element {
           </div>
           <SavedAccountsStrip
             onPick={(account): void => {
+              if (user?.username === account.username) {
+                void router.replace('/home');
+                return;
+              }
               setIsSignUp(false);
               setUsername(account.username);
               setError(null);

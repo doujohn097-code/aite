@@ -12,6 +12,8 @@ type UserAvatarProps = {
   className?: string;
   /** Set false to hide the green presence dot (e.g. inside chat bubbles). */
   showPresence?: boolean;
+  /** لا تغلف الصورة برابط الملف الشخصي — ضروري داخل أزرار الحسابات المحفوظة. */
+  disableLink?: boolean;
 };
 
 export function UserAvatar({
@@ -20,7 +22,8 @@ export function UserAvatar({
   size,
   username,
   className,
-  showPresence = true
+  showPresence = true,
+  disableLink
 }: UserAvatarProps): JSX.Element {
   const { t } = useLanguage();
   const online = useOnlineStatus(showPresence ? username : undefined);
@@ -56,7 +59,7 @@ export function UserAvatar({
     </span>
   );
 
-  if (!username)
+  if (!username || disableLink)
     return (
       <div className={cn('blur-picture flex self-start', className)}>
         {image}

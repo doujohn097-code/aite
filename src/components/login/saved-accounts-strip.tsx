@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@lib/context/language-context';
-import { getSavedAccounts } from '@lib/accounts';
+import { getSavedAccounts, hydrateSavedAccounts } from '@lib/accounts';
 import { UserAvatar } from '@components/user/user-avatar';
 import type { SavedAccount } from '@lib/accounts';
 
@@ -17,6 +17,13 @@ export function SavedAccountsStrip({
 
   useEffect(() => {
     setAccounts(getSavedAccounts());
+    let cancelled = false;
+    void hydrateSavedAccounts().then((next) => {
+      if (!cancelled) setAccounts(next);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (!accounts.length) return null;
@@ -43,10 +50,11 @@ export function SavedAccountsStrip({
           >
             <UserAvatar
               src={account.photoURL || '/assets/default-avatar.png'}
-              alt={account.name}
+              alt={account.name || account.username}
               username={account.username}
               size={40}
               showPresence={false}
+              disableLink
             />
             <span className='w-full truncate text-[11px] font-bold leading-tight'>
               {account.name || account.username}

@@ -12,20 +12,29 @@ const MAX_ACCOUNTS = 8;
 function toSafeAccount(value: unknown): SavedAccount | null {
   if (typeof value !== 'object' || value === null) return null;
   const account = value as Record<string, unknown>;
+  if (typeof account.username !== 'string' || !account.username.trim())
+    return null;
+
+  const username = account.username.trim().toLowerCase();
+  const name =
+    typeof account.name === 'string' && account.name.trim()
+      ? account.name.trim()
+      : username;
+  const photoURL =
+    typeof account.photoURL === 'string' && account.photoURL.trim()
+      ? account.photoURL.trim()
+      : null;
   if (
-    typeof account.username !== 'string' ||
-    typeof account.name !== 'string' ||
-    (typeof account.photoURL !== 'string' && account.photoURL !== null) ||
-    (account.provider !== undefined &&
-      account.provider !== 'password' &&
-      account.provider !== 'google')
+    account.provider !== undefined &&
+    account.provider !== 'password' &&
+    account.provider !== 'google'
   )
     return null;
 
   return {
-    username: account.username,
-    name: account.name,
-    photoURL: account.photoURL,
+    username,
+    name,
+    photoURL,
     provider:
       account.provider === 'google' || account.provider === 'password'
         ? account.provider
@@ -84,4 +93,52 @@ export function removeSavedAccount(username: string): void {
     (saved) => saved.username !== username
   );
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+}
+
+export type PublicSavedProfile = {
+  username: string;
+  name: string;
+  photoURL: string | null;
+};
+
+export async function hydrateSavedAccounts(): Promise<SavedAccount[]> {
+  const saved = getSavedAccounts();
+  if (!saved.length) return saved;
+
+  try {
+    const usernames = saved.map((account) => account.username).join(',');
+    const response = await fetch(
+      `/api/account/profiles?usernames=${encodeURIComponent(usernames)}`
+    );
+    if (!response.ok) return saved;
+    const data = (await response.json()) as {
+      profiles?: PublicSavedProfile[];
+    };
+    const byUsername = new Map(
+      (data.profiles ?? []).map((profile) => [profile.username, profile])
+    );
+    const next = saved.map((account) => {
+      const live = byUsername.get(account.username);
+      if (!live) return account;
+      const merged: SavedAccount = {
+        ...account,
+        name: live.name || account.name,
+        photoURL: live.photoURL || account.photoURL
+      };
+      if (
+        merged.name !== account.name ||
+        merged.photoURL !== account.photoURL
+      )
+        saveAccount({
+          username: merged.username,
+          name: merged.name,
+          photoURL: merged.photoURL,
+          provider: merged.provider
+        });
+      return merged;
+    });
+    return next;
+  } catch {
+    return saved;
+  }
 }

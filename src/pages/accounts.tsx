@@ -3,15 +3,13 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import cn from 'clsx';
-import { getDocs, query, where } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { useLanguage } from '@lib/context/language-context';
 import {
   getSavedAccounts,
-  removeSavedAccount,
-  saveAccount
+  hydrateSavedAccounts,
+  removeSavedAccount
 } from '@lib/accounts';
-import { usersCollection } from '@lib/firebase/collections';
 import { isSafeInternalPath } from '@lib/utils';
 import { SEO } from '@components/common/seo';
 import { AiteLogo } from '@components/ui/aite-logo';
@@ -22,77 +20,23 @@ import { Loading } from '@components/ui/loading';
 import type { SavedAccount } from '@lib/accounts';
 
 export default function Accounts(): JSX.Element {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { t, isRtl } = useLanguage();
   const router = useRouter();
 
   const [accounts, setAccounts] = useState<SavedAccount[] | null>(null);
   const [signingIn, setSigningIn] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
-  const [profiles, setProfiles] = useState<
-    Record<
-      string,
-      {
-        photoURL: string;
-        name: string;
-        verified: boolean;
-        gender?: string | null;
-      }
-    >
-  >({});
 
   useEffect(() => {
-    const saved = getSavedAccounts();
-
-    setAccounts(saved);
-
-    // جلب الصور الحقيقية من قاعدة البيانات (المحفوظ محليًا قد يكون فارغًا)
-    const usernames = saved.map(({ username }) => username).slice(0, 10);
-
-    if (!usernames.length) return;
-
-    void (async (): Promise<void> => {
-      try {
-        const snapshot = await getDocs(
-          query(usersCollection, where('username', 'in', usernames))
-        );
-
-        const resolved: Record<
-          string,
-          {
-            photoURL: string;
-            name: string;
-            verified: boolean;
-            gender?: string | null;
-          }
-        > = {};
-
-        snapshot.forEach((document) => {
-          const data = document.data();
-          resolved[data.username] = {
-            photoURL: data.photoURL,
-            name: data.name,
-            verified: data.verified,
-            gender: data.gender ?? null
-          };
-
-          // حدّث النسخة المحلية حتى تظهر الصورة فورًا في المرات القادمة
-          const local = saved.find((item) => item.username === data.username);
-
-          if (local && local.photoURL !== data.photoURL)
-            saveAccount({
-              username: local.username,
-              name: data.name || local.name,
-              photoURL: data.photoURL ?? null,
-              provider: local.provider
-            });
-        });
-
-        setProfiles(resolved);
-      } catch {
-        // تعذّر الجلب — نكتفي بالبيانات المحلية
-      }
-    })();
+    setAccounts(getSavedAccounts());
+    let cancelled = false;
+    void hydrateSavedAccounts().then((next) => {
+      if (!cancelled) setAccounts(next);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const getRedirectTarget = (): string => {
@@ -103,9 +47,12 @@ export default function Accounts(): JSX.Element {
 
   const handlePick = async (account: SavedAccount): Promise<void> => {
     if (signingIn) return;
+    if (user?.username === account.username) {
+      await router.replace(getRedirectTarget());
+      return;
+    }
     setSigningIn(account.username);
-    // لأسباب أمنية لا تُحفظ كلمات المرور على الجهاز. نملأ اسم المستخدم فقط
-    // ويكتب صاحبه كلمة المرور عند تبديل الحساب.
+    if (user) await signOut();
     await router.push({
       pathname: '/',
       query: {
@@ -162,23 +109,20 @@ export default function Accounts(): JSX.Element {
                   >
                     <button
                       type='button'
-                      disabled={!!signingIn || isCurrent}
+                      disabled={!!signingIn}
                       onClick={() => void handlePick(account)}
                       className='flex flex-1 items-center gap-3 text-start disabled:cursor-default'
                     >
                       <UserAvatar
-                        src={
-                          profiles[account.username]?.photoURL ??
-                          account.photoURL ??
-                          '/assets/default-avatar.png'
-                        }
-                        alt={profiles[account.username]?.name ?? account.name}
+                        src={account.photoURL || '/assets/default-avatar.png'}
+                        alt={account.name || account.username}
                         username={account.username}
                         size={48}
+                        disableLink
                       />
                       <span className='flex min-w-0 flex-1 flex-col'>
                         <span className='truncate text-[15px] font-bold text-light-primary dark:text-dark-primary'>
-                          {profiles[account.username]?.name ?? account.name}
+                          {account.name || account.username}
                           {isCurrent && (
                             <span className='mr-2 text-xs font-medium text-main-accent-text'>
                               ({t('common.currentAccount')})

@@ -547,6 +547,7 @@ export const en: { [K in keyof typeof ar]: string } = {
   'accounts.login': 'Log in',
   'accounts.savedShort': 'Accounts on this device',
   'accounts.manage': 'Manage accounts',
+  'accounts.enterPass': 'Enter your password to continue to Home',
   'seo.copyright': '© 2026 Aite — All rights reserved',
 
   'update.bytes': '{n} B',

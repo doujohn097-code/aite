@@ -545,6 +545,7 @@ export const ar = {
   'accounts.login': 'تسجيل الدخول',
   'accounts.savedShort': 'حسابات هذا الجهاز',
   'accounts.manage': 'إدارة الحسابات',
+  'accounts.enterPass': 'أدخل كلمة المرور للمتابعة إلى الرئيسية',
   'seo.copyright': '© 2026 Aite — جميع الحقوق محفوظة',
 
   'update.bytes': '{n} ب',

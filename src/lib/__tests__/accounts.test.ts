@@ -44,4 +44,20 @@ describe('saved account security', () => {
     const stored = JSON.parse(localStorage.getItem(KEY) ?? '[]') as object[];
     expect(stored[0]).not.toHaveProperty('password');
   });
+
+  it('keeps accounts even when photoURL is missing', () => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify([{ username: 'sara', savedAt: 1 }])
+    );
+    expect(getSavedAccounts()).toEqual([
+      {
+        username: 'sara',
+        name: 'sara',
+        photoURL: null,
+        provider: 'password',
+        savedAt: 1
+      }
+    ]);
+  });
 });
