@@ -853,7 +853,10 @@ export function ReelCard({
 
         {/* Caption with expansion */}
         {captionText && (
-          <div className='text-sm leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
+          <div
+            dir='auto'
+            className='user-text w-full text-sm leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'
+          >
             <p
               className={cn(
                 'whitespace-pre-line break-words text-white/95',

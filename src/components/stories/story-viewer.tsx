@@ -575,8 +575,9 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
                     fontFamily: fontCss(item.font),
                     fontSize: `clamp(12px, ${item.size * 100}vh, 96px)`
                   }}
+                  dir='auto'
                   className={cn(
-                    `pointer-events-none absolute max-w-[86%] whitespace-pre-wrap break-words
+                    `user-text pointer-events-none absolute max-w-[86%] whitespace-pre-wrap break-words
                      px-2 text-center font-bold leading-tight
                      drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]`,
                     item.background &&

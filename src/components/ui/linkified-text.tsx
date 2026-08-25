@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import cn from 'clsx';
 import { isMentionToken } from '@lib/mention-parser';
 import { safeHttpUrl } from '@lib/utils';
 import { HeroIcon } from './hero-icon';
@@ -67,7 +68,8 @@ export function LinkifiedText({
           return (
             <Link href={`/user/${encodeURIComponent(username)}`} key={index}>
               <a
-                className={mentionClass}
+                dir='ltr'
+                className={cn(mentionClass, 'user-text-ltr inline')}
                 onClick={(event): void => {
                   event.stopPropagation();
                 }}
@@ -90,9 +92,10 @@ export function LinkifiedText({
             onClick={(event): void => {
               event.stopPropagation();
             }}
+            dir='ltr'
             className={
               linkClassName ??
-              'bg-main-accent/12 mx-0.5 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 align-middle text-[13px] font-semibold text-main-accent-text ring-1 ring-main-accent/20 transition hover:bg-main-accent/20'
+              'user-text-ltr bg-main-accent/12 mx-0.5 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 align-middle text-[13px] font-semibold text-main-accent-text ring-1 ring-main-accent/20 transition hover:bg-main-accent/20'
             }
           >
             <HeroIcon className='h-3.5 w-3.5 shrink-0' iconName='LinkIcon' />

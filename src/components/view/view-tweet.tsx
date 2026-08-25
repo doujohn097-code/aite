@@ -132,7 +132,10 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
             </p>
           )}
           {text && (
-            <p className='whitespace-pre-line break-words text-2xl'>
+            <p
+              dir='auto'
+              className='user-text whitespace-pre-line break-words text-2xl'
+            >
               <LinkifiedText text={text} />
             </p>
           )}

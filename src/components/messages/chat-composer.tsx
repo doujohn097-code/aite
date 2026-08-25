@@ -421,7 +421,8 @@ export function ChatComposer({
               onKeyDown={handleKeyDown}
               placeholder={t('chat.placeholder')}
               maxRows={4}
-              className='max-h-32 flex-1 resize-none self-center bg-transparent px-2 py-1.5
+              dir='auto'
+              className='user-text max-h-32 flex-1 resize-none self-center bg-transparent px-2 py-1.5
                          text-[15px] outline-none placeholder:text-light-secondary
                          dark:placeholder:text-dark-secondary'
             />

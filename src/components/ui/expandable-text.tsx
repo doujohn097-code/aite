@@ -36,7 +36,8 @@ export function ExpandableText({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
-          className='whitespace-pre-line break-words'
+          dir='auto'
+          className='user-text whitespace-pre-line break-words'
         >
           <LinkifiedText text={shown} />
         </motion.p>

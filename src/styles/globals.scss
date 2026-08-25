@@ -162,6 +162,24 @@
     user-select: text;
     -webkit-user-select: text;
   }
+
+  /* نصوص المستخدم: الاتجاه والمحاذاة من لغة السطر لا من لغة الواجهة */
+  .user-text {
+    unicode-bidi: plaintext;
+    text-align: start;
+  }
+
+  input.user-text,
+  textarea.user-text {
+    unicode-bidi: plaintext;
+    text-align: start;
+  }
+
+  .user-text-ltr {
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: start;
+  }
 }
 
 @layer components {

@@ -215,7 +215,8 @@ export function EditContentModal({
             placeholder={fieldPlaceholder}
             minRows={4}
             maxRows={10}
-            className='w-full resize-none rounded-2xl border border-light-border bg-light-primary/5 p-3.5 text-base outline-none focus:border-main-accent dark:border-dark-border dark:bg-dark-primary/5'
+            dir='auto'
+            className='user-text w-full resize-none rounded-2xl border border-light-border bg-light-primary/5 p-3.5 text-base outline-none focus:border-main-accent dark:border-dark-border dark:bg-dark-primary/5'
           />
           <p
             className={`mt-2 text-end text-xs ${

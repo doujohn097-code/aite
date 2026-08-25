@@ -133,6 +133,7 @@ export function UpdateUsername(): JSX.Element {
           <InputField
             label={t('profile.username')}
             inputId='username'
+            dirMode='ltr'
             inputValue={inputValue}
             errorMessage={errorMessage}
             handleChange={handleChange}

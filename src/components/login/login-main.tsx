@@ -225,6 +225,7 @@ export function LoginMain(): JSX.Element {
               label={t('auth.username')}
               inputId='username'
               autoComplete='username'
+              dirMode='ltr'
               inputValue={username}
               handleChange={({
                 target: { value }

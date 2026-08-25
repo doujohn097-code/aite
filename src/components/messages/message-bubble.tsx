@@ -585,7 +585,10 @@ export function MessageBubble({
               {replyQuote}
 
               {type === 'text' && (
-                <p className='selectable-text whitespace-pre-wrap break-words'>
+                <p
+                  dir='auto'
+                  className='user-text selectable-text whitespace-pre-wrap break-words'
+                >
                   {text && (
                     <LinkifiedText
                       text={text}
@@ -761,7 +764,8 @@ export function MessageBubble({
 
               {text && type !== 'text' && (
                 <p
-                  className='mt-1 whitespace-pre-wrap break-words px-2 pb-1
+                  dir='auto'
+                  className='user-text mt-1 whitespace-pre-wrap break-words px-2 pb-1
                              text-[15px] text-light-primary dark:text-dark-primary'
                 >
                   <LinkifiedText text={text} />

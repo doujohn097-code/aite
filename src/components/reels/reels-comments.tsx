@@ -575,7 +575,10 @@ export function ReelsComments({
                               </div>
                             )}
 
-                            <p className='mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-light-primary dark:text-dark-primary'>
+                            <p
+                              dir='auto'
+                              className='user-text mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-light-primary dark:text-dark-primary'
+                            >
                               {item.text && <LinkifiedText text={item.text} />}
                             </p>
 
@@ -759,7 +762,10 @@ export function ReelsComments({
                                     </div>
 
                                     {/* Reply text body */}
-                                    <p className='mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-light-primary dark:text-dark-primary'>
+                                    <p
+                                      dir='auto'
+                                      className='user-text mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-light-primary dark:text-dark-primary'
+                                    >
                                       {reply.text && (
                                         <LinkifiedText text={reply.text} />
                                       )}

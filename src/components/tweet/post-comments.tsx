@@ -468,7 +468,10 @@ export function PostComments({
                         </span>
                       </div>
 
-                      <p className='mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-light-primary dark:text-dark-primary'>
+                      <p
+                        dir='auto'
+                        className='user-text mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-light-primary dark:text-dark-primary'
+                      >
                         {item.text && <LinkifiedText text={item.text} />}
                       </p>
 
@@ -639,7 +642,10 @@ export function PostComments({
                                 </span>
                               </div>
 
-                              <p className='mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-light-primary dark:text-dark-primary'>
+                              <p
+                                dir='auto'
+                                className='user-text mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-light-primary dark:text-dark-primary'
+                              >
                                 {reply.text && (
                                   <LinkifiedText text={reply.text} />
                                 )}
@@ -787,7 +793,8 @@ export function PostComments({
                   : t('comments.addShort')
               }
               maxLength={280}
-              className='min-w-0 flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-base
+              dir='auto'
+              className='user-text min-w-0 flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-base
                          text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent
                          dark:bg-dark-line-reply/50 dark:text-dark-primary xs:text-sm'
             />

@@ -233,7 +233,8 @@ export function UserEditProfile({ hide }: UserEditProfileProps): JSX.Element {
       label: t('profile.website'),
       inputId: 'website',
       inputValue: editUserData.website,
-      inputLimit: 100
+      inputLimit: 100,
+      dirMode: 'ltr'
     }
   ];
 

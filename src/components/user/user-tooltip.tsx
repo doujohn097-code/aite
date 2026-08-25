@@ -123,7 +123,11 @@ export function UserTooltip({
               </div>
             </div>
           </div>
-          {bio && <p>{bio}</p>}
+          {bio && (
+            <p dir='auto' className='user-text'>
+              {bio}
+            </p>
+          )}
           <div className='text-secondary flex gap-4'>
             {allStats.map(([id, label, stat]) => (
               <Link href={`${userLink}/${id}`} key={id}>

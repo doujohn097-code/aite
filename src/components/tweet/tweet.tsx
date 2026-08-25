@@ -212,7 +212,10 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                 </p>
               )}
               {text && (
-                <p className='selectable-text whitespace-pre-line break-words'>
+                <p
+                  dir='auto'
+                  className='user-text selectable-text whitespace-pre-line break-words'
+                >
                   <LinkifiedText text={text} />
                 </p>
               )}

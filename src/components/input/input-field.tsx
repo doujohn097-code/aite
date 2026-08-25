@@ -13,6 +13,7 @@ export type InputFieldProps = {
   type?: string;
   name?: string;
   autoComplete?: string;
+  dirMode?: 'auto' | 'ltr' | 'rtl';
   inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode'];
   errorMessage?: string;
   handleChange: (
@@ -33,6 +34,7 @@ export function InputField({
   type = 'text',
   name,
   autoComplete,
+  dirMode = 'auto',
   inputMode,
   errorMessage,
   handleChange,
@@ -61,10 +63,11 @@ export function InputField({
       >
         {useTextArea ? (
           <textarea
-            className='peer mt-6 w-full resize-none bg-inherit px-3 pb-1
+            className='user-text peer mt-6 w-full resize-none bg-inherit px-3 pb-1
                        text-light-primary placeholder-transparent outline-none
                        transition dark:text-dark-primary'
             id={inputId}
+            dir={dirMode}
             placeholder={inputId}
             onChange={!isHittingInputLimit ? handleChange : undefined}
             onKeyUp={handleKeyboardShortcut}
@@ -76,13 +79,15 @@ export function InputField({
             className={cn(
               `peer mt-6 w-full bg-inherit px-3 pb-1 text-light-primary
                placeholder-transparent outline-none transition dark:text-dark-primary`,
-              isPassword && 'pl-11'
+              dirMode !== 'ltr' && dirMode !== 'rtl' && 'user-text',
+              isPassword && 'pe-11'
             )}
             id={inputId}
             name={name ?? inputId}
             autoComplete={autoComplete}
             type={effectiveType}
             inputMode={inputMode}
+            dir={isPassword ? undefined : dirMode}
             placeholder={inputId}
             onChange={!isHittingInputLimit ? handleChange : undefined}
             value={slicedInputValue}
@@ -96,7 +101,7 @@ export function InputField({
               showPassword ? t('action.hidePass') : t('action.showPass')
             }
             onClick={(): void => setShowPassword((prev) => !prev)}
-            className='absolute left-2 top-1/2 -translate-y-1/2 rounded-full p-1.5
+            className='absolute end-2 top-1/2 -translate-y-1/2 rounded-full p-1.5
                        text-light-secondary transition hover:bg-light-primary/10
                        dark:text-dark-secondary dark:hover:bg-dark-primary/10'
           >
@@ -108,7 +113,7 @@ export function InputField({
         )}
         <label
           className={cn(
-            `group-peer pointer-events-none absolute right-3 translate-y-1 bg-inherit text-sm
+            `group-peer pointer-events-none absolute start-3 translate-y-1 bg-inherit text-sm
              text-light-secondary transition-all peer-placeholder-shown:translate-y-3
              peer-placeholder-shown:text-lg peer-focus:translate-y-1 peer-focus:text-sm
              dark:text-dark-secondary`,
@@ -123,7 +128,7 @@ export function InputField({
         {inputLimit && (
           <span
             className={cn(
-              `absolute right-3 top-0 translate-y-1 text-sm text-light-secondary transition-opacity 
+              `absolute end-3 top-0 translate-y-1 text-sm text-light-secondary transition-opacity 
                duration-200 peer-focus:visible peer-focus:opacity-100 dark:text-dark-secondary`,
               errorMessage ? 'visible opacity-100' : 'invisible opacity-0'
             )}

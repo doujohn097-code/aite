@@ -565,8 +565,9 @@ export function StoryEditor({
                 fontFamily: fontCss(item.font),
                 fontSize: `clamp(10px, ${item.size * 100}vh, 140px)`
               }}
+              dir='auto'
               className={cn(
-                `absolute max-w-[88%] cursor-move touch-none select-none whitespace-pre-wrap
+                `user-text absolute max-w-[88%] cursor-move touch-none select-none whitespace-pre-wrap
                  break-words px-2 text-center font-bold leading-tight
                  drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]`,
                 item.background &&
@@ -735,11 +736,12 @@ export function StoryEditor({
               rows={2}
               autoFocus
               placeholder={t('stories.writeText')}
+              dir='auto'
               style={{
                 fontFamily: fontCss(activeText.font),
                 color: activeText.color
               }}
-              className='mb-3 w-full resize-none rounded-2xl bg-white/10 p-3 text-lg font-bold
+              className='user-text mb-3 w-full resize-none rounded-2xl bg-white/10 p-3 text-lg font-bold
                          outline-none ring-1 ring-white/15 placeholder:text-white/40'
             />
 

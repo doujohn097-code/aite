@@ -46,9 +46,12 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
                 <p>26m</p>
               </div>
             </div>
-            <p className='whitespace-pre-line break-words'>
+            <p dir='auto' className='user-text whitespace-pre-line break-words'>
               {t('display.sample')}{' '}
-              <span className='text-main-accent-text'>@myplatform</span>.
+              <span dir='ltr' className='user-text-ltr text-main-accent-text'>
+                @myplatform
+              </span>
+              .
             </p>
           </div>
         </div>
