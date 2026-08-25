@@ -3,7 +3,7 @@ import { useLanguage } from '@lib/context/language-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
 import { MobileSidebarModal } from '@components/modal/mobile-sidebar-modal';
-import { StoryAvatar } from '@components/stories/story-avatar';
+import { HeroIcon } from '@components/ui/hero-icon';
 import type { Variants } from 'framer-motion';
 import type { User } from '@lib/types/user';
 
@@ -33,7 +33,7 @@ function drawerVariant(isRtl: boolean): Variants {
 
 export function MobileSidebar(): JSX.Element {
   const { user } = useAuth();
-  const { isRtl } = useLanguage();
+  const { t, isRtl } = useLanguage();
   const { open, openModal, closeModal } = useModal();
 
   return (
@@ -53,12 +53,17 @@ export function MobileSidebar(): JSX.Element {
       >
         <MobileSidebarModal {...(user as User)} closeModal={closeModal} />
       </Modal>
-      <StoryAvatar
-        className='xs:hidden'
-        user={user as User}
-        size={38}
+      <button
+        type='button'
         onClick={openModal}
-      />
+        aria-label={t('nav.more')}
+        className='dark-bg-tab xs:hidden rounded-full p-2 text-light-primary
+                   hover:bg-light-primary/10 active:bg-light-primary/20
+                   dark:text-dark-primary dark:hover:bg-dark-primary/10
+                   dark:active:bg-dark-primary/20'
+      >
+        <HeroIcon className='h-7 w-7' iconName='Bars3Icon' />
+      </button>
     </>
   );
 }

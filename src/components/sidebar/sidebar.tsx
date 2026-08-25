@@ -10,6 +10,7 @@ import { Modal } from '@components/modal/modal';
 import { Input } from '@components/input/input';
 import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
+import { UserAvatar } from '@components/user/user-avatar';
 import { SidebarLink } from './sidebar-link';
 import { SidebarProfile } from './sidebar-profile';
 import type { IconName } from '@components/ui/hero-icon';
@@ -105,6 +106,15 @@ export function Sidebar(): JSX.Element {
               username={username}
               linkName={t('nav.profile')}
               iconName='UserIcon'
+              avatar={
+                <UserAvatar
+                  src={user?.photoURL}
+                  alt={user?.name ?? t('nav.profile')}
+                  disableLink
+                  showPresence={false}
+                  size={28}
+                />
+              }
             />
           </nav>
           {!isReels && !isMessages && (

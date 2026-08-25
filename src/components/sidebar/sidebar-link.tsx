@@ -3,12 +3,14 @@ import Link from 'next/link';
 import cn from 'clsx';
 import { preventBubbling } from '@lib/utils';
 import { HeroIcon } from '@components/ui/hero-icon';
+import type { ReactNode } from 'react';
 import type { NavLink } from './sidebar';
 
 type SidebarLinkProps = NavLink & {
   username?: string;
   badge?: number;
   badgeClassName?: string;
+  avatar?: ReactNode;
 };
 
 export function SidebarLink({
@@ -19,7 +21,8 @@ export function SidebarLink({
   disabled,
   canBeHidden,
   badge,
-  badgeClassName
+  badgeClassName,
+  avatar
 }: SidebarLinkProps): JSX.Element {
   const { asPath } = useRouter();
   const isActive = username ? asPath.includes(username) : asPath === href;
@@ -45,7 +48,19 @@ export function SidebarLink({
         )}
       >
         <span className='relative'>
-          <HeroIcon className='h-7 w-7' iconName={iconName} solid={isActive} />
+          {avatar ? (
+            <span
+              className={cn(
+                'flex h-7 w-7 items-center justify-center overflow-hidden rounded-full',
+                isActive &&
+                  'ring-2 ring-main-accent ring-offset-2 ring-offset-main-background'
+              )}
+            >
+              {avatar}
+            </span>
+          ) : (
+            <HeroIcon className='h-7 w-7' iconName={iconName} solid={isActive} />
+          )}
           {showBadge && (
             <span
               className={cn(
