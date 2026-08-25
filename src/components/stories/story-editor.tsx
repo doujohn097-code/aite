@@ -14,6 +14,7 @@ import type { ChangeEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import type { StoryMusic, StoryText } from '@lib/types/story';
 import { useLanguage } from '@lib/context/language-context';
+import { TEXT_FONTS, fontCss as sharedFontCss } from '@lib/text-fonts';
 
 const TEXT_COLORS = [
   '#FFFFFF',
@@ -42,29 +43,9 @@ const RING_COLORS = [
 ];
 
 /** الاسم المعروض يُكتب بنفس الخط ليكون معاينة حقيقية */
-export const STORY_FONTS: Readonly<
-  { id: string; label: string; css: string }[]
-> = [
-  { id: 'aite', label: 'الافتراضي', css: '"IBM Plex Sans Arabic", sans-serif' },
-  { id: 'cairo', label: 'القاهرة', css: '"Cairo", sans-serif' },
-  { id: 'tajawal', label: 'تجوّل', css: '"Tajawal", sans-serif' },
-  { id: 'almarai', label: 'المراعي', css: '"Almarai", sans-serif' },
-  { id: 'amiri', label: 'أميري', css: '"Amiri", serif' },
-  { id: 'reem', label: 'ريم كوفي', css: '"Reem Kufi", sans-serif' },
-  { id: 'lalezar', label: 'لاله زار', css: '"Lalezar", cursive' },
-  { id: 'ruqaa', label: 'عارف رقعة', css: '"Aref Ruqaa", serif' },
-  { id: 'poppins', label: 'Poppins', css: '"Poppins", sans-serif' },
-  { id: 'playfair', label: 'Playfair', css: '"Playfair Display", serif' },
-  { id: 'bebas', label: 'BEBAS NEUE', css: '"Bebas Neue", sans-serif' },
-  { id: 'pacifico', label: 'Pacifico', css: '"Pacifico", cursive' },
-  { id: 'lobster', label: 'Lobster', css: '"Lobster", cursive' },
-  { id: 'script', label: 'Great Vibes', css: '"Great Vibes", cursive' },
-  { id: 'mono', label: 'Typewriter', css: '"Courier New", monospace' },
-  { id: 'heavy', label: 'Impact', css: '"Arial Black", Impact, sans-serif' }
-];
+export const STORY_FONTS = TEXT_FONTS;
 
-export const fontCss = (id: string): string =>
-  STORY_FONTS.find((font) => font.id === id)?.css ?? STORY_FONTS[0].css;
+export const fontCss = (id: string): string => sharedFontCss(id);
 
 const MIN_SIZE = 0.02;
 const MAX_SIZE = 0.2;

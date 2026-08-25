@@ -53,9 +53,9 @@ export default function Document(): JSX.Element {
           href='https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap'
           rel='stylesheet'
         />
-        {/* خطوط محرّر القصص — عربية ولاتينية */}
+        {/* خطوط المنشورات والرسائل والريلز والقصص — أوزان قراءة وعناوين */}
         <link
-          href='https://fonts.googleapis.com/css2?family=Cairo:wght@700&family=Tajawal:wght@700&family=Almarai:wght@700&family=Amiri:wght@700&family=Reem+Kufi:wght@600&family=Lalezar&family=Aref+Ruqaa:wght@700&family=Poppins:wght@700&family=Playfair+Display:wght@700&family=Bebas+Neue&family=Pacifico&family=Lobster&display=swap'
+          href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Tajawal:wght@400;500;700&family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;600;700&family=Lalezar&family=Aref+Ruqaa:wght@400;700&family=El+Messiri:wght@400;600;700&family=Changa:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&family=Readex+Pro:wght@400;500;600;700&family=Mada:wght@400;600;700&family=Lemonada:wght@400;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&family=Poppins:wght@400;500;600;700&family=Bebas+Neue&family=Pacifico&family=Lobster&family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&family=Oswald:wght@400;600;700&family=Dancing+Script:wght@400;600;700&family=Montserrat:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap'
           rel='stylesheet'
         />
         <link

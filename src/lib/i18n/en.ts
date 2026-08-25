@@ -751,5 +751,11 @@ export const en: { [K in keyof typeof ar]: string } = {
   'settings.passWeakNew': 'New password is too weak',
 
   'dark.word': 'Dark',
-  'light.word': 'Light'
+  'light.word': 'Light',
+
+  'fonts.label': 'Font',
+  'fonts.arabic': 'Arabic',
+  'fonts.latin': 'English',
+  'chat.sent': 'Sent',
+  'chat.read': 'Read'
 };

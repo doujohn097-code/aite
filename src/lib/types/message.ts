@@ -44,6 +44,7 @@ export type Message = {
   senderId: string;
   type: MessageType;
   text: string | null;
+  font?: string | null;
   media: MessageMedia[] | null;
   audio: VoiceData | null;
   replyTo: ReplyData | null;

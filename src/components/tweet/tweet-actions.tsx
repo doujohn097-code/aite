@@ -54,6 +54,7 @@ type TweetActionsProps = Pick<Tweet, 'createdBy'> & {
   hasImages: boolean;
   hasAudio?: boolean;
   text?: string | null;
+  font?: string | null;
   images?: ImagesPreview | null;
   viewTweet?: boolean;
 };
@@ -67,6 +68,7 @@ export function TweetActions({
   hasImages,
   hasAudio,
   text,
+  font,
   images,
   viewTweet,
   createdBy
@@ -151,10 +153,15 @@ export function TweetActions({
     removeCloseModal();
   };
 
-  const handleEdit = async ({ text: nextText, images: nextImages }: EditContentSave): Promise<void> => {
+  const handleEdit = async ({
+    text: nextText,
+    images: nextImages,
+    font: nextFont
+  }: EditContentSave): Promise<void> => {
     await editTweet(tweetId, userId, nextText, {
       allowEmpty: !!hasAudio,
-      images: nextImages
+      images: nextImages,
+      font: nextFont
     });
     toast.success(t('tweet.saved'));
   };
@@ -225,6 +232,7 @@ export function TweetActions({
         closeModal={editCloseModal}
         title={t('tweet.edit')}
         initialText={text ?? ''}
+        initialFont={font}
         initialImages={images}
         mediaKind='images'
         allowEmpty={!!hasAudio}

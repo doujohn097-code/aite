@@ -71,7 +71,7 @@ export async function getOrCreateConversation(
   return { id, ...conversation };
 }
 
-export type SendPayload = { replyTo?: ReplyData | null } & (
+export type SendPayload = { replyTo?: ReplyData | null; font?: string | null } & (
   | { type: 'text'; text: string }
   | { type: 'image' | 'video'; files: FilesWithId }
   | { type: 'audio'; blob: Blob; duration: number; peaks: number[] }
@@ -162,6 +162,7 @@ export async function sendMessage(
     senderId,
     type,
     text,
+    font: payload.font ?? null,
     media,
     audio,
     replyTo: payload.replyTo ?? null,

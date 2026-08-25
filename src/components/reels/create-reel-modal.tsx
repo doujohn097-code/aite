@@ -19,6 +19,8 @@ import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import { useLanguage } from '@lib/context/language-context';
+import { FontPicker } from '@components/input/font-picker';
+import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
 
 const modalVariants = {
   initial: { opacity: 0, scale: 0.94, y: 15 },
@@ -50,6 +52,7 @@ export function CreateReelModal({
   const [videoPreview, setVideoPreview] = useState<ImagesPreview>([]);
   const [durations, setDurations] = useState<Record<string, number>>({});
   const [caption, setCaption] = useState('');
+  const [captionFont, setCaptionFont] = useState(DEFAULT_TEXT_FONT);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [computingDuration, setComputingDuration] = useState(false);
@@ -69,6 +72,7 @@ export function CreateReelModal({
       setVideoPreview([]);
       setDurations({});
       setCaption('');
+      setCaptionFont(DEFAULT_TEXT_FONT);
       setLoading(false);
       setUploadProgress(0);
       setComputingDuration(false);
@@ -199,7 +203,8 @@ export function CreateReelModal({
           caption,
           durations,
           null,
-          setUploadProgress
+          setUploadProgress,
+          captionFont
         ),
         uploadTimeoutMs(file.size) + 30_000,
         t('err.videoTimeout')
@@ -403,8 +408,10 @@ export function CreateReelModal({
               rows={3}
               maxLength={280}
               dir='auto'
+              style={{ fontFamily: fontCss(captionFont) }}
               className='user-text w-full resize-none rounded-2xl border border-light-border bg-light-line-reply/20 p-3.5 text-sm text-light-primary outline-none transition placeholder:text-light-secondary/60 focus:border-main-accent focus:ring-1 focus:ring-main-accent dark:border-dark-border dark:bg-dark-line-reply/20 dark:text-dark-primary dark:placeholder:text-dark-secondary/60'
             />
+            <FontPicker value={captionFont} onChange={setCaptionFont} compact />
 
             {/* Quick Hashtags */}
             <div className='flex flex-wrap items-center gap-1.5 pt-1'>

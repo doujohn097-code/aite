@@ -40,6 +40,7 @@ import type { Conversation, Message } from '@lib/types/message';
 import type { User } from '@lib/types/user';
 import type { FilesWithId } from '@lib/types/file';
 import { useLanguage } from '@lib/context/language-context';
+import { isLastOwnInStreak } from '@lib/text-fonts';
 
 function dayKey(millis: number): string {
   return new Date(millis).toDateString();
@@ -330,7 +331,7 @@ export default function Chat(): JSX.Element {
 
   const handleSend = async (
     payload:
-      | { type: 'text'; text: string }
+      | { type: 'text'; text: string; font?: string }
       | { type: 'image' | 'video'; files: FilesWithId }
       | { type: 'audio'; blob: Blob; duration: number; peaks: number[] }
   ): Promise<boolean> => {
@@ -556,6 +557,11 @@ export default function Chat(): JSX.Element {
                 <MessageBubble
                   message={message}
                   isOwn={message.senderId === user?.id}
+                  showReadReceipt={isLastOwnInStreak(
+                    shownMessages,
+                    index,
+                    user?.id
+                  )}
                   viewerId={user?.id}
                   onReply={setReplyTarget}
                   onDelete={(target) => setDeleteTarget(target)}
@@ -667,7 +673,9 @@ export default function Chat(): JSX.Element {
                 })
                 .catch(() => toast.error(t('messages.editFail')));
             }}
-            onSendText={(text) => void handleSend({ type: 'text', text })}
+            onSendText={(text, font) =>
+              void handleSend({ type: 'text', text, font })
+            }
             onSendMedia={(files, kind) =>
               void handleSend({ type: kind, files })
             }

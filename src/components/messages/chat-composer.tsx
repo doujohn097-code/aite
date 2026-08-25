@@ -11,6 +11,8 @@ import { getRandomId } from '@lib/random';
 import type { FilesWithId } from '@lib/types/file';
 import type { MessageType } from '@lib/types/message';
 import { useLanguage } from '@lib/context/language-context';
+import { FontPicker } from '@components/input/font-picker';
+import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
 
 type VoiceDraft = {
   url: string;
@@ -31,7 +33,7 @@ type ChatComposerProps = {
   editingText?: string | null;
   onCancelEdit?: () => void;
   onSubmitEdit?: (text: string) => void;
-  onSendText: (text: string) => void;
+  onSendText: (text: string, font?: string) => void;
   onSendMedia: (files: FilesWithId, kind: 'image' | 'video') => void;
   onSendVoice: (
     blob: Blob,
@@ -68,6 +70,8 @@ export function ChatComposer({
   >([]);
   const [voice, setVoice] = useState<VoiceDraft | null>(null);
   const [recording, setRecording] = useState(false);
+  const [font, setFont] = useState(DEFAULT_TEXT_FONT);
+  const [showFonts, setShowFonts] = useState(false);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingSent = useRef(false);
 
@@ -168,7 +172,7 @@ export function ChatComposer({
         ? 'video'
         : 'image';
       onSendMedia(pendingFiles, kind);
-      if (pendingText) onSendText(pendingText);
+      if (pendingText) onSendText(pendingText, font);
       return;
     }
 
@@ -187,7 +191,7 @@ export function ChatComposer({
       return;
     }
 
-    if (pendingText) onSendText(pendingText);
+    if (pendingText) onSendText(pendingText, font);
   };
 
   const handleKeyDown = (
@@ -368,6 +372,12 @@ export function ChatComposer({
         )}
       </AnimatePresence>
 
+      {showFonts && !recording && (
+        <div className='mb-2 rounded-2xl border border-light-border bg-main-search-background/70 p-2 dark:border-dark-border'>
+          <FontPicker value={font} onChange={setFont} compact />
+        </div>
+      )}
+
       <div
         className='flex items-end gap-1 rounded-3xl border border-light-border bg-main-search-background/70
                    px-1.5 py-1.5 shadow-sm transition focus-within:border-main-accent/60
@@ -409,6 +419,19 @@ export function ChatComposer({
             >
               <HeroIcon className='h-6 w-6' iconName='PhotoIcon' />
             </button>
+            <button
+              type='button'
+              onClick={() => setShowFonts((open) => !open)}
+              aria-label={t('fonts.label')}
+              className={cn(
+                'custom-button dark-bg-tab shrink-0 p-2 hover:bg-light-primary/10 dark:hover:bg-dark-primary/10',
+                showFonts
+                  ? 'text-main-accent-text'
+                  : 'text-light-secondary dark:text-dark-secondary'
+              )}
+            >
+              <span className='text-sm font-black leading-none'>Aa</span>
+            </button>
 
             <TextareaAutosize
               ref={textInputRef}
@@ -422,6 +445,7 @@ export function ChatComposer({
               placeholder={t('chat.placeholder')}
               maxRows={4}
               dir='auto'
+              style={{ fontFamily: fontCss(font) }}
               className='user-text max-h-32 flex-1 resize-none self-center bg-transparent px-2 py-1.5
                          text-[15px] outline-none placeholder:text-light-secondary
                          dark:placeholder:text-dark-secondary'

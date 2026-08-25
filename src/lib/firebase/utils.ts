@@ -221,7 +221,7 @@ export async function editTweet(
   tweetId: string,
   userId: string,
   text: string,
-  options?: { allowEmpty?: boolean; images?: ImagesPreview | null }
+  options?: { allowEmpty?: boolean; images?: ImagesPreview | null; font?: string | null }
 ): Promise<void> {
   const trimmed = text.trim();
   const nextImages = options?.images ?? null;
@@ -241,6 +241,7 @@ export async function editTweet(
   const hadImages = !!data.images?.length;
   await updateDoc(tweetRef, {
     text: trimmed || null,
+    font: trimmed ? options?.font ?? data.font ?? null : null,
     images: nextImages,
     edited: true,
     editedAt: serverTimestamp(),
@@ -257,7 +258,7 @@ export async function editReel(
   reelId: string,
   userId: string,
   caption: string,
-  options?: { images?: ImagesPreview | null }
+  options?: { images?: ImagesPreview | null; font?: string | null }
 ): Promise<void> {
   const trimmed = caption.trim();
   if (trimmed.length > 1000) throw new Error(tx('err.longCaption'));
@@ -274,6 +275,7 @@ export async function editReel(
 
   await updateDoc(reelRef, {
     caption: trimmed || null,
+    captionFont: trimmed ? options?.font ?? data.captionFont ?? null : null,
     ...(options?.images !== undefined ? { images: nextImages } : {}),
     edited: true,
     editedAt: serverTimestamp(),
@@ -915,7 +917,8 @@ export async function uploadReel(
   caption: string | null,
   durations?: Record<string, number>,
   music?: { src: string; name: string } | null,
-  onProgress?: UploadProgressHandler
+  onProgress?: UploadProgressHandler,
+  captionFont?: string | null
 ): Promise<void> {
   if (!files.length) return;
 
@@ -936,6 +939,7 @@ export async function uploadReel(
     userId,
     images: [image],
     caption: caption?.trim() || null,
+    captionFont: caption?.trim() ? captionFont ?? null : null,
     color,
     duration: durations?.[image.id] ?? DEFAULT_STORY_DURATION_MS,
     music: music ?? null,

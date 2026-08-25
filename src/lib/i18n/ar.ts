@@ -749,5 +749,11 @@ export const ar = {
   'settings.passWeakNew': 'كلمة المرور الجديدة ضعيفة',
 
   'dark.word': 'داكن',
-  'light.word': 'فاتح'
+  'light.word': 'فاتح',
+
+  'fonts.label': 'الخط',
+  'fonts.arabic': 'عربية',
+  'fonts.latin': 'إنجليزية',
+  'chat.sent': 'تم الإرسال',
+  'chat.read': 'مقروءة'
 } as const;

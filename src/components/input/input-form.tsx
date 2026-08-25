@@ -7,6 +7,7 @@ import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { Button } from '@components/ui/button';
 import { MentionSuggest } from './mention-suggest';
+import { fontCss } from '@lib/text-fonts';
 import type {
   ReactNode,
   RefObject,
@@ -37,6 +38,7 @@ type InputFormProps = {
   handleImageUpload: (
     e: ChangeEvent<HTMLInputElement> | ClipboardEvent<HTMLTextAreaElement>
   ) => void;
+  font?: string | null;
 };
 
 const variants: Variants[] = [
@@ -68,7 +70,8 @@ export function InputForm({
   handleFocus,
   discardTweet,
   handleChange,
-  handleImageUpload
+  handleImageUpload,
+  font
 }: InputFormProps): JSX.Element {
   const { t } = useLanguage();
   const { open, openModal, closeModal } = useModal();
@@ -148,6 +151,7 @@ export function InputForm({
             dir='auto'
             className='user-text w-full min-w-0 resize-none bg-transparent text-xl outline-none
                        placeholder:text-light-secondary dark:placeholder:text-dark-secondary'
+            style={{ fontFamily: fontCss(font) }}
             value={inputValue}
             placeholder={
               reply || replyModal ? t('compose.reply') : t('compose.whatsNew')

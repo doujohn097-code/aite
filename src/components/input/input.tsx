@@ -19,6 +19,8 @@ import { UserAvatar } from '@components/user/user-avatar';
 import { InputForm, fromTop } from './input-form';
 import { ImagePreview } from './image-preview';
 import { InputOptions } from './input-options';
+import { FontPicker } from './font-picker';
+import { DEFAULT_TEXT_FONT } from '@lib/text-fonts';
 import { VoicePlayer } from '@components/messages/voice-player';
 import { VoiceRecorder } from '@components/messages/voice-recorder';
 import { Button } from '@components/ui/button';
@@ -70,6 +72,7 @@ export function Input({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [font, setFont] = useState(DEFAULT_TEXT_FONT);
 
   const { user, isAdmin } = useAuth();
   const { name, username, photoURL } = user as User;
@@ -133,6 +136,7 @@ export function Input({
 
       const tweetData: WithFieldValue<Omit<Tweet, 'id'>> = {
         text: inputValue.trim() || null,
+        font: inputValue.trim() ? font : null,
         parent: isReplying && parent ? parent : null,
         images: await uploadImages(
           userId,
@@ -260,6 +264,7 @@ export function Input({
   const discardTweet = (): void => {
     setInputValue('');
     setVisited(false);
+    setFont(DEFAULT_TEXT_FONT);
     cleanImage();
     discardAudio();
 
@@ -372,7 +377,13 @@ export function Input({
             discardTweet={discardTweet}
             handleChange={handleChange}
             handleImageUpload={handleImageUpload}
+            font={font}
           >
+            {(visited || modal || replyModal) && !loading && (
+              <div className='rounded-2xl border border-light-border/80 bg-light-primary/5 p-2 dark:border-dark-border/80 dark:bg-dark-primary/5'>
+                <FontPicker value={font} onChange={setFont} compact />
+              </div>
+            )}
             {isUploadingImages && (
               <ImagePreview
                 imagesPreview={imagesPreview}

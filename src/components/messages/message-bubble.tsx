@@ -17,6 +17,8 @@ import { Modal } from '@components/modal/modal';
 import { ImageModal } from '@components/modal/image-modal';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { LinkifiedText } from '@components/ui/linkified-text';
+import { ReadReceipt } from './read-receipt';
+import { fontCss } from '@lib/text-fonts';
 import {
   isVideoUrl,
   useRepairableVideo,
@@ -38,6 +40,7 @@ type MessageBubbleProps = {
   onDelete?: (message: Message) => void;
   /** تعديل نص الرسالة (للمرسل فقط) */
   onEdit?: (message: Message) => void;
+  showReadReceipt?: boolean;
 };
 
 const SWIPE_THRESHOLD = 56;
@@ -118,12 +121,14 @@ export function MessageBubble({
   onReply,
   onReaction,
   onDelete,
-  onEdit
+  onEdit,
+  showReadReceipt = false
 }: MessageBubbleProps): JSX.Element {
   const { t, locale } = useLanguage();
   const {
     type,
     text,
+    font,
     media,
     audio,
     replyTo,
@@ -588,6 +593,7 @@ export function MessageBubble({
                 <p
                   dir='auto'
                   className='user-text selectable-text whitespace-pre-wrap break-words'
+                  style={{ fontFamily: fontCss(font) }}
                 >
                   {text && (
                     <LinkifiedText
@@ -767,6 +773,7 @@ export function MessageBubble({
                   dir='auto'
                   className='user-text mt-1 whitespace-pre-wrap break-words px-2 pb-1
                              text-[15px] text-light-primary dark:text-dark-primary'
+                  style={{ fontFamily: fontCss(font) }}
                 >
                   <LinkifiedText text={text} />
                 </p>
@@ -812,13 +819,7 @@ export function MessageBubble({
       >
         <span>{formatTime(createdAt, locale)}</span>
         {edited && !deletedAt && <span className='opacity-80'>· {t('common.editedShort')}</span>}
-        {isOwn && (
-          <HeroIcon
-            className={cn('h-3.5 w-3.5', seen && 'text-main-accent-text')}
-            iconName={seen ? 'CheckCircleIcon' : 'CheckIcon'}
-            solid={seen}
-          />
-        )}
+        {isOwn && showReadReceipt && <ReadReceipt seen={seen} />}
       </div>
       {selectedMediaIndex !== null && media?.[selectedMediaIndex] && (
         <Modal

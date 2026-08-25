@@ -754,5 +754,11 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'settings.passWeakNew': 'Nouveau mot de passe trop faible',
 
   'dark.word': 'Sombre',
-  'light.word': 'Clair'
+  'light.word': 'Clair',
+
+  'fonts.label': 'Police',
+  'fonts.arabic': 'Arabe',
+  'fonts.latin': 'Anglais',
+  'chat.sent': 'Envoyé',
+  'chat.read': 'Lu'
 };

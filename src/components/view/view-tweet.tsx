@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import cn from 'clsx';
 import { LinkifiedText } from '@components/ui/linkified-text';
+import { fontCss } from '@lib/text-fonts';
 import { useAuth } from '@lib/context/auth-context';
 import { useLanguage } from '@lib/context/language-context';
 import { useModal } from '@lib/hooks/useModal';
@@ -29,6 +30,7 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
   const {
     id: tweetId,
     text,
+    font,
     images = [],
     audio,
     parent,
@@ -118,6 +120,8 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
               hasImages={!!images}
               hasAudio={!!audio}
               text={text}
+              font={font}
+              images={images}
               createdBy={createdBy}
             />
           </div>
@@ -135,6 +139,7 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
             <p
               dir='auto'
               className='user-text whitespace-pre-line break-words text-2xl'
+              style={{ fontFamily: fontCss(font) }}
             >
               <LinkifiedText text={text} />
             </p>

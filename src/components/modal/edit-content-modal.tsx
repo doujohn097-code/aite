@@ -13,12 +13,15 @@ import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import { useLanguage } from '@lib/context/language-context';
+import { FontPicker } from '@components/input/font-picker';
+import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
 
 export type EditMediaKind = 'none' | 'images' | 'video';
 
 export type EditContentSave = {
   text: string;
   images: ImagesPreview | null;
+  font?: string | null;
 };
 
 type EditContentModalProps = {
@@ -26,6 +29,7 @@ type EditContentModalProps = {
   closeModal: () => void;
   title: string;
   initialText: string;
+  initialFont?: string | null;
   initialImages?: ImagesPreview | null;
   mediaKind?: EditMediaKind;
   maxLength?: number;
@@ -39,6 +43,7 @@ export function EditContentModal({
   closeModal,
   title,
   initialText,
+  initialFont,
   initialImages = null,
   mediaKind = 'none',
   maxLength,
@@ -53,6 +58,7 @@ export function EditContentModal({
   const limit = maxLength ?? (isAdmin ? 560 : 280);
   const maxFiles = mediaKind === 'video' ? 1 : 4;
   const [value, setValue] = useState(initialText);
+  const [font, setFont] = useState(initialFont || DEFAULT_TEXT_FONT);
   const [keptImages, setKeptImages] = useState<ImagesPreview>(
     initialImages ?? []
   );
@@ -68,6 +74,7 @@ export function EditContentModal({
   useEffect(() => {
     if (!open) return;
     setValue(initialText);
+    setFont(initialFont || DEFAULT_TEXT_FONT);
     setKeptImages(initialImages ?? []);
     setNewFiles([]);
     setNewPreview([]);
@@ -82,7 +89,7 @@ export function EditContentModal({
       }
     }, 40);
     return () => window.clearTimeout(timer);
-  }, [open, initialText, initialImages]);
+  }, [open, initialText, initialFont, initialImages]);
 
   const previewImages = [...keptImages, ...newPreview];
   const trimmed = value.trim();
@@ -91,10 +98,11 @@ export function EditContentModal({
   const keptIds = keptImages.map((image) => image.id).join('|');
   const mediaChanged = keptIds !== initialIds || newFiles.length > 0;
   const textChanged = trimmed !== initialText.trim();
+  const fontChanged = (font || DEFAULT_TEXT_FONT) !== (initialFont || DEFAULT_TEXT_FONT);
   const hasMedia = previewImages.length > 0;
   const canSave =
     !tooLong &&
-    (textChanged || mediaChanged) &&
+    (textChanged || mediaChanged || fontChanged) &&
     (allowEmpty || !!trimmed || hasMedia);
 
   const handleFiles = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -165,7 +173,8 @@ export function EditContentModal({
       const images = [...keptImages, ...uploaded];
       await onSave({
         text: trimmed,
-        images: images.length ? images : null
+        images: images.length ? images : null,
+        font: trimmed ? font : null
       });
       closeMentions();
       closeModal();

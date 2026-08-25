@@ -11,6 +11,7 @@ export type TweetAudio = {
 export type Tweet = {
   id: string;
   text: string | null;
+  font?: string | null;
   images: ImagesPreview | null;
   audio?: TweetAudio | null;
   parent: { id: string; username: string } | null;

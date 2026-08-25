@@ -48,6 +48,7 @@ import { VerifiedBadge } from '@components/ui/verified-badge';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { LinkifiedText } from '@components/ui/linkified-text';
+import { fontCss } from '@lib/text-fonts';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { useShareToChat } from '@components/messages/share-to-chat';
@@ -423,10 +424,14 @@ export function ReelCard({
 
   const handleEdit = async ({
     text: nextCaption,
-    images: nextImages
+    images: nextImages,
+    font: nextFont
   }: EditContentSave): Promise<void> => {
     if (!authUser) return;
-    await editReel(reel.id, authUser.id, nextCaption, { images: nextImages });
+    await editReel(reel.id, authUser.id, nextCaption, {
+      images: nextImages,
+      font: nextFont
+    });
     toast.success(t('reels.saved'));
   };
 
@@ -856,6 +861,7 @@ export function ReelCard({
           <div
             dir='auto'
             className='user-text w-full text-sm leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'
+            style={{ fontFamily: fontCss(reel.captionFont) }}
           >
             <p
               className={cn(

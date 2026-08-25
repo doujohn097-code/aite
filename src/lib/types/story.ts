@@ -33,6 +33,7 @@ export type Story = {
   userId: string;
   images: ImagesPreview | null;
   caption: string | null;
+  captionFont?: string | null;
   color: string;
   duration?: number | null;
   music?: StoryMusic | null;

@@ -36,6 +36,7 @@ import { preventBubbling } from '@lib/utils';
 import { useMentionAssist } from '@lib/hooks/useMentionAssist';
 import { MentionSuggest } from '@components/input/mention-suggest';
 import { LinkifiedText } from '@components/ui/linkified-text';
+import { fontCss } from '@lib/text-fonts';
 import type { TweetWithUser } from '@lib/types/tweet';
 import { useLanguage } from '@lib/context/language-context';
 
@@ -337,9 +338,12 @@ export function ReelsComments({
     }
   };
 
-  const handleSaveEdit = async ({ text: nextText }: EditContentSave): Promise<void> => {
+  const handleSaveEdit = async ({
+    text: nextText,
+    font: nextFont
+  }: EditContentSave): Promise<void> => {
     if (!user || !editTarget) return;
-    await editTweet(editTarget.id, user.id, nextText);
+    await editTweet(editTarget.id, user.id, nextText, { font: nextFont });
     toast.success(t('ok.commentSaved'));
     setEditTarget(null);
   };
@@ -578,6 +582,7 @@ export function ReelsComments({
                             <p
                               dir='auto'
                               className='user-text mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-light-primary dark:text-dark-primary'
+                              style={{ fontFamily: fontCss(item.font) }}
                             >
                               {item.text && <LinkifiedText text={item.text} />}
                             </p>
@@ -765,6 +770,7 @@ export function ReelsComments({
                                     <p
                                       dir='auto'
                                       className='user-text mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-light-primary dark:text-dark-primary'
+                                      style={{ fontFamily: fontCss(reply.font) }}
                                     >
                                       {reply.text && (
                                         <LinkifiedText text={reply.text} />
@@ -948,6 +954,7 @@ export function ReelsComments({
         closeModal={() => setEditTarget(null)}
         title={editTarget?.replyTo ? t('comments.editReply') : t('comments.editComment')}
         initialText={editTarget?.text ?? ''}
+        initialFont={editTarget?.font}
         onSave={handleSaveEdit}
       />
 
