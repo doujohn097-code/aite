@@ -217,10 +217,7 @@ export const TEXT_FONTS: readonly TextFont[] = [
 ];
 
 export function fontCss(id?: string | null): string {
-  return (
-    TEXT_FONTS.find((font) => font.id === id)?.css ??
-    TEXT_FONTS[0].css
-  );
+  return TEXT_FONTS.find((font) => font.id === id)?.css ?? TEXT_FONTS[0].css;
 }
 
 export function isTextFontId(id?: string | null): boolean {

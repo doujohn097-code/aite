@@ -71,7 +71,10 @@ export async function getOrCreateConversation(
   return { id, ...conversation };
 }
 
-export type SendPayload = { replyTo?: ReplyData | null; font?: string | null } & (
+export type SendPayload = {
+  replyTo?: ReplyData | null;
+  font?: string | null;
+} & (
   | { type: 'text'; text: string }
   | { type: 'image' | 'video'; files: FilesWithId }
   | { type: 'audio'; blob: Blob; duration: number; peaks: number[] }
@@ -158,6 +161,7 @@ export async function sendMessage(
   }
 
   await addDoc(conversationMessagesCollection(id), {
+    id: '',
     senderId,
     type,
     text,
@@ -259,7 +263,8 @@ export async function deleteMessage(
   await updateDoc(
     doc(db, 'conversations', conversationId, 'messages', messageId),
     {
-      text: tx('messages.deleted'),
+      // يجب أن يطابق النص قاعدة Firestore حرفياً؛ الواجهة تعرض الترجمة محلياً.
+      text: 'تم حذف هذه الرسالة',
       media: null,
       audio: null,
       replyTo: null,

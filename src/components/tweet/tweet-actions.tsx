@@ -113,7 +113,9 @@ export function TweetActions({
 
   const handleCopy = async (): Promise<void> => {
     const ok = await copyText(text ?? '');
-    toast[ok ? 'success' : 'error'](ok ? t('common.copied') : t('common.copyFailed'));
+    toast[ok ? 'success' : 'error'](
+      ok ? t('common.copied') : t('common.copyFailed')
+    );
   };
 
   if (!user) return null;

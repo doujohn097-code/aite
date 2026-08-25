@@ -34,7 +34,9 @@ export function FontPicker({
         <p
           className={cn(
             'text-[11px] font-bold',
-            dark ? 'text-white/70' : 'text-light-secondary dark:text-dark-secondary'
+            dark
+              ? 'text-white/70'
+              : 'text-light-secondary dark:text-dark-secondary'
           )}
         >
           {t('fonts.label')}

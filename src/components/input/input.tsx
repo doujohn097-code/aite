@@ -4,11 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
 import { toast } from 'react-hot-toast';
 import { serverTimestamp } from 'firebase/firestore';
-import {
-  manageReply,
-  uploadImages,
-  createTweet
-} from '@lib/firebase/utils';
+import { manageReply, uploadImages, createTweet } from '@lib/firebase/utils';
 import { useAuth } from '@lib/context/auth-context';
 
 import { getImagesData } from '@lib/validation';
@@ -156,8 +152,7 @@ export function Input({
         isReply: !!isReplying
       });
       await Promise.all([
-        isReplying &&
-          manageReply('increment', parent?.id as string, tweetId),
+        isReplying && manageReply('increment', parent?.id as string, tweetId),
         notifyMentions('post', tweetId)
       ]);
 
@@ -178,9 +173,7 @@ export function Input({
       );
     } catch (error) {
       console.error(error);
-      toast.error(
-        error instanceof Error ? error.message : t('err.publish')
-      );
+      toast.error(error instanceof Error ? error.message : t('err.publish'));
     } finally {
       setLoading(false);
       setUploadProgress(0);

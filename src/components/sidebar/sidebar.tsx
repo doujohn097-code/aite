@@ -24,7 +24,11 @@ export type NavLink = {
 };
 
 const navLinkDefs: Readonly<
-  { href: string; nameKey: 'nav.home' | 'nav.reels' | 'nav.messages' | 'nav.people'; iconName: IconName }[]
+  {
+    href: string;
+    nameKey: 'nav.home' | 'nav.reels' | 'nav.messages' | 'nav.people';
+    iconName: IconName;
+  }[]
 > = [
   { href: '/home', nameKey: 'nav.home', iconName: 'HomeIcon' },
   { href: '/reels', nameKey: 'nav.reels', iconName: 'FilmIcon' },

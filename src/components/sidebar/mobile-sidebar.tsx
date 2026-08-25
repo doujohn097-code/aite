@@ -57,10 +57,10 @@ export function MobileSidebar(): JSX.Element {
         type='button'
         onClick={openModal}
         aria-label={t('nav.more')}
-        className='dark-bg-tab xs:hidden rounded-full p-2 text-light-primary
-                   hover:bg-light-primary/10 active:bg-light-primary/20
-                   dark:text-dark-primary dark:hover:bg-dark-primary/10
-                   dark:active:bg-dark-primary/20'
+        className='dark-bg-tab rounded-full p-2 text-light-primary hover:bg-light-primary/10
+                   active:bg-light-primary/20 dark:text-dark-primary
+                   dark:hover:bg-dark-primary/10 dark:active:bg-dark-primary/20
+                   xs:hidden'
       >
         <HeroIcon className='h-7 w-7' iconName='Bars3Icon' />
       </button>

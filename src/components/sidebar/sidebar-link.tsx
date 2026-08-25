@@ -59,7 +59,11 @@ export function SidebarLink({
               {avatar}
             </span>
           ) : (
-            <HeroIcon className='h-7 w-7' iconName={iconName} solid={isActive} />
+            <HeroIcon
+              className='h-7 w-7'
+              iconName={iconName}
+              solid={isActive}
+            />
           )}
           {showBadge && (
             <span

@@ -6,7 +6,10 @@ type ReadReceiptProps = {
   className?: string;
 };
 
-export function ReadReceipt({ seen, className }: ReadReceiptProps): JSX.Element {
+export function ReadReceipt({
+  seen,
+  className
+}: ReadReceiptProps): JSX.Element {
   const { t } = useLanguage();
   return (
     <span

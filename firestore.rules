@@ -40,7 +40,7 @@ service cloud.firestore {
     function validStoryContentEdit() {
       let changed = request.resource.data.diff(resource.data).affectedKeys();
       return isOwner(resource.data.userId)
-        && changed.hasOnly(['caption', 'images', 'music', 'texts', 'color', 'duration', 'edited', 'editedAt', 'updatedAt'])
+        && changed.hasOnly(['caption', 'captionFont', 'images', 'music', 'texts', 'color', 'duration', 'edited', 'editedAt', 'updatedAt'])
         && validText(request.resource.data.caption, 1000)
         && validImages(request.resource.data.images)
         && request.resource.data.userId == resource.data.userId;

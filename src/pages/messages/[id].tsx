@@ -358,9 +358,7 @@ export default function Chat(): JSX.Element {
       return true;
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : t('messages.sendFail')
+        error instanceof Error ? error.message : t('messages.sendFail')
       );
       return false;
     } finally {
@@ -604,9 +602,7 @@ export default function Chat(): JSX.Element {
         {isBlockedConversation && (
           <div className='mx-auto my-3 flex max-w-sm items-center gap-2 rounded-2xl border border-accent-red/20 bg-accent-red/10 px-4 py-3 text-center text-sm text-accent-red'>
             <HeroIcon className='h-5 w-5 shrink-0' iconName='NoSymbolIcon' />
-            <span className='flex-1'>
-              {t('messages.blockedBanner')}
-            </span>
+            <span className='flex-1'>{t('messages.blockedBanner')}</span>
             <button
               type='button'
               onClick={() => void toggleBlockPeer()}
