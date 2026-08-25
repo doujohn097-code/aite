@@ -524,6 +524,7 @@ export const fr: { [K in keyof typeof ar]: string } = {
 
   'media.save': 'Enregistrer le média',
   'media.savedOk': 'Enregistré dans Téléchargements / les notifications',
+  'media.savedChrome': 'Chrome va s’ouvrir et lancer le téléchargement',
   'media.saveFail': 'Impossible de télécharger le fichier. Réessayez',
   'media.closePreview': 'Fermer l’aperçu',
   'media.replaceVideo': 'Remplacer la vidéo',

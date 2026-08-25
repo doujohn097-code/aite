@@ -519,6 +519,7 @@ export const ar = {
 
   'media.save': 'حفظ الوسيط على الجهاز',
   'media.savedOk': 'يظهر التنزيل في مجلد التنزيلات أو شريط الإشعارات',
+  'media.savedChrome': 'سيفتح كروم ويبدأ التحميل',
   'media.saveFail': 'تعذر تحميل الملف. حاول مجددًا',
   'media.closePreview': 'إغلاق المعاينة',
   'media.replaceVideo': 'استبدال الفيديو',

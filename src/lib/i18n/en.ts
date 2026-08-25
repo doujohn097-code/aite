@@ -521,6 +521,7 @@ export const en: { [K in keyof typeof ar]: string } = {
 
   'media.save': 'Save media to device',
   'media.savedOk': 'Saved to Downloads / your notification shade',
+  'media.savedChrome': 'Chrome will open and start the download',
   'media.saveFail': 'Could not download the file. Try again',
   'media.closePreview': 'Close preview',
   'media.replaceVideo': 'Replace video',

@@ -46,6 +46,63 @@ export function isAllowedMediaDownloadUrl(value: string): boolean {
   );
 }
 
+type AndroidAppFlags = {
+  capacitor?: boolean;
+  aiteBridge?: boolean;
+};
+
+function readCapacitorAndroid(): boolean {
+  if (typeof window === 'undefined') return false;
+  const capacitor = (
+    window as Window & {
+      Capacitor?: {
+        isNativePlatform?: () => boolean;
+        getPlatform?: () => string;
+      };
+    }
+  ).Capacitor;
+  if (!capacitor) return false;
+  if (typeof capacitor.getPlatform === 'function') {
+    return capacitor.getPlatform() === 'android';
+  }
+  return (
+    typeof capacitor.isNativePlatform === 'function' &&
+    capacitor.isNativePlatform() &&
+    /Android/i.test(navigator.userAgent || '')
+  );
+}
+
+export function isEmbeddedAndroidApp(
+  userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent,
+  flags?: AndroidAppFlags
+): boolean {
+  if (flags?.capacitor === true) return true;
+  if (flags?.aiteBridge === true) return /Android/i.test(userAgent);
+  if (readCapacitorAndroid()) return true;
+  if (
+    typeof window !== 'undefined' &&
+    ((window as Window & { AiteAndroid?: unknown }).AiteAndroid ||
+      (window as Window & { AiteUpdate?: unknown }).AiteUpdate) &&
+    /Android/i.test(userAgent)
+  ) {
+    return true;
+  }
+  return /Android/i.test(userAgent) && /;\s*wv\)/i.test(userAgent);
+}
+
+export function buildChromeNavigateUrl(httpsUrl: string): string {
+  return `googlechrome://navigate?url=${encodeURIComponent(httpsUrl)}`;
+}
+
+export function buildChromeIntentUrl(httpsUrl: string): string {
+  const stripped = httpsUrl.replace(/^https:\/\//i, '');
+  return (
+    `intent://${stripped}#Intent;scheme=https;package=com.android.chrome;` +
+    `action=android.intent.action.VIEW;` +
+    `S.browser_fallback_url=${encodeURIComponent(httpsUrl)};end`
+  );
+}
+
 export function filenameFromMedia(
   src: string,
   alt?: string | null,

@@ -1,5 +1,12 @@
 import { auth } from '@lib/firebase/app';
-import { filenameFromMedia } from '@lib/media-download';
+import {
+  buildChromeIntentUrl,
+  buildChromeNavigateUrl,
+  filenameFromMedia,
+  isEmbeddedAndroidApp
+} from '@lib/media-download';
+
+export type MediaSaveResult = 'chrome' | boolean;
 
 type NativeSaver = {
   saveMedia?: (url: string, filename: string) => unknown;
@@ -22,6 +29,42 @@ function nativeSave(url: string, filename: string): boolean {
     return false;
   }
   return false;
+}
+
+function absoluteUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+  const origin =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : 'https://aite-app-one.vercel.app';
+  return `${origin}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
+function openDownloadInChrome(httpsUrl: string): boolean {
+  const chromeUrl = buildChromeNavigateUrl(httpsUrl);
+  const intentUrl = buildChromeIntentUrl(httpsUrl);
+  try {
+    const link = document.createElement('a');
+    link.href = chromeUrl;
+    link.rel = 'noopener';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch {
+    // نكمل بالمسار الاحتياطي
+  }
+  try {
+    window.location.assign(chromeUrl);
+    return true;
+  } catch {
+    try {
+      window.location.assign(intentUrl);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
 
 function triggerAnchorDownload(href: string, filename: string): void {
@@ -68,11 +111,12 @@ async function shareFile(blob: Blob, filename: string): Promise<boolean> {
 export async function downloadRemoteMedia(
   src: string,
   options?: { alt?: string | null; type?: string | null }
-): Promise<boolean> {
+): Promise<MediaSaveResult> {
   if (!src || typeof window === 'undefined') return false;
   const filename = filenameFromMedia(src, options?.alt, options?.type);
+  const useChrome = isEmbeddedAndroidApp();
 
-  if (nativeSave(src, filename)) return true;
+  if (!useChrome && nativeSave(src, filename)) return true;
 
   const token = await auth.currentUser?.getIdToken().catch(() => null);
   const headers: Record<string, string> = token
@@ -93,9 +137,10 @@ export async function downloadRemoteMedia(
       ticket?: string;
     } | null;
     if (data?.ticket) {
-      const ticketUrl = `/api/media/download?ticket=${encodeURIComponent(
-        data.ticket
-      )}`;
+      const ticketUrl = absoluteUrl(
+        `/api/media/download?ticket=${encodeURIComponent(data.ticket)}`
+      );
+      if (useChrome && openDownloadInChrome(ticketUrl)) return 'chrome';
       const iframe = document.createElement('iframe');
       iframe.hidden = true;
       iframe.src = ticketUrl;

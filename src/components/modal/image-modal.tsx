@@ -53,7 +53,8 @@ export function ImageModal({
     setSaving(true);
     try {
       const ok = await downloadRemoteMedia(src, { alt, type });
-      if (ok) toast.success(t('media.savedOk'));
+      if (ok === 'chrome') toast.success(t('media.savedChrome'));
+      else if (ok) toast.success(t('media.savedOk'));
       else toast.error(t('media.saveFail'));
     } catch {
       toast.error(t('media.saveFail'));

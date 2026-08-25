@@ -1,6 +1,9 @@
 import {
+  buildChromeIntentUrl,
+  buildChromeNavigateUrl,
   filenameFromMedia,
-  isAllowedMediaDownloadUrl
+  isAllowedMediaDownloadUrl,
+  isEmbeddedAndroidApp
 } from '../media-download';
 
 describe('media download allowlist', () => {
@@ -35,5 +38,28 @@ describe('media download filename', () => {
         'video/mp4'
       )
     ).toBe('clip.mp4');
+  });
+});
+
+describe('android chrome handoff', () => {
+  it('detects the native Android shell and builds Chrome URLs', () => {
+    expect(isEmbeddedAndroidApp('Mozilla/5.0 (Windows NT 10.0)', { capacitor: false, aiteBridge: false })).toBe(false);
+    expect(
+      isEmbeddedAndroidApp(
+        'Mozilla/5.0 (Linux; Android 14; wv) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36',
+        { capacitor: false, aiteBridge: false }
+      )
+    ).toBe(true);
+    expect(
+      isEmbeddedAndroidApp('Mozilla/5.0 (Linux; Android 14)', { capacitor: true })
+    ).toBe(true);
+
+    const file =
+      'https://aite-app-one.vercel.app/api/media/download?ticket=abc.def';
+    expect(buildChromeNavigateUrl(file)).toBe(
+      `googlechrome://navigate?url=${encodeURIComponent(file)}`
+    );
+    expect(buildChromeIntentUrl(file)).toContain('package=com.android.chrome');
+    expect(buildChromeIntentUrl(file)).toContain('intent://aite-app-one.vercel.app/');
   });
 });
