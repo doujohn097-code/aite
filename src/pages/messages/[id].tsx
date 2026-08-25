@@ -525,12 +525,11 @@ export default function Chat(): JSX.Element {
             const prevMillis = prev ? toMillis(prev.createdAt) : 0;
             const showDate = !prev || dayKey(millis) !== dayKey(prevMillis);
             return (
-              <div key={message.id} className='contents'>
+              <div key={message.id} className='flex flex-col gap-2'>
                 {showDate && (
                   <div
-                    className='sticky top-2 z-10 mx-auto my-2 w-fit rounded-full
-                               bg-main-background/90 px-3 py-1 text-[11px] font-semibold
-                               text-light-secondary shadow-sm backdrop-blur-md
+                    className='mx-auto my-1 w-fit rounded-full bg-main-sidebar-background
+                               px-3 py-1 text-[11px] font-semibold text-light-secondary
                                dark:text-dark-secondary'
                   >
                     {formatDayLabel(
