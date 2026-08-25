@@ -668,33 +668,45 @@ export default function Admin(): JSX.Element {
                       </p>
                     </div>
                   </div>
-                  <div className='flex flex-wrap gap-2'>
+                  <div className='flex w-full flex-col gap-2 xs:w-auto'>
                     <Button
-                      className='bg-main-accent px-3 py-1.5 text-sm font-bold text-main-accent-contrast'
-                      onClick={(): Promise<void> => toggleVerified(targetUser)}
-                      loading={processing[targetUser.id]}
-                      disabled={processing[targetUser.id]}
-                    >
-                      {targetUser.verified ? 'نزع التحقق' : 'منح التحقق'}
-                    </Button>
-                    <Button
-                      className='border border-light-border px-3 py-1.5 text-sm font-bold dark:border-dark-border'
+                      className='w-full bg-emerald-600 px-3 py-2 text-sm font-bold text-white xs:w-auto'
                       onClick={(): void => {
-                        setPasswordUser(targetUser);
-                        setNewPassword('');
+                        void enterAccount(targetUser);
                       }}
-                      disabled={processing[targetUser.id]}
-                    >
-                      كلمة المرور
-                    </Button>
-                    <Button
-                      className='bg-accent-red px-3 py-1.5 text-sm font-bold text-white'
-                      onClick={(): Promise<void> => deleteUser(targetUser)}
                       loading={processing[targetUser.id]}
                       disabled={processing[targetUser.id]}
                     >
-                      حذف الحساب
+                      دخول للحساب
                     </Button>
+                    <div className='flex flex-wrap gap-2'>
+                      <Button
+                        className='bg-main-accent px-3 py-1.5 text-sm font-bold text-main-accent-contrast'
+                        onClick={(): Promise<void> => toggleVerified(targetUser)}
+                        loading={processing[targetUser.id]}
+                        disabled={processing[targetUser.id]}
+                      >
+                        {targetUser.verified ? 'نزع التحقق' : 'منح التحقق'}
+                      </Button>
+                      <Button
+                        className='border border-light-border px-3 py-1.5 text-sm font-bold dark:border-dark-border'
+                        onClick={(): void => {
+                          setPasswordUser(targetUser);
+                          setNewPassword('');
+                        }}
+                        disabled={processing[targetUser.id]}
+                      >
+                        كلمة المرور
+                      </Button>
+                      <Button
+                        className='bg-accent-red px-3 py-1.5 text-sm font-bold text-white'
+                        onClick={(): Promise<void> => deleteUser(targetUser)}
+                        loading={processing[targetUser.id]}
+                        disabled={processing[targetUser.id]}
+                      >
+                        حذف الحساب
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
