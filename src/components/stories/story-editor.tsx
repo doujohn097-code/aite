@@ -10,7 +10,6 @@ import { getRandomId } from '@lib/random';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { MusicSearch } from './music-search';
 import { MusicTrimmer } from './music-trimmer';
-import { StoryRing } from './story-ring';
 import type { ChangeEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import type { StoryMusic, StoryText } from '@lib/types/story';
@@ -668,11 +667,11 @@ export function StoryEditor({
             title={t('stories.storyColor')}
             onClose={(): void => setPanel('none')}
           >
-            <div className='mx-auto mb-4 flex h-20 w-20 items-center justify-center'>
-              <div className='relative h-20 w-20'>
-                <StoryRing color={ringColor} animate />
-                <div className='absolute inset-[14px] rounded-full bg-white/15' />
-              </div>
+            <div
+              className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full p-[3px]'
+              style={{ backgroundColor: ringColor }}
+            >
+              <div className='h-full w-full rounded-full bg-black' />
             </div>
             <div className='flex flex-wrap gap-3 pb-2'>
               {RING_COLORS.map((color) => (

@@ -7,7 +7,6 @@ import { useOnlineStatus } from '@lib/presence-store';
 import { NextImage } from '@components/ui/next-image';
 import { Modal } from '@components/modal/modal';
 import { ImageModal } from '@components/modal/image-modal';
-import { StoryRing } from '@components/stories/story-ring';
 import type { ImageData } from '@lib/types/file';
 import type { User } from '@lib/types/user';
 
@@ -38,7 +37,7 @@ export function UserHomeAvatar({
   };
 
   return (
-    <div className={cn('inline-block overflow-visible', className)}>
+    <div className={cn('inline-block', className)}>
       <Modal open={open} closeModal={closeModal}>
         <ImageModal
           imageData={{ src: imageSrc, alt: imageAlt } as ImageData}
@@ -51,21 +50,17 @@ export function UserHomeAvatar({
         onClick={handleClick}
         disabled={!imageSrc && !hasStory}
         className={cn(
-          'group relative overflow-visible rounded-full',
-          hasStory && 'p-5 xs:p-6'
+          'group relative rounded-full transition',
+          unseen ? 'p-[3px]' : 'p-0'
         )}
+        style={unseen ? { backgroundColor: ringColor } : undefined}
       >
-        {hasStory && (
-          <StoryRing
-            color={ringColor}
-            animate={unseen}
-            className={cn(
-              'pointer-events-none absolute inset-0 z-[1]',
-              !unseen && 'opacity-45'
-            )}
-          />
-        )}
-        <div className='relative z-0 aspect-square w-24 overflow-hidden rounded-full bg-main-background xs:w-32 sm:w-36'>
+        <div
+          className={cn(
+            'story-solid aspect-square w-24 overflow-hidden rounded-full xs:w-32 sm:w-36',
+            unseen ? 'p-[3px]' : 'p-0'
+          )}
+        >
           {imageSrc ? (
             <NextImage
               useSkeleton
