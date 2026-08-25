@@ -12,9 +12,12 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.app.DownloadManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.webkit.URLUtil
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
@@ -168,6 +171,10 @@ class MainActivity : BridgeActivity() {
     CookieManager.getInstance().setAcceptCookie(true)
     CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false)
     webView.addJavascriptInterface(AiteUpdateBridge(this), "AiteUpdate")
+    webView.setDownloadListener { url, _, contentDisposition, mimeType, _ ->
+      val name = URLUtil.guessFileName(url, contentDisposition, mimeType)
+      enqueueMediaDownload(url, name)
+    }
 
     webView.setWebViewClient(object : BridgeWebViewClient(activeBridge) {
       override fun onPageFinished(view: WebView, url: String) {
@@ -304,6 +311,12 @@ class MainActivity : BridgeActivity() {
         };
         window.AiteAndroid.installUpdate = function(url) {
           try { window.AiteUpdate.install(String(url || '')); } catch (e) {}
+        };
+        window.AiteAndroid.saveMedia = function(url, name) {
+          try {
+            window.AiteUpdate.saveMedia(String(url || ''), String(name || 'aite-media'));
+            return true;
+          } catch (e) { return false; }
         };
         try { sessionStorage.setItem('aite:splash-shown', '1'); } catch (e) {}
         if (document.visibilityState === 'visible') {
@@ -517,6 +530,37 @@ class MainActivity : BridgeActivity() {
 
   fun enqueueApkInstall(url: String) {
     runOnUiThread { UpdateInstaller.start(this, url) }
+  }
+
+  fun enqueueMediaDownload(url: String, filename: String) {
+    if (url.isBlank()) return
+    runOnUiThread {
+      try {
+        val safeName = filename
+          .ifBlank { "aite-media" }
+          .replace(Regex("[\\\\/:*?\"<>|]"), "_")
+          .take(80)
+        val request = DownloadManager.Request(Uri.parse(url))
+          .setTitle(safeName)
+          .setDescription("Aite")
+          .setNotificationVisibility(
+            DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+          )
+          .setAllowedOverMetered(true)
+          .setAllowedOverRoaming(true)
+          .setDestinationInExternalPublicDir(
+            Environment.DIRECTORY_DOWNLOADS,
+            safeName
+          )
+        val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        manager.enqueue(request)
+      } catch (_: Exception) {
+        try {
+          startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (_: ActivityNotFoundException) {
+        }
+      }
+    }
   }
 
   fun reportUpdateProgress(percent: Int, status: String, message: String) {

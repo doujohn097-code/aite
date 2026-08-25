@@ -520,7 +520,7 @@ export const en: { [K in keyof typeof ar]: string } = {
   'stats.repost': 'Repost',
 
   'media.save': 'Save media to device',
-  'media.savedOk': 'Download started',
+  'media.savedOk': 'Saved to Downloads / your notification shade',
   'media.saveFail': 'Could not download the file. Try again',
   'media.closePreview': 'Close preview',
   'media.replaceVideo': 'Replace video',

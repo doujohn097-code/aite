@@ -523,7 +523,7 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'stats.repost': 'Republication',
 
   'media.save': 'Enregistrer le média',
-  'media.savedOk': 'Téléchargement lancé',
+  'media.savedOk': 'Enregistré dans Téléchargements / les notifications',
   'media.saveFail': 'Impossible de télécharger le fichier. Réessayez',
   'media.closePreview': 'Fermer l’aperçu',
   'media.replaceVideo': 'Remplacer la vidéo',

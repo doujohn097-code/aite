@@ -518,7 +518,7 @@ export const ar = {
   'stats.repost': 'إعادة نشر',
 
   'media.save': 'حفظ الوسيط على الجهاز',
-  'media.savedOk': 'تم بدء تحميل الملف',
+  'media.savedOk': 'يظهر التنزيل في مجلد التنزيلات أو شريط الإشعارات',
   'media.saveFail': 'تعذر تحميل الملف. حاول مجددًا',
   'media.closePreview': 'إغلاق المعاينة',
   'media.replaceVideo': 'استبدال الفيديو',

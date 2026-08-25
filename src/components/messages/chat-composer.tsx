@@ -147,29 +147,47 @@ export function ChatComposer({
 
     if (!hasContent || sending) return;
 
-    // A composer action must create exactly one message. Previously a draft
-    // containing text + media/voice could dispatch several messages at once.
-    // Keep the text in the editor when an attachment is sent, so it is never
-    // silently lost and can be sent as the following message/caption.
-    if (files.length) {
-      const kind = files.some((file) => file.type.startsWith('video/'))
+    const pendingText = text.trim();
+    const pendingFiles = files;
+    const pendingPreviews = previews;
+    const pendingVoice = voice;
+
+    setText('');
+    closeMentions();
+    setFiles([]);
+    setPreviews([]);
+    setVoice(null);
+    setRecording(false);
+    pendingPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
+    if (pendingVoice) URL.revokeObjectURL(pendingVoice.url);
+    if (textInputRef.current) textInputRef.current.value = '';
+    stopTyping();
+
+    if (pendingFiles.length) {
+      const kind = pendingFiles.some((file) => file.type.startsWith('video/'))
         ? 'video'
         : 'image';
-      onSendMedia(files, kind);
-      previews.forEach((preview) => URL.revokeObjectURL(preview.url));
-      setFiles([]);
-      setPreviews([]);
-    } else if (voice) {
-      const sent = await onSendVoice(voice.blob, voice.duration, voice.peaks);
-      if (sent) {
-        URL.revokeObjectURL(voice.url);
-        setVoice(null);
-      }
-    } else {
-      onSendText(text.trim());
-      setText('');
+      onSendMedia(pendingFiles, kind);
+      if (pendingText) onSendText(pendingText);
+      return;
     }
-    stopTyping();
+
+    if (pendingVoice) {
+      const sent = await onSendVoice(
+        pendingVoice.blob,
+        pendingVoice.duration,
+        pendingVoice.peaks
+      );
+      if (!sent) {
+        setVoice({
+          ...pendingVoice,
+          url: URL.createObjectURL(pendingVoice.blob)
+        });
+      }
+      return;
+    }
+
+    if (pendingText) onSendText(pendingText);
   };
 
   const handleKeyDown = (

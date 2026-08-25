@@ -13,4 +13,9 @@ class AiteUpdateBridge(private val host: MainActivity) {
   fun install(url: String) {
     host.enqueueApkInstall(url)
   }
+
+  @JavascriptInterface
+  fun saveMedia(url: String, filename: String) {
+    host.enqueueMediaDownload(url, filename)
+  }
 }
