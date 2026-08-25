@@ -22,7 +22,10 @@ export function readImpersonation(): ImpersonationSession | null {
     return {
       userId: data.userId,
       username: data.username.trim().toLowerCase(),
-      name: typeof data.name === 'string' && data.name.trim() ? data.name : data.username
+      name:
+        typeof data.name === 'string' && data.name.trim()
+          ? data.name
+          : data.username
     };
   } catch {
     return null;
@@ -48,4 +51,9 @@ export function isImpersonating(userId?: string | null): boolean {
   if (!session) return false;
   if (userId) return session.userId === userId;
   return true;
+}
+
+/** لا نربط إشعارات الجهاز بحساب ندخل إليه كمدير. */
+export function shouldAttachPushToken(userId?: string | null): boolean {
+  return !isImpersonating() && !isImpersonating(userId);
 }

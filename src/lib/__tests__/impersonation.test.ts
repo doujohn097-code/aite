@@ -2,6 +2,7 @@ import {
   clearImpersonation,
   isImpersonating,
   readImpersonation,
+  shouldAttachPushToken,
   writeImpersonation
 } from '../impersonation';
 
@@ -24,7 +25,9 @@ describe('impersonation session', () => {
     });
     expect(isImpersonating('u1')).toBe(true);
     expect(isImpersonating('other')).toBe(false);
+    expect(shouldAttachPushToken('u1')).toBe(false);
     clearImpersonation();
     expect(readImpersonation()).toBeNull();
+    expect(shouldAttachPushToken('u1')).toBe(true);
   });
 });

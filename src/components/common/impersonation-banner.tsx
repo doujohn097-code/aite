@@ -6,6 +6,7 @@ import {
   readImpersonation,
   type ImpersonationSession
 } from '@lib/impersonation';
+import { unregisterDevicePushToken } from '@lib/native-bridge';
 import { Button } from '@components/ui/button';
 
 export function ImpersonationBanner(): JSX.Element | null {
@@ -24,6 +25,7 @@ export function ImpersonationBanner(): JSX.Element | null {
   const leave = async (): Promise<void> => {
     if (leaving) return;
     setLeaving(true);
+    await unregisterDevicePushToken(user.id);
     clearImpersonation();
     await signOut();
     void router.replace('/admin');

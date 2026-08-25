@@ -46,7 +46,7 @@ import {
 import { getSavedAccounts, saveAccount } from '@lib/accounts';
 import { getResumeToken, setResumeToken } from '@lib/account-session';
 import { clearImpersonation, isImpersonating } from '@lib/impersonation';
-import { registerWebPushToken } from '@lib/native-bridge';
+import { claimDevicePushToken, registerWebPushToken } from '@lib/native-bridge';
 import { tx } from '@lib/i18n/tx';
 import type { ReactNode } from 'react';
 import type { User as AuthUser } from 'firebase/auth';
@@ -115,7 +115,8 @@ function pendingMatchesUser(
 ): profile is PendingSignUpProfile {
   if (!profile?.name || !profile.username) return false;
   if (profile.uid && profile.uid !== authUser.uid) return false;
-  if (profile.email && !emailsEqual(profile.email, authUser.email)) return false;
+  if (profile.email && !emailsEqual(profile.email, authUser.email))
+    return false;
   if (
     profile.createdAt &&
     Date.now() - profile.createdAt > PENDING_SIGN_UP_MAX_AGE_MS
@@ -227,7 +228,10 @@ export function AuthContextProvider({
       if (!userSnapshot.exists()) {
         // لا ننشئ ملفًا ولا نفتح الرئيسية إلا بالاسم واسم المستخدم اللذين أدخلهما
         // المستخدم. أي توليد لاسم افتراضي كان يظهر «user123» في الإشعارات.
-        if (!isChosenProfileName(chosenName) || !isChosenUsername(chosenUsername)) {
+        if (
+          !isChosenProfileName(chosenName) ||
+          !isChosenUsername(chosenUsername)
+        ) {
           processedUid.current = null;
           if (!cancelled) setLoading(false);
           return;
@@ -397,9 +401,16 @@ export function AuthContextProvider({
   useEffect(() => {
     const userId = user?.id;
     if (!userId) return;
+    if (isImpersonating(userId)) return;
 
-    void registerWebPushToken(userId);
-    const handleToken = (): void => void registerWebPushToken(userId);
+    void registerWebPushToken(userId).then(() => {
+      void claimDevicePushToken();
+    });
+    const handleToken = (): void => {
+      void registerWebPushToken(userId).then(() => {
+        void claimDevicePushToken();
+      });
+    };
     window.addEventListener('aite-fcm-token', handleToken);
 
     return () => window.removeEventListener('aite-fcm-token', handleToken);
@@ -506,8 +517,7 @@ export function AuthContextProvider({
   ): Promise<void> => {
     try {
       const cleaned = username.trim().replace(/\s+/g, '').toLowerCase();
-      if (!cleaned || !password)
-        throw new Error(tx('auth.needCreds'));
+      if (!cleaned || !password) throw new Error(tx('auth.needCreds'));
       const email = usernameToInternalEmail(cleaned);
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
@@ -533,22 +543,22 @@ export function AuthContextProvider({
       if (!isChosenUsername(cleanedUsername))
         throw new Error(tx('auth.userInvalid'));
 
-      if (cleanedUsername.length < 3)
-        throw new Error(tx('auth.userShort'));
-      if (cleanedUsername.length > 15)
-        throw new Error(tx('auth.userLong'));
+      if (cleanedUsername.length < 3) throw new Error(tx('auth.userShort'));
+      if (cleanedUsername.length > 15) throw new Error(tx('auth.userLong'));
       if (!/^\w+$/i.test(cleanedUsername))
         throw new Error(tx('auth.userChars'));
 
-      if (password.length < 6)
-        throw new Error(tx('auth.passWeak'));
+      if (password.length < 6) throw new Error(tx('auth.passWeak'));
 
       try {
-        const last = Number(window.localStorage.getItem('aite:last-signup') ?? '0');
+        const last = Number(
+          window.localStorage.getItem('aite:last-signup') ?? '0'
+        );
         if (last && Date.now() - last < 45_000)
           throw new Error(tx('err.waitSignup'));
       } catch (error) {
-        if (error instanceof Error && error.message === tx('err.waitSignup')) throw error;
+        if (error instanceof Error && error.message === tx('err.waitSignup'))
+          throw error;
       }
 
       // تحقق من التوفر مع معالجة أخطاء الصلاحيات

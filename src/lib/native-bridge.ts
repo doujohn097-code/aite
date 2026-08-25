@@ -1,11 +1,12 @@
 /* eslint-disable import/no-unresolved, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 
-import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, doc, updateDoc } from 'firebase/firestore';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
-import { getFirebase } from '@lib/firebase/app';
+import { auth, getFirebase } from '@lib/firebase/app';
 import { usersCollection } from '@lib/firebase/collections';
+import { shouldAttachPushToken } from '@lib/impersonation';
 
 const VAPID_KEY =
   process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY ||
@@ -65,8 +66,43 @@ function getNativeToken(): string | null {
   return bridge?.fcmToken ?? null;
 }
 
+export function getStoredPushToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  const native = getNativeToken();
+  if (native) return native;
+  try {
+    return window.localStorage.getItem('aite:fcmToken');
+  } catch {
+    return null;
+  }
+}
+
+export async function unregisterDevicePushToken(userId: string): Promise<void> {
+  const token = getStoredPushToken();
+  if (!userId || !token) return;
+  await updateDoc(doc(usersCollection, userId), {
+    fcmTokens: arrayRemove(token)
+  }).catch(() => undefined);
+}
+
+export async function claimDevicePushToken(): Promise<void> {
+  const token = getStoredPushToken();
+  if (!token || typeof window === 'undefined') return;
+  const idToken = await auth.currentUser?.getIdToken().catch(() => null);
+  if (!idToken) return;
+  await fetch('/api/push/claim-device', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${idToken}`
+    },
+    body: JSON.stringify({ token })
+  }).catch(() => undefined);
+}
+
 /** يحفظ توكن التطبيق الأصلي في حساب المستخدم */
 export async function registerNativeToken(userId: string): Promise<boolean> {
+  if (!shouldAttachPushToken(userId)) return false;
   const token = getNativeToken();
 
   if (!token) return false;
@@ -80,6 +116,8 @@ export async function registerNativeToken(userId: string): Promise<boolean> {
 
 /** يسجّل توكن Web Push (FCM) للمتصفح أو تطبيق PWA المثبّت. */
 export async function registerWebPushToken(userId: string): Promise<void> {
+  if (!shouldAttachPushToken(userId)) return;
+
   if (isNativeApp()) {
     await registerNativePushToken(userId);
     return;
