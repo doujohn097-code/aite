@@ -1,16 +1,12 @@
 import {
-  verifyIdToken,
-  isAdminConfigured,
   adminAuth,
-  adminFirestore
+  isAdminConfigured,
+  verifyIdToken
 } from '@lib/firebase-admin';
 import { purgeUserData } from '@lib/server/purge-user';
+import { verifyAccountPassword } from '@lib/server/verify-password';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-/**
- * حذف الحساب نهائيًا — يحذف حساب المصادقة ووثيقة المستخدم وإحصاءاته.
- * يتطلب توكن المستخدم نفسه؛ لا يمكن لأي مستخدم حذف حساب غيره.
- */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -21,10 +17,8 @@ export default async function handler(
     return;
   }
 
-  if (!isAdminConfigured() || !adminAuth || !adminFirestore) {
-    res
-      .status(503)
-      .json({ error: 'الخدمة غير متاحة حاليًا — حاول مجددًا لاحقًا' });
+  if (!isAdminConfigured() || !adminAuth) {
+    res.status(503).json({ error: 'service_unavailable' });
     return;
   }
 
@@ -38,13 +32,37 @@ export default async function handler(
 
     const decoded = await verifyIdToken(idToken);
     const userId = decoded.uid;
+    const password =
+      typeof (req.body as { password?: unknown })?.password === 'string'
+        ? (req.body as { password: string }).password
+        : '';
 
-    // حذف شامل لكل بيانات المستخدم (منشورات، ردود، قصص، محادثات، إشعارات، متابعات)
+    if (!password) {
+      res.status(400).json({ error: 'missing_password' });
+      return;
+    }
+
+    const record = await adminAuth.getUser(userId);
+    const email = record.email ?? decoded.email;
+    if (!email) {
+      res.status(400).json({ error: 'missing_email' });
+      return;
+    }
+
+    const valid = await verifyAccountPassword(email, password);
+    if (!valid) {
+      res.status(403).json({ error: 'wrong_password' });
+      return;
+    }
+
     const report = await purgeUserData(userId);
-
     res.status(200).json({ ok: true, report });
   } catch (error) {
     console.error('account/delete failed:', error);
-    res.status(500).json({ error: 'تعذر حذف الحساب — حاول مجددًا' });
+    res.status(500).json({ error: 'delete_failed' });
   }
 }
+
+export const config = {
+  api: { bodyParser: { sizeLimit: '16kb' } }
+};

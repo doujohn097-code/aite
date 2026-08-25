@@ -58,6 +58,11 @@ export const en: { [K in keyof typeof ar]: string } = {
   'auth.userChars': "Username can only contain letters, numbers and '_'",
   'auth.passWeak': 'Password is too weak (at least 6 characters)',
   'auth.needCreds': 'Enter your username and password',
+  'auth.nameInvalid':
+    'Enter your real name — not a default like User or user123',
+  'auth.userInvalid': 'Choose your own username, not a generated id',
+  'auth.profileIncomplete':
+    'Your name and username could not be saved as entered. You were not taken to Home.',
   'auth.created': 'Account created! Redirecting...',
   'auth.welcome': 'Logged in successfully!',
   'auth.unexpected': 'An unexpected error occurred',

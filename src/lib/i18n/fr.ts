@@ -58,6 +58,12 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'auth.userChars': "Le nom d’utilisateur ne peut contenir que des lettres, chiffres et '_'",
   'auth.passWeak': 'Mot de passe trop faible (6 caractères min.)',
   'auth.needCreds': 'Saisissez votre nom d’utilisateur et mot de passe',
+  'auth.nameInvalid':
+    'Saisissez votre vrai nom, pas un nom par défaut comme user',
+  'auth.userInvalid':
+    'Choisissez votre propre pseudo, pas un identifiant généré',
+  'auth.profileIncomplete':
+    'Impossible d’enregistrer le nom et le pseudo tels que saisis. Accueil non ouvert.',
   'auth.created': 'Compte créé ! Redirection...',
   'auth.welcome': 'Connexion réussie !',
   'auth.unexpected': 'Une erreur inattendue s’est produite',

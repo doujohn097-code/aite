@@ -191,6 +191,33 @@ export function isPlaceholderUsername(value?: string | null): boolean {
   );
 }
 
+export function isChosenProfileName(value?: string | null): boolean {
+  const name = typeof value === 'string' ? value.trim() : '';
+  return name.length > 0 && name.length <= 80 && !isPlaceholderProfileName(name);
+}
+
+export function isChosenUsername(value?: string | null): boolean {
+  const username = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return /^[a-z0-9_]{3,15}$/.test(username) && !isPlaceholderUsername(username);
+}
+
+export type ProfileLabelSource = {
+  id?: string | null;
+  name?: string | null;
+  username?: string | null;
+};
+
+/** ملف جاهز للدخول إلى الرئيسية: الاسم واسم المستخدم كما اختارهما المستخدم. */
+export function isReadyProfile(
+  profile?: ProfileLabelSource | null
+): boolean {
+  return isChosenProfileName(profile?.name) && isChosenUsername(profile?.username);
+}
+
+export function emailsEqual(a?: string | null, b?: string | null): boolean {
+  return !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
 export function visibleProfileName(value?: string | null): string | null {
   const name = typeof value === 'string' ? value.trim() : '';
   return isPlaceholderProfileName(name) ? null : name;
@@ -200,12 +227,6 @@ export function visibleUsername(value?: string | null): string | null {
   const username = typeof value === 'string' ? value.trim() : '';
   return isPlaceholderUsername(username) ? null : username;
 }
-
-export type ProfileLabelSource = {
-  id?: string | null;
-  name?: string | null;
-  username?: string | null;
-};
 
 function asTrimmed(value?: string | null): string {
   return typeof value === 'string' ? value.trim() : '';

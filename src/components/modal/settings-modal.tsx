@@ -10,7 +10,7 @@ import { useLanguage } from '@lib/context/language-context';
 import { useTheme } from '@lib/context/theme-context';
 import type { AppLocale } from '@lib/i18n';
 import { auth } from '@lib/firebase/app';
-import { usernameToInternalEmail } from '@lib/utils';
+import { appCheckHeaders } from '@lib/firebase/app-check';
 import { saveAccount, removeSavedAccount } from '@lib/accounts';
 import { themesMeta } from '@lib/types/theme';
 import { Button } from '@components/ui/button';
@@ -69,11 +69,34 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
     setView('main');
   };
 
+  const apiErrorMessage = (code?: string): string => {
+    switch (code) {
+      case 'wrong_password':
+        return t('settings.wrongPass');
+      case 'weak_password':
+        return t('settings.passWeakNew');
+      case 'same_password':
+        return t('settings.passSame');
+      case 'missing_fields':
+      case 'missing_password':
+        return t('settings.fillAll');
+      case 'unauthorized':
+      case 'missing_email':
+        return t('settings.sessionEnded');
+      case 'service_unavailable':
+        return t('err.temp');
+      case 'delete_failed':
+        return t('settings.deleteFailed');
+      default:
+        return t('settings.changeFailed');
+    }
+  };
+
   const reauthenticate = async (password: string): Promise<void> => {
     const currentUser = auth.currentUser;
-    if (!currentUser) throw new Error(t('settings.sessionEnded'));
+    if (!currentUser?.email) throw new Error(t('settings.sessionEnded'));
     const credential = EmailAuthProvider.credential(
-      usernameToInternalEmail(username),
+      currentUser.email,
       password
     );
     await reauthenticateWithCredential(currentUser, credential);
@@ -102,12 +125,33 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
 
     setLoading(true);
     try {
-      await reauthenticate(currentPassword);
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error(t('err.session'));
-      await updatePassword(currentUser, newPassword);
 
-      // نحدّث بيانات العرض فقط؛ كلمات المرور لا تُخزن محليًا.
+      try {
+        await reauthenticate(currentPassword);
+        await updatePassword(currentUser, newPassword);
+      } catch {
+        const idToken = await currentUser.getIdToken(true);
+        const response = await fetch('/api/account/password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`,
+            ...(await appCheckHeaders())
+          },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        if (!response.ok) {
+          const data = (await response.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          throw Object.assign(new Error(apiErrorMessage(data?.error)), {
+            api: data?.error ?? 'change_failed'
+          });
+        }
+      }
+
       try {
         saveAccount({
           username,
@@ -122,8 +166,10 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
       resetForms();
       closeModal();
     } catch (err) {
-      const code = (err as { code?: string })?.code ?? '';
-      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential')
+      const code = (err as { code?: string; api?: string })?.code ?? '';
+      const api = (err as { api?: string })?.api;
+      if (api) toast.error(apiErrorMessage(api));
+      else if (code === 'auth/wrong-password' || code === 'auth/invalid-credential')
         toast.error(t('settings.wrongPass'));
       else if (code === 'auth/too-many-requests')
         toast.error(t('settings.tooMany'));
@@ -146,31 +192,53 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
       toast.error(t('settings.enterPass'));
       return;
     }
-    if (deleteConfirmText.trim() !== deleteWord) {
+    const typed = deleteConfirmText.trim();
+    const accepted = new Set(
+      [deleteWord, 'حذف', 'DELETE', 'SUPPRIMER'].map((word) =>
+        word.toLowerCase()
+      )
+    );
+    if (!accepted.has(typed.toLowerCase())) {
       toast.error(t('settings.typeDelete', { word: deleteWord }));
       return;
     }
 
     setLoading(true);
     try {
-      await reauthenticate(deletePassword);
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error(t('err.session'));
 
-      const idToken = await currentUser.getIdToken();
+      try {
+        await reauthenticate(deletePassword);
+      } catch (error) {
+        const code = (error as { code?: string })?.code ?? '';
+        if (code === 'auth/too-many-requests') throw error;
+        // نكمل: الخادم يتحقق من كلمة المرور عبر البريد الحقيقي للحساب.
+      }
+
+      const idToken = await currentUser.getIdToken(true);
       const response = await fetch('/api/account/delete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`
-        }
+          Authorization: `Bearer ${idToken}`,
+          ...(await appCheckHeaders())
+        },
+        body: JSON.stringify({ password: deletePassword })
       });
 
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        throw new Error(data?.error ?? t('settings.deleteFailed'));
+        throw Object.assign(
+          new Error(
+            data?.error === 'wrong_password'
+              ? t('settings.wrongPassShort')
+              : t('settings.deleteFailed')
+          ),
+          { api: data?.error ?? 'delete_failed' }
+        );
       }
 
       try {

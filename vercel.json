@@ -7,6 +7,9 @@
     "src/pages/api/media/poster.ts": {
       "maxDuration": 60,
       "includeFiles": "src/pages/api/media/ffmpeg-bin/ffmpeg"
+    },
+    "src/pages/api/account/delete.ts": {
+      "maxDuration": 60
     }
   }
 }

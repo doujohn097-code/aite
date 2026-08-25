@@ -31,12 +31,16 @@ import {
   userStatsCollection,
   notificationsCollection
 } from '@lib/firebase/collections';
-import { getRandomId, getRandomInt } from '@lib/random';
+import { getRandomId } from '@lib/random';
 import { checkUsernameAvailability } from '@lib/firebase/utils';
 import {
+  emailsEqual,
   internalEmailToUsername,
+  isChosenProfileName,
+  isChosenUsername,
   isPlaceholderProfileName,
   isPlaceholderUsername,
+  isReadyProfile,
   usernameToInternalEmail
 } from '@lib/utils';
 import { getSavedAccounts } from '@lib/accounts';
@@ -109,7 +113,7 @@ function pendingMatchesUser(
 ): profile is PendingSignUpProfile {
   if (!profile?.name || !profile.username) return false;
   if (profile.uid && profile.uid !== authUser.uid) return false;
-  if (profile.email && profile.email !== authUser.email) return false;
+  if (profile.email && !emailsEqual(profile.email, authUser.email)) return false;
   if (
     profile.createdAt &&
     Date.now() - profile.createdAt > PENDING_SIGN_UP_MAX_AGE_MS
@@ -163,12 +167,20 @@ export function AuthContextProvider({
         pendingData?.username ?? decodedUsername ?? savedAccount?.username;
       const authName = displayName?.trim() ?? '';
       const savedName = savedAccount?.name?.trim() ?? '';
-      const fallbackName =
-        pendingData?.name ||
-        (!isPlaceholderProfileName(authName) ? authName : '') ||
-        (!isPlaceholderProfileName(savedName) ? savedName : '') ||
-        recoveredUsername ||
-        '';
+      const chosenName = isChosenProfileName(pendingData?.name)
+        ? pendingData!.name
+        : isChosenProfileName(authName)
+        ? authName
+        : isChosenProfileName(savedName)
+        ? savedName
+        : '';
+      const chosenUsername = isChosenUsername(pendingData?.username)
+        ? pendingData!.username
+        : isChosenUsername(decodedUsername)
+        ? decodedUsername
+        : isChosenUsername(savedAccount?.username)
+        ? savedAccount!.username
+        : '';
       const fallbackPhoto = photoURL ?? '/assets/default-avatar.png';
 
       // قراءة الملف مع إعادة محاولة
@@ -192,7 +204,7 @@ export function AuthContextProvider({
       const defaultUserData: User = {
         id: uid,
         bio: null,
-        name: fallbackName,
+        name: chosenName,
         theme: null,
         accent: null,
         website: null,
@@ -211,37 +223,15 @@ export function AuthContextProvider({
       };
 
       if (!userSnapshot.exists()) {
-        // البريد الداخلي مشتق أصلًا من اسم المستخدم وفريد داخل Firebase Auth،
-        // لذلك هو المصدر الأوثق لاستعادة الاسم عند فقدان كتابة Firestore.
-        let finalUsername = recoveredUsername ?? '';
-
-        if (!finalUsername) {
-          // توليد اسم مستخدم عشوائي متاح
-          let tries = 0;
-          while (tries < 15) {
-            const normalizeName =
-              fallbackName
-                .replace(/\s/g, '')
-                .toLowerCase()
-                .replace(/[^a-z0-9_]/g, '')
-                .slice(0, 8) || 'user';
-            const randomInt = getRandomInt(1, 10_000);
-            const candidate = `${normalizeName}${randomInt}`;
-            try {
-              const isAvailable = await checkUsernameAvailability(candidate);
-              if (isAvailable) {
-                finalUsername = candidate;
-                break;
-              }
-            } catch {
-              finalUsername = candidate;
-              break;
-            }
-            tries++;
-          }
-          if (!finalUsername)
-            finalUsername = `user${getRandomInt(1000, 99999)}`;
+        // لا ننشئ ملفًا ولا نفتح الرئيسية إلا بالاسم واسم المستخدم اللذين أدخلهما
+        // المستخدم. أي توليد لاسم افتراضي كان يظهر «user123» في الإشعارات.
+        if (!isChosenProfileName(chosenName) || !isChosenUsername(chosenUsername)) {
+          processedUid.current = null;
+          if (!cancelled) setLoading(false);
+          return;
         }
+
+        const finalUsername = chosenUsername;
 
         // استخدام مرجع خام بدون converter لضمان التوافق مع جميع إصدارات القواعد
         // القاعدة القديمة كانت تتطلب id == userId، والجديدة لا تتطلبه - الخام يعمل مع الاثنين
@@ -250,7 +240,7 @@ export function AuthContextProvider({
 
         const userData = {
           bio: null,
-          name: (fallbackName || finalUsername).slice(0, 80),
+          name: chosenName.slice(0, 80),
           theme: null,
           accent: null,
           website: null,
@@ -282,8 +272,18 @@ export function AuthContextProvider({
 
           const newSnap = await getDoc(doc(usersCollection, uid));
           const newUser = newSnap.data();
-          if (newUser) setUser({ ...defaultUserData, ...newUser } as User);
-          else setUser({ ...defaultUserData, username: finalUsername } as User);
+          const nextUser = {
+            ...defaultUserData,
+            ...(newUser ?? {}),
+            name: chosenName,
+            username: finalUsername
+          } as User;
+          if (isReadyProfile(nextUser)) setUser(nextUser);
+          else {
+            processedUid.current = null;
+            if (!cancelled) setLoading(false);
+            return;
+          }
 
           try {
             sessionStorage.removeItem(`aite:pending-profile:${uid}`);
@@ -305,15 +305,12 @@ export function AuthContextProvider({
 
         // إصلاح الحسابات التي تأثرت بالسباق في الإصدارات السابقة. لا نغيّر
         // اسمًا حقيقيًا اختاره المستخدم؛ نصلح القيم الافتراضية المعروفة فقط.
-        if (
-          isPlaceholderProfileName(userData.name) &&
-          !isPlaceholderProfileName(fallbackName)
-        )
-          repairs.name = fallbackName;
+        if (isPlaceholderProfileName(userData.name) && chosenName)
+          repairs.name = chosenName;
 
         if (
-          recoveredUsername &&
           isPlaceholderUsername(userData.username) &&
+          isChosenUsername(recoveredUsername) &&
           recoveredUsername !== userData.username
         )
           repairs.username = recoveredUsername;
@@ -501,6 +498,10 @@ export function AuthContextProvider({
 
       if (!cleanedName || !cleanedUsername || !password)
         throw new Error(tx('auth.fillAll'));
+      if (!isChosenProfileName(cleanedName))
+        throw new Error(tx('auth.nameInvalid'));
+      if (!isChosenUsername(cleanedUsername))
+        throw new Error(tx('auth.userInvalid'));
 
       if (cleanedUsername.length < 3)
         throw new Error(tx('auth.userShort'));
@@ -627,20 +628,49 @@ export function AuthContextProvider({
           setDoc(rawUserRef, userData, { merge: true }),
           setDoc(rawStatsRef, userStatsData, { merge: true })
         ]);
-
-        try {
-          sessionStorage.removeItem(PENDING_SIGN_UP_KEY);
-          sessionStorage.removeItem(`aite:pending-profile:${authUser.uid}`);
-        } catch {
-          // ignore
-        }
-        if (pendingMatchesUser(pendingSignUpRef.current, authUser))
-          pendingSignUpRef.current = null;
       } catch (err) {
         console.error('setDoc failed', err);
-        // نبقي البيانات المعلّقة ليعيد manageUser المحاولة دون اسم افتراضي.
         processedUid.current = null;
+        throw err;
       }
+
+      let saved: User | undefined;
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const snap = await getDoc(doc(usersCollection, authUser.uid));
+        const data = snap.data();
+        if (
+          data &&
+          data.name === cleanedName &&
+          data.username === cleanedUsername
+        ) {
+          saved = data;
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+
+      if (!saved) {
+        processedUid.current = null;
+        await signOutFirebase(auth).catch(() => undefined);
+        throw new Error(tx('auth.profileIncomplete'));
+      }
+
+      processedUid.current = authUser.uid;
+      setUser({
+        ...saved,
+        id: authUser.uid,
+        name: cleanedName,
+        username: cleanedUsername
+      });
+
+      try {
+        sessionStorage.removeItem(PENDING_SIGN_UP_KEY);
+        sessionStorage.removeItem(`aite:pending-profile:${authUser.uid}`);
+      } catch {
+        // ignore
+      }
+      if (pendingMatchesUser(pendingSignUpRef.current, authUser))
+        pendingSignUpRef.current = null;
     } catch (err) {
       pendingSignUpRef.current = null;
       try {
@@ -656,7 +686,8 @@ export function AuthContextProvider({
           err.message === tx('auth.userChars') ||
           err.message === tx('err.userUnavailable') ||
           err.message === tx('auth.fillAll') ||
-          err.message === tx('err.waitSignup'))
+          err.message === tx('err.waitSignup') ||
+          err.message === tx('auth.profileIncomplete'))
           ? err
           : toArabicAuthError(err);
       setError(arabic);

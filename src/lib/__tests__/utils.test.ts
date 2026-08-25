@@ -13,6 +13,9 @@ import {
   resolveProfileName,
   resolveUsername,
   profileHref,
+  isReadyProfile,
+  isChosenUsername,
+  emailsEqual,
   isSafeInternalPath,
   safeHttpUrl
 } from '../utils';
@@ -172,6 +175,23 @@ describe('placeholder profile detection', () => {
     expect(isPlaceholderUsername('مستخدم125')).toBe(true);
     expect(isPlaceholderUsername('user_8721')).toBe(true);
     expect(isPlaceholderUsername('salem_125')).toBe(false);
+  });
+});
+
+describe('chosen profile data', () => {
+  it('accepts only a real name and username pair', () => {
+    expect(isReadyProfile({ name: 'سارة علي', username: 'sara_12' })).toBe(
+      true
+    );
+    expect(isReadyProfile({ name: 'مستخدم', username: 'sara_12' })).toBe(false);
+    expect(isReadyProfile({ name: 'سارة', username: 'user_99' })).toBe(false);
+    expect(isChosenUsername('salem')).toBe(true);
+    expect(isChosenUsername('user123')).toBe(false);
+  });
+
+  it('compares emails without case', () => {
+    expect(emailsEqual('AbC@aite.local', 'abc@aite.local')).toBe(true);
+    expect(emailsEqual('a@aite.local', 'b@aite.local')).toBe(false);
   });
 });
 
