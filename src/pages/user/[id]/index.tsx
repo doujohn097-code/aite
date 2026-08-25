@@ -44,7 +44,10 @@ export default function UserTweets(): JSX.Element {
   const { user: authUser } = useAuth();
   const { t } = useLanguage();
   const { id, username, pinnedTweet } = user ?? {};
-  const isBlocked = !!id && authUser?.blockedUsers?.includes(id);
+  const blockedByMe = !!id && !!authUser?.blockedUsers?.includes(id);
+  const blockedByPeer =
+    !!authUser?.id && !!user?.blockedUsers?.includes(authUser.id);
+  const isBlocked = blockedByMe || blockedByPeer;
 
   const [tab, setTab] = useState<ProfileTab>('posts');
 

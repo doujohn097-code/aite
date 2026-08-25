@@ -140,9 +140,11 @@ export const en: { [K in keyof typeof ar]: string } = {
   'tweet.pin': 'Pin',
   'tweet.unpin': 'Unpin',
   'tweet.pinTitle': 'Pin this post to your profile?',
-  'tweet.pinBody': 'It will appear at the top of your profile and replace any previous pin.',
+  'tweet.pinBody':
+    'It will appear at the top of your profile and replace any previous pin.',
   'tweet.unpinTitle': 'Unpin this post from your profile?',
-  'tweet.unpinBody': 'It will no longer appear automatically at the top of your profile.',
+  'tweet.unpinBody':
+    'It will no longer appear automatically at the top of your profile.',
   'tweet.pinned': 'Your post was pinned to your profile',
   'tweet.unpinned': 'Your post was unpinned from your profile',
   'tweet.follow': 'Follow @{username}',
@@ -199,7 +201,8 @@ export const en: { [K in keyof typeof ar]: string } = {
   'messages.new': 'New message',
   'messages.search': 'Search conversations',
   'messages.empty': 'No conversations yet',
-  'messages.emptyHint': 'Start a chat with people you follow and it will appear here.',
+  'messages.emptyHint':
+    'Start a chat with people you follow and it will appear here.',
   'messages.noMatch': 'No matching results',
   'messages.start': 'Start the conversation',
   'messages.voice': 'Voice message',
@@ -224,9 +227,12 @@ export const en: { [K in keyof typeof ar]: string } = {
   'messages.sendFail': 'Could not send the message. Try again.',
   'messages.blockedBanner':
     'You blocked this user. Messages stay visible but sending is paused.',
+  'messages.blockedByPeerBanner':
+    'This user blocked you. Messages stay visible but sending is paused.',
   'messages.latest': 'Latest messages',
   'messages.newDivider': 'New messages',
-  'messages.startHint': 'Start the chat with a message, photo, video or voice note',
+  'messages.startHint':
+    'Start the chat with a message, photo, video or voice note',
   'messages.reply': 'Reply',
   'messages.edit': 'Edit message',
   'messages.delete': 'Delete message',
@@ -241,7 +247,8 @@ export const en: { [K in keyof typeof ar]: string } = {
   'notif.title': 'Notifications / Aite',
   'notif.heading': 'Notifications',
   'notif.empty': 'No notifications',
-  'notif.emptyHint': 'When someone interacts with your posts or follows you, it will show here.',
+  'notif.emptyHint':
+    'When someone interacts with your posts or follows you, it will show here.',
   'notif.follow': 'started following you',
   'notif.likePost': 'liked your post',
   'notif.likeReel': 'liked your reel',
@@ -273,6 +280,9 @@ export const en: { [K in keyof typeof ar]: string } = {
   'profile.messageFail': 'Could not open the conversation. Try again.',
   'profile.blocked': 'You blocked this account',
   'profile.blockedHint': 'Their posts will not appear in your feed.',
+  'profile.blockedByPeer': 'This account blocked you',
+  'profile.blockedByPeerHint':
+    'You cannot message them or see their new posts.',
   'profile.posts': 'Posts',
   'profile.reposts': 'Reposts',
   'profile.reels': 'Reposted reels',
@@ -294,7 +304,8 @@ export const en: { [K in keyof typeof ar]: string } = {
   'stories.yours': 'Your story',
   'stories.noneOwn': 'No active stories on your account',
   'stories.noneOther': 'No active stories for this user',
-  'stories.noneOwnHint': 'Share a moment with your followers. It stays here for 24 hours.',
+  'stories.noneOwnHint':
+    'Share a moment with your followers. It stays here for 24 hours.',
   'stories.noneOtherHint': 'The story may have expired or been deleted.',
   'stories.create': '+ New story',
   'stories.home': 'Back to home',
@@ -308,7 +319,8 @@ export const en: { [K in keyof typeof ar]: string } = {
   'update.now': 'Update now',
   'update.apk': 'Download Android app',
   'update.downloading': 'Downloading…',
-  'update.stay': 'Stay on this screen until the download finishes. Don’t go back or close the app.',
+  'update.stay':
+    'Stay on this screen until the download finishes. Don’t go back or close the app.',
   'update.finish': 'Finish install',
   'update.version': 'Version {name}',
   'update.installed': 'Installed {name}',
@@ -387,18 +399,23 @@ export const en: { [K in keyof typeof ar]: string } = {
   'err.emptyVideo': 'The video file is empty or damaged',
   'err.processVideo': 'Could not process the video. Try again',
   'err.needVideoFirst': 'Upload a video for the reel first',
-  'err.videoTimeout': 'Video upload took too long. Check your connection and retry',
+  'err.videoTimeout':
+    'Video upload took too long. Check your connection and retry',
   'err.reelPublish': 'Could not publish the reel. Try again',
   'err.commentPublish': 'Could not publish the comment. Try again',
   'err.commentDelete': 'Could not delete the comment',
   'err.commentLike': 'Could not update the like',
   'err.loginToComment': 'Sign in to comment',
-  'err.micDenied': 'Microphone permission denied. Allow Aite to use it and retry.',
+  'err.micDenied':
+    'Microphone permission denied. Allow Aite to use it and retry.',
   'err.micMissing': 'No microphone was found on this device.',
   'err.micBusy': 'The microphone is used by another app. Close it and retry.',
-  'err.micWebview': 'This WebView cannot record audio. Update Android System WebView.',
-  'err.micGeneric': 'Could not start the microphone. Check permissions and retry.',
-  'err.voiceMax': 'The recording reached the size limit. Record a shorter note.',
+  'err.micWebview':
+    'This WebView cannot record audio. Update Android System WebView.',
+  'err.micGeneric':
+    'Could not start the microphone. Check permissions and retry.',
+  'err.voiceMax':
+    'The recording reached the size limit. Record a shorter note.',
   'err.shareFail': 'Could not share. Try again',
   'err.maxShare': 'You can send to {n} people at most',
   'err.openChat': 'Could not open the conversation. Try again',
@@ -508,7 +525,8 @@ export const en: { [K in keyof typeof ar]: string } = {
   'onboard.how': 'What should we call you?',
   'onboard.userHint': 'Your @username is unique. You can change it later.',
   'onboard.changeUser': 'Change username?',
-  'onboard.changeHint': 'Your @username is unique. You can change it here anytime.',
+  'onboard.changeHint':
+    'Your @username is unique. You can change it here anytime.',
 
   'stats.likedBy': 'Liked by',
   'stats.repostedBy': 'Reposted by',
@@ -564,7 +582,8 @@ export const en: { [K in keyof typeof ar]: string } = {
   'update.preparing': 'Preparing download…',
   'update.applying': 'Applying update…',
   'update.keepOpen': 'Downloading the update… don’t close the app',
-  'update.savedFile': 'File saved. Open it to install and keep this window open.',
+  'update.savedFile':
+    'File saved. Open it to install and keep this window open.',
   'update.openLink': 'Could not preview. Opening the download link',
   'update.downloadFail': 'Could not download the update',
 
@@ -574,7 +593,6 @@ export const en: { [K in keyof typeof ar]: string } = {
   'unfollow.title': 'Unfollow @{username}?',
   'unfollow.body':
     'Their posts will no longer appear in your timeline. You can still view their profile unless posts are protected.',
-
 
   'stories.publish': 'Publish story',
   'stories.published': 'Story published',
@@ -589,8 +607,10 @@ export const en: { [K in keyof typeof ar]: string } = {
   'stories.preview': 'Story preview',
   'stories.done': 'Done',
   'stories.bg': 'Background',
-  'stories.colorRing': 'This color appears as a ring around your photo in the stories bar.',
-  'stories.pinchHint': 'Pinch to resize the text, or use the white handle on the corner',
+  'stories.colorRing':
+    'This color appears as a ring around your photo in the stories bar.',
+  'stories.pinchHint':
+    'Pinch to resize the text, or use the white handle on the corner',
   'stories.resize': 'Resize',
   'stories.invalidMedia': 'Please choose a valid photo or video',
   'stories.deleteText': 'Delete text',
@@ -651,22 +671,26 @@ export const en: { [K in keyof typeof ar]: string } = {
 
   'display.title': 'Customize display',
   'display.hint': 'These settings apply to every Aite account in this browser.',
-  'display.sample': 'Aite is built around short posts — like this one — that can include photos, videos, links, text, hashtags and mentions such as',
+  'display.sample':
+    'Aite is built around short posts — like this one — that can include photos, videos, links, text, hashtags and mentions such as',
   'display.color': 'Color',
   'display.bg': 'Background',
   'display.done': 'Done',
 
   'cards.repostsTitle': 'Share posts you like',
   'cards.repostsAlt': 'No reposts',
-  'cards.repostsDesc': 'Repost someone else’s post to share it on your timeline. When you do, it will show here.',
+  'cards.repostsDesc':
+    'Repost someone else’s post to share it on your timeline. When you do, it will show here.',
   'cards.likesTitle': 'No likes yet',
   'cards.likesAlt': 'No likes',
   'cards.likesDesc': 'When you like a post, it will show here.',
   'cards.followTitle': 'Stay in the loop',
-  'cards.followDesc': 'Following accounts is an easy way to shape your timeline around topics and people you care about.',
+  'cards.followDesc':
+    'Following accounts is an easy way to shape your timeline around topics and people you care about.',
   'cards.followersTitle': 'Looking for followers?',
   'cards.followersAlt': 'No followers',
-  'cards.followersDesc': 'When someone follows you, they will show here. Posting and interacting helps you grow.',
+  'cards.followersDesc':
+    'When someone follows you, they will show here. Posting and interacting helps you grow.',
 
   'valid.userMin': 'Username must be longer than 4 characters.',
   'valid.userMax': 'Username must be shorter than 15 characters.',
@@ -681,7 +705,8 @@ export const en: { [K in keyof typeof ar]: string } = {
   'profile.unblockUser': 'Unblock @{username}',
   'onboard.setUsername': 'Set username',
   'onboard.welcome': 'Welcome to Aite 👋',
-  'onboard.welcomeHint': 'Add your photo and cover, and pick the badge next to your name.',
+  'onboard.welcomeHint':
+    'Add your photo and cover, and pick the badge next to your name.',
   'onboard.changeCover': 'Change cover',
   'onboard.pickCover': 'Tap to choose a cover',
   'onboard.badge': 'Badge next to your name',

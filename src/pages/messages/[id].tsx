@@ -201,18 +201,19 @@ export default function Chat(): JSX.Element {
   const realBlockedByMe = !!peerId && !!user?.blockedUsers?.includes(peerId);
   const realBlockedByPeer =
     !!peerId && !!peer?.blockedUsers?.includes(user?.id ?? '');
-  const realBlocked = realBlockedByMe || realBlockedByPeer;
-  const isBlockedConversation =
-    optimisticBlocked !== null ? optimisticBlocked : realBlocked;
+  const blockedByMe =
+    optimisticBlocked !== null ? optimisticBlocked : realBlockedByMe;
+  const blockedByPeer = realBlockedByPeer;
+  const isBlockedConversation = blockedByMe || blockedByPeer;
   // إخفاء مؤشر الكتابة فوراً عند الحظر - لا نعتمد على تأخير Firestore
   const peerTyping = !isBlockedConversation && conversation?.typing === peerId;
 
   // عندما تتحدث بيانات Firestore الحقيقية، نمسح الحالة التفاؤلية
   useEffect(() => {
-    if (optimisticBlocked !== null && optimisticBlocked === realBlocked) {
+    if (optimisticBlocked !== null && optimisticBlocked === realBlockedByMe) {
       setOptimisticBlocked(null);
     }
-  }, [realBlocked, optimisticBlocked]);
+  }, [realBlockedByMe, optimisticBlocked]);
 
   const peerActiveMillis = peer?.lastActiveAt
     ? getTimestampMillis(peer.lastActiveAt)
@@ -602,15 +603,21 @@ export default function Chat(): JSX.Element {
         {isBlockedConversation && (
           <div className='mx-auto my-3 flex max-w-sm items-center gap-2 rounded-2xl border border-accent-red/20 bg-accent-red/10 px-4 py-3 text-center text-sm text-accent-red'>
             <HeroIcon className='h-5 w-5 shrink-0' iconName='NoSymbolIcon' />
-            <span className='flex-1'>{t('messages.blockedBanner')}</span>
-            <button
-              type='button'
-              onClick={() => void toggleBlockPeer()}
-              className='shrink-0 font-bold underline'
-              disabled={blockBusy}
-            >
-              {t('messages.unblock')}
-            </button>
+            <span className='flex-1'>
+              {blockedByMe
+                ? t('messages.blockedBanner')
+                : t('messages.blockedByPeerBanner')}
+            </span>
+            {blockedByMe && (
+              <button
+                type='button'
+                onClick={() => void toggleBlockPeer()}
+                className='shrink-0 font-bold underline'
+                disabled={blockBusy}
+              >
+                {t('messages.unblock')}
+              </button>
+            )}
           </div>
         )}
         {/* مؤشر "يكتب الآن…" */}

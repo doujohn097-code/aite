@@ -56,7 +56,8 @@ export const ar = {
   'auth.userChars': "اسم المستخدم يمكن أن يحتوي فقط على أحرف وأرقام و '_'",
   'auth.passWeak': 'كلمة المرور ضعيفة (6 أحرف على الأقل)',
   'auth.needCreds': 'يرجى إدخال اسم المستخدم وكلمة المرور',
-  'auth.nameInvalid': 'أدخل اسمك الحقيقي، بدون أسماء افتراضية مثل مستخدم أو user',
+  'auth.nameInvalid':
+    'أدخل اسمك الحقيقي، بدون أسماء افتراضية مثل مستخدم أو user',
   'auth.userInvalid': 'اختر اسم مستخدم خاصًا بك، وليس معرفًا افتراضيًا',
   'auth.profileIncomplete':
     'تعذر حفظ الاسم واسم المستخدم كما أدخلتهما. لم يتم فتح الرئيسية.',
@@ -158,7 +159,8 @@ export const ar = {
   'reels.title': 'الريلز / Aite',
   'reels.create': 'إنشاء ريل',
   'reels.empty': 'لا توجد ريلز بعد',
-  'reels.emptyHint': 'كن أول من يشارك لحظاته المميزة بمقطع فيديو ريل ووصف مميز!',
+  'reels.emptyHint':
+    'كن أول من يشارك لحظاته المميزة بمقطع فيديو ريل ووصف مميز!',
   'reels.createFirst': 'إنشاء أول ريل الآن',
   'reels.edit': 'تعديل الريل',
   'reels.delete': 'حذف الريل',
@@ -196,7 +198,8 @@ export const ar = {
   'messages.new': 'رسالة جديدة',
   'messages.search': 'ابحث في المحادثات',
   'messages.empty': 'لا توجد محادثات بعد',
-  'messages.emptyHint': 'ابدأ محادثة جديدة مع الأشخاص الذين تتابعهم وستظهر هنا.',
+  'messages.emptyHint':
+    'ابدأ محادثة جديدة مع الأشخاص الذين تتابعهم وستظهر هنا.',
   'messages.noMatch': 'لا توجد نتائج مطابقة',
   'messages.start': 'ابدأ المحادثة الآن',
   'messages.voice': 'رسالة صوتية',
@@ -220,7 +223,9 @@ export const ar = {
   'messages.editFail': 'تعذر تعديل الرسالة',
   'messages.sendFail': 'تعذر إرسال الرسالة، حاول مرة أخرى',
   'messages.blockedBanner':
-    'لقد حظرت هذا المستخدم. تبقى الرسائل مرئية لكن المراسلة متوقفة.',
+    'لقد قمت بحظر هذا المستخدم. تبقى الرسائل مرئية لكن المراسلة متوقفة.',
+  'messages.blockedByPeerBanner':
+    'لقد قام بحظرك. تبقى الرسائل مرئية لكن المراسلة متوقفة.',
   'messages.latest': 'أحدث الرسائل',
   'messages.newDivider': 'رسائل جديدة',
   'messages.startHint': 'ابدأ المحادثة بإرسال رسالة، صورة، فيديو أو تسجيل صوتي',
@@ -269,8 +274,10 @@ export const ar = {
   'profile.notFoundHint': 'جرب البحث عن حساب آخر.',
   'profile.message': 'مراسلة',
   'profile.messageFail': 'تعذر فتح المحادثة، حاول مرة أخرى',
-  'profile.blocked': 'لقد حظرت هذا الحساب',
+  'profile.blocked': 'لقد قمت بحظر هذا الحساب',
   'profile.blockedHint': 'لن تظهر منشوراته أو محتواه في خلاصتك.',
+  'profile.blockedByPeer': 'لقد قام بحظرك',
+  'profile.blockedByPeerHint': 'لا يمكنك مراسلته أو رؤية محتواه الجديد.',
   'profile.posts': 'المنشورات',
   'profile.reposts': 'المُعاد نشرها',
   'profile.reels': 'الريلز المعاد نشرها',
@@ -292,7 +299,8 @@ export const ar = {
   'stories.yours': 'قصتك',
   'stories.noneOwn': 'لا توجد قصص نشطة في حسابك',
   'stories.noneOther': 'لا توجد قصص نشطة لهذا المستخدم',
-  'stories.noneOwnHint': 'شارك لحظاتك وصورك مع متابعيك، وستظهر هنا لمدة 24 ساعة.',
+  'stories.noneOwnHint':
+    'شارك لحظاتك وصورك مع متابعيك، وستظهر هنا لمدة 24 ساعة.',
   'stories.noneOtherHint': 'ربما انتهت صلاحية القصة أو تم حذفها مؤخراً.',
   'stories.create': '+ إنشاء قصة جديدة',
   'stories.home': 'العودة للرئيسية',
@@ -306,7 +314,8 @@ export const ar = {
   'update.now': 'تحديث الآن',
   'update.apk': 'تحميل تطبيق أندرويد',
   'update.downloading': 'جارٍ التنزيل…',
-  'update.stay': 'ابقَ في هذه الشاشة حتى يكتمل التنزيل. لا تضغط رجوع ولا تغلق التطبيق.',
+  'update.stay':
+    'ابقَ في هذه الشاشة حتى يكتمل التنزيل. لا تضغط رجوع ولا تغلق التطبيق.',
   'update.finish': 'أكمل التثبيت',
   'update.version': 'الإصدار {name}',
   'update.installed': 'المثبت {name}',
@@ -385,16 +394,19 @@ export const ar = {
   'err.emptyVideo': 'ملف الفيديو فارغ أو تالف',
   'err.processVideo': 'تعذر معالجة الفيديو، يرجى المحاولة مرة أخرى',
   'err.needVideoFirst': 'يرجى رفع فيديو للريل أولاً',
-  'err.videoTimeout': 'استغرق رفع الفيديو وقتًا طويلًا. تحقق من الاتصال وأعد المحاولة',
+  'err.videoTimeout':
+    'استغرق رفع الفيديو وقتًا طويلًا. تحقق من الاتصال وأعد المحاولة',
   'err.reelPublish': 'فشل نشر الريل، يرجى المحاولة مرة أخرى',
   'err.commentPublish': 'فشل نشر التعليق، يرجى المحاولة مرة أخرى',
   'err.commentDelete': 'فشل حذف التعليق',
   'err.commentLike': 'تعذر تحديث الإعجاب',
   'err.loginToComment': 'يرجى تسجيل الدخول للتعليق',
-  'err.micDenied': 'تم رفض إذن الميكروفون. اسمح لـ Aite باستخدامه ثم أعد المحاولة.',
+  'err.micDenied':
+    'تم رفض إذن الميكروفون. اسمح لـ Aite باستخدامه ثم أعد المحاولة.',
   'err.micMissing': 'لم يتم العثور على ميكروفون في هذا الجهاز.',
   'err.micBusy': 'الميكروفون مستخدم في تطبيق آخر. أغلقه ثم أعد المحاولة.',
-  'err.micWebview': 'إصدار WebView الحالي لا يدعم التسجيل الصوتي. حدّث Android System WebView.',
+  'err.micWebview':
+    'إصدار WebView الحالي لا يدعم التسجيل الصوتي. حدّث Android System WebView.',
   'err.micGeneric': 'تعذر تشغيل الميكروفون. تحقق من الأذونات ثم أعد المحاولة.',
   'err.voiceMax': 'وصل التسجيل إلى الحد الأقصى للحجم. سجّل رسالة أقصر.',
   'err.shareFail': 'تعذرت المشاركة — حاول مرة أخرى',
@@ -506,7 +518,8 @@ export const ar = {
   'onboard.how': 'كيف نناديك؟',
   'onboard.userHint': 'اسم المستخدم @username فريد. يمكنك تغييره لاحقًا.',
   'onboard.changeUser': 'تغيير اسم المستخدم؟',
-  'onboard.changeHint': 'اسم المستخدم @username فريد. يمكنك تغييره هنا في أي وقت.',
+  'onboard.changeHint':
+    'اسم المستخدم @username فريد. يمكنك تغييره هنا في أي وقت.',
 
   'stats.likedBy': 'أعجب به',
   'stats.repostedBy': 'أعاد نشره',
@@ -562,7 +575,8 @@ export const ar = {
   'update.preparing': 'جارٍ تجهيز التنزيل…',
   'update.applying': 'جارٍ تطبيق التحديث…',
   'update.keepOpen': 'جارٍ تنزيل التحديث… لا تغلق التطبيق',
-  'update.savedFile': 'تم حفظ الملف. افتحه لتثبيت التحديث ولا تغلق هذه النافذة.',
+  'update.savedFile':
+    'تم حفظ الملف. افتحه لتثبيت التحديث ولا تغلق هذه النافذة.',
   'update.openLink': 'تعذر العرض المباشر، سيتم فتح رابط التنزيل',
   'update.downloadFail': 'تعذر تنزيل التحديث',
 
@@ -572,7 +586,6 @@ export const ar = {
   'unfollow.title': 'إلغاء متابعة @{username}؟',
   'unfollow.body':
     'لن تظهر منشوراتهم في الخط الزمني. يمكنك استعراض ملفهم الشخصي ما لم تكن المنشورات محمية.',
-
 
   'stories.publish': 'نشر القصة',
   'stories.published': 'تم نشر القصة',
@@ -588,7 +601,8 @@ export const ar = {
   'stories.done': 'تم',
   'stories.bg': 'خلفية',
   'stories.colorRing': 'يظهر هذا اللون كحلقة حول صورتك في شريط القصص.',
-  'stories.pinchHint': 'كبّر أو صغّر النص بإصبعين أو من المقبض الأبيض على الزاوية',
+  'stories.pinchHint':
+    'كبّر أو صغّر النص بإصبعين أو من المقبض الأبيض على الزاوية',
   'stories.resize': 'تغيير الحجم',
   'stories.invalidMedia': 'يرجى اختيار صورة أو فيديو صالح',
   'stories.deleteText': 'حذف النص',
@@ -649,22 +663,26 @@ export const ar = {
 
   'display.title': 'تخصيص العرض',
   'display.hint': 'تؤثر هذه الإعدادات على جميع حسابات المنصة في هذا المتصفح.',
-  'display.sample': 'جوهر Aite هي رسائل قصيرة تُسمّى منشورات — مثل هذه — ويمكن أن تتضمن صورًا وفيديوهات وروابط ونصًا ووسوم وإشارات مثل',
+  'display.sample':
+    'جوهر Aite هي رسائل قصيرة تُسمّى منشورات — مثل هذه — ويمكن أن تتضمن صورًا وفيديوهات وروابط ونصًا ووسوم وإشارات مثل',
   'display.color': 'اللون',
   'display.bg': 'الخلفية',
   'display.done': 'تم',
 
   'cards.repostsTitle': 'انشر المنشورات التي تعجبك',
   'cards.repostsAlt': 'لا توجد إعادات نشر',
-  'cards.repostsDesc': 'شارك منشور الآخرين في خطك الزمني بإعادة نشرها. عندما تفعل، ستظهر هنا.',
+  'cards.repostsDesc':
+    'شارك منشور الآخرين في خطك الزمني بإعادة نشرها. عندما تفعل، ستظهر هنا.',
   'cards.likesTitle': 'لا توجد إعجابات بعد',
   'cards.likesAlt': 'لا توجد إعجابات',
   'cards.likesDesc': 'عندما تعجب بمنشور، سيظهر هنا.',
   'cards.followTitle': 'كن على اطلاع',
-  'cards.followDesc': 'متابعة الحسابات طريقة سهلة لتنظيم خطك الزمني ومعرفة ما يحدث حول المواضيع والأشخاص المهمين لك.',
+  'cards.followDesc':
+    'متابعة الحسابات طريقة سهلة لتنظيم خطك الزمني ومعرفة ما يحدث حول المواضيع والأشخاص المهمين لك.',
   'cards.followersTitle': 'تبحث عن متابعين؟',
   'cards.followersAlt': 'لا يوجد متابعون',
-  'cards.followersDesc': 'عندما يتابعك أحدهم، سيظهر هنا. النشر والتفاعل مع الآخرين يساعدك على زيادة المتابعين.',
+  'cards.followersDesc':
+    'عندما يتابعك أحدهم، سيظهر هنا. النشر والتفاعل مع الآخرين يساعدك على زيادة المتابعين.',
 
   'valid.userMin': 'يجب أن يكون اسم المستخدم أطول من 4 أحرف.',
   'valid.userMax': 'يجب أن يكون اسم المستخدم أقصر من 15 حرفًا.',

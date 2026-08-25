@@ -55,7 +55,8 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'auth.fillAll': 'Veuillez remplir tous les champs',
   'auth.userShort': 'Nom d’utilisateur trop court (3 caractères min.)',
   'auth.userLong': 'Nom d’utilisateur trop long (15 caractères max.)',
-  'auth.userChars': "Le nom d’utilisateur ne peut contenir que des lettres, chiffres et '_'",
+  'auth.userChars':
+    "Le nom d’utilisateur ne peut contenir que des lettres, chiffres et '_'",
   'auth.passWeak': 'Mot de passe trop faible (6 caractères min.)',
   'auth.needCreds': 'Saisissez votre nom d’utilisateur et mot de passe',
   'auth.nameInvalid':
@@ -86,7 +87,7 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'settings.deleteWarnTitle': 'Attention : action irréversible',
   'settings.deleteWarnBody':
     'Votre compte @{username} et toutes vos données seront définitivement supprimés.',
-  'settings.deleteType': "Tapez « {word} » pour confirmer",
+  'settings.deleteType': 'Tapez « {word} » pour confirmer',
   'settings.deleteConfirmWord': 'SUPPRIMER',
   'settings.deleteForever': 'Supprimer définitivement',
   'settings.fillAll': 'Veuillez remplir tous les champs',
@@ -99,7 +100,7 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'settings.tooMany': 'Trop de tentatives — patientez puis réessayez',
   'settings.changeFailed': 'Impossible de changer le mot de passe',
   'settings.enterPass': 'Saisissez le mot de passe pour confirmer',
-  'settings.typeDelete': "Tapez « {word} » pour confirmer",
+  'settings.typeDelete': 'Tapez « {word} » pour confirmer',
   'settings.deleted': 'Compte supprimé définitivement',
   'settings.deleteFailed': 'Impossible de supprimer le compte',
 
@@ -141,9 +142,11 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'tweet.pin': 'Épingler',
   'tweet.unpin': 'Désépingler',
   'tweet.pinTitle': 'Épingler cette publication au profil ?',
-  'tweet.pinBody': 'Elle apparaîtra en haut de votre profil et remplacera l’épingle précédente.',
+  'tweet.pinBody':
+    'Elle apparaîtra en haut de votre profil et remplacera l’épingle précédente.',
   'tweet.unpinTitle': 'Désépingler cette publication ?',
-  'tweet.unpinBody': 'Elle n’apparaîtra plus automatiquement en haut de votre profil.',
+  'tweet.unpinBody':
+    'Elle n’apparaîtra plus automatiquement en haut de votre profil.',
   'tweet.pinned': 'Publication épinglée',
   'tweet.unpinned': 'Publication désépinglée',
   'tweet.follow': 'Suivre @{username}',
@@ -200,7 +203,8 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'messages.new': 'Nouveau message',
   'messages.search': 'Rechercher des conversations',
   'messages.empty': 'Aucune conversation',
-  'messages.emptyHint': 'Démarrez une discussion avec quelqu’un que vous suivez.',
+  'messages.emptyHint':
+    'Démarrez une discussion avec quelqu’un que vous suivez.',
   'messages.noMatch': 'Aucun résultat',
   'messages.start': 'Commencez la conversation',
   'messages.voice': 'Message vocal',
@@ -225,9 +229,12 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'messages.sendFail': 'Impossible d’envoyer le message. Réessayez.',
   'messages.blockedBanner':
     'Vous avez bloqué cet utilisateur. Les messages restent visibles mais l’envoi est suspendu.',
+  'messages.blockedByPeerBanner':
+    'Cet utilisateur vous a bloqué. Les messages restent visibles mais l’envoi est suspendu.',
   'messages.latest': 'Derniers messages',
   'messages.newDivider': 'Nouveaux messages',
-  'messages.startHint': 'Commencez par un message, une photo, une vidéo ou un vocal',
+  'messages.startHint':
+    'Commencez par un message, une photo, une vidéo ou un vocal',
   'messages.reply': 'Répondre',
   'messages.edit': 'Modifier le message',
   'messages.delete': 'Supprimer le message',
@@ -275,6 +282,9 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'profile.messageFail': 'Impossible d’ouvrir la conversation. Réessayez.',
   'profile.blocked': 'Vous avez bloqué ce compte',
   'profile.blockedHint': 'Ses publications n’apparaîtront pas dans votre fil.',
+  'profile.blockedByPeer': 'Ce compte vous a bloqué',
+  'profile.blockedByPeerHint':
+    'Vous ne pouvez plus lui écrire ni voir ses nouvelles publications.',
   'profile.posts': 'Publications',
   'profile.reposts': 'Republications',
   'profile.reels': 'Reels republicés',
@@ -399,9 +409,12 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'err.micDenied': 'Micro refusé. Autorisez Aite puis réessayez.',
   'err.micMissing': 'Aucun micro trouvé sur cet appareil.',
   'err.micBusy': 'Le micro est utilisé par une autre application.',
-  'err.micWebview': 'Cette WebView ne peut pas enregistrer. Mettez à jour Android System WebView.',
-  'err.micGeneric': 'Impossible de démarrer le micro. Vérifiez les permissions.',
-  'err.voiceMax': 'L’enregistrement a atteint la taille maximale. Faites plus court.',
+  'err.micWebview':
+    'Cette WebView ne peut pas enregistrer. Mettez à jour Android System WebView.',
+  'err.micGeneric':
+    'Impossible de démarrer le micro. Vérifiez les permissions.',
+  'err.voiceMax':
+    'L’enregistrement a atteint la taille maximale. Faites plus court.',
   'err.shareFail': 'Impossible de partager. Réessayez',
   'err.maxShare': 'Vous pouvez envoyer à {n} personnes au maximum',
   'err.openChat': 'Impossible d’ouvrir la conversation. Réessayez',
@@ -416,7 +429,8 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'err.loginFail': 'Impossible de se connecter — réessayez',
   'err.reloadPage': 'Erreur temporaire — rechargez la page',
   'err.quotaWait': 'Attendez {n} secondes avant de republier',
-  'err.quotaHour': 'Limite atteinte ({n} publications par heure). Réessayez plus tard',
+  'err.quotaHour':
+    'Limite atteinte ({n} publications par heure). Réessayez plus tard',
   'err.pageMissing': 'Désolé, cette page est introuvable.',
   'err.pageTitle': 'Page introuvable / Aite',
 
@@ -437,7 +451,8 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'compose.whatsNew': 'Quoi de neuf ?  @mention',
   'compose.reply': 'Écrivez votre réponse  @mention',
   'compose.discardTitle': 'Ignorer la publication ?',
-  'compose.discardBody': 'Cette action est irréversible et vous perdrez le brouillon.',
+  'compose.discardBody':
+    'Cette action est irréversible et vous perdrez le brouillon.',
   'compose.media': 'Médias',
   'compose.voice': 'Note vocale',
   'compose.publish': 'Publier',
@@ -509,9 +524,11 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'profile.photosManyWord': 'photos et GIF',
 
   'onboard.how': 'Comment vous appeler ?',
-  'onboard.userHint': 'Votre @nom est unique. Vous pourrez le changer plus tard.',
+  'onboard.userHint':
+    'Votre @nom est unique. Vous pourrez le changer plus tard.',
   'onboard.changeUser': 'Changer le nom d’utilisateur ?',
-  'onboard.changeHint': 'Votre @nom est unique. Vous pouvez le changer ici à tout moment.',
+  'onboard.changeHint':
+    'Votre @nom est unique. Vous pouvez le changer ici à tout moment.',
 
   'stats.likedBy': 'Aimé par',
   'stats.repostedBy': 'Republicé par',
@@ -578,7 +595,6 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'unfollow.body':
     'Leurs publications n’apparaîtront plus dans votre fil. Vous pourrez toujours voir leur profil.',
 
-
   'stories.publish': 'Publier la story',
   'stories.published': 'Story publiée',
   'stories.publishFail': 'Impossible de publier la story',
@@ -592,8 +608,10 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'stories.preview': 'Aperçu de la story',
   'stories.done': 'OK',
   'stories.bg': 'Arrière-plan',
-  'stories.colorRing': 'Cette couleur apparaît en anneau autour de votre photo.',
-  'stories.pinchHint': 'Pincez pour redimensionner le texte, ou utilisez la poignée blanche',
+  'stories.colorRing':
+    'Cette couleur apparaît en anneau autour de votre photo.',
+  'stories.pinchHint':
+    'Pincez pour redimensionner le texte, ou utilisez la poignée blanche',
   'stories.resize': 'Redimensionner',
   'stories.invalidMedia': 'Choisissez une photo ou une vidéo valide',
   'stories.deleteText': 'Supprimer le texte',
@@ -643,7 +661,8 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'chat.noPeople': 'Aucune personne correspondante',
   'chat.sendTo': 'Envoyer à',
   'chat.copyLink': 'Copier le lien',
-  'chat.sendKindHint': 'Vous pouvez choisir plusieurs personnes pour envoyer le {kind}',
+  'chat.sendKindHint':
+    'Vous pouvez choisir plusieurs personnes pour envoyer le {kind}',
   'chat.replyToName': 'Répondre à {name}',
 
   'compose.published': 'Publication envoyée',
@@ -653,27 +672,33 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'compose.audioTooBig': 'Le fichier audio {size} dépasse la limite {max}',
 
   'display.title': 'Personnaliser l’affichage',
-  'display.hint': 'Ces réglages s’appliquent à tous les comptes Aite de ce navigateur.',
-  'display.sample': 'Aite repose sur de courts messages — comme celui-ci — qui peuvent inclure photos, vidéos, liens, texte, hashtags et mentions comme',
+  'display.hint':
+    'Ces réglages s’appliquent à tous les comptes Aite de ce navigateur.',
+  'display.sample':
+    'Aite repose sur de courts messages — comme celui-ci — qui peuvent inclure photos, vidéos, liens, texte, hashtags et mentions comme',
   'display.color': 'Couleur',
   'display.bg': 'Arrière-plan',
   'display.done': 'OK',
 
   'cards.repostsTitle': 'Partagez les publications que vous aimez',
   'cards.repostsAlt': 'Aucune republication',
-  'cards.repostsDesc': 'Republicz une publication pour la partager. Elle apparaîtra ici.',
+  'cards.repostsDesc':
+    'Republicz une publication pour la partager. Elle apparaîtra ici.',
   'cards.likesTitle': 'Aucun j’aime pour le moment',
   'cards.likesAlt': 'Aucun j’aime',
   'cards.likesDesc': 'Quand vous aimez une publication, elle apparaît ici.',
   'cards.followTitle': 'Restez informé',
-  'cards.followDesc': 'Suivre des comptes aide à organiser votre fil autour de ce qui compte pour vous.',
+  'cards.followDesc':
+    'Suivre des comptes aide à organiser votre fil autour de ce qui compte pour vous.',
   'cards.followersTitle': 'Vous cherchez des abonnés ?',
   'cards.followersAlt': 'Aucun abonné',
-  'cards.followersDesc': 'Quand quelqu’un vous suit, il apparaît ici. Publier et interagir aide à grandir.',
+  'cards.followersDesc':
+    'Quand quelqu’un vous suit, il apparaît ici. Publier et interagir aide à grandir.',
 
   'valid.userMin': 'Le nom d’utilisateur doit dépasser 4 caractères.',
   'valid.userMax': 'Le nom d’utilisateur doit faire moins de 15 caractères.',
-  'valid.userChars': "Le nom d’utilisateur ne peut contenir que des lettres, chiffres et '_'.",
+  'valid.userChars':
+    "Le nom d’utilisateur ne peut contenir que des lettres, chiffres et '_'.",
   'valid.userLetter': 'Incluez au moins une lettre.',
   'valid.userSame': 'C’est déjà votre nom d’utilisateur.',
   'valid.nameEmpty': 'Le nom ne peut pas être vide',
@@ -684,7 +709,8 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'profile.unblockUser': 'Débloquer @{username}',
   'onboard.setUsername': 'Choisir un nom d’utilisateur',
   'onboard.welcome': 'Bienvenue sur Aite 👋',
-  'onboard.welcomeHint': 'Ajoutez votre photo et votre couverture, et choisissez le badge.',
+  'onboard.welcomeHint':
+    'Ajoutez votre photo et votre couverture, et choisissez le badge.',
   'onboard.changeCover': 'Changer la couverture',
   'onboard.pickCover': 'Appuyez pour choisir une couverture',
   'onboard.badge': 'Badge à côté du nom',
