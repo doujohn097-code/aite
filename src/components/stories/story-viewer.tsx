@@ -20,10 +20,10 @@ import { Loading } from '@components/ui/loading';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { StoryEditor, fontCss } from './story-editor';
+import { isLiveStory, STORY_LIFETIME_MS } from '@lib/story-lifetime';
 import type { Story } from '@lib/types/story';
 import { useLanguage } from '@lib/context/language-context';
 
-const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_STORY_DURATION_MS = 15000;
 
 export function StoryViewer({ userId }: { userId: string }): JSX.Element {
@@ -69,24 +69,7 @@ export function StoryViewer({ userId }: { userId: string }): JSX.Element {
     if (!rawStories) return [];
     const now = Date.now();
     return [...rawStories]
-      .filter((s) => {
-        if (s.kind === 'reel') return false;
-
-        const createdMs = getTimestampMillis(s.createdAt);
-        let expiresMs = getTimestampMillis(s.expiresAt);
-
-        if (!expiresMs && createdMs) {
-          expiresMs = createdMs + STORY_LIFETIME_MS;
-        } else if (createdMs && expiresMs <= createdMs) {
-          expiresMs = createdMs + STORY_LIFETIME_MS;
-        }
-
-        const isActive =
-          expiresMs > now - 5 * 60 * 1000 ||
-          (createdMs > 0 && now - createdMs < STORY_LIFETIME_MS);
-
-        return isActive;
-      })
+      .filter((s) => isLiveStory(s, now))
       .sort(
         (a, b) =>
           getTimestampMillis(a.createdAt) - getTimestampMillis(b.createdAt)

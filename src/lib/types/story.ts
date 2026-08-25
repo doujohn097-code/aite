@@ -1,4 +1,6 @@
 import { Timestamp, type FirestoreDataConverter } from 'firebase/firestore';
+import { getTimestampMillis } from '@lib/date';
+import { STORY_LIFETIME_MS } from '@lib/story-lifetime';
 import type { ImagesPreview } from './file';
 
 export type StoryKind = 'story' | 'reel';
@@ -63,6 +65,11 @@ export const storyConverter: FirestoreDataConverter<Story> = {
   fromFirestore(snapshot, options) {
     const { id } = snapshot;
     const data = snapshot.data(options);
+    const createdAt = data.createdAt ?? Timestamp.now();
+    const createdMs = getTimestampMillis(createdAt);
+    const derivedExpiry = Timestamp.fromMillis(
+      (createdMs || Date.now()) + STORY_LIFETIME_MS
+    );
     return {
       id,
       userId: '',
@@ -75,12 +82,12 @@ export const storyConverter: FirestoreDataConverter<Story> = {
       likes: [],
       views: [],
       kind: 'story',
-      createdAt: Timestamp.now(),
-      expiresAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000),
       updatedAt: null,
       edited: false,
       editedAt: null,
-      ...data
+      ...data,
+      createdAt,
+      expiresAt: data.expiresAt ?? derivedExpiry
     } as Story;
   }
 };

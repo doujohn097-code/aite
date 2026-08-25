@@ -41,6 +41,7 @@ import type { Theme, Accent } from '@lib/types/theme';
 import type { Notification } from '@lib/types/notification';
 import type { StoryMusic, StoryText, Story } from '@lib/types/story';
 import { getTimestampMillis } from '@lib/date';
+import { isLiveStory, STORY_LIFETIME_MS } from '@lib/story-lifetime';
 import { tx } from '@lib/i18n/tx';
 import { nextPublishQuota } from '@lib/publish-quota';
 import type { Tweet } from '@lib/types/tweet';
@@ -221,7 +222,11 @@ export async function editTweet(
   tweetId: string,
   userId: string,
   text: string,
-  options?: { allowEmpty?: boolean; images?: ImagesPreview | null; font?: string | null }
+  options?: {
+    allowEmpty?: boolean;
+    images?: ImagesPreview | null;
+    font?: string | null;
+  }
 ): Promise<void> {
   const trimmed = text.trim();
   const nextImages = options?.images ?? null;
@@ -229,8 +234,7 @@ export async function editTweet(
   if (!trimmed && !hasImages && !options?.allowEmpty)
     throw new Error(tx('err.emptyPost'));
   if (trimmed.length > 1000) throw new Error(tx('err.longText'));
-  if (nextImages && nextImages.length > 4)
-    throw new Error(tx('err.maxFiles'));
+  if (nextImages && nextImages.length > 4) throw new Error(tx('err.maxFiles'));
 
   const tweetRef = doc(tweetsCollection, tweetId);
   const snap = await getDoc(tweetRef);
@@ -269,7 +273,8 @@ export async function editReel(
   if (!data) throw new Error(tx('err.reelMissing'));
   if (data.userId !== userId) throw new Error(tx('err.cantEditReel'));
 
-  const nextImages = options?.images === undefined ? data.images : options.images;
+  const nextImages =
+    options?.images === undefined ? data.images : options.images;
   if (options?.images !== undefined && !nextImages?.length)
     throw new Error(tx('err.reelNeedsVideo'));
 
@@ -465,9 +470,11 @@ export async function uploadImages(
 
   for (const file of files) {
     const mediaType = inferMediaType(file.name, file.type);
-    if (!mediaType) throw new Error(tx('err.unsupportedFile', { name: file.name }));
+    if (!mediaType)
+      throw new Error(tx('err.unsupportedFile', { name: file.name }));
     const maxBytes = maxUploadBytesForType(mediaType);
-    if (file.size <= 0) throw new Error(tx('err.emptyFile', { name: file.name }));
+    if (file.size <= 0)
+      throw new Error(tx('err.emptyFile', { name: file.name }));
     if (file.size > maxBytes)
       throw new Error(
         tx('err.fileTooBig', {
@@ -556,10 +563,8 @@ export async function uploadImages(
     );
   } catch (error) {
     const code = error instanceof Error ? error.message : '';
-    if (code === 'upload_timeout')
-      throw new Error(tx('err.uploadTimeout'));
-    if (code === 'upload_network')
-      throw new Error(tx('err.uploadLost'));
+    if (code === 'upload_timeout') throw new Error(tx('err.uploadTimeout'));
+    if (code === 'upload_network') throw new Error(tx('err.uploadLost'));
     throw new Error(tx('err.upload'));
   }
 
@@ -836,8 +841,6 @@ export async function createNotification(
   }
 }
 
-const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
-
 export function getStoryExpiration(): Timestamp {
   return Timestamp.fromMillis(Date.now() + STORY_LIFETIME_MS);
 }
@@ -1032,16 +1035,7 @@ export async function deleteStory(
   const nowMs = Date.now();
   const latest = allStoriesSnap.docs
     .map((s) => s.data())
-    .filter((s) => {
-      if (s.kind === 'reel') return false;
-      const createdMs = getTimestampMillis(s.createdAt);
-      let expiresMs = getTimestampMillis(s.expiresAt);
-      if (!expiresMs && createdMs) expiresMs = createdMs + 24 * 60 * 60 * 1000;
-      return (
-        expiresMs > nowMs ||
-        (createdMs > 0 && nowMs - createdMs < 24 * 60 * 60 * 1000)
-      );
-    })
+    .filter((s) => isLiveStory(s, nowMs))
     .sort(
       (a, b) =>
         getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt)

@@ -1,9 +1,8 @@
 import { useAuth } from '@lib/context/auth-context';
 import { useStoryRingMap } from '@lib/story-ring-store';
 import { getTimestampMillis } from '@lib/date';
+import { STORY_LIFETIME_MS } from '@lib/story-lifetime';
 import type { User } from '@lib/types/user';
-
-const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 export function useStoryRing(user?: Partial<User> | null): {
   hasStory: boolean;

@@ -9,9 +9,8 @@ import { useCollection } from '@lib/hooks/useCollection';
 import { getTimestampMillis } from '@lib/date';
 import { StoryChipSkeleton } from '@components/ui/skeleton';
 import { StoryAvatar } from './story-avatar';
+import { STORY_LIFETIME_MS } from '@lib/story-lifetime';
 import { StoryEditor } from './story-editor';
-
-const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 export function StoriesBar(): JSX.Element {
   const { user: currentUser } = useAuth();
@@ -71,7 +70,9 @@ export function StoriesBar(): JSX.Element {
             >
               <span className='text-2xl leading-none'>+</span>
             </button>
-            <span className='max-w-[4rem] truncate text-xs'>{t('stories.yours')}</span>
+            <span className='max-w-[4rem] truncate text-xs'>
+              {t('stories.yours')}
+            </span>
           </div>
         )}
 

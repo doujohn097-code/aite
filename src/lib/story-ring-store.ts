@@ -1,13 +1,12 @@
 import { useSyncExternalStore } from 'react';
 import { onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { usersCollection } from '@lib/firebase/collections';
+import { STORY_LIFETIME_MS } from '@lib/story-lifetime';
 
 type RingInfo = {
   lastStoryAt: Timestamp;
   storyColor: string | null;
 };
-
-const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Shared realtime map of users who currently have an active (24h) story.
