@@ -668,10 +668,10 @@ export function StoryEditor({
             title={t('stories.storyColor')}
             onClose={(): void => setPanel('none')}
           >
-            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center'>
-              <div className='relative h-16 w-16'>
+            <div className='mx-auto mb-4 flex h-20 w-20 items-center justify-center'>
+              <div className='relative h-20 w-20'>
                 <StoryRing color={ringColor} animate />
-                <div className='absolute inset-[8px] rounded-full bg-white/15' />
+                <div className='absolute inset-[14px] rounded-full bg-white/15' />
               </div>
             </div>
             <div className='flex flex-wrap gap-3 pb-2'>

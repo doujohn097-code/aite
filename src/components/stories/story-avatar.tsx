@@ -1,5 +1,6 @@
 import cn from 'clsx';
 import { useStoryRing } from '@lib/hooks/useStoryRing';
+import { storyRingGutter } from '@lib/wavy-circle';
 import { UserAvatar } from '@components/user/user-avatar';
 import { StoryRing } from './story-ring';
 import type { User } from '@lib/types/user';
@@ -19,7 +20,8 @@ export function StoryAvatar({
 }: StoryAvatarProps): JSX.Element {
   const { hasStory, unseen, color } = useStoryRing(user);
   const ringColor = color ?? '#3b82f6';
-  const photoSize = hasStory ? Math.max(24, size - 10) : size;
+  const gutter = hasStory ? storyRingGutter(size) : 0;
+  const outer = size + gutter * 2;
 
   const Wrapper = onClick ? 'button' : 'div';
 
@@ -32,24 +34,29 @@ export function StoryAvatar({
         onClick && 'cursor-pointer',
         className
       )}
-      style={{ width: size, height: size }}
+      style={{ width: outer, height: outer }}
     >
       {hasStory && (
         <StoryRing
           color={ringColor}
           animate={unseen}
           className={cn(
-            'pointer-events-none absolute inset-0',
+            'pointer-events-none absolute inset-0 z-[1]',
             !unseen && 'opacity-45'
           )}
         />
       )}
-      <UserAvatar
-        src={user.photoURL}
-        alt={user.name}
-        username={onClick ? undefined : user.username}
-        size={photoSize}
-      />
+      <span
+        className='relative z-0 inline-flex rounded-full bg-main-background'
+        style={hasStory ? { padding: 3 } : undefined}
+      >
+        <UserAvatar
+          src={user.photoURL}
+          alt={user.name}
+          username={onClick ? undefined : user.username}
+          size={size}
+        />
+      </span>
     </Wrapper>
   );
 }

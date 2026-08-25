@@ -1,16 +1,15 @@
 /**
  * Material 3 Expressive / Google Play download ring.
- * A sine wave rides a circular arc; amplitude fades at both ends
- * so the stroke tapers into the gap like Play Store.
+ * A closed sine wave rides a full circle; phase frames make the
+ * scallops crawl so the motion is a wave, not a rigid spin.
  */
 
 export const STORY_RING_VIEWBOX = 100;
-export const STORY_RING_RADIUS = 42;
-export const STORY_RING_AMPLITUDE = 3.15;
-export const STORY_RING_WAVES = 15;
-export const STORY_RING_SWEEP = 0.86;
-export const STORY_RING_TAIL_START = 0.93;
-export const STORY_RING_TAIL_SWEEP = 0.035;
+export const STORY_RING_RADIUS = 44.2;
+export const STORY_RING_AMPLITUDE = 3.85;
+export const STORY_RING_WAVES = 14;
+export const STORY_RING_SWEEP = 1;
+export const STORY_RING_FRAMES = 12;
 
 export type WavyArcOptions = {
   cx?: number;
@@ -26,6 +25,7 @@ export type WavyArcOptions = {
   /** 0–0.5 — fade amplitude at both ends of the arc. */
   ramp?: number;
   samples?: number;
+  closed?: boolean;
 };
 
 export function smoothstep(t: number): number {
@@ -52,7 +52,7 @@ export function wavyArcPoint(
   const sweep = opts.sweep ?? STORY_RING_SWEEP;
   const start = opts.start ?? -Math.PI / 2;
   const phase = opts.phase ?? 0;
-  const ramp = opts.ramp ?? 0.12;
+  const ramp = opts.ramp ?? 0;
   const total = sweep * Math.PI * 2;
   const theta = start + u * total;
   const fade = amplitudeFade(u, ramp);
@@ -67,37 +67,46 @@ export function wavyArcPoint(
 }
 
 export function wavyArcPath(opts: WavyArcOptions = {}): string {
-  const samples = opts.samples ?? 360;
+  const samples = opts.samples ?? 168;
+  const closed = opts.closed ?? (opts.sweep === undefined || opts.sweep >= 1);
   const parts: string[] = [];
 
   for (let i = 0; i <= samples; i++) {
-    const { x, y } = wavyArcPoint(i / samples, opts);
-    parts.push(`${i === 0 ? 'M' : 'L'}${x.toFixed(3)} ${y.toFixed(3)}`);
+    const { x, y } = wavyArcPoint(i / samples, {
+      ...opts,
+      ramp: opts.ramp ?? 0
+    });
+    parts.push(`${i === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`);
   }
 
+  if (closed) parts.push('Z');
   return parts.join(' ');
 }
 
-const shared = {
+const ringOpts = {
   radius: STORY_RING_RADIUS,
   amplitude: STORY_RING_AMPLITUDE,
   waves: STORY_RING_WAVES,
-  samples: 360
+  sweep: 1,
+  ramp: 0,
+  closed: true,
+  samples: 168
 };
 
-/** Main Play-style crinkled arc (~86% of the circle). */
-export const STORY_RING_MAIN_PATH = wavyArcPath({
-  ...shared,
-  sweep: STORY_RING_SWEEP,
-  start: -Math.PI / 2
-});
+/** Closed wavy circle at phase 0. */
+export const STORY_RING_MAIN_PATH = wavyArcPath(ringOpts);
 
-/** Tiny detached dash after the gap — matches the Play Store tail. */
-export const STORY_RING_TAIL_PATH = wavyArcPath({
-  ...shared,
-  amplitude: 1.15,
-  sweep: STORY_RING_TAIL_SWEEP,
-  start: -Math.PI / 2 + STORY_RING_TAIL_START * Math.PI * 2,
-  ramp: 0.4,
-  samples: 24
-});
+/** Phase-shifted frames — cycling these crawls the wave around the photo. */
+export const STORY_RING_PHASE_PATHS: string[] = Array.from(
+  { length: STORY_RING_FRAMES },
+  (_, index) =>
+    wavyArcPath({
+      ...ringOpts,
+      phase: (index / STORY_RING_FRAMES) * Math.PI * 2
+    })
+);
+
+/** Extra pixels around the photo so the full wave sits outside the face. */
+export function storyRingGutter(photoSize: number): number {
+  return Math.max(11, Math.round(photoSize * 0.24));
+}

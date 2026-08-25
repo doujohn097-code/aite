@@ -1,5 +1,7 @@
 import cn from 'clsx';
-import { STORY_RING_MAIN_PATH, STORY_RING_TAIL_PATH } from '@lib/wavy-circle';
+import { useReducedMotion } from 'framer-motion';
+import { useStoryRingFrame } from '@lib/story-ring-clock';
+import { STORY_RING_PHASE_PATHS } from '@lib/wavy-circle';
 
 type StoryRingProps = {
   color: string;
@@ -8,39 +10,35 @@ type StoryRingProps = {
 };
 
 /**
- * Google Play / Material 3 Expressive wavy progress ring.
- * Used as the unseen-story indicator around avatars.
+ * Full Google Play / Material 3 wavy circle around a photo.
+ * The path phase crawls — the ring does not rigidly spin.
  */
 export function StoryRing({
   color,
   animate = true,
   className
 }: StoryRingProps): JSX.Element {
+  const reduceMotion = useReducedMotion();
+  const live = Boolean(animate && !reduceMotion);
+  const frame = useStoryRingFrame(live);
+  const d = STORY_RING_PHASE_PATHS[frame] ?? STORY_RING_PHASE_PATHS[0];
+
   return (
     <svg
-      className={cn('story-ring', animate && 'story-ring--live', className)}
+      className={cn('story-ring', live && 'story-ring--live', className)}
       viewBox='0 0 100 100'
       fill='none'
       aria-hidden
       focusable='false'
     >
-      <g className='story-ring__spin'>
-        <path
-          className='story-ring__stroke'
-          d={STORY_RING_MAIN_PATH}
-          stroke={color}
-          strokeWidth={2.85}
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
-        <path
-          className='story-ring__stroke'
-          d={STORY_RING_TAIL_PATH}
-          stroke={color}
-          strokeWidth={2.85}
-          strokeLinecap='round'
-        />
-      </g>
+      <path
+        className='story-ring__stroke'
+        d={d}
+        stroke={color}
+        strokeWidth={3.05}
+        strokeLinecap='round'
+        strokeLinejoin='round'
+      />
     </svg>
   );
 }

@@ -50,19 +50,22 @@ export function UserHomeAvatar({
         type='button'
         onClick={handleClick}
         disabled={!imageSrc && !hasStory}
-        className='group relative rounded-full'
+        className={cn(
+          'group relative overflow-visible rounded-full',
+          hasStory && 'p-5 xs:p-6'
+        )}
       >
         {hasStory && (
           <StoryRing
             color={ringColor}
             animate={unseen}
             className={cn(
-              'pointer-events-none absolute -inset-2 xs:-inset-2.5',
+              'pointer-events-none absolute inset-0 z-[1]',
               !unseen && 'opacity-45'
             )}
           />
         )}
-        <div className='aspect-square w-24 overflow-hidden rounded-full bg-main-background xs:w-32 sm:w-36'>
+        <div className='relative z-0 aspect-square w-24 overflow-hidden rounded-full bg-main-background xs:w-32 sm:w-36'>
           {imageSrc ? (
             <NextImage
               useSkeleton

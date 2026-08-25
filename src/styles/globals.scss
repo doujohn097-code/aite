@@ -521,42 +521,12 @@ video:not([src]) {
   }
 }
 
-/* حلقة القصة — أنيميشن متموّج بطراز تحميل Google Play */
+/* حلقة القصة — دائرة متموّجة كاملة حول الصورة (بدون دوران جامد) */
 .story-ring {
   overflow: visible;
   display: block;
   width: 100%;
   height: 100%;
-  transform-origin: 50% 50%;
-}
-
-.story-ring__spin {
-  transform-origin: 50px 50px;
-  transform-box: view-box;
-}
-
-.story-ring--live {
-  animation: story-ring-spin 3.2s linear infinite;
-}
-
-.story-ring--live .story-ring__stroke {
-  animation: story-ring-wave 1.6s ease-in-out infinite;
-}
-
-@keyframes story-ring-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes story-ring-wave {
-  0%,
-  100% {
-    stroke-width: 2.7;
-  }
-  50% {
-    stroke-width: 3.15;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
