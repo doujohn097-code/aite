@@ -32,7 +32,7 @@ service cloud.firestore {
     function validTweetContentEdit() {
       let changed = request.resource.data.diff(resource.data).affectedKeys();
       return isOwner(resource.data.createdBy)
-        && changed.hasOnly(['text', 'images', 'audio', 'edited', 'editedAt', 'updatedAt'])
+        && changed.hasOnly(['text', 'font', 'images', 'audio', 'edited', 'editedAt', 'updatedAt'])
         && validText(request.resource.data.text, 1000)
         && validImages(request.resource.data.images)
         && request.resource.data.createdBy == resource.data.createdBy;
@@ -186,9 +186,14 @@ service cloud.firestore {
           && request.resource.data.participants == get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
           && request.resource.data.senderId == request.auth.uid
           && request.resource.data.keys().hasOnly([
-            'senderId', 'type', 'text', 'media', 'audio', 'replyTo',
+            'senderId', 'type', 'text', 'font', 'media', 'audio', 'replyTo',
             'sharedPost', 'reactions', 'participants', 'createdAt', 'seenBy'
           ])
+          && (!request.resource.data.keys().hasAny(['font'])
+            || request.resource.data.font == null
+            || (request.resource.data.font is string
+              && request.resource.data.font.size() > 0
+              && request.resource.data.font.size() <= 40))
           && ['text', 'image', 'video', 'audio', 'shared'].hasAny([request.resource.data.type])
           && request.resource.data.reactions is map
           && request.resource.data.reactions.size() == 0
