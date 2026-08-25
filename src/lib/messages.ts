@@ -158,11 +158,10 @@ export async function sendMessage(
   }
 
   await addDoc(conversationMessagesCollection(id), {
-    id: '',
     senderId,
     type,
     text,
-    font: payload.font ?? null,
+    ...(payload.font ? { font: payload.font } : {}),
     media,
     audio,
     replyTo: payload.replyTo ?? null,
