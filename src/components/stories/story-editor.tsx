@@ -10,6 +10,7 @@ import { getRandomId } from '@lib/random';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { MusicSearch } from './music-search';
 import { MusicTrimmer } from './music-trimmer';
+import { StoryRing } from './story-ring';
 import type { ChangeEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import type { StoryMusic, StoryText } from '@lib/types/story';
@@ -474,7 +475,10 @@ export function StoryEditor({
           <ToolButton label={t('stories.text')} onClick={addText}>
             <span className='text-base font-black leading-none'>Aa</span>
           </ToolButton>
-          <ToolButton label={t('stories.storyColor')} onClick={(): void => setPanel('color')}>
+          <ToolButton
+            label={t('stories.storyColor')}
+            onClick={(): void => setPanel('color')}
+          >
             <span
               className='h-5 w-5 rounded-full ring-2 ring-white/70'
               style={{ backgroundColor: ringColor }}
@@ -664,6 +668,12 @@ export function StoryEditor({
             title={t('stories.storyColor')}
             onClose={(): void => setPanel('none')}
           >
+            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center'>
+              <div className='relative h-16 w-16'>
+                <StoryRing color={ringColor} animate />
+                <div className='absolute inset-[8px] rounded-full bg-white/15' />
+              </div>
+            </div>
             <div className='flex flex-wrap gap-3 pb-2'>
               {RING_COLORS.map((color) => (
                 <button

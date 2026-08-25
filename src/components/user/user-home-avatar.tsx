@@ -7,6 +7,7 @@ import { useOnlineStatus } from '@lib/presence-store';
 import { NextImage } from '@components/ui/next-image';
 import { Modal } from '@components/modal/modal';
 import { ImageModal } from '@components/modal/image-modal';
+import { StoryRing } from '@components/stories/story-ring';
 import type { ImageData } from '@lib/types/file';
 import type { User } from '@lib/types/user';
 
@@ -23,7 +24,7 @@ export function UserHomeAvatar({
 }: UserHomeAvatarProps): JSX.Element {
   const { open, openModal, closeModal } = useModal();
   const { push } = useRouter();
-  const { hasStory, color } = useStoryRing(user);
+  const { hasStory, unseen, color } = useStoryRing(user);
   const ringColor = color ?? '#3b82f6';
   const { t } = useLanguage();
   const online = useOnlineStatus(user?.username);
@@ -37,7 +38,7 @@ export function UserHomeAvatar({
   };
 
   return (
-    <div className={cn('inline-block', className)}>
+    <div className={cn('inline-block overflow-visible', className)}>
       <Modal open={open} closeModal={closeModal}>
         <ImageModal
           imageData={{ src: imageSrc, alt: imageAlt } as ImageData}
@@ -49,24 +50,19 @@ export function UserHomeAvatar({
         type='button'
         onClick={handleClick}
         disabled={!imageSrc && !hasStory}
-        className={cn(
-          'group relative rounded-full transition',
-          hasStory ? 'p-0.5' : 'p-0'
-        )}
-        style={
-          hasStory
-            ? {
-                background: `linear-gradient(135deg, ${ringColor}, ${ringColor}80 60%, ${ringColor}40)`
-              }
-            : undefined
-        }
+        className='group relative rounded-full'
       >
-        <div
-          className={cn(
-            'aspect-square w-24 overflow-hidden rounded-full bg-main-background xs:w-32 sm:w-36',
-            hasStory ? 'p-0.5' : 'p-0'
-          )}
-        >
+        {hasStory && (
+          <StoryRing
+            color={ringColor}
+            animate={unseen}
+            className={cn(
+              'pointer-events-none absolute -inset-2 xs:-inset-2.5',
+              !unseen && 'opacity-45'
+            )}
+          />
+        )}
+        <div className='aspect-square w-24 overflow-hidden rounded-full bg-main-background xs:w-32 sm:w-36'>
           {imageSrc ? (
             <NextImage
               useSkeleton

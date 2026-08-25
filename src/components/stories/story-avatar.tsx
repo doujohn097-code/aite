@@ -1,6 +1,7 @@
 import cn from 'clsx';
 import { useStoryRing } from '@lib/hooks/useStoryRing';
 import { UserAvatar } from '@components/user/user-avatar';
+import { StoryRing } from './story-ring';
 import type { User } from '@lib/types/user';
 
 type StoryAvatarProps = {
@@ -16,8 +17,9 @@ export function StoryAvatar({
   className,
   onClick
 }: StoryAvatarProps): JSX.Element {
-  const { hasStory, color } = useStoryRing(user);
+  const { hasStory, unseen, color } = useStoryRing(user);
   const ringColor = color ?? '#3b82f6';
+  const photoSize = hasStory ? Math.max(24, size - 10) : size;
 
   const Wrapper = onClick ? 'button' : 'div';
 
@@ -26,32 +28,28 @@ export function StoryAvatar({
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cn(
-        'relative rounded-full transition',
-        hasStory ? 'p-[3px]' : 'p-0',
+        'relative inline-flex shrink-0 items-center justify-center overflow-visible rounded-full',
         onClick && 'cursor-pointer',
         className
       )}
-      style={
-        hasStory
-          ? {
-              background: `linear-gradient(135deg, ${ringColor}, ${ringColor}90 45%, ${ringColor}60)`
-            }
-          : undefined
-      }
+      style={{ width: size, height: size }}
     >
-      <div
-        className={cn(
-          'rounded-full bg-main-background',
-          hasStory ? 'p-[2px]' : 'p-0'
-        )}
-      >
-        <UserAvatar
-          src={user.photoURL}
-          alt={user.name}
-          username={onClick ? undefined : user.username}
-          size={hasStory ? size - 8 : size}
+      {hasStory && (
+        <StoryRing
+          color={ringColor}
+          animate={unseen}
+          className={cn(
+            'pointer-events-none absolute inset-0',
+            !unseen && 'opacity-45'
+          )}
         />
-      </div>
+      )}
+      <UserAvatar
+        src={user.photoURL}
+        alt={user.name}
+        username={onClick ? undefined : user.username}
+        size={photoSize}
+      />
     </Wrapper>
   );
 }
