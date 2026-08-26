@@ -3,6 +3,7 @@ import {
   documentId,
   getDoc,
   getDocs,
+  limit,
   query,
   Timestamp,
   where
@@ -31,6 +32,24 @@ export function blankUser(id = ''): User {
     pinnedTweet: null,
     coverPhotoURL: null
   };
+}
+
+export async function getUserByUsernameOrId(
+  handle: string
+): Promise<User | null> {
+  const raw = handle.trim();
+  if (!raw) return null;
+  const username = raw.toLowerCase();
+
+  if (username.length <= 15) {
+    const byName = await getDocs(
+      query(usersCollection, where('username', '==', username), limit(1))
+    );
+    if (!byName.empty) return byName.docs[0].data();
+  }
+
+  const byId = await getDoc(doc(usersCollection, raw));
+  return byId.exists() ? byId.data() : null;
 }
 
 export async function loadUsersByIds(

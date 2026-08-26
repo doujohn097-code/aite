@@ -7,7 +7,7 @@ import { useLanguage } from '@lib/context/language-context';
 import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 import { useRankedFeed } from '@lib/hooks/useRankedFeed';
 import { getTimestampMillis } from '@lib/date';
-import { blankUser, loadUsersByIds } from '@lib/firebase/users';
+import { loadUsersByIds } from '@lib/firebase/users';
 import type { RankableItem } from '@lib/feed-rank';
 import type { Story } from '@lib/types/story';
 import { ProtectedLayout } from '@components/layout/common-layout';
@@ -20,10 +20,6 @@ import { ReelCard } from '@components/reels/reel-card';
 import { CreateReelModal } from '@components/reels/create-reel-modal';
 import type { ReactElement, ReactNode } from 'react';
 import type { User } from '@lib/types/user';
-
-function fallbackUser(userId: string): User {
-  return blankUser(userId);
-}
 
 function mapReel(reel: Story): RankableItem {
   return {
@@ -250,8 +246,7 @@ export default function Reels(): JSX.Element {
           >
             <AnimatePresence mode='popLayout'>
               {reels.map((reel, index) => {
-                const owner =
-                  ownersById.get(reel.userId) ?? fallbackUser(reel.userId);
+                const owner = ownersById.get(reel.userId) ?? null;
                 const isActive = index === activeIndex;
 
                 return (

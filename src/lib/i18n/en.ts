@@ -243,6 +243,9 @@ export const en: { [K in keyof typeof ar]: string } = {
   'messages.conversation': 'Chat',
   'messages.post': 'Post',
   'messages.reel': 'Reel',
+  'messages.profile': 'Profile',
+  'messages.sharedProfile': 'Shared a profile',
+  'messages.viewProfile': 'View profile',
 
   'notif.title': 'Notifications / Aite',
   'notif.heading': 'Notifications',
@@ -701,6 +704,7 @@ export const en: { [K in keyof typeof ar]: string } = {
 
   'profile.updated': 'Profile updated',
   'profile.copyLink': 'Copy profile link',
+  'profile.sendChat': 'Send in a message',
   'profile.blockUser': 'Block @{username}',
   'profile.unblockUser': 'Unblock @{username}',
   'onboard.setUsername': 'Set username',

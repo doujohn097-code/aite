@@ -36,9 +36,7 @@ export function useShareToChat(shared: SharedPostRef): {
     }
   };
 
-  const handleSelectMany = async (
-    targets: { id: string }[]
-  ): Promise<void> => {
+  const handleSelectMany = async (targets: { id: string }[]): Promise<void> => {
     if (!user || !targets.length) return;
     const results = await Promise.allSettled(
       targets.map(async (target) => {
@@ -49,7 +47,9 @@ export function useShareToChat(shared: SharedPostRef): {
         });
       })
     );
-    const sent = results.filter((result) => result.status === 'fulfilled').length;
+    const sent = results.filter(
+      (result) => result.status === 'fulfilled'
+    ).length;
     const failed = results.length - sent;
     setOpen(false);
     if (sent && !failed)
@@ -75,7 +75,11 @@ export function useShareToChat(shared: SharedPostRef): {
           <p className='text-xs text-light-secondary dark:text-dark-secondary'>
             {t('chat.sendKindHint', {
               kind:
-                shared.kind === 'reel' ? t('messages.reel') : t('messages.post')
+                shared.kind === 'profile'
+                  ? t('messages.profile')
+                  : shared.kind === 'reel'
+                  ? t('messages.reel')
+                  : t('messages.post')
             })}
           </p>
         </div>
@@ -84,7 +88,8 @@ export function useShareToChat(shared: SharedPostRef): {
           onClick={() => void copyLink()}
           className='flex items-center gap-2 rounded-full bg-main-accent/15 px-3 py-2 text-sm font-bold text-main-accent-text transition hover:bg-main-accent/25'
         >
-          <HeroIcon className='h-4 w-4' iconName='LinkIcon' /> {t('chat.copyLink')}
+          <HeroIcon className='h-4 w-4' iconName='LinkIcon' />{' '}
+          {t('chat.copyLink')}
         </button>
       </div>
       <NewMessageModal

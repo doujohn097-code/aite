@@ -24,6 +24,14 @@ import {
   useRepairableVideo,
   useVideoPoster
 } from '@lib/media-normalize';
+import { extractBareProfileHandle } from '@lib/profile-link';
+import { useResolvedProfile } from '@lib/hooks/useResolvedProfile';
+import {
+  SharedProfileCard,
+  SharedProfileCardSkeleton,
+  sharedProfileFromRef,
+  sharedProfileFromUser
+} from './shared-profile-card';
 import type { ImageData } from '@lib/types/file';
 import type { Message, MessageType } from '@lib/types/message';
 
@@ -55,10 +63,14 @@ const HEART_PARTICLES = [
   { x: 0, y: 58, r: 0, s: 0.68, delay: 0.06 }
 ];
 
-function replyLabel(type: Exclude<MessageType, 'text'>, t: (k: any) => string): string {
+function replyLabel(
+  type: Exclude<MessageType, 'text'>,
+  t: (k: any) => string
+): string {
   if (type === 'image') return t('messages.image');
   if (type === 'video') return t('messages.video');
   if (type === 'audio') return t('messages.voice');
+  if (type === 'shared') return t('messages.shared');
   return t('messages.post');
 }
 
@@ -141,6 +153,13 @@ export function MessageBubble({
   } = message;
   const seen = seenBy?.length > 1;
   const isDeleted = !!message.deletedAt;
+  const profileHandle =
+    !isDeleted && type === 'text' ? extractBareProfileHandle(text ?? '') : null;
+  const { user: unfurledUser, status: unfurlStatus } =
+    useResolvedProfile(profileHandle);
+  const isSharedProfile = type === 'shared' && sharedPost?.kind === 'profile';
+  const showUnfurledProfile = !!profileHandle && unfurlStatus !== 'missing';
+  const showProfileCard = isSharedProfile || showUnfurledProfile;
 
   // Shared cards carry the raw video URL as "thumbnail", which mobile browsers'
   // WebView cannot decode — render a server-extracted frame instead.
@@ -284,7 +303,7 @@ export function MessageBubble({
 
   const bubbleClass = cn(
     'max-w-[88%] xs:max-w-[76%]',
-    type === 'text'
+    type === 'text' && !showProfileCard
       ? cn(
           'rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed shadow-lg backdrop-blur-xl',
           isOwn
@@ -318,9 +337,7 @@ export function MessageBubble({
       </span>
       <span className='block truncate opacity-70'>
         {replyTo.text ||
-          (replyTo.type !== 'text'
-            ? replyLabel(replyTo.type, t)
-            : '')}
+          (replyTo.type !== 'text' ? replyLabel(replyTo.type, t) : '')}
       </span>
     </div>
   );
@@ -589,7 +606,7 @@ export function MessageBubble({
             <>
               {replyQuote}
 
-              {type === 'text' && (
+              {type === 'text' && !showProfileCard && (
                 <p
                   dir='auto'
                   className='user-text selectable-text whitespace-pre-wrap break-words'
@@ -607,6 +624,16 @@ export function MessageBubble({
                   )}
                 </p>
               )}
+
+              {type === 'text' &&
+                showUnfurledProfile &&
+                (unfurlStatus === 'ready' && unfurledUser ? (
+                  <SharedProfileCard
+                    profile={sharedProfileFromUser(unfurledUser)}
+                  />
+                ) : (
+                  <SharedProfileCardSkeleton />
+                ))}
 
               {(type === 'image' || type === 'video') && media && (
                 <div className='w-fit max-w-[75vw] overflow-hidden rounded-2xl xs:max-w-[330px]'>
@@ -756,7 +783,9 @@ export function MessageBubble({
                             : 'bg-main-accent/15 text-main-accent-text'
                         )}
                       >
-                        {sharedPost.kind === 'reel' ? t('messages.reel') : t('messages.post')}
+                        {sharedPost.kind === 'reel'
+                          ? t('messages.reel')
+                          : t('messages.post')}
                       </span>
                     </div>
                     {sharedPost.text && (
@@ -818,7 +847,9 @@ export function MessageBubble({
         )}
       >
         <span>{formatTime(createdAt, locale)}</span>
-        {edited && !deletedAt && <span className='opacity-80'>· {t('common.editedShort')}</span>}
+        {edited && !deletedAt && (
+          <span className='opacity-80'>· {t('common.editedShort')}</span>
+        )}
         {isOwn && showReadReceipt && <ReadReceipt seen={seen} />}
       </div>
       {selectedMediaIndex !== null && media?.[selectedMediaIndex] && (

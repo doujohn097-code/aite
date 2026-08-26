@@ -3,22 +3,27 @@ import { preventBubbling } from '@lib/utils';
 import { siteURL } from '@lib/env';
 import { useAuth } from '@lib/context/auth-context';
 import { manageBlock } from '@lib/firebase/utils';
+import { toSharedProfile } from '@lib/profile-link';
 import { Button } from '@components/ui/button';
 import { OverflowMenu } from '@components/ui/overflow-menu';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { ToolTip } from '@components/ui/tooltip';
+import { useShareToChat } from '@components/messages/share-to-chat';
 import { useLanguage } from '@lib/context/language-context';
+import type { User } from '@lib/types/user';
 
 type UserShareProps = {
-  username: string;
-  userId?: string;
+  user: User;
 };
 
-export function UserShare({ username, userId }: UserShareProps): JSX.Element {
+export function UserShare({ user: profile }: UserShareProps): JSX.Element {
   const { t } = useLanguage();
-
   const { user } = useAuth();
+  const username = profile.username;
+  const userId = profile.id;
   const isBlocked = !!userId && user?.blockedUsers?.includes(userId);
+  const { openShare, element } = useShareToChat(toSharedProfile(profile));
+
   const handleBlock = async (closeMenu: () => void): Promise<void> => {
     if (!user || !userId || user.id === userId) return;
     await manageBlock(isBlocked ? 'unblock' : 'block', user.id, userId);
@@ -36,42 +41,55 @@ export function UserShare({ username, userId }: UserShareProps): JSX.Element {
   };
 
   return (
-    <OverflowMenu
-      aria-label={t('common.more')}
-      buttonClassName='dark-bg-tab group relative rounded-full border border-light-line-reply p-2
+    <>
+      <OverflowMenu
+        aria-label={t('common.more')}
+        buttonClassName='dark-bg-tab group relative rounded-full border border-light-line-reply p-2
                        hover:bg-light-primary/10 active:bg-light-primary/20 dark:border-light-secondary
                        dark:hover:bg-dark-primary/10 dark:active:bg-dark-primary/20'
-      button={
-        <div className='group relative'>
-          <HeroIcon className='h-5 w-5' iconName='EllipsisHorizontalIcon' />
-          <ToolTip tip={t('common.more')} />
-        </div>
-      }
-    >
-      {(close): JSX.Element => (
-        <>
-          <Button
-            className='flex w-full justify-start gap-3 rounded-none p-4 hover:bg-main-sidebar-background'
-            onClick={preventBubbling(handleCopy(close))}
-          >
-            <HeroIcon iconName='LinkIcon' />
-            {t('profile.copyLink')}
-          </Button>
-          {userId && user?.id !== userId && (
+        button={
+          <div className='group relative'>
+            <HeroIcon className='h-5 w-5' iconName='EllipsisHorizontalIcon' />
+            <ToolTip tip={t('common.more')} />
+          </div>
+        }
+      >
+        {(close): JSX.Element => (
+          <>
             <Button
-              className='flex w-full justify-start gap-3 border-t border-light-border p-4 text-accent-red hover:bg-accent-red/10 dark:border-dark-border'
-              onClick={preventBubbling(() => handleBlock(close))}
+              className='flex w-full justify-start gap-3 rounded-none p-4 hover:bg-main-sidebar-background'
+              onClick={preventBubbling(() => {
+                close();
+                openShare();
+              })}
             >
-              <HeroIcon
-                iconName={isBlocked ? 'CheckCircleIcon' : 'NoSymbolIcon'}
-              />
-              {isBlocked
-                ? t('profile.unblockUser', { username })
-                : t('profile.blockUser', { username })}
+              <HeroIcon iconName='PaperAirplaneIcon' />
+              {t('profile.sendChat')}
             </Button>
-          )}
-        </>
-      )}
-    </OverflowMenu>
+            <Button
+              className='flex w-full justify-start gap-3 rounded-none p-4 hover:bg-main-sidebar-background'
+              onClick={preventBubbling(handleCopy(close))}
+            >
+              <HeroIcon iconName='LinkIcon' />
+              {t('profile.copyLink')}
+            </Button>
+            {userId && user?.id !== userId && (
+              <Button
+                className='flex w-full justify-start gap-3 border-t border-light-border p-4 text-accent-red hover:bg-accent-red/10 dark:border-dark-border'
+                onClick={preventBubbling(() => handleBlock(close))}
+              >
+                <HeroIcon
+                  iconName={isBlocked ? 'CheckCircleIcon' : 'NoSymbolIcon'}
+                />
+                {isBlocked
+                  ? t('profile.unblockUser', { username })
+                  : t('profile.blockUser', { username })}
+              </Button>
+            )}
+          </>
+        )}
+      </OverflowMenu>
+      {element}
+    </>
   );
 }

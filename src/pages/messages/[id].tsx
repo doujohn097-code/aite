@@ -19,6 +19,8 @@ import {
   deleteMessage,
   editMessage
 } from '@lib/messages';
+import { extractBareProfileHandle, toSharedProfile } from '@lib/profile-link';
+import { getUserByUsernameOrId } from '@lib/firebase/users';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { SEO } from '@components/common/seo';
@@ -354,6 +356,21 @@ export default function Chat(): JSX.Element {
     setReplyTarget(null);
     setSending(true);
     try {
+      if (payload.type === 'text') {
+        const handle = extractBareProfileHandle(payload.text);
+        if (handle) {
+          const profile = await getUserByUsernameOrId(handle);
+          if (profile) {
+            await sendMessage(conversation, user.id, {
+              type: 'shared',
+              post: toSharedProfile(profile),
+              replyTo
+            });
+            void setTyping(conversation.id, null).catch(() => undefined);
+            return true;
+          }
+        }
+      }
       await sendMessage(conversation, user.id, { ...payload, replyTo });
       void setTyping(conversation.id, null).catch(() => undefined);
       return true;

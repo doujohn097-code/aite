@@ -58,7 +58,7 @@ import type { User } from '@lib/types/user';
 
 type ReelCardProps = {
   reel: Story;
-  user: User;
+  user: User | null;
   isActive?: boolean;
 };
 
@@ -365,9 +365,9 @@ export function ReelCard({
   const { openShare, element: shareChatElement } = useShareToChat({
     id: reel.id,
     kind: 'reel',
-    authorName: user.name ?? null,
-    authorUsername: user.username ?? null,
-    authorPhoto: user.photoURL ?? null,
+    authorName: user?.name ?? null,
+    authorUsername: user?.username ?? null,
+    authorPhoto: user?.photoURL ?? null,
     text: reel.caption ?? null,
     // للفيديو: استخدم صورة البوستر وليس ملف الفيديو الخام
     thumbnail: media?.thumbnail ?? media?.src ?? null
@@ -384,7 +384,9 @@ export function ReelCard({
     const reelUrl =
       typeof window !== 'undefined' ? `${window.location.origin}/reels` : '';
     const shareData = {
-      title: t('tweet.byName', { name: user.name }),
+      title: t('tweet.byName', {
+        name: resolveProfileName(user, t('messages.reel'))
+      }),
       text: reel.caption || t('tweet.watchReel'),
       url: reelUrl
     };
@@ -824,37 +826,47 @@ export function ReelCard({
         }`}
       >
         {/* User profile row with verified badge */}
-        <Link href={profileHref(user)}>
-          <a
-            onClick={(e) => e.stopPropagation()}
-            className='group flex items-center gap-2.5'
-          >
-            <div className='relative shrink-0'>
-              <UserAvatar
-                src={user.photoURL || '/assets/default-avatar.png'}
-                alt={resolveProfileName(user, t('common.user'))}
-                username={resolveUsername(user) ?? user.id}
-                size={42}
-                className='shadow-md ring-2 ring-white/90 transition group-hover:ring-main-accent'
-              />
-            </div>
-            <div className='flex min-w-0 flex-col text-start'>
-              <div className='flex items-center gap-1 truncate'>
-                <span className='truncate text-sm font-bold leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] transition-colors group-hover:text-main-accent'>
-                  {resolveProfileName(user, t('common.user'))}
-                </span>
-                {user.verified && (
-                  <VerifiedBadge className='h-4 w-4 shrink-0' />
+        {user ? (
+          <Link href={profileHref(user)}>
+            <a
+              onClick={(e) => e.stopPropagation()}
+              className='group flex items-center gap-2.5'
+            >
+              <div className='relative shrink-0'>
+                <UserAvatar
+                  src={user.photoURL || '/assets/default-avatar.png'}
+                  alt={resolveProfileName(user)}
+                  username={resolveUsername(user) ?? user.id}
+                  size={42}
+                  className='shadow-md ring-2 ring-white/90 transition group-hover:ring-main-accent'
+                />
+              </div>
+              <div className='flex min-w-0 flex-col text-start'>
+                <div className='flex items-center gap-1 truncate'>
+                  <span className='truncate text-sm font-bold leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] transition-colors group-hover:text-main-accent'>
+                    {resolveProfileName(user)}
+                  </span>
+                  {user.verified && (
+                    <VerifiedBadge className='h-4 w-4 shrink-0' />
+                  )}
+                </div>
+                {resolveUsername(user) && (
+                  <span className='truncate text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
+                    @{resolveUsername(user)}
+                  </span>
                 )}
               </div>
-              {resolveUsername(user) && (
-                <span className='truncate text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
-                  @{resolveUsername(user)}
-                </span>
-              )}
-            </div>
-          </a>
-        </Link>
+            </a>
+          </Link>
+        ) : (
+          <div className='flex items-center gap-2.5'>
+            <span className='h-[42px] w-[42px] animate-pulse rounded-full bg-white/20 ring-2 ring-white/40' />
+            <span className='flex min-w-0 flex-col gap-1.5'>
+              <span className='h-3 w-24 animate-pulse rounded-full bg-white/25' />
+              <span className='h-2.5 w-16 animate-pulse rounded-full bg-white/15' />
+            </span>
+          </div>
+        )}
 
         {/* Caption with expansion */}
         {captionText && (

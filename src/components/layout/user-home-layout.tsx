@@ -96,6 +96,7 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
                     <>
                       <UpdateUsername />
                       <UserEditProfile />
+                      <UserShare user={userData} />
                     </>
                   ) : (
                     <>
@@ -109,10 +110,7 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
                           {t('profile.message')}
                         </Button>
                       )}
-                      <UserShare
-                        username={userData.username}
-                        userId={userData.id}
-                      />
+                      <UserShare user={userData} />
                       <FollowButton
                         userTargetId={userData.id}
                         userTargetUsername={userData.username}

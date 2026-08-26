@@ -81,11 +81,17 @@ export type SendPayload = {
   | { type: 'shared'; post: SharedPostRef }
 );
 
-function lastMessageLabel(type: MessageType): string {
+function lastMessageLabel(
+  type: MessageType,
+  sharedPost?: SharedPostRef | null
+): string {
   if (type === 'image') return tx('messages.image');
   if (type === 'video') return tx('messages.video');
   if (type === 'audio') return tx('messages.voice');
-  if (type === 'shared') return tx('messages.shared');
+  if (type === 'shared')
+    return sharedPost?.kind === 'profile'
+      ? tx('messages.sharedProfile')
+      : tx('messages.shared');
   return '';
 }
 
@@ -188,7 +194,8 @@ export async function sendMessage(
 
   await updateDoc(doc(db, 'conversations', id), {
     lastMessage: {
-      text: type === 'text' ? (text as string) : lastMessageLabel(type),
+      text:
+        type === 'text' ? (text as string) : lastMessageLabel(type, sharedPost),
       type,
       senderId,
       createdAt: Timestamp.now()
@@ -201,7 +208,8 @@ export async function sendMessage(
   sendPushNotification({
     kind: 'message',
     conversationId: id,
-    preview: type === 'text' ? (text as string) : lastMessageLabel(type)
+    preview:
+      type === 'text' ? (text as string) : lastMessageLabel(type, sharedPost)
   });
 }
 

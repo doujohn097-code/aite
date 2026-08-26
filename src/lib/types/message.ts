@@ -2,15 +2,17 @@ import { Timestamp, type FirestoreDataConverter } from 'firebase/firestore';
 
 export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'shared';
 
-/** بطاقة مشاركة منشور/ريل داخل الدردشة */
+/** بطاقة مشاركة منشور/ريل/ملف شخصي داخل الدردشة */
 export type SharedPostRef = {
   id: string;
-  kind: 'tweet' | 'reel';
+  kind: 'tweet' | 'reel' | 'profile';
   authorName: string | null;
   authorUsername: string | null;
   authorPhoto: string | null;
   text: string | null;
   thumbnail: string | null;
+  verified?: boolean | null;
+  followers?: number | null;
 };
 
 /** اسم المستخدم المعجب لكل emoji */

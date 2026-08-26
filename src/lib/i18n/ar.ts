@@ -239,6 +239,9 @@ export const ar = {
   'messages.conversation': 'محادثة',
   'messages.post': 'منشور',
   'messages.reel': 'ريل',
+  'messages.profile': 'ملف شخصي',
+  'messages.sharedProfile': 'شارك ملفًا شخصيًا',
+  'messages.viewProfile': 'عرض الملف',
 
   'notif.title': 'الإشعارات / Aite',
   'notif.heading': 'الإشعارات',
@@ -693,6 +696,7 @@ export const ar = {
 
   'profile.updated': 'تم تحديث الملف الشخصي',
   'profile.copyLink': 'نسخ رابط الملف الشخصي',
+  'profile.sendChat': 'إرسال عبر رسالة',
   'profile.blockUser': 'حظر @{username}',
   'profile.unblockUser': 'إلغاء حظر @{username}',
   'onboard.setUsername': 'تعيين اسم المستخدم',
