@@ -16,6 +16,7 @@ import type { FilesWithId } from '@lib/types/file';
 import type { User, EditableData, EditableUserData } from '@lib/types/user';
 import type { InputFieldProps } from '@components/input/input-field';
 import { useLanguage } from '@lib/context/language-context';
+import { BIO_TEXT_MAX } from '@lib/text-limits';
 
 type RequiredInputFieldProps = Omit<InputFieldProps, 'handleChange'> & {
   inputId: EditableData;
@@ -63,9 +64,7 @@ export function UserEditProfile({ hide }: UserEditProfileProps): JSX.Element {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => cleanImage, []);
 
-  const inputNameError = !editUserData.name?.trim()
-    ? t('valid.nameEmpty')
-    : '';
+  const inputNameError = !editUserData.name?.trim() ? t('valid.nameEmpty') : '';
 
   const updateData = async (): Promise<void> => {
     setLoading(true);
@@ -220,7 +219,7 @@ export function UserEditProfile({ hide }: UserEditProfileProps): JSX.Element {
       label: t('profile.bio'),
       inputId: 'bio',
       inputValue: editUserData.bio,
-      inputLimit: 160,
+      inputLimit: BIO_TEXT_MAX,
       useTextArea: true
     },
     {

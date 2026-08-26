@@ -17,6 +17,7 @@ import { ImagePreview } from './image-preview';
 import { InputOptions } from './input-options';
 import { FontPicker } from './font-picker';
 import { DEFAULT_TEXT_FONT } from '@lib/text-fonts';
+import { postTextMax } from '@lib/text-limits';
 import { VoicePlayer } from '@components/messages/voice-player';
 import { VoiceRecorder } from '@components/messages/voice-recorder';
 import { Button } from '@components/ui/button';
@@ -297,7 +298,7 @@ export function Input({
 
   const formId = useId();
 
-  const inputLimit = isAdmin ? 560 : 280;
+  const inputLimit = postTextMax(isAdmin);
 
   const inputLength = inputValue.length;
   const isValidInput = !!inputValue.trim().length;

@@ -38,6 +38,8 @@ import { MentionSuggest } from '@components/input/mention-suggest';
 import { LinkifiedText } from '@components/ui/linkified-text';
 import { FontPicker } from '@components/input/font-picker';
 import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
+import { COMMENT_TEXT_MAX } from '@lib/text-limits';
+import TextareaAutosize from 'react-textarea-autosize';
 import type { TweetWithUser } from '@lib/types/tweet';
 import { useLanguage } from '@lib/context/language-context';
 
@@ -84,7 +86,7 @@ export function PostComments({
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
   const [editTarget, setEditTarget] = useState<TweetWithUser | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const { mentionQuery, onMentionChange, insertMention, closeMentions } =
     useMentionAssist(comment, setComment, inputRef);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -817,7 +819,7 @@ export function PostComments({
             >
               Aa
             </button>
-            <input
+            <TextareaAutosize
               ref={inputRef}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -826,17 +828,19 @@ export function PostComments({
                   ? t('comments.replyTo', { username: replyingTo.username })
                   : t('comments.addShort')
               }
-              maxLength={280}
+              maxLength={COMMENT_TEXT_MAX}
+              minRows={1}
+              maxRows={5}
               dir='auto'
               style={{ fontFamily: fontCss(commentFont) }}
-              className='user-text min-w-0 flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-base
+              className='user-text min-w-0 flex-1 resize-none rounded-2xl bg-light-line-reply/50 px-4 py-2.5 text-base
                          text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent
                          dark:bg-dark-line-reply/50 dark:text-dark-primary xs:text-sm'
             />
             <Button
               type='submit'
               loading={sending}
-              disabled={!comment.trim()}
+              disabled={!comment.trim() || comment.length > COMMENT_TEXT_MAX}
               className='flex shrink-0 items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm
                          font-bold text-main-accent-contrast shadow-md transition hover:brightness-95 active:scale-95
                          disabled:pointer-events-none disabled:opacity-40'
@@ -879,6 +883,7 @@ export function PostComments({
         }
         initialText={editTarget?.text ?? ''}
         initialFont={editTarget?.font}
+        maxLength={COMMENT_TEXT_MAX}
         onSave={handleSaveEdit}
       />
 

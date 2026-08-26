@@ -15,6 +15,7 @@ import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import { useLanguage } from '@lib/context/language-context';
 import { FontPicker } from '@components/input/font-picker';
 import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
+import { postTextMax } from '@lib/text-limits';
 
 export type EditMediaKind = 'none' | 'images' | 'video';
 
@@ -55,7 +56,7 @@ export function EditContentModal({
   const fieldPlaceholder = placeholder ?? t('media.editCaption');
 
   const { user, isAdmin } = useAuth();
-  const limit = maxLength ?? (isAdmin ? 560 : 280);
+  const limit = maxLength ?? postTextMax(isAdmin);
   const maxFiles = mediaKind === 'video' ? 1 : 4;
   const [value, setValue] = useState(initialText);
   const [font, setFont] = useState(initialFont || DEFAULT_TEXT_FONT);
@@ -223,7 +224,7 @@ export function EditContentModal({
             onChange={onMentionChange}
             placeholder={fieldPlaceholder}
             minRows={4}
-            maxRows={10}
+            maxRows={16}
             dir='auto'
             style={{ fontFamily: fontCss(font) }}
             className='user-text w-full resize-none rounded-2xl border border-light-border bg-light-primary/5 p-3.5 text-base outline-none focus:border-main-accent dark:border-dark-border dark:bg-dark-primary/5'

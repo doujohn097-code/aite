@@ -13,6 +13,7 @@ import type { MessageType } from '@lib/types/message';
 import { useLanguage } from '@lib/context/language-context';
 import { FontPicker } from '@components/input/font-picker';
 import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
+import { MESSAGE_TEXT_MAX } from '@lib/text-limits';
 
 type VoiceDraft = {
   url: string;
@@ -142,14 +143,14 @@ export function ChatComposer({
     // وضع التعديل: نحفظ النص الجديد بدل إرسال رسالة جديدة
     if (isEditing) {
       const trimmed = text.trim();
-      if (!trimmed || sending) return;
+      if (!trimmed || sending || trimmed.length > MESSAGE_TEXT_MAX) return;
       onSubmitEdit?.(trimmed);
       setText('');
       stopTyping();
       return;
     }
 
-    if (!hasContent || sending) return;
+    if (!hasContent || sending || text.trim().length > MESSAGE_TEXT_MAX) return;
 
     const pendingText = text.trim();
     const pendingFiles = files;
@@ -443,10 +444,11 @@ export function ChatComposer({
               }}
               onKeyDown={handleKeyDown}
               placeholder={t('chat.placeholder')}
-              maxRows={4}
+              maxLength={MESSAGE_TEXT_MAX}
+              maxRows={8}
               dir='auto'
               style={{ fontFamily: fontCss(font) }}
-              className='user-text max-h-32 flex-1 resize-none self-center bg-transparent px-2 py-1.5
+              className='user-text max-h-48 flex-1 resize-none self-center bg-transparent px-2 py-1.5
                          text-[15px] outline-none placeholder:text-light-secondary
                          dark:placeholder:text-dark-secondary'
             />

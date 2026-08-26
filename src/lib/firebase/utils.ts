@@ -43,6 +43,11 @@ import type { StoryMusic, StoryText, Story } from '@lib/types/story';
 import { getTimestampMillis } from '@lib/date';
 import { isLiveStory, STORY_LIFETIME_MS } from '@lib/story-lifetime';
 import { tx } from '@lib/i18n/tx';
+import {
+  CAPTION_TEXT_MAX,
+  COMMENT_TEXT_MAX,
+  CONTENT_STORE_MAX
+} from '@lib/text-limits';
 import { nextPublishQuota } from '@lib/publish-quota';
 import type { Tweet } from '@lib/types/tweet';
 
@@ -233,7 +238,7 @@ export async function editTweet(
   const hasImages = !!nextImages?.length;
   if (!trimmed && !hasImages && !options?.allowEmpty)
     throw new Error(tx('err.emptyPost'));
-  if (trimmed.length > 1000) throw new Error(tx('err.longText'));
+  if (trimmed.length > CONTENT_STORE_MAX) throw new Error(tx('err.longText'));
   if (nextImages && nextImages.length > 4) throw new Error(tx('err.maxFiles'));
 
   const tweetRef = doc(tweetsCollection, tweetId);
@@ -265,7 +270,7 @@ export async function editReel(
   options?: { images?: ImagesPreview | null; font?: string | null }
 ): Promise<void> {
   const trimmed = caption.trim();
-  if (trimmed.length > 1000) throw new Error(tx('err.longCaption'));
+  if (trimmed.length > CAPTION_TEXT_MAX) throw new Error(tx('err.longCaption'));
 
   const reelRef = doc(storiesCollection, reelId);
   const snap = await getDoc(reelRef);

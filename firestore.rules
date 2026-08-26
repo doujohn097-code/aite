@@ -33,7 +33,7 @@ service cloud.firestore {
       let changed = request.resource.data.diff(resource.data).affectedKeys();
       return isOwner(resource.data.createdBy)
         && changed.hasOnly(['text', 'font', 'images', 'audio', 'edited', 'editedAt', 'updatedAt'])
-        && validText(request.resource.data.text, 1000)
+        && validText(request.resource.data.text, 1200)
         && validImages(request.resource.data.images)
         && request.resource.data.createdBy == resource.data.createdBy;
     }
@@ -41,7 +41,7 @@ service cloud.firestore {
       let changed = request.resource.data.diff(resource.data).affectedKeys();
       return isOwner(resource.data.userId)
         && changed.hasOnly(['caption', 'captionFont', 'images', 'music', 'texts', 'color', 'duration', 'edited', 'editedAt', 'updatedAt'])
-        && validText(request.resource.data.caption, 1000)
+        && validText(request.resource.data.caption, 1200)
         && validImages(request.resource.data.images)
         && request.resource.data.userId == resource.data.userId;
     }
@@ -110,7 +110,7 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.createdBy == request.auth.uid
-        && validText(request.resource.data.text, 1000)
+        && validText(request.resource.data.text, 1200)
         && validImages(request.resource.data.images)
         && request.resource.data.userLikes is list
         && request.resource.data.userLikes.size() == 0
@@ -201,7 +201,7 @@ service cloud.firestore {
           && validImages(request.resource.data.media)
           && !blocks(request.auth.uid, otherParticipant(request.resource.data.participants))
           && !blocks(otherParticipant(request.resource.data.participants), request.auth.uid)
-          && validText(request.resource.data.text, 4000);
+          && validText(request.resource.data.text, 5000);
         allow update: if signedIn() && request.auth.uid in resource.data.participants
           && request.resource.data.senderId == resource.data.senderId
           && (
@@ -217,7 +217,7 @@ service cloud.firestore {
                 'text', 'edited', 'editedAt'
               ])
               && request.resource.data.edited == true
-              && validText(request.resource.data.text, 4000)
+              && validText(request.resource.data.text, 5000)
               && request.resource.data.text is string
               && request.resource.data.text.size() > 0)
             || (request.auth.uid == resource.data.senderId
@@ -243,7 +243,7 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.userId == request.auth.uid
-        && validText(request.resource.data.caption, 1000)
+        && validText(request.resource.data.caption, 1200)
         && validImages(request.resource.data.images)
         && request.resource.data.images is list
         && request.resource.data.images.size() >= 1

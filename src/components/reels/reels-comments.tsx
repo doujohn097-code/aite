@@ -38,6 +38,8 @@ import { MentionSuggest } from '@components/input/mention-suggest';
 import { LinkifiedText } from '@components/ui/linkified-text';
 import { FontPicker } from '@components/input/font-picker';
 import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
+import { COMMENT_TEXT_MAX } from '@lib/text-limits';
+import TextareaAutosize from 'react-textarea-autosize';
 import type { TweetWithUser } from '@lib/types/tweet';
 import { useLanguage } from '@lib/context/language-context';
 
@@ -88,7 +90,7 @@ export function ReelsComments({
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
   const [editTarget, setEditTarget] = useState<TweetWithUser | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const { mentionQuery, onMentionChange, insertMention, closeMentions } =
     useMentionAssist(comment, setComment, inputRef);
   const listContainerRef = useRef<HTMLDivElement>(null);
@@ -932,7 +934,7 @@ export function ReelsComments({
                 onSelect={insertMention}
                 onClose={closeMentions}
               />
-              <input
+              <TextareaAutosize
                 ref={inputRef}
                 value={comment}
                 onChange={onMentionChange}
@@ -941,13 +943,16 @@ export function ReelsComments({
                     ? t('comments.replyTo', { username: replyingTo.username })
                     : t('comments.add')
                 }
-                maxLength={280}
-                className='flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-sm text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent dark:bg-dark-line-reply/50 dark:text-dark-primary'
+                maxLength={COMMENT_TEXT_MAX}
+                minRows={1}
+                maxRows={5}
+                dir='auto'
+                className='flex-1 resize-none rounded-2xl bg-light-line-reply/50 px-4 py-2.5 text-sm text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent dark:bg-dark-line-reply/50 dark:text-dark-primary'
               />
               <Button
                 type='submit'
                 loading={sending}
-                disabled={!comment.trim()}
+                disabled={!comment.trim() || comment.length > COMMENT_TEXT_MAX}
                 className='flex items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm font-bold text-main-accent-contrast shadow-md transition hover:brightness-95 active:scale-95 disabled:pointer-events-none disabled:opacity-40'
               >
                 <span>{t('comments.send')}</span>
@@ -971,6 +976,7 @@ export function ReelsComments({
         }
         initialText={editTarget?.text ?? ''}
         initialFont={editTarget?.font}
+        maxLength={COMMENT_TEXT_MAX}
         onSave={handleSaveEdit}
       />
 

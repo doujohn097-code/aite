@@ -23,6 +23,7 @@ import {
 } from '@lib/media-limits';
 import { getRandomId } from '@lib/random';
 import { tx } from '@lib/i18n/tx';
+import { MESSAGE_TEXT_MAX } from '@lib/text-limits';
 import type { FilesWithId } from '@lib/types/file';
 import { deleteField } from 'firebase/firestore';
 import type {
@@ -295,8 +296,9 @@ export async function editMessage(
 ): Promise<void> {
   const trimmed = text.trim();
 
-  if (!trimmed) throw new Error('لا يمكن ترك الرسالة فارغة');
-  if (trimmed.length > 4000) throw new Error('الرسالة طويلة جدًا');
+  if (!trimmed) throw new Error(tx('messages.emptyEdit'));
+  if (trimmed.length > MESSAGE_TEXT_MAX)
+    throw new Error(tx('messages.tooLong'));
 
   await updateDoc(
     doc(db, 'conversations', conversationId, 'messages', messageId),
