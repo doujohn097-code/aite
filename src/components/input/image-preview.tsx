@@ -42,6 +42,11 @@ const postImageBorderRadius: Readonly<PostImageBorderRadius> = {
   4: ['rounded-tl-2xl', 'rounded-tr-2xl', 'rounded-bl-2xl', 'rounded-br-2xl']
 };
 
+function clampFeedAspect(raw?: number): number | undefined {
+  if (raw === undefined) return undefined;
+  return Math.max(raw, 4 / 5);
+}
+
 function activeSlideIndex(scroller: HTMLElement): number {
   const mid = scroller.getBoundingClientRect().left + scroller.clientWidth / 2;
   let best = 0;
@@ -163,12 +168,14 @@ export function ImagePreview({
   );
 
   if (feedCarousel) {
-    const current = imagesPreview[slide] ?? imagesPreview[0];
-    const rawAspect = current ? aspects[current.id] : undefined;
-    const tall = rawAspect !== undefined && rawAspect < 4 / 5;
-    const aspect =
-      rawAspect === undefined ? undefined : Math.max(rawAspect, 4 / 5);
-    const fitClass = tall
+    const firstId = imagesPreview[0]?.id;
+    const rawFirst = firstId ? aspects[firstId] : undefined;
+    const mixed = previewCount > 1;
+    const aspect = clampFeedAspect(rawFirst);
+    const tallSingle = !mixed && rawFirst !== undefined && rawFirst < 4 / 5;
+    const fitClass = mixed
+      ? 'block h-full w-full object-contain'
+      : tallSingle
       ? 'block h-full w-full object-cover'
       : aspect
       ? 'block h-full w-full object-contain'
@@ -176,7 +183,7 @@ export function ImagePreview({
 
     return (
       <div
-        className='relative w-full overflow-hidden'
+        className={cn('relative w-full overflow-hidden', mixed && 'bg-black')}
         style={aspect ? { aspectRatio: `${aspect}` } : undefined}
         onClick={preventBubbling()}
       >
@@ -213,9 +220,9 @@ export function ImagePreview({
                     poster={thumbnail}
                     className='h-full w-full !bg-transparent'
                     videoClassName={
-                      tall
-                        ? 'h-full w-full object-cover'
-                        : 'h-full w-full object-contain'
+                      mixed || !tallSingle
+                        ? 'h-full w-full object-contain'
+                        : 'h-full w-full object-cover'
                     }
                   />
                 ) : (
