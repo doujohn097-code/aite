@@ -33,7 +33,7 @@ export function Skeleton({
 
 export function TweetSkeleton(): JSX.Element {
   return (
-    <article className='border-b border-light-border px-4 py-3 dark:border-dark-border'>
+    <article className='glass-card flex flex-col gap-y-3 overflow-hidden px-4 py-3'>
       <div className='grid grid-cols-[auto,1fr] gap-x-3'>
         <Skeleton shape='circle' className='h-12 w-12' />
         <div className='flex min-w-0 flex-col gap-2'>
@@ -43,8 +43,17 @@ export function TweetSkeleton(): JSX.Element {
           </div>
           <Skeleton className='h-3 w-full' />
           <Skeleton className='h-3 w-4/5' />
-          <Skeleton shape='media' className='mt-1 h-36 w-full' />
         </div>
+      </div>
+      <Skeleton
+        shape='none'
+        className='-mx-4 h-64 w-[calc(100%+2rem)] rounded-none'
+      />
+      <div className='grid grid-cols-4 py-1'>
+        <Skeleton shape='circle' className='mx-auto h-8 w-8' />
+        <Skeleton shape='circle' className='mx-auto h-8 w-8' />
+        <Skeleton shape='circle' className='mx-auto h-8 w-8' />
+        <Skeleton shape='circle' className='mx-auto h-8 w-8' />
       </div>
     </article>
   );
@@ -66,8 +75,14 @@ export function TweetFeedSkeleton({
 
 export function NotificationSkeleton(): JSX.Element {
   return (
-    <div className='flex items-center gap-3.5 border-b border-light-border/60 px-4 py-3.5 dark:border-dark-border/60'>
-      <Skeleton shape='circle' className='h-11 w-11' />
+    <div className='glass-card flex items-center gap-3.5 px-4 py-3.5'>
+      <div className='relative shrink-0'>
+        <Skeleton shape='circle' className='h-[46px] w-[46px]' />
+        <Skeleton
+          shape='circle'
+          className='absolute -bottom-1 -left-1 h-6 w-6 ring-2 ring-main-background'
+        />
+      </div>
       <div className='flex min-w-0 flex-1 flex-col gap-2'>
         <Skeleton className='h-3.5 w-3/4' />
         <Skeleton className='h-3 w-20' />
@@ -92,13 +107,15 @@ export function NotificationFeedSkeleton({
 
 export function UserRowSkeleton(): JSX.Element {
   return (
-    <div className='flex items-center gap-3 px-4 py-3'>
+    <div className='glass-card grid grid-cols-[auto,1fr] gap-3 px-4 py-3'>
       <Skeleton shape='circle' className='h-12 w-12' />
-      <div className='flex min-w-0 flex-1 flex-col gap-2'>
-        <Skeleton className='h-3.5 w-32' />
-        <Skeleton className='h-3 w-20' />
+      <div className='flex items-center justify-between gap-2'>
+        <div className='flex min-w-0 flex-col gap-2'>
+          <Skeleton className='h-3.5 w-32' />
+          <Skeleton className='h-3 w-20' />
+        </div>
+        <Skeleton className='h-8 w-20 rounded-full' />
       </div>
-      <Skeleton className='h-8 w-20' />
     </div>
   );
 }
@@ -119,7 +136,7 @@ export function UserFeedSkeleton({
 
 export function ConversationRowSkeleton(): JSX.Element {
   return (
-    <div className='flex items-center gap-3 border-b border-light-border/60 px-4 py-3 dark:border-dark-border/60'>
+    <div className='glass-card flex items-center gap-3 px-4 py-3'>
       <Skeleton shape='circle' className='h-12 w-12' />
       <div className='flex min-w-0 flex-1 flex-col gap-2'>
         <div className='flex items-center justify-between'>
@@ -155,42 +172,24 @@ export function MessageThreadSkeleton(): JSX.Element {
     >
       <div className='flex items-end gap-2'>
         <Skeleton shape='circle' className='h-8 w-8' />
-        <Skeleton
-          shape='bubble'
-          className='h-11 w-44 rounded-bl-md'
-        />
+        <Skeleton shape='bubble' className='h-11 w-44 rounded-bl-md' />
       </div>
       <div className='flex items-end gap-2'>
         <Skeleton shape='circle' className='h-8 w-8' />
-        <Skeleton
-          shape='bubble'
-          className='h-16 w-56 rounded-bl-md'
-        />
+        <Skeleton shape='bubble' className='h-16 w-56 rounded-bl-md' />
       </div>
       <div className='flex justify-end'>
-        <Skeleton
-          shape='bubble'
-          className='h-11 w-40 rounded-br-md'
-        />
+        <Skeleton shape='bubble' className='h-11 w-40 rounded-br-md' />
       </div>
       <div className='flex justify-end'>
-        <Skeleton
-          shape='media'
-          className='h-36 w-44 rounded-br-md'
-        />
+        <Skeleton shape='media' className='h-36 w-44 rounded-br-md' />
       </div>
       <div className='flex items-end gap-2'>
         <Skeleton shape='circle' className='h-8 w-8' />
-        <Skeleton
-          shape='bubble'
-          className='h-10 w-32 rounded-bl-md'
-        />
+        <Skeleton shape='bubble' className='h-10 w-32 rounded-bl-md' />
       </div>
       <div className='flex justify-end'>
-        <Skeleton
-          shape='bubble'
-          className='h-12 w-52 rounded-br-md'
-        />
+        <Skeleton shape='bubble' className='h-12 w-52 rounded-br-md' />
       </div>
     </div>
   );
@@ -199,17 +198,22 @@ export function MessageThreadSkeleton(): JSX.Element {
 export function ProfileSkeleton(): JSX.Element {
   return (
     <div role='status' aria-label='loading'>
-      <Skeleton shape='none' className='h-36 w-full xs:h-48' />
-      <div className='px-4 py-3'>
-        <Skeleton shape='circle' className='-mt-12 h-24 w-24 ring-4 ring-main-background' />
-        <div className='mt-3 flex justify-end gap-2'>
-          <Skeleton className='h-8 w-20' />
-          <Skeleton className='h-8 w-24' />
+      <Skeleton shape='none' className='h-36 w-full xs:h-48 sm:h-52' />
+      <div className='glass-panel glass-strong relative flex flex-col gap-3 px-4 py-3'>
+        <div className='grid grid-cols-[auto,1fr] items-start gap-3'>
+          <Skeleton
+            shape='circle'
+            className='-mt-3 h-24 w-24 -translate-y-1/2 ring-4 ring-main-background xs:h-32 xs:w-32 sm:h-36 sm:w-36'
+          />
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <Skeleton className='h-8 w-20 rounded-full' />
+            <Skeleton className='h-8 w-24 rounded-full' />
+          </div>
         </div>
-        <Skeleton className='mt-2 h-5 w-36' />
-        <Skeleton className='mt-2 h-3 w-24' />
-        <Skeleton className='mt-4 h-3 w-full' />
-        <Skeleton className='mt-2 h-3 w-2/3' />
+        <Skeleton className='h-5 w-36' />
+        <Skeleton className='h-3 w-24' />
+        <Skeleton className='mt-2 h-3 w-full' />
+        <Skeleton className='h-3 w-2/3' />
       </div>
     </div>
   );

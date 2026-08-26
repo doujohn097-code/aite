@@ -154,6 +154,7 @@ export function ImagePreview({
         imageData={selectedImage as ImageData}
         previewCount={previewCount}
         selectedIndex={selectedIndex}
+        gallery={imagesPreview}
         handleNextIndex={handleNextIndex}
         onSelectIndex={setSelectedIndex}
         onClose={closeModal}
@@ -163,7 +164,15 @@ export function ImagePreview({
 
   if (feedCarousel) {
     const current = imagesPreview[slide] ?? imagesPreview[0];
-    const aspect = current ? aspects[current.id] : undefined;
+    const rawAspect = current ? aspects[current.id] : undefined;
+    const tall = rawAspect !== undefined && rawAspect < 4 / 5;
+    const aspect =
+      rawAspect === undefined ? undefined : Math.max(rawAspect, 4 / 5);
+    const fitClass = tall
+      ? 'block h-full w-full object-cover'
+      : aspect
+      ? 'block h-full w-full object-contain'
+      : 'block h-auto w-full';
 
     return (
       <div
@@ -203,7 +212,11 @@ export function ImagePreview({
                     src={src}
                     poster={thumbnail}
                     className='h-full w-full !bg-transparent'
-                    videoClassName='h-full w-full object-contain'
+                    videoClassName={
+                      tall
+                        ? 'h-full w-full object-cover'
+                        : 'h-full w-full object-contain'
+                    }
                   />
                 ) : (
                   <button
@@ -215,11 +228,7 @@ export function ImagePreview({
                     <img
                       src={src}
                       alt={alt}
-                      className={
-                        aspect
-                          ? 'block h-full w-full object-contain'
-                          : 'block h-auto w-full'
-                      }
+                      className={fitClass}
                       draggable={false}
                     />
                   </button>
