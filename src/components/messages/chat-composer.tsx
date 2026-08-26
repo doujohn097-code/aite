@@ -374,7 +374,7 @@ export function ChatComposer({
 
       {showFonts && !recording && (
         <div className='mb-2 rounded-2xl border border-light-border bg-main-search-background/70 p-2 dark:border-dark-border'>
-          <FontPicker value={font} onChange={setFont} compact />
+          <FontPicker value={font} onChange={setFont} compact startOpen />
         </div>
       )}
 

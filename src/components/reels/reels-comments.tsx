@@ -36,7 +36,8 @@ import { preventBubbling } from '@lib/utils';
 import { useMentionAssist } from '@lib/hooks/useMentionAssist';
 import { MentionSuggest } from '@components/input/mention-suggest';
 import { LinkifiedText } from '@components/ui/linkified-text';
-import { fontCss } from '@lib/text-fonts';
+import { FontPicker } from '@components/input/font-picker';
+import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
 import type { TweetWithUser } from '@lib/types/tweet';
 import { useLanguage } from '@lib/context/language-context';
 
@@ -71,6 +72,8 @@ export function ReelsComments({
 
   const { user } = useAuth();
   const [comment, setComment] = useState('');
+  const [commentFont, setCommentFont] = useState(DEFAULT_TEXT_FONT);
+  const [showFonts, setShowFonts] = useState(false);
   const [sending, setSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ReplyingTo>(null);
   const [optimisticLikes, setOptimisticLikes] = useState<
@@ -277,6 +280,7 @@ export function ReelsComments({
     const optimisticItem: TweetWithUser = {
       id: tempId,
       text: trimmed,
+      font: commentFont,
       images: null,
       parent: { id: reelId, username: reelOwnerId || '' },
       replyTo: replyMetadata,
@@ -324,7 +328,8 @@ export function ReelsComments({
         reelOwnerId,
         user.id,
         trimmed,
-        replyMetadata
+        replyMetadata,
+        commentFont
       );
       // Cleanly remove the temp item when server confirms without UI flicker
       setOptimisticComments((prev) => prev.filter((c) => c.id !== tempId));
@@ -667,7 +672,9 @@ export function ReelsComments({
                             onClick={toggleCommentLike(item.id, item.userLikes)}
                             className='p-1.5 text-light-secondary transition hover:text-rose-500 dark:text-dark-secondary'
                             aria-label={
-                              isLiked ? t('comments.unlike') : t('comments.like')
+                              isLiked
+                                ? t('comments.unlike')
+                                : t('comments.like')
                             }
                           >
                             <HeroIcon
@@ -748,7 +755,9 @@ export function ReelsComments({
                                       )}
                                       <span className='mr-auto text-[11px] text-light-secondary dark:text-dark-secondary'>
                                         {formatDate(reply.createdAt, 'message')}
-                                        {reply.edited ? ` · ${t('common.edited')}` : ''}
+                                        {reply.edited
+                                          ? ` · ${t('common.edited')}`
+                                          : ''}
                                       </span>
                                     </div>
 
@@ -770,7 +779,9 @@ export function ReelsComments({
                                     <p
                                       dir='auto'
                                       className='user-text mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-light-primary dark:text-dark-primary'
-                                      style={{ fontFamily: fontCss(reply.font) }}
+                                      style={{
+                                        fontFamily: fontCss(reply.font)
+                                      }}
                                     >
                                       {reply.text && (
                                         <LinkifiedText text={reply.text} />
@@ -889,7 +900,8 @@ export function ReelsComments({
                       iconName='ArrowUturnLeftIcon'
                     />
                     <span className='truncate'>
-                      {t('comments.replyingTo')} <strong>@{replyingTo.username}</strong>
+                      {t('comments.replyingTo')}{' '}
+                      <strong>@{replyingTo.username}</strong>
                       {replyingTo.text && (
                         <span className='mx-1 truncate font-normal opacity-75'>
                           &ldquo;{replyingTo.text.slice(0, 35)}
@@ -952,7 +964,11 @@ export function ReelsComments({
       <EditContentModal
         open={!!editTarget}
         closeModal={() => setEditTarget(null)}
-        title={editTarget?.replyTo ? t('comments.editReply') : t('comments.editComment')}
+        title={
+          editTarget?.replyTo
+            ? t('comments.editReply')
+            : t('comments.editComment')
+        }
         initialText={editTarget?.text ?? ''}
         initialFont={editTarget?.font}
         onSave={handleSaveEdit}
@@ -966,7 +982,11 @@ export function ReelsComments({
       >
         <div onClick={preventBubbling()}>
           <ActionModal
-            title={deleteTarget?.isReply ? t('comments.deleteReply') : t('comments.deleteComment')}
+            title={
+              deleteTarget?.isReply
+                ? t('comments.deleteReply')
+                : t('comments.deleteComment')
+            }
             description={
               deleteTarget?.isReply
                 ? t('comments.deleteReplyBody')

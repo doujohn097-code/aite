@@ -98,7 +98,8 @@ export function EditContentModal({
   const keptIds = keptImages.map((image) => image.id).join('|');
   const mediaChanged = keptIds !== initialIds || newFiles.length > 0;
   const textChanged = trimmed !== initialText.trim();
-  const fontChanged = (font || DEFAULT_TEXT_FONT) !== (initialFont || DEFAULT_TEXT_FONT);
+  const fontChanged =
+    (font || DEFAULT_TEXT_FONT) !== (initialFont || DEFAULT_TEXT_FONT);
   const hasMedia = previewImages.length > 0;
   const canSave =
     !tooLong &&
@@ -114,9 +115,7 @@ export function EditContentModal({
     if (fileRef.current) fileRef.current.value = '';
     if (!imagesData) {
       toast.error(
-        mediaKind === 'video'
-          ? t('media.pickVideo')
-          : t('media.pickMedia')
+        mediaKind === 'video' ? t('media.pickVideo') : t('media.pickMedia')
       );
       return;
     }
@@ -179,9 +178,7 @@ export function EditContentModal({
       closeMentions();
       closeModal();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t('err.saveEdit')
-      );
+      toast.error(error instanceof Error ? error.message : t('err.saveEdit'));
     } finally {
       setSaving(false);
       setUploadProgress(0);
@@ -194,7 +191,10 @@ export function EditContentModal({
       closeModal={saving ? (): void => undefined : closeModal}
       modalClassName='w-full max-w-lg overflow-hidden rounded-3xl border border-light-border bg-main-background shadow-2xl dark:border-dark-border'
     >
-      <div className='flex flex-col' onClick={(event) => event.stopPropagation()}>
+      <div
+        className='flex flex-col'
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className='flex items-center justify-between border-b border-light-border px-5 py-4 dark:border-dark-border'>
           <div className='flex items-center gap-2.5'>
             <span className='flex h-9 w-9 items-center justify-center rounded-xl bg-main-accent/15 text-main-accent-text'>
@@ -225,8 +225,12 @@ export function EditContentModal({
             minRows={4}
             maxRows={10}
             dir='auto'
+            style={{ fontFamily: fontCss(font) }}
             className='user-text w-full resize-none rounded-2xl border border-light-border bg-light-primary/5 p-3.5 text-base outline-none focus:border-main-accent dark:border-dark-border dark:bg-dark-primary/5'
           />
+          <div className='mt-3'>
+            <FontPicker value={font} onChange={setFont} compact />
+          </div>
           <p
             className={`mt-2 text-end text-xs ${
               tooLong

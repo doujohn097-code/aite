@@ -36,7 +36,8 @@ import { preventBubbling } from '@lib/utils';
 import { useMentionAssist } from '@lib/hooks/useMentionAssist';
 import { MentionSuggest } from '@components/input/mention-suggest';
 import { LinkifiedText } from '@components/ui/linkified-text';
-import { fontCss } from '@lib/text-fonts';
+import { FontPicker } from '@components/input/font-picker';
+import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
 import type { TweetWithUser } from '@lib/types/tweet';
 import { useLanguage } from '@lib/context/language-context';
 
@@ -67,6 +68,8 @@ export function PostComments({
 
   const { user } = useAuth();
   const [comment, setComment] = useState('');
+  const [commentFont, setCommentFont] = useState(DEFAULT_TEXT_FONT);
+  const [showFonts, setShowFonts] = useState(false);
   const [sending, setSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ReplyingTo>(null);
   const [optimisticLikes, setOptimisticLikes] = useState<
@@ -233,6 +236,7 @@ export function PostComments({
     const optimisticItem: TweetWithUser = {
       id: tempId,
       text: trimmed,
+      font: commentFont,
       images: null,
       parent: { id: tweetId, username: ownerId || '' },
       replyTo: replyMetadata,
@@ -413,9 +417,7 @@ export function PostComments({
               <p className='text-sm font-semibold text-light-primary dark:text-dark-primary'>
                 {t('empty.comments')}
               </p>
-              <p className='text-xs opacity-75'>
-                {t('comments.firstPost')}
-              </p>
+              <p className='text-xs opacity-75'>{t('comments.firstPost')}</p>
             </div>
           ) : (
             rootComments.map((item: TweetWithUser) => {
@@ -630,7 +632,9 @@ export function PostComments({
                                 )}
                                 <span className='mr-auto text-[11px] text-light-secondary dark:text-dark-secondary'>
                                   {formatDate(reply.createdAt, 'message')}
-                                  {reply.edited ? ` · ${t('common.edited')}` : ''}
+                                  {reply.edited
+                                    ? ` · ${t('common.edited')}`
+                                    : ''}
                                 </span>
                               </div>
 
@@ -738,9 +742,8 @@ export function PostComments({
         </div>
         {/* Composer — مثبت أسفل الشاشة فوق شريط التنقل ليبقى دائمًا ظاهرًا */}
         <div
-          className='sticky bottom-0 z-30 flex w-full min-w-0 flex-col border-t border-light-border
-                     bg-main-background pb-[calc(env(safe-area-inset-bottom)_+_64px)]
-                     dark:border-dark-border xs:pb-0'
+          className='sticky bottom-16 z-30 flex w-full min-w-0 flex-col border-t border-light-border
+                     bg-main-background pb-1 dark:border-dark-border xs:bottom-0 xs:pb-0'
         >
           <AnimatePresence>
             {replyingTo && (
@@ -756,7 +759,8 @@ export function PostComments({
                     iconName='ArrowUturnLeftIcon'
                   />
                   <span className='truncate'>
-                    {t('comments.replyingTo')} <strong>@{replyingTo.username}</strong>
+                    {t('comments.replyingTo')}{' '}
+                    <strong>@{replyingTo.username}</strong>
                     {replyingTo.text && (
                       <span className='mx-1 truncate font-normal opacity-75'>
                         &ldquo;{replyingTo.text.slice(0, 35)}
@@ -777,9 +781,20 @@ export function PostComments({
             )}
           </AnimatePresence>
 
+          {showFonts && (
+            <div className='border-b border-light-border/60 px-4 py-2 dark:border-dark-border/60'>
+              <FontPicker
+                value={commentFont}
+                onChange={setCommentFont}
+                compact
+                startOpen
+              />
+            </div>
+          )}
+
           <form
             onSubmit={handleSubmit}
-            className='flex w-full min-w-0 items-center gap-3 px-4 py-3'
+            className='flex w-full min-w-0 items-center gap-2 px-4 py-3'
           >
             <span className='shrink-0'>
               <UserAvatar
@@ -789,6 +804,19 @@ export function PostComments({
                 size={36}
               />
             </span>
+            <button
+              type='button'
+              onClick={(): void => setShowFonts((open) => !open)}
+              aria-label={t('fonts.label')}
+              className={cn(
+                'shrink-0 rounded-full p-2 text-sm font-black transition',
+                showFonts
+                  ? 'bg-main-accent/15 text-main-accent-text'
+                  : 'text-light-secondary hover:bg-light-primary/10 dark:text-dark-secondary'
+              )}
+            >
+              Aa
+            </button>
             <input
               ref={inputRef}
               value={comment}
@@ -800,6 +828,7 @@ export function PostComments({
               }
               maxLength={280}
               dir='auto'
+              style={{ fontFamily: fontCss(commentFont) }}
               className='user-text min-w-0 flex-1 rounded-full bg-light-line-reply/50 px-4 py-2.5 text-base
                          text-light-primary outline-none transition focus:ring-2 focus:ring-main-accent
                          dark:bg-dark-line-reply/50 dark:text-dark-primary xs:text-sm'
@@ -843,7 +872,11 @@ export function PostComments({
       <EditContentModal
         open={!!editTarget}
         closeModal={() => setEditTarget(null)}
-        title={editTarget?.replyTo ? t('comments.editReply') : t('comments.editComment')}
+        title={
+          editTarget?.replyTo
+            ? t('comments.editReply')
+            : t('comments.editComment')
+        }
         initialText={editTarget?.text ?? ''}
         initialFont={editTarget?.font}
         onSave={handleSaveEdit}
@@ -857,7 +890,11 @@ export function PostComments({
       >
         <div onClick={preventBubbling()}>
           <ActionModal
-            title={deleteTarget?.isReply ? t('comments.deleteReply') : t('comments.deleteComment')}
+            title={
+              deleteTarget?.isReply
+                ? t('comments.deleteReply')
+                : t('comments.deleteComment')
+            }
             description={
               deleteTarget?.isReply
                 ? t('comments.deleteReplyBody')

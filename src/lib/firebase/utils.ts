@@ -1132,13 +1132,15 @@ export async function addReelComment(
     username: string;
     name?: string;
     text?: string | null;
-  } | null
+  } | null,
+  font?: string | null
 ): Promise<string> {
   const trimmed = text.trim();
   if (!trimmed) throw new Error(tx('err.emptyComment'));
 
   const tweetData: WithFieldValue<Omit<Tweet, 'id'>> = {
     text: trimmed,
+    font: font || null,
     parent: { id: reelId, username: reelOwnerId || '' },
     replyTo: replyTo ?? null,
     images: null,
