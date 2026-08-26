@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
 import { useModal } from '@lib/hooks/useModal';
@@ -42,6 +42,22 @@ const postImageBorderRadius: Readonly<PostImageBorderRadius> = {
   4: ['rounded-tl-2xl', 'rounded-tr-2xl', 'rounded-bl-2xl', 'rounded-br-2xl']
 };
 
+function activeSlideIndex(scroller: HTMLElement): number {
+  const mid = scroller.getBoundingClientRect().left + scroller.clientWidth / 2;
+  let best = 0;
+  let bestDist = Infinity;
+  Array.from(scroller.children).forEach((child, index) => {
+    if (!(child instanceof HTMLElement)) return;
+    const box = child.getBoundingClientRect();
+    const dist = Math.abs(box.left + box.width / 2 - mid);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = index;
+    }
+  });
+  return best;
+}
+
 export function ImagePreview({
   tweet,
   viewTweet,
@@ -52,6 +68,9 @@ export function ImagePreview({
 }: ImagePreviewProps): JSX.Element {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
+  const [slide, setSlide] = useState(0);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ x: 0, moved: false });
 
   const { open, openModal, closeModal } = useModal();
 
@@ -61,7 +80,8 @@ export function ImagePreview({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIndex]);
 
-  const handleSelectedImage = (index: number) => () => {
+  const handleSelectedImage = (index: number) => (): void => {
+    if (dragRef.current.moved) return;
     setSelectedIndex(index);
     openModal();
   };
@@ -80,6 +100,109 @@ export function ImagePreview({
   };
 
   const isTweet = tweet ?? viewTweet;
+  const feedCarousel = Boolean(isTweet && !removeImage && !chat);
+
+  const lightbox = (
+    <Modal
+      modalClassName={cn(
+        'flex justify-center w-full items-center relative',
+        isTweet && 'h-full'
+      )}
+      open={open}
+      closeModal={closeModal}
+      closePanelOnClick
+    >
+      <ImageModal
+        tweet={isTweet}
+        imageData={selectedImage as ImageData}
+        previewCount={previewCount}
+        selectedIndex={selectedIndex}
+        handleNextIndex={handleNextIndex}
+        onClose={closeModal}
+      />
+    </Modal>
+  );
+
+  if (feedCarousel) {
+    return (
+      <div
+        className='relative w-full overflow-hidden bg-black'
+        onClick={preventBubbling()}
+      >
+        {lightbox}
+        <div
+          ref={scrollerRef}
+          className='media-snap flex w-full'
+          onScroll={(event): void => {
+            setSlide(activeSlideIndex(event.currentTarget));
+          }}
+          onPointerDown={(event): void => {
+            dragRef.current = { x: event.clientX, moved: false };
+          }}
+          onPointerMove={(event): void => {
+            if (Math.abs(event.clientX - dragRef.current.x) > 10)
+              dragRef.current.moved = true;
+          }}
+        >
+          {imagesPreview.map(({ id, src, alt, thumbnail, type }, index) => {
+            const isVideo = type?.includes('video');
+            return (
+              <div
+                key={id}
+                className='media-slide relative h-full w-full shrink-0'
+              >
+                {isVideo ? (
+                  <CustomVideoPlayer
+                    src={src}
+                    poster={thumbnail}
+                    className='h-full w-full'
+                    videoClassName='h-full w-full object-cover'
+                  />
+                ) : (
+                  <button
+                    type='button'
+                    className='relative h-full w-full'
+                    onClick={preventBubbling(handleSelectedImage(index))}
+                  >
+                    <NextImage
+                      className='relative h-full w-full'
+                      imgClassName='object-cover'
+                      previewCount={1}
+                      layout='fill'
+                      src={src}
+                      alt={alt}
+                      useSkeleton
+                    />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {previewCount > 1 && (
+          <>
+            <span
+              className='absolute end-3 top-3 rounded-full bg-black/55 px-2 py-0.5
+                         text-[11px] font-semibold text-white backdrop-blur-sm'
+            >
+              {slide + 1}/{previewCount}
+            </span>
+            <div className='pointer-events-none absolute inset-x-0 bottom-3 flex justify-center gap-1.5'>
+              {imagesPreview.map(({ id }, index) => (
+                <span
+                  key={id}
+                  className={cn(
+                    'h-1.5 rounded-full transition-all',
+                    index === slide ? 'w-4 bg-white' : 'w-1.5 bg-white/45'
+                  )}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -93,24 +216,7 @@ export function ImagePreview({
         isTweet ? (chat ? 'gap-0.5' : 'mt-2 gap-0.5') : 'gap-3'
       )}
     >
-      <Modal
-        modalClassName={cn(
-          'flex justify-center w-full items-center relative',
-          isTweet && 'h-full'
-        )}
-        open={open}
-        closeModal={closeModal}
-        closePanelOnClick
-      >
-        <ImageModal
-          tweet={isTweet}
-          imageData={selectedImage as ImageData}
-          previewCount={previewCount}
-          selectedIndex={selectedIndex}
-          handleNextIndex={handleNextIndex}
-          onClose={closeModal}
-        />
-      </Modal>
+      {lightbox}
       <AnimatePresence mode='popLayout'>
         {imagesPreview.map(({ id, src, alt, thumbnail }, index) => {
           const isVideo = imagesPreview[index].type?.includes('video');

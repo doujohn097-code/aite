@@ -544,6 +544,36 @@ video:not([src]) {
   height: 0;
 }
 
+/* منشورات إنستغرام: وسائط بعرض البطاقة + تمرير أفقي سلس */
+.media-snap {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pinch-zoom;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.media-snap::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
+.media-slide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: min(70vh, 36rem);
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  background: #000;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .theme-background__image {
     animation: none;

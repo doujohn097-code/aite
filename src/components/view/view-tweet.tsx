@@ -73,6 +73,7 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
       className={cn(
         `accent-tab glass-card relative flex cursor-default flex-col gap-3 border-b
          border-light-border px-4 py-3 outline-none dark:border-dark-border`,
+        !!images?.length && 'overflow-hidden',
         reply && 'scroll-m-[3.25rem] pt-0'
       )}
       {...variants}
@@ -144,44 +145,45 @@ export function ViewTweet(tweet: ViewTweetProps): JSX.Element {
               <LinkifiedText text={text} />
             </p>
           )}
-          {images && (
-            <ImagePreview
-              viewTweet
-              imagesPreview={images}
-              previewCount={images.length}
-            />
-          )}
-          {audio && <TweetAudioPlayer audio={audio} />}
-          <div className='border-b border-light-border pb-2 dark:border-dark-border'>
-            <TweetDate
-              viewTweet
-              tweetLink={tweetLink}
-              createdAt={createdAt}
-              edited={!!edited}
-            />
-            <TweetStats
-              viewTweet
-              reply={reply}
-              userId={userId}
-              isOwner={isOwner}
-              tweetId={tweetId}
-              userLikes={userLikes}
-              userRetweets={userRetweets}
-              userReplies={userReplies}
-              openModal={openModal}
-              shared={{
-                id: tweetId,
-                kind: 'tweet',
-                authorName: name ?? null,
-                authorUsername: username ?? null,
-                authorPhoto: photoURL ?? null,
-                text: text ?? null,
-                // للفيديو: استخدم صورة البوستر وليس ملف الفيديو الخام
-                thumbnail: images?.[0]?.thumbnail ?? images?.[0]?.src ?? null
-              }}
-            />
-          </div>
         </div>
+      </div>
+      {images && images.length > 0 && (
+        <div className='-mx-4'>
+          <ImagePreview
+            viewTweet
+            imagesPreview={images}
+            previewCount={images.length}
+          />
+        </div>
+      )}
+      {audio && <TweetAudioPlayer audio={audio} />}
+      <div className='border-b border-light-border pb-2 dark:border-dark-border'>
+        <TweetDate
+          viewTweet
+          tweetLink={tweetLink}
+          createdAt={createdAt}
+          edited={!!edited}
+        />
+        <TweetStats
+          viewTweet
+          reply={reply}
+          userId={userId}
+          isOwner={isOwner}
+          tweetId={tweetId}
+          userLikes={userLikes}
+          userRetweets={userRetweets}
+          userReplies={userReplies}
+          openModal={openModal}
+          shared={{
+            id: tweetId,
+            kind: 'tweet',
+            authorName: name ?? null,
+            authorUsername: username ?? null,
+            authorPhoto: photoURL ?? null,
+            text: text ?? null,
+            thumbnail: images?.[0]?.thumbnail ?? images?.[0]?.src ?? null
+          }}
+        />
       </div>
     </motion.article>
   );

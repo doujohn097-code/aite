@@ -120,7 +120,8 @@ export function Tweet(tweet: TweetProps): JSX.Element {
         <a
           className={cn(
             `accent-tab hover-card glass-card relative flex flex-col 
-             gap-y-4 px-4 py-3 outline-none duration-200`,
+             gap-y-3 px-4 py-3 outline-none duration-200`,
+            images && 'overflow-hidden',
             parentTweet
               ? 'mt-0.5 pb-0 pt-2.5'
               : 'border-b border-light-border dark:border-dark-border'
@@ -223,41 +224,39 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                   <LinkifiedText text={text} />
                 </p>
               )}
-              <div className='mt-1 flex flex-col gap-2'>
-                {images && (
-                  <ImagePreview
-                    tweet
-                    imagesPreview={images}
-                    previewCount={images.length}
-                  />
-                )}
-                {audio && <TweetAudioPlayer audio={audio} />}
-                {!modal && (
-                  <TweetStats
-                    reply={reply}
-                    userId={userId}
-                    isOwner={isOwner}
-                    tweetId={tweetId}
-                    userLikes={userLikes}
-                    userReplies={userReplies}
-                    userRetweets={userRetweets}
-                    openModal={!parent ? openModal : undefined}
-                    shared={{
-                      id: tweetId,
-                      kind: 'tweet',
-                      authorName: name ?? null,
-                      authorUsername: username ?? null,
-                      authorPhoto: photoURL ?? null,
-                      text: text ?? null,
-                      // للفيديو: استخدم صورة البوستر وليس ملف الفيديو الخام
-                      thumbnail:
-                        images?.[0]?.thumbnail ?? images?.[0]?.src ?? null
-                    }}
-                  />
-                )}
-              </div>
             </div>
           </div>
+          {images && (
+            <div className='-mx-4'>
+              <ImagePreview
+                tweet
+                imagesPreview={images}
+                previewCount={images.length}
+              />
+            </div>
+          )}
+          {audio && <TweetAudioPlayer audio={audio} />}
+          {!modal && (
+            <TweetStats
+              reply={reply}
+              userId={userId}
+              isOwner={isOwner}
+              tweetId={tweetId}
+              userLikes={userLikes}
+              userReplies={userReplies}
+              userRetweets={userRetweets}
+              openModal={!parent ? openModal : undefined}
+              shared={{
+                id: tweetId,
+                kind: 'tweet',
+                authorName: name ?? null,
+                authorUsername: username ?? null,
+                authorPhoto: photoURL ?? null,
+                text: text ?? null,
+                thumbnail: images?.[0]?.thumbnail ?? images?.[0]?.src ?? null
+              }}
+            />
+          )}
         </a>
       </Link>
     </motion.article>
