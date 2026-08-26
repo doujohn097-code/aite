@@ -69,8 +69,45 @@ export function ImagePreview({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
   const [slide, setSlide] = useState(0);
+  const [aspects, setAspects] = useState<Record<string, number>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef({ x: 0, moved: false });
+  const dragRef = useRef({ x: 0, y: 0, moved: false });
+
+  useEffect(() => {
+    let cancelled = false;
+    imagesPreview.forEach((item) => {
+      if (item.type?.includes('video')) {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.src = item.src;
+        video.onloadedmetadata = (): void => {
+          if (cancelled || !video.videoWidth || !video.videoHeight) return;
+          setAspects((prev) =>
+            prev[item.id]
+              ? prev
+              : { ...prev, [item.id]: video.videoWidth / video.videoHeight }
+          );
+        };
+        return;
+      }
+      const image = new Image();
+      image.onload = (): void => {
+        if (cancelled || !image.naturalWidth || !image.naturalHeight) return;
+        setAspects((prev) =>
+          prev[item.id]
+            ? prev
+            : {
+                ...prev,
+                [item.id]: image.naturalWidth / image.naturalHeight
+              }
+        );
+      };
+      image.src = item.src;
+    });
+    return (): void => {
+      cancelled = true;
+    };
+  }, [imagesPreview]);
 
   const { open, openModal, closeModal } = useModal();
 
@@ -118,60 +155,72 @@ export function ImagePreview({
         previewCount={previewCount}
         selectedIndex={selectedIndex}
         handleNextIndex={handleNextIndex}
+        onSelectIndex={setSelectedIndex}
         onClose={closeModal}
       />
     </Modal>
   );
 
   if (feedCarousel) {
+    const current = imagesPreview[slide] ?? imagesPreview[0];
+    const aspect = current ? aspects[current.id] : undefined;
+
     return (
       <div
-        className='relative w-full overflow-hidden bg-black'
+        className='relative w-full overflow-hidden'
+        style={aspect ? { aspectRatio: `${aspect}` } : undefined}
         onClick={preventBubbling()}
       >
         {lightbox}
         <div
           ref={scrollerRef}
-          className='media-snap flex w-full'
+          className={cn('flex h-full w-full', previewCount > 1 && 'media-snap')}
           onScroll={(event): void => {
             setSlide(activeSlideIndex(event.currentTarget));
           }}
           onPointerDown={(event): void => {
-            dragRef.current = { x: event.clientX, moved: false };
+            dragRef.current = {
+              x: event.clientX,
+              y: event.clientY,
+              moved: false
+            };
           }}
           onPointerMove={(event): void => {
-            if (Math.abs(event.clientX - dragRef.current.x) > 10)
+            if (
+              Math.abs(event.clientX - dragRef.current.x) > 12 &&
+              Math.abs(event.clientX - dragRef.current.x) >
+                Math.abs(event.clientY - dragRef.current.y)
+            )
               dragRef.current.moved = true;
           }}
         >
           {imagesPreview.map(({ id, src, alt, thumbnail, type }, index) => {
             const isVideo = type?.includes('video');
             return (
-              <div
-                key={id}
-                className='media-slide relative h-full w-full shrink-0'
-              >
+              <div key={id} className='media-slide'>
                 {isVideo ? (
                   <CustomVideoPlayer
                     src={src}
                     poster={thumbnail}
-                    className='h-full w-full'
-                    videoClassName='h-full w-full object-cover'
+                    className='h-full w-full !bg-transparent'
+                    videoClassName='h-full w-full object-contain'
                   />
                 ) : (
                   <button
                     type='button'
-                    className='relative h-full w-full'
+                    className='relative block h-full w-full'
                     onClick={preventBubbling(handleSelectedImage(index))}
                   >
-                    <NextImage
-                      className='relative h-full w-full'
-                      imgClassName='object-cover'
-                      previewCount={1}
-                      layout='fill'
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={src}
                       alt={alt}
-                      useSkeleton
+                      className={
+                        aspect
+                          ? 'block h-full w-full object-contain'
+                          : 'block h-auto w-full'
+                      }
+                      draggable={false}
                     />
                   </button>
                 )}

@@ -544,7 +544,7 @@ video:not([src]) {
   height: 0;
 }
 
-/* منشورات إنستغرام: وسائط بعرض البطاقة + تمرير أفقي سلس */
+/* منشورات: وسائط بعرض البطاقة، بنسبة الصورة نفسها، تمرير أفقي دون حبس الإصبع عمودياً */
 .media-snap {
   display: flex;
   overflow-x: auto;
@@ -553,7 +553,7 @@ video:not([src]) {
   scroll-behavior: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
-  touch-action: pan-x pinch-zoom;
+  touch-action: pan-y pan-x;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -567,11 +567,9 @@ video:not([src]) {
   position: relative;
   flex: 0 0 100%;
   width: 100%;
-  aspect-ratio: 4 / 5;
-  max-height: min(70vh, 36rem);
+  height: 100%;
   scroll-snap-align: center;
   scroll-snap-stop: always;
-  background: #000;
 }
 
 @media (prefers-reduced-motion: reduce) {

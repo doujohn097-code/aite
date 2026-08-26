@@ -128,6 +128,7 @@ export function CustomVideoPlayer({
   return (
     <div
       className={cn('group relative overflow-hidden bg-black', className)}
+      style={{ touchAction: 'pan-y pan-x' }}
       onMouseMove={wakeControls}
       onClick={(e) => {
         e.preventDefault();

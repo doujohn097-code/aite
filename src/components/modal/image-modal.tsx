@@ -7,14 +7,12 @@ import cn from 'clsx';
 import { useLanguage } from '@lib/context/language-context';
 import { downloadRemoteMedia } from '@lib/download-media';
 import { preventBubbling } from '@lib/utils';
-import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { Loading } from '@components/ui/loading';
 import { CustomVideoPlayer } from '@components/ui/custom-video-player';
 import { backdrop, modal } from './modal';
 import type { VariantLabels } from 'framer-motion';
 import type { ImageData } from '@lib/types/file';
-import type { IconName } from '@components/ui/hero-icon';
 
 type ImageModalProps = {
   tweet?: boolean;
@@ -22,15 +20,9 @@ type ImageModalProps = {
   previewCount: number;
   selectedIndex?: number;
   handleNextIndex?: (type: 'prev' | 'next') => () => void;
+  onSelectIndex?: (index: number) => void;
   onClose?: () => void;
 };
-
-type ArrowButton = ['prev' | 'next', string | null, IconName];
-
-const arrowButtons: Readonly<ArrowButton[]> = [
-  ['prev', null, 'ArrowLeftIcon'],
-  ['next', 'order-1', 'ArrowRightIcon']
-];
 
 export function ImageModal({
   tweet,
@@ -38,6 +30,7 @@ export function ImageModal({
   previewCount,
   selectedIndex,
   handleNextIndex,
+  onSelectIndex,
   onClose
 }: ImageModalProps): JSX.Element {
   const { t } = useLanguage();
@@ -63,7 +56,7 @@ export function ImageModal({
     }
   };
 
-  const requireArrows = handleNextIndex && previewCount > 1;
+  const requirePager = previewCount > 1;
 
   useEffect(() => {
     if (
@@ -90,7 +83,7 @@ export function ImageModal({
   }, [...(tweet && previewCount > 1 ? [src] : [])]);
 
   useEffect(() => {
-    if (!requireArrows) return;
+    if (!handleNextIndex || !requirePager) return;
 
     const handleKeyDown = ({ key }: KeyboardEvent): void => {
       const callback =
@@ -109,21 +102,42 @@ export function ImageModal({
 
   return (
     <>
-      {requireArrows &&
-        arrowButtons.map(([name, className, iconName]) => (
-          <Button
-            className={cn(
-              `absolute z-10 hover:bg-light-primary/10 active:bg-light-primary/20
-               dark:hover:bg-dark-primary/10 dark:active:bg-dark-primary/20`,
-              name === 'prev' ? 'left-2' : 'right-2',
-              className
-            )}
-            onClick={preventBubbling(handleNextIndex(name))}
-            key={name}
-          >
-            <HeroIcon iconName={iconName} />
-          </Button>
-        ))}
+      {requirePager && (
+        <div
+          className='absolute inset-x-0 bottom-5 z-20 flex justify-center gap-1.5'
+          onClick={preventBubbling()}
+        >
+          {Array.from({ length: previewCount }, (_, index) => (
+            <button
+              type='button'
+              key={index}
+              aria-label={`${index + 1}`}
+              onClick={preventBubbling(() => {
+                if (onSelectIndex) {
+                  onSelectIndex(index);
+                  return;
+                }
+                if (!handleNextIndex || selectedIndex === undefined) return;
+                const delta = index - selectedIndex;
+                if (delta > 0)
+                  Array.from({ length: delta }).forEach(() =>
+                    handleNextIndex('next')()
+                  );
+                else if (delta < 0)
+                  Array.from({ length: -delta }).forEach(() =>
+                    handleNextIndex('prev')()
+                  );
+              })}
+              className={cn(
+                'h-1.5 rounded-full transition-all',
+                index === (selectedIndex ?? 0)
+                  ? 'w-4 bg-white'
+                  : 'w-1.5 bg-white/45'
+              )}
+            />
+          ))}
+        </div>
+      )}
       <AnimatePresence mode='wait'>
         {loading ? (
           <motion.div
