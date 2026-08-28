@@ -93,6 +93,7 @@ export async function createTweet(
     ...(tweetData.images ? { totalPhotos: increment(1) } : {})
   });
   await batch.commit();
+  if (!options?.isReply) void notifyFollowersOfPublish('post', tweetRef.id);
   return tweetRef.id;
 }
 
@@ -848,6 +849,35 @@ export async function createNotification(
   }
 }
 
+/** يُنبّه متابعي الناشر عند منشور أو ريل جديد — لا يوقف النشر إن فشل. */
+export async function notifyFollowersOfPublish(
+  kind: 'post' | 'reel',
+  contentId: string
+): Promise<void> {
+  if (!contentId) return;
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+    const token = await currentUser.getIdToken();
+    await fetch('/api/notifications/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(await appCheckHeaders())
+      },
+      body: JSON.stringify({
+        type: 'publish',
+        context: kind,
+        tweetId: kind === 'post' ? contentId : null,
+        storyId: kind === 'reel' ? contentId : null
+      })
+    });
+  } catch (error) {
+    console.warn('follower publish notification skipped:', error);
+  }
+}
+
 export function getStoryExpiration(): Timestamp {
   return Timestamp.fromMillis(Date.now() + STORY_LIFETIME_MS);
 }
@@ -968,6 +998,7 @@ export async function uploadReel(
 
   await batch.commit();
   await notifyMentions('reel', reelRef.id);
+  void notifyFollowersOfPublish('reel', reelRef.id);
 }
 
 export async function viewStory(

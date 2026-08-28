@@ -30,6 +30,27 @@ describe('notification targeting', () => {
     expect(notificationCopy(notification)).toBe('علّق على الريلز الخاص بك');
   });
 
+  it('notifies followers of a new post or reel', () => {
+    const post = {
+      type: 'publish' as const,
+      context: 'post' as const,
+      tweetId: 't9',
+      storyId: null,
+      storyUserId: null
+    };
+    const reel = {
+      type: 'publish' as const,
+      context: 'reel' as const,
+      tweetId: null,
+      storyId: 'reel2',
+      storyUserId: null
+    };
+    expect(notificationHref(post, 'salem')).toBe('/tweet/t9');
+    expect(notificationCopy(post)).toBe('نشر منشوراً جديداً');
+    expect(notificationHref(reel, 'salem')).toBe('/reels?video=reel2');
+    expect(notificationCopy(reel)).toBe('نشر ريلاً جديداً');
+  });
+
   it('keeps posts pointing at the tweet', () => {
     const notification = {
       type: 'like' as const,

@@ -44,6 +44,10 @@ const typeStyles: Record<
   mention: {
     icon: 'AtSymbolIcon',
     classes: 'bg-violet-500/50 text-violet-100 backdrop-blur-md'
+  },
+  publish: {
+    icon: 'SparklesIcon',
+    classes: 'bg-main-accent/60 text-white backdrop-blur-md'
   }
 };
 

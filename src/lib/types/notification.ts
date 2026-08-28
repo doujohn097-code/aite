@@ -6,7 +6,8 @@ export type NotificationType =
   | 'follow'
   | 'reply'
   | 'storyLike'
-  | 'mention';
+  | 'mention'
+  | 'publish';
 
 export type NotificationContext = 'post' | 'reel' | 'story';
 

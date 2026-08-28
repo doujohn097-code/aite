@@ -53,9 +53,7 @@ export function notificationActor(
     resolveUsername({ username: notification.fromUsername }) ||
     '';
   const photoURL =
-    user?.photoURL ||
-    notification.fromPhotoURL ||
-    '/assets/default-avatar.png';
+    user?.photoURL || notification.fromPhotoURL || '/assets/default-avatar.png';
   const id = user?.id || notification.fromUserId || '';
   return {
     id,
@@ -106,19 +104,29 @@ export function notificationCopy(
     case 'follow':
       return text('notif.follow');
     case 'like':
-      return context === 'reel' ? text('notif.likeReel') : text('notif.likePost');
+      return context === 'reel'
+        ? text('notif.likeReel')
+        : text('notif.likePost');
     case 'retweet':
       return text('notif.retweet');
     case 'reply':
-      return context === 'reel' ? text('notif.replyReel') : text('notif.replyPost');
+      return context === 'reel'
+        ? text('notif.replyReel')
+        : text('notif.replyPost');
     case 'storyLike':
-      return context === 'reel' ? text('notif.likeReel') : text('notif.storyLike');
+      return context === 'reel'
+        ? text('notif.likeReel')
+        : text('notif.storyLike');
     case 'mention':
       return context === 'reel'
         ? text('notif.mentionReel')
         : context === 'story'
         ? text('notif.mentionStory')
         : text('notif.mentionPost');
+    case 'publish':
+      return context === 'reel'
+        ? text('notif.publishReel')
+        : text('notif.publishPost');
     default:
       return text('notif.generic');
   }
@@ -185,6 +193,16 @@ export function notificationPushCopy(
         : {
             title: tx('notif.pushMentionTitle'),
             body: tx('notif.pushMentionPost', { name })
+          };
+    case 'publish':
+      return context === 'reel'
+        ? {
+            title: tx('notif.pushPublishReelTitle'),
+            body: tx('notif.pushPublishReelBody', { name })
+          }
+        : {
+            title: tx('notif.pushPublishPostTitle'),
+            body: tx('notif.pushPublishPostBody', { name })
           };
     default:
       return { title: 'Aite', body: tx('notif.pushGenericBody', { name }) };

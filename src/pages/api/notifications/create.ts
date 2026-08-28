@@ -15,7 +15,8 @@ type ActivityType =
   | 'follow'
   | 'reply'
   | 'storyLike'
-  | 'mention';
+  | 'mention'
+  | 'publish';
 
 type NotifyInput = {
   type?: ActivityType;
@@ -212,6 +213,79 @@ async function mentionTargets(
   targets.forEach((target) => {
     target.data.sourceId = sourceId;
   });
+  return { targets, sender };
+}
+
+const MAX_FOLLOWER_NOTIFY = 200;
+
+async function publishTargets(
+  senderId: string,
+  input: NotifyInput
+): Promise<{ targets: NotificationTarget[]; sender: Record<string, unknown> }> {
+  const firestore = admin.firestore();
+  const context = input.context;
+  let sourceId = '';
+  let baseData: Record<string, unknown> = {};
+  let url = '/notifications';
+
+  if (context === 'post') {
+    const tweetId = cleanId(input.tweetId);
+    if (!tweetId) throw new Error('invalid_target');
+    const snapshot = await firestore.doc(`tweets/${tweetId}`).get();
+    const data = asRecord(snapshot.data());
+    if (!snapshot.exists || data.createdBy !== senderId)
+      throw new Error('forbidden');
+    if (asRecord(data.parent).id) throw new Error('invalid_target');
+    sourceId = tweetId;
+    baseData = { type: 'publish', tweetId, context: 'post' };
+    url = `/tweet/${tweetId}`;
+  } else if (context === 'reel') {
+    const storyId = cleanId(input.storyId);
+    if (!storyId) throw new Error('invalid_target');
+    const snapshot = await firestore.doc(`stories/${storyId}`).get();
+    const data = asRecord(snapshot.data());
+    if (!snapshot.exists || data.userId !== senderId || data.kind !== 'reel')
+      throw new Error('forbidden');
+    sourceId = storyId;
+    baseData = { type: 'publish', storyId, context: 'reel' };
+    url = `/reels?video=${storyId}`;
+  } else throw new Error('invalid_target');
+
+  const senderSnapshot = await firestore.doc(`users/${senderId}`).get();
+  const sender = asRecord(senderSnapshot.data());
+  const senderBlocked = new Set(asStringArray(sender.blockedUsers));
+  const followerIds = Array.from(
+    new Set(asStringArray(sender.followers))
+  ).filter((id) => id && id !== senderId && !senderBlocked.has(id));
+
+  const allowed: string[] = [];
+  for (let index = 0; index < followerIds.length; index += 100) {
+    if (allowed.length >= MAX_FOLLOWER_NOTIFY) break;
+    const chunk = followerIds.slice(index, index + 100);
+    const refs = chunk.map((id) => firestore.doc(`users/${id}`));
+    if (!refs.length) continue;
+    const snapshots = await firestore.getAll(...refs);
+    snapshots.forEach((document) => {
+      if (allowed.length >= MAX_FOLLOWER_NOTIFY || !document.exists) return;
+      const blocked = asStringArray(asRecord(document.data()).blockedUsers);
+      if (blocked.includes(senderId)) return;
+      allowed.push(document.id);
+    });
+  }
+
+  const targets: NotificationTarget[] = allowed.map((userId) => ({
+    userId,
+    data: {
+      ...baseData,
+      fromUserId: senderId,
+      toUserId: userId,
+      read: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      sourceId
+    },
+    url
+  }));
+
   return { targets, sender };
 }
 
@@ -433,5 +507,6 @@ export default async function handler(
 }
 
 export const config = {
-  api: { bodyParser: { sizeLimit: '16kb' } }
+  api: { bodyParser: { sizeLimit: '16kb' } },
+  maxDuration: 60
 };
