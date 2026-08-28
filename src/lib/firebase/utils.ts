@@ -859,7 +859,7 @@ export async function notifyFollowersOfPublish(
     const currentUser = auth.currentUser;
     if (!currentUser) return;
     const token = await currentUser.getIdToken();
-    await fetch('/api/notifications/create', {
+    const response = await fetch('/api/notifications/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -873,6 +873,14 @@ export async function notifyFollowersOfPublish(
         storyId: kind === 'reel' ? contentId : null
       })
     });
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      console.warn(
+        'follower publish notification failed:',
+        response.status,
+        body
+      );
+    }
   } catch (error) {
     console.warn('follower publish notification skipped:', error);
   }

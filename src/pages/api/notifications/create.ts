@@ -254,8 +254,18 @@ async function publishTargets(
   const senderSnapshot = await firestore.doc(`users/${senderId}`).get();
   const sender = asRecord(senderSnapshot.data());
   const senderBlocked = new Set(asStringArray(sender.blockedUsers));
+  // المصدر الأساسي: من يتابع الناشر فعلياً (following يحتوي معرّفه).
+  // ندمج أيضاً sender.followers لو تأخّر أحد الحقلين عن الآخر.
+  const followingSnap = await firestore
+    .collection('users')
+    .where('following', 'array-contains', senderId)
+    .limit(MAX_FOLLOWER_NOTIFY)
+    .get();
   const followerIds = Array.from(
-    new Set(asStringArray(sender.followers))
+    new Set([
+      ...followingSnap.docs.map((document) => document.id),
+      ...asStringArray(sender.followers)
+    ])
   ).filter((id) => id && id !== senderId && !senderBlocked.has(id));
 
   const allowed: string[] = [];
@@ -449,6 +459,31 @@ export default async function handler(
 
     const input = (req.body ?? {}) as NotifyInput;
     const firestore = admin.firestore();
+
+    if (input.type === 'publish') {
+      const { targets, sender } = await publishTargets(senderId, input);
+      let created = 0;
+      for (const target of targets) {
+        const sourceId = String(target.data.sourceId ?? 'content');
+        delete target.data.sourceId;
+        const id = createHash('sha256')
+          .update(`publish:${senderId}:${target.userId}:${sourceId}`)
+          .digest('hex')
+          .slice(0, 40);
+        const ref = firestore.doc(`users/${target.userId}/notifications/${id}`);
+        try {
+          await ref.create({ ...target.data, ...senderFields(sender) });
+          created += 1;
+          await sendActivityPush(target, sender);
+        } catch (error) {
+          const code = (error as { code?: number | string })?.code;
+          if (code !== 6 && code !== '6' && code !== 'already-exists')
+            throw error;
+        }
+      }
+      res.status(200).json({ ok: true, created });
+      return;
+    }
 
     if (input.type === 'mention') {
       const { targets, sender } = await mentionTargets(senderId, input);
