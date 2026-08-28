@@ -134,10 +134,12 @@ export default function App({
         <AuthContextProvider>
           <ThemeContextProvider>
             <ThemeBackground />
-            <AppUpdatePrompt />
-            <GlobalPullToRefresh />
-            <ImpersonationBanner />
-            {getLayout(<Component {...pageProps} />)}
+            <div className='app-foreground'>
+              <AppUpdatePrompt />
+              <GlobalPullToRefresh />
+              <ImpersonationBanner />
+              {getLayout(<Component {...pageProps} />)}
+            </div>
           </ThemeContextProvider>
         </AuthContextProvider>
       </LanguageProvider>

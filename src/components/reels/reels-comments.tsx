@@ -455,7 +455,7 @@ export function ReelsComments({
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 350, damping: 35 }}
             onClick={(e) => e.stopPropagation()}
-            className='mx-auto flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border-t border-light-border bg-main-background shadow-2xl dark:border-dark-border'
+            className='comments-fog mx-auto flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border-t border-light-border bg-main-background shadow-2xl dark:border-dark-border'
           >
             {/* Drag Pill Handle */}
             <div

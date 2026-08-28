@@ -21,13 +21,12 @@ export function ThemeBackground(): JSX.Element {
             key={wallpaper}
             className='theme-background__image'
             style={{ backgroundImage: `url('${wallpaper}')` }}
-            initial={{ opacity: 0, scale: 1.12, filter: 'blur(14px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 1.04, filter: 'blur(10px)' }}
+            initial={{ opacity: 0.4, scale: 1.06 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
             transition={{
-              opacity: { duration: 0.85, ease: EASE },
-              scale: { duration: 1.15, ease: EASE },
-              filter: { duration: 0.9, ease: EASE }
+              opacity: { duration: 0.55, ease: EASE },
+              scale: { duration: 0.9, ease: EASE }
             }}
           />
         )}

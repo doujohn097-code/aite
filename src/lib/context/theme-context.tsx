@@ -92,8 +92,16 @@ export function ThemeContextProvider({
       if (dark) root.classList.add('dark');
       else root.classList.remove('dark');
 
-      if (wallpaper) root.classList.add('theme-wallpaper');
-      else root.classList.remove('theme-wallpaper');
+      if (wallpaper) {
+        root.classList.add('theme-wallpaper');
+        root.style.setProperty(
+          '--theme-wallpaper-image',
+          `url("${wallpaper}")`
+        );
+      } else {
+        root.classList.remove('theme-wallpaper');
+        root.style.setProperty('--theme-wallpaper-image', 'none');
+      }
 
       root.dataset.theme = theme;
 

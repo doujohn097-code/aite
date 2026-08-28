@@ -383,7 +383,7 @@ export function PostComments({
 
   return (
     <>
-      <section className='flex flex-col'>
+      <section className='comments-fog flex flex-col overflow-hidden rounded-[22px]'>
         {/* Header */}
         <div className='flex items-center gap-2 border-y border-light-border px-4 py-3 dark:border-dark-border'>
           <h2 className='text-base font-bold text-light-primary dark:text-dark-primary'>
@@ -744,7 +744,7 @@ export function PostComments({
         </div>
         {/* Composer — مثبت أسفل الشاشة فوق شريط التنقل ليبقى دائمًا ظاهرًا */}
         <div
-          className='sticky bottom-16 z-30 flex w-full min-w-0 flex-col border-t border-light-border
+          className='comments-fog sticky bottom-16 z-30 flex w-full min-w-0 flex-col border-t border-light-border
                      bg-main-background pb-1 dark:border-dark-border xs:bottom-0 xs:pb-0'
         >
           <AnimatePresence>

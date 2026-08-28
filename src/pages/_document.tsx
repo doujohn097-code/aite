@@ -14,7 +14,13 @@ const themeBootstrap = `(function(){try{
   var known = {light:1,dim:1,dark:1,lilac:1,ocean:1,crimson:1,violet:1,emerald:1};
   if(!t || !known[t]) t = 'dark';
   if(dark[t]) r.classList.add('dark'); else r.classList.remove('dark');
-  if(wallpaper[t]) r.classList.add('theme-wallpaper');
+  if(wallpaper[t]){
+    r.classList.add('theme-wallpaper');
+    r.style.setProperty('--theme-wallpaper-image','url("/assets/themes/'+t+'.webp")');
+  } else {
+    r.classList.remove('theme-wallpaper');
+    r.style.setProperty('--theme-wallpaper-image','none');
+  }
   r.dataset.theme = t;
   r.style.setProperty('--main-background','var(--'+t+'-background)');
   r.style.setProperty('--main-search-background','var(--'+t+'-search-background)');

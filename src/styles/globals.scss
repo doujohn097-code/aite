@@ -306,11 +306,19 @@ video:not([src]) {
    المظاهر ذات الخلفية السائلة (wallpaper themes)
    الأسطح تصبح زجاجية شفافة فوق الخلفية مع الحفاظ على وضوح النص
    ========================================================= */
+html.theme-wallpaper {
+  background-color: rgb(var(--main-background));
+  background-image: var(--theme-wallpaper-image, none);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
 .theme-wallpaper {
   --toast-bg: var(--main-background);
 
   body {
-    background-color: transparent;
+    background-color: transparent !important;
   }
 
   /* الأسطح الأساسية: زجاج شفاف + ضبابية */
@@ -379,9 +387,14 @@ video:not([src]) {
 .theme-background {
   position: fixed;
   inset: 0;
-  z-index: -10;
+  z-index: 0;
   overflow: hidden;
   pointer-events: none;
+}
+
+.app-foreground {
+  position: relative;
+  z-index: 1;
 }
 
 .theme-background__image {
@@ -724,6 +737,19 @@ video:not([src]) {
   -webkit-backdrop-filter: blur(20px) saturate(160%);
 }
 
+/* ضباب تحت التعليقات في كل المظاهر ما عدا الأسود الكامل */
+html:not([data-theme='dark']) .comments-fog {
+  background-color: rgb(var(--main-background) / 0.86);
+  backdrop-filter: blur(24px) saturate(165%);
+  -webkit-backdrop-filter: blur(24px) saturate(165%);
+}
+
+html.theme-wallpaper .comments-fog {
+  background-color: rgb(var(--main-background) / 0.8);
+  backdrop-filter: blur(28px) saturate(170%);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+}
+
 /* =========================================================
    توافق متصفحات الجوال و PWA
    ========================================================= */
@@ -779,9 +805,14 @@ video:not([src]) {
     .sidebar-glass,
     .theme-surface > *,
     .theme-surface > section > article,
-    .theme-surface > section > a {
+    .theme-surface > section > a,
+    .comments-fog {
       background-color: rgb(var(--main-background) / 0.94);
     }
+  }
+
+  html:not([data-theme='dark']) .comments-fog {
+    background-color: rgb(var(--main-background) / 0.94);
   }
 
   .theme-background__veil {
