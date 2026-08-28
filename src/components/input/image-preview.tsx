@@ -269,6 +269,59 @@ export function ImagePreview({
     );
   }
 
+  if (removeImage) {
+    return (
+      <div className='grid grid-cols-3 gap-2 xs:grid-cols-5'>
+        {lightbox}
+        <AnimatePresence mode='popLayout'>
+          {imagesPreview.map(({ id, src, alt, thumbnail }, index) => {
+            const isVideo = imagesPreview[index].type?.includes('video');
+            return (
+              <motion.button
+                type='button'
+                className='accent-tab group relative aspect-square overflow-hidden rounded-2xl'
+                {...variants}
+                onClick={preventBubbling(handleSelectedImage(index))}
+                layout
+                key={id}
+              >
+                {isVideo ? (
+                  <CustomVideoPlayer
+                    src={src}
+                    poster={thumbnail}
+                    className='h-full w-full'
+                    videoClassName='h-full w-full rounded-2xl object-cover'
+                  />
+                ) : (
+                  <NextImage
+                    className='relative h-full w-full cursor-pointer transition hover:brightness-75'
+                    imgClassName='rounded-2xl object-cover'
+                    previewCount={previewCount}
+                    layout='fill'
+                    src={src}
+                    alt={alt}
+                    useSkeleton
+                  />
+                )}
+                <Button
+                  className='absolute left-0 top-0 z-10 translate-x-1 translate-y-1
+                             bg-light-primary/75 p-1 backdrop-blur-sm hover:bg-image-preview-hover/75'
+                  onClick={preventBubbling(removeImage(id))}
+                >
+                  <HeroIcon
+                    className='h-5 w-5 text-white'
+                    iconName='XMarkIcon'
+                  />
+                  <ToolTip className='translate-y-2' tip='إزالة' />
+                </Button>
+              </motion.button>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -345,20 +398,6 @@ export function ImagePreview({
                   alt={alt}
                   useSkeleton={isTweet}
                 />
-              )}
-              {removeImage && (
-                <Button
-                  className='group absolute left-0 top-0 translate-x-1 translate-y-1
-                           bg-light-primary/75 p-1 backdrop-blur-sm 
-                           hover:bg-image-preview-hover/75'
-                  onClick={preventBubbling(removeImage(id))}
-                >
-                  <HeroIcon
-                    className='h-5 w-5 text-white'
-                    iconName='XMarkIcon'
-                  />
-                  <ToolTip className='translate-y-2' tip='إزالة' />
-                </Button>
               )}
             </motion.button>
           );

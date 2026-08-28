@@ -4,6 +4,10 @@ export const MAX_IMAGE_UPLOAD_BYTES = 20 * MEBIBYTE;
 export const MAX_VIDEO_UPLOAD_BYTES = 100 * MEBIBYTE;
 export const MAX_AUDIO_UPLOAD_BYTES = 25 * MEBIBYTE;
 export const MAX_VOICE_DURATION_SECONDS = 10 * 60;
+/** صور/فيديو المنشور الواحد */
+export const POST_MEDIA_MAX = 10;
+/** طلب الرفع قد يشمل بوستر لكل فيديو */
+export const UPLOAD_FILES_MAX = POST_MEDIA_MAX * 2;
 
 export function normalizeMediaType(type: string): string {
   return type.split(';', 1)[0].trim().toLowerCase();

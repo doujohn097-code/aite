@@ -10,7 +10,11 @@ import { useAuth } from '@lib/context/auth-context';
 import { getImagesData } from '@lib/validation';
 import { getAudioWaveform } from '@lib/audio';
 import { notifyMentions } from '@lib/mentions';
-import { formatFileSize, MAX_AUDIO_UPLOAD_BYTES } from '@lib/media-limits';
+import {
+  formatFileSize,
+  MAX_AUDIO_UPLOAD_BYTES,
+  POST_MEDIA_MAX
+} from '@lib/media-limits';
 import { UserAvatar } from '@components/user/user-avatar';
 import { InputForm, fromTop } from './input-form';
 import { ImagePreview } from './image-preview';
@@ -225,7 +229,7 @@ export function Input({
     });
 
     if (!imagesData) {
-      toast.error(t('err.maxImages'));
+      toast.error(t('err.maxImages', { n: POST_MEDIA_MAX }));
       return;
     }
 

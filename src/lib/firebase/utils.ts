@@ -24,6 +24,7 @@ import {
   formatFileSize,
   inferMediaType,
   maxUploadBytesForType,
+  POST_MEDIA_MAX,
   uploadTimeoutMs
 } from '@lib/media-limits';
 import {
@@ -239,7 +240,8 @@ export async function editTweet(
   if (!trimmed && !hasImages && !options?.allowEmpty)
     throw new Error(tx('err.emptyPost'));
   if (trimmed.length > CONTENT_STORE_MAX) throw new Error(tx('err.longText'));
-  if (nextImages && nextImages.length > 4) throw new Error(tx('err.maxFiles'));
+  if (nextImages && nextImages.length > POST_MEDIA_MAX)
+    throw new Error(tx('err.maxFiles', { n: POST_MEDIA_MAX }));
 
   const tweetRef = doc(tweetsCollection, tweetId);
   const snap = await getDoc(tweetRef);
@@ -1142,6 +1144,7 @@ export async function addReelComment(
 ): Promise<string> {
   const trimmed = text.trim();
   if (!trimmed) throw new Error(tx('err.emptyComment'));
+  if (trimmed.length > COMMENT_TEXT_MAX) throw new Error(tx('err.longText'));
 
   const tweetData: WithFieldValue<Omit<Tweet, 'id'>> = {
     text: trimmed,

@@ -2,6 +2,7 @@ import { tx } from './i18n/tx';
 import { getRandomId } from './random';
 import {
   MAX_IMAGE_UPLOAD_BYTES,
+  POST_MEDIA_MAX,
   inferMediaType,
   maxUploadBytesForType
 } from './media-limits';
@@ -112,27 +113,34 @@ type ImagesData = {
 type ImagesDataOptions = {
   currentFiles?: number;
   allowUploadingVideos?: boolean;
+  maxFiles?: number;
 };
 
 export function getImagesData(
   files: FileList | null,
-  { currentFiles, allowUploadingVideos }: ImagesDataOptions = {}
+  {
+    currentFiles,
+    allowUploadingVideos,
+    maxFiles = POST_MEDIA_MAX
+  }: ImagesDataOptions = {}
 ): ImagesData | null {
   if (!files || !files.length) return null;
 
   const singleEditingMode = currentFiles === undefined;
+  const room = singleEditingMode
+    ? files.length
+    : Math.max(0, maxFiles - currentFiles);
+  if (!room) return null;
 
-  const rawImages =
-    singleEditingMode ||
-    !(currentFiles === 4 || files.length > 4 - currentFiles)
-      ? Array.from(files).filter(({ name, size, type }) =>
-          allowUploadingVideos
-            ? isValidMedia(name, size, type)
-            : isValidImage(name, size)
-        )
-      : null;
+  const rawImages = Array.from(files)
+    .filter(({ name, size, type }) =>
+      allowUploadingVideos
+        ? isValidMedia(name, size, type)
+        : isValidImage(name, size)
+    )
+    .slice(0, room);
 
-  if (!rawImages || !rawImages.length) return null;
+  if (!rawImages.length) return null;
 
   const imagesId = rawImages.map(({ name }) => {
     const randomId = getRandomId();

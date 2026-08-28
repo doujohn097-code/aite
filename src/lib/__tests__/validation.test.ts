@@ -149,24 +149,28 @@ describe('getImagesData', () => {
     );
   });
 
-  it('caps the total at 4 images when currentFiles is provided', () => {
-    const four = [
-      makeFile('a.png', 'image/png'),
-      makeFile('b.png', 'image/png'),
-      makeFile('c.png', 'image/png'),
-      makeFile('d.png', 'image/png')
-    ];
-    // 4 files with currentFiles 0 keeps all 4 (4 > 4 is false)
+  it('caps the total at 10 images when currentFiles is provided', () => {
+    const ten = Array.from({ length: 10 }, (_, i) =>
+      makeFile(`${i}.png`, 'image/png')
+    );
     expect(
-      getImagesData(makeFileList(four), { currentFiles: 0 })?.imagesPreviewData
-    ).toHaveLength(4);
+      getImagesData(makeFileList(ten), { currentFiles: 0 })?.imagesPreviewData
+    ).toHaveLength(10);
 
-    // a 5th file pushes over the limit and the whole selection is rejected
-    const five = [...four, makeFile('e.png', 'image/png')];
-    expect(getImagesData(makeFileList(five), { currentFiles: 0 })).toBeNull();
+    const eleven = [...ten, makeFile('extra.png', 'image/png')];
+    expect(
+      getImagesData(makeFileList(eleven), { currentFiles: 0 })
+        ?.imagesPreviewData
+    ).toHaveLength(10);
 
-    // currentFiles counts already-selected files against the 4-image total
-    expect(getImagesData(makeFileList(five), { currentFiles: 1 })).toBeNull();
+    expect(
+      getImagesData(makeFileList(eleven), { currentFiles: 9 })
+        ?.imagesPreviewData
+    ).toHaveLength(1);
+
+    expect(
+      getImagesData(makeFileList(eleven), { currentFiles: 10 })
+    ).toBeNull();
   });
 
   it('does not cap in single editing mode (currentFiles undefined)', () => {

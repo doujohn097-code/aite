@@ -2,10 +2,14 @@ import { verifyIdToken, isAdminConfigured } from '@lib/firebase-admin';
 import { getUploadUrl, isR2Configured } from '@lib/r2';
 import { consumeRateLimit } from '@lib/server/rate-limit';
 import { assertAppCheck } from '@lib/server/app-check';
-import { inferMediaType, maxUploadBytesForType } from '@lib/media-limits';
+import {
+  inferMediaType,
+  maxUploadBytesForType,
+  UPLOAD_FILES_MAX
+} from '@lib/media-limits';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const MAX_FILES = 8;
+const MAX_FILES = UPLOAD_FILES_MAX;
 const MAX_FILE_NAME_LENGTH = 120;
 const ALLOWED_TYPES = new Set([
   'image/jpeg',

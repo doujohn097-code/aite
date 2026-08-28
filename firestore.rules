@@ -46,7 +46,7 @@ service cloud.firestore {
         && request.resource.data.userId == resource.data.userId;
     }
     function validText(value, maxLength) { return value == null || (value is string && value.size() <= maxLength); }
-    function validImages(images) { return images == null || (images is list && images.size() <= 4); }
+    function validImages(images) { return images == null || (images is list && images.size() <= 10); }
     function onlyCurrentUserChanged(oldList, newList) {
       return oldList.toSet().difference(newList.toSet()).hasOnly([request.auth.uid])
         && newList.toSet().difference(oldList.toSet()).hasOnly([request.auth.uid]);

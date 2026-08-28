@@ -16,6 +16,7 @@ import { useLanguage } from '@lib/context/language-context';
 import { FontPicker } from '@components/input/font-picker';
 import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
 import { postTextMax } from '@lib/text-limits';
+import { POST_MEDIA_MAX } from '@lib/media-limits';
 
 export type EditMediaKind = 'none' | 'images' | 'video';
 
@@ -57,7 +58,7 @@ export function EditContentModal({
 
   const { user, isAdmin } = useAuth();
   const limit = maxLength ?? postTextMax(isAdmin);
-  const maxFiles = mediaKind === 'video' ? 1 : 4;
+  const maxFiles = mediaKind === 'video' ? 1 : POST_MEDIA_MAX;
   const [value, setValue] = useState(initialText);
   const [font, setFont] = useState(initialFont || DEFAULT_TEXT_FONT);
   const [keptImages, setKeptImages] = useState<ImagesPreview>(
@@ -116,7 +117,9 @@ export function EditContentModal({
     if (fileRef.current) fileRef.current.value = '';
     if (!imagesData) {
       toast.error(
-        mediaKind === 'video' ? t('media.pickVideo') : t('media.pickMedia')
+        mediaKind === 'video'
+          ? t('media.pickVideo')
+          : t('media.pickMedia', { n: POST_MEDIA_MAX })
       );
       return;
     }
