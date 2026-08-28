@@ -12,6 +12,7 @@ import {
   shouldOfferUpdate
 } from '@lib/app-update';
 import { tx } from '@lib/i18n/tx';
+import { isAdminPath } from '@lib/admin-path';
 import { Button } from '@components/ui/button';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { AppUpdate } from '@lib/types/app-update';
@@ -117,7 +118,7 @@ export function AppUpdatePrompt(): JSX.Element | null {
   const downloading = phase === 'busy';
   const visible =
     !hidden &&
-    router.pathname !== '/admin' &&
+    !isAdminPath(router.pathname) &&
     shouldOfferUpdate(update, nativeInfo, { waitForNative });
 
   const refresh = useCallback(async (): Promise<void> => {

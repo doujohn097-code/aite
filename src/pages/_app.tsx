@@ -7,6 +7,7 @@ import { Capacitor } from '@capacitor/core';
 import { AuthContextProvider } from '@lib/context/auth-context';
 import { useViewportFix } from '@lib/hooks/useViewportFix';
 import { isSafeInternalPath } from '@lib/utils';
+import { isAdminPath } from '@lib/admin-path';
 import { LanguageProvider } from '@lib/context/language-context';
 import { ThemeContextProvider } from '@lib/context/theme-context';
 import { AppHead } from '@components/common/app-head';
@@ -42,7 +43,7 @@ function isRestorableRoute(path: string): boolean {
     isSafeInternalPath(path) &&
     path !== '/' &&
     !path.startsWith('/accounts') &&
-    !path.startsWith('/admin')
+    !isAdminPath(path)
   );
 }
 

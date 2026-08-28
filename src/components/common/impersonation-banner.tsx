@@ -7,6 +7,7 @@ import {
   type ImpersonationSession
 } from '@lib/impersonation';
 import { unregisterDevicePushToken } from '@lib/native-bridge';
+import { ADMIN_PATH } from '@lib/admin-path';
 import { Button } from '@components/ui/button';
 
 export function ImpersonationBanner(): JSX.Element | null {
@@ -28,7 +29,7 @@ export function ImpersonationBanner(): JSX.Element | null {
     await unregisterDevicePushToken(user.id);
     clearImpersonation();
     await signOut();
-    void router.replace('/admin');
+    void router.replace(ADMIN_PATH);
   };
 
   return (
