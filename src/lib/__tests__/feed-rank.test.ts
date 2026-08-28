@@ -41,8 +41,12 @@ const baseCtx: RankContext = {
 describe('feed-rank helpers', () => {
   it('builds a day-stable session seed', () => {
     const start = Math.floor(now / DAY_MS) * DAY_MS;
-    expect(sessionSeed('me', start)).toBe(sessionSeed('me', start + DAY_MS - 1));
-    expect(sessionSeed('me', start)).not.toBe(sessionSeed('me', start + DAY_MS));
+    expect(sessionSeed('me', start)).toBe(
+      sessionSeed('me', start + DAY_MS - 1)
+    );
+    expect(sessionSeed('me', start)).not.toBe(
+      sessionSeed('me', start + DAY_MS)
+    );
     expect(sessionSeed(null, now)).toMatch(/^anon:/);
   });
 
@@ -79,7 +83,10 @@ describe('feed-rank helpers', () => {
 describe('scoreItem', () => {
   it('boosts followed authors over strangers with equal stats', () => {
     const followed = scoreItem(item({ id: 'f', authorId: 'friend' }), baseCtx);
-    const stranger = scoreItem(item({ id: 's', authorId: 'stranger' }), baseCtx);
+    const stranger = scoreItem(
+      item({ id: 's', authorId: 'stranger' }),
+      baseCtx
+    );
     expect(followed).toBeGreaterThan(stranger);
   });
 });

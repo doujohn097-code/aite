@@ -213,7 +213,9 @@ export function NewMessageModal({
                     )}
                   </span>
                 ) : (
-                  busyId === person.id && <Loading className='ms-auto h-4 w-4' />
+                  busyId === person.id && (
+                    <Loading className='ms-auto h-4 w-4' />
+                  )
                 )}
               </button>
             );

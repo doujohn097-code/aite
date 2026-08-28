@@ -169,7 +169,10 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
       const code = (err as { code?: string; api?: string })?.code ?? '';
       const api = (err as { api?: string })?.api;
       if (api) toast.error(apiErrorMessage(api));
-      else if (code === 'auth/wrong-password' || code === 'auth/invalid-credential')
+      else if (
+        code === 'auth/wrong-password' ||
+        code === 'auth/invalid-credential'
+      )
         toast.error(t('settings.wrongPass'));
       else if (code === 'auth/too-many-requests')
         toast.error(t('settings.tooMany'));
@@ -177,7 +180,9 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
         toast.error(t('settings.passWeakNew'));
       else
         toast.error(
-          err instanceof Error && !code ? err.message : t('settings.changeFailed')
+          err instanceof Error && !code
+            ? err.message
+            : t('settings.changeFailed')
         );
     } finally {
       setLoading(false);
@@ -258,7 +263,9 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
         toast.error(t('settings.tooMany'));
       else
         toast.error(
-          err instanceof Error && !code ? err.message : t('settings.deleteFailed')
+          err instanceof Error && !code
+            ? err.message
+            : t('settings.deleteFailed')
         );
     } finally {
       setLoading(false);
@@ -320,8 +327,8 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
             </div>
             <HeroIcon
               className='h-4 w-4 text-light-secondary dark:text-dark-secondary'
-                iconName={isRtl ? 'ChevronLeftIcon' : 'ChevronRightIcon'}
-              />
+              iconName={isRtl ? 'ChevronLeftIcon' : 'ChevronRightIcon'}
+            />
           </button>
 
           <button
@@ -510,9 +517,7 @@ export function SettingsModal({ closeModal }: SettingsModalProps): JSX.Element {
                        text-sm leading-relaxed text-accent-red'
           >
             <p className='font-bold'>{t('settings.deleteWarnTitle')}</p>
-            <p className='mt-1'>
-              {t('settings.deleteWarnBody', { username })}
-            </p>
+            <p className='mt-1'>{t('settings.deleteWarnBody', { username })}</p>
           </div>
           <InputField
             label={t('auth.password')}

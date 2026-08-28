@@ -17,7 +17,11 @@ type ConversationCardProps = {
   active?: boolean;
 };
 
-function formatListTime(timestamp: unknown, locale: string, yesterdayLabel: string): string {
+function formatListTime(
+  timestamp: unknown,
+  locale: string,
+  yesterdayLabel: string
+): string {
   const millis = getTimestampMillis(timestamp);
   if (!millis) return '';
   const date = new Date(millis);

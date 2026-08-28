@@ -30,8 +30,8 @@ export async function saveDeviceSession(
 
   const existing = await col.orderBy('lastUsedAt', 'desc').get();
   const stale = existing.docs.filter((doc, index) => {
-    const lastUsed =
-      typeof doc.data().lastUsedAt === 'number' ? doc.data().lastUsedAt : 0;
+    const lastUsedAt = doc.data().lastUsedAt as unknown;
+    const lastUsed = typeof lastUsedAt === 'number' ? lastUsedAt : 0;
     return index >= MAX_SESSIONS || Date.now() - lastUsed > SESSION_TTL_MS;
   });
   await Promise.all(stale.map((doc) => doc.ref.delete()));
@@ -55,8 +55,8 @@ export async function consumeDeviceSession(
   const right = Buffer.from(hash);
   if (left.length !== right.length || !timingSafeEqual(left, right))
     return false;
-  const lastUsed =
-    typeof snap.data()?.lastUsedAt === 'number' ? snap.data()!.lastUsedAt : 0;
+  const lastUsedAt = snap.data()?.lastUsedAt as unknown;
+  const lastUsed = typeof lastUsedAt === 'number' ? lastUsedAt : 0;
   if (Date.now() - lastUsed > SESSION_TTL_MS) {
     await ref.delete().catch(() => undefined);
     return false;

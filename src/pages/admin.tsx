@@ -533,10 +533,10 @@ export default function Admin(): JSX.Element {
               </p>
             )}
             <p className='text-sm leading-relaxed text-light-secondary dark:text-dark-secondary'>
-              يظهر الإعلان فقط لمن نسخته أقدم من رمز الإصدار الذي تدخله.
-              النسخة الحالية للمنصة {APP_VERSION_NAME} (رمز {APP_VERSION_CODE})
-              — استخدم رقماً أكبر. أثناء التنزيل تختفي «لاحقاً» ويظهر شريط
-              التقدم حتى لا يخرج المستخدم.
+              يظهر الإعلان فقط لمن نسخته أقدم من رمز الإصدار الذي تدخله. النسخة
+              الحالية للمنصة {APP_VERSION_NAME} (رمز {APP_VERSION_CODE}) —
+              استخدم رقماً أكبر. أثناء التنزيل تختفي «لاحقاً» ويظهر شريط التقدم
+              حتى لا يخرج المستخدم.
             </p>
             <input
               value={updateForm.versionName}
@@ -662,8 +662,8 @@ export default function Admin(): JSX.Element {
                         verified={targetUser.verified}
                       />
                       <p className='mt-0.5 text-[11px] text-light-secondary dark:text-dark-secondary'>
-                        {(targetUser.following?.length ?? 0)} يتابع ·{' '}
-                        {(targetUser.followers?.length ?? 0)} متابع ·{' '}
+                        {targetUser.following?.length ?? 0} يتابع ·{' '}
+                        {targetUser.followers?.length ?? 0} متابع ·{' '}
                         {targetUser.totalTweets ?? 0} منشور
                       </p>
                     </div>
@@ -682,7 +682,9 @@ export default function Admin(): JSX.Element {
                     <div className='flex flex-wrap gap-2'>
                       <Button
                         className='bg-main-accent px-3 py-1.5 text-sm font-bold text-main-accent-contrast'
-                        onClick={(): Promise<void> => toggleVerified(targetUser)}
+                        onClick={(): Promise<void> =>
+                          toggleVerified(targetUser)
+                        }
                         loading={processing[targetUser.id]}
                         disabled={processing[targetUser.id]}
                       >
@@ -720,11 +722,7 @@ export default function Admin(): JSX.Element {
           <div className='flex flex-col'>
             <p className='px-5 py-2 text-xs font-bold text-light-secondary dark:text-dark-secondary'>
               {items.length}{' '}
-              {tab === 'reels'
-                ? 'ريل'
-                : tab === 'comments'
-                ? 'تعليق'
-                : 'منشور'}
+              {tab === 'reels' ? 'ريل' : tab === 'comments' ? 'تعليق' : 'منشور'}
             </p>
             {items.map((item) => {
               const body = String(item.text ?? item.caption ?? '').trim();
@@ -775,7 +773,10 @@ export default function Admin(): JSX.Element {
                       </div>
                       {tab === 'comments' && item.parentId && (
                         <p className='mt-1 text-[11px] text-light-secondary dark:text-dark-secondary'>
-                          رد على {item.parentUsername ? `@${item.parentUsername}` : 'منشور'}
+                          رد على{' '}
+                          {item.parentUsername
+                            ? `@${item.parentUsername}`
+                            : 'منشور'}
                         </p>
                       )}
                       <p className='mt-2 whitespace-pre-line break-words text-sm leading-relaxed'>
@@ -809,7 +810,9 @@ export default function Admin(): JSX.Element {
                       <div className='mt-3 flex flex-wrap items-center gap-3 text-[11px] text-light-secondary dark:text-dark-secondary'>
                         <span>{item.likes ?? 0} إعجاب</span>
                         {tab !== 'reels' && <span>{item.replies ?? 0} رد</span>}
-                        {tab === 'reels' && <span>{item.views ?? 0} مشاهدة</span>}
+                        {tab === 'reels' && (
+                          <span>{item.views ?? 0} مشاهدة</span>
+                        )}
                         <a
                           href={href}
                           target='_blank'

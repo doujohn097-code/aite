@@ -97,14 +97,11 @@ export function LoginMain(): JSX.Element {
         if (!cleanedName || !cleanedUsername || !password) {
           throw new Error(t('auth.fillAll'));
         }
-        if (cleanedUsername.length < 3)
-          throw new Error(t('auth.userShort'));
-        if (cleanedUsername.length > 15)
-          throw new Error(t('auth.userLong'));
+        if (cleanedUsername.length < 3) throw new Error(t('auth.userShort'));
+        if (cleanedUsername.length > 15) throw new Error(t('auth.userLong'));
         if (!/^\w+$/i.test(cleanedUsername))
           throw new Error(t('auth.userChars'));
-        if (password.length < 6)
-          throw new Error(t('auth.passWeak'));
+        if (password.length < 6) throw new Error(t('auth.passWeak'));
 
         await signUpWithUsername({
           name: cleanedName,
@@ -113,8 +110,7 @@ export function LoginMain(): JSX.Element {
         });
         setSuccess(t('auth.created'));
       } else {
-        if (!cleanedUsername || !password)
-          throw new Error(t('auth.needCreds'));
+        if (!cleanedUsername || !password) throw new Error(t('auth.needCreds'));
         await signInWithUsername(cleanedUsername, password);
         setSuccess(t('auth.welcome'));
       }

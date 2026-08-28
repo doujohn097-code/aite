@@ -36,10 +36,7 @@ export default function Login(): JSX.Element {
   }, [isReady, loading, user]);
   return (
     <div className='grid min-h-app grid-rows-[1fr,auto]'>
-      <SEO
-        title={t('seo.tagline')}
-        description={t('seo.share')}
-      />
+      <SEO title={t('seo.tagline')} description={t('seo.share')} />
       <LoginMain />
       <LoginFooter />
     </div>

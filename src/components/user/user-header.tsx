@@ -48,6 +48,9 @@ export function UserHeader(): JSX.Element {
   const isInTweetPage = ['[id]', 'with_replies'].includes(currentPage);
   const isInFollowPage = ['following', 'followers'].includes(currentPage);
 
+  // يُحسب مرة واحدة حتى لا تتكرر الاستدعاءات ويبقى النوع string دقيقًا.
+  const profileHandle = resolveUsername(user);
+
   return (
     <AnimatePresence mode='popLayout'>
       {loading ? (
@@ -79,17 +82,21 @@ export function UserHeader(): JSX.Element {
           />
           <p className='text-xs text-light-secondary dark:text-dark-secondary'>
             {isInFollowPage || isInTweetPage
-              ? resolveUsername(user)
-                ? `@${resolveUsername(user)}`
+              ? profileHandle
+                ? `@${profileHandle}`
                 : t('common.user')
               : currentPage === 'media'
               ? totalPhotos
                 ? `${totalPhotos} ${
-                    totalPhotos > 1 ? t('profile.photosManyWord') : t('profile.photosOne')
+                    totalPhotos > 1
+                      ? t('profile.photosManyWord')
+                      : t('profile.photosOne')
                   }`
                 : t('profile.noPhotos')
               : totalLikes
-              ? `${totalLikes} ${totalLikes > 1 ? t('profile.followers') : t('action.like')}`
+              ? `${totalLikes} ${
+                  totalLikes > 1 ? t('profile.followers') : t('action.like')
+                }`
               : t('profile.noLikes')}
           </p>
         </motion.div>

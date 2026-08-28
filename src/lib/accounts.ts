@@ -128,10 +128,7 @@ export async function hydrateSavedAccounts(): Promise<SavedAccount[]> {
         name: live.name || account.name,
         photoURL: live.photoURL || account.photoURL
       };
-      if (
-        merged.name !== account.name ||
-        merged.photoURL !== account.photoURL
-      )
+      if (merged.name !== account.name || merged.photoURL !== account.photoURL)
         saveAccount({
           username: merged.username,
           name: merged.name,

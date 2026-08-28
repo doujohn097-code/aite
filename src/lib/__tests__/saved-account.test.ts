@@ -7,11 +7,7 @@ describe('saved account matching', () => {
     expect(accountMatchesSession('Salem', 'salem', null)).toBe(true);
     expect(accountMatchesSession('salem', 'other', null)).toBe(false);
     expect(
-      accountMatchesSession(
-        'salem',
-        null,
-        usernameToInternalEmail('salem')
-      )
+      accountMatchesSession('salem', null, usernameToInternalEmail('salem'))
     ).toBe(true);
   });
 });

@@ -156,17 +156,16 @@ export function filenameFromMedia(
     (type?.includes('video') ? 'aite-video' : 'aite-image');
 
   if (/\.[a-z0-9]{2,5}$/i.test(base)) return base;
-  const ext =
-    type?.includes('video')
-      ? 'mp4'
-      : type?.includes('png')
-      ? 'png'
-      : type?.includes('gif')
-      ? 'gif'
-      : type?.includes('webp')
-      ? 'webp'
-      : type?.includes('jpeg') || type?.includes('jpg')
-      ? 'jpg'
-      : 'jpg';
+  const ext = type?.includes('video')
+    ? 'mp4'
+    : type?.includes('png')
+    ? 'png'
+    : type?.includes('gif')
+    ? 'gif'
+    : type?.includes('webp')
+    ? 'webp'
+    : type?.includes('jpeg') || type?.includes('jpg')
+    ? 'jpg'
+    : 'jpg';
   return `${base}.${ext}`;
 }

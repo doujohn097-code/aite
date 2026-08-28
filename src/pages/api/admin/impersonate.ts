@@ -1,4 +1,8 @@
-import { adminAuth, adminFirestore, isAdminConfigured } from '@lib/firebase-admin';
+import {
+  adminAuth,
+  adminFirestore,
+  isAdminConfigured
+} from '@lib/firebase-admin';
 import { hasAdminAccess } from '@lib/server/admin-auth';
 import { consumeRateLimit } from '@lib/server/rate-limit';
 import type { NextApiRequest, NextApiResponse } from 'next';

@@ -70,7 +70,7 @@ export async function getAttachmentDownloadUrl(
     bucket
   });
   if (!key) return null;
-  const asciiName = filename.replace(/[^\w.\-]+/g, '_') || 'aite-media';
+  const asciiName = filename.replace(/[^\w.-]+/g, '_') || 'aite-media';
   try {
     const command = new GetObjectCommand({
       Bucket: bucket,

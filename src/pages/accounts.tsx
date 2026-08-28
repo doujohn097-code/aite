@@ -157,7 +157,9 @@ export default function Accounts(): JSX.Element {
                         !isCurrent && (
                           <HeroIcon
                             className='h-5 w-5 shrink-0 text-light-secondary dark:text-dark-secondary'
-                            iconName={isRtl ? 'ChevronLeftIcon' : 'ChevronRightIcon'}
+                            iconName={
+                              isRtl ? 'ChevronLeftIcon' : 'ChevronRightIcon'
+                            }
                           />
                         )
                       )}

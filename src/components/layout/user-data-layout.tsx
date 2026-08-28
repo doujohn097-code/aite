@@ -30,9 +30,10 @@ export function UserDataLayout({ children }: LayoutProps): JSX.Element {
   });
 
   const found = data?.[0] ?? null;
-  const tryDocId = !!username && !collectionLoading && !found;
+  const tryDocId = typeof username === 'string' && !collectionLoading && !found;
+  const docId = tryDocId ? username : null;
   const { data: byId, loading: idLoading } = useDocument(
-    tryDocId ? doc(usersCollection, username as string) : null,
+    docId ? doc(usersCollection, docId) : null,
     {
       allowNull: true,
       disabled: !tryDocId

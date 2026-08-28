@@ -1,4 +1,8 @@
-import { adminAuth, adminFirestore, isAdminConfigured } from '@lib/firebase-admin';
+import {
+  adminAuth,
+  adminFirestore,
+  isAdminConfigured
+} from '@lib/firebase-admin';
 import { consumeDeviceSession } from '@lib/server/device-session';
 import { consumeRateLimit } from '@lib/server/rate-limit';
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -34,7 +38,9 @@ export default async function handler(
   try {
     const body = (req.body ?? {}) as { username?: unknown; token?: unknown };
     const username =
-      typeof body.username === 'string' ? body.username.trim().toLowerCase() : '';
+      typeof body.username === 'string'
+        ? body.username.trim().toLowerCase()
+        : '';
     const token = typeof body.token === 'string' ? body.token.trim() : '';
     if (!/^[a-z0-9_]{3,15}$/.test(username) || token.length < 20) {
       res.status(400).json({ error: 'invalid' });

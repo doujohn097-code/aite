@@ -74,11 +74,13 @@ describe('app update helpers', () => {
   });
 
   it('parses native download progress events', () => {
-    expect(parseUpdateProgress({ status: 'downloading', percent: 42 })).toEqual({
-      status: 'downloading',
-      percent: 42,
-      message: undefined
-    });
+    expect(parseUpdateProgress({ status: 'downloading', percent: 42 })).toEqual(
+      {
+        status: 'downloading',
+        percent: 42,
+        message: undefined
+      }
+    );
     expect(parseUpdateProgress({ status: 'nope', percent: 10 })).toBeNull();
   });
 });

@@ -34,13 +34,20 @@ function toMillis(value: unknown): number | null {
   if (typeof rec.toDate === 'function')
     return (rec as { toDate: () => Date }).toDate().getTime();
   if (typeof rec.seconds === 'number')
-    return rec.seconds * 1000 + Math.round(((rec.nanoseconds as number) ?? 0) / 1e6);
+    return (
+      rec.seconds * 1000 + Math.round(((rec.nanoseconds as number) ?? 0) / 1e6)
+    );
   if (typeof rec._seconds === 'number')
-    return rec._seconds * 1000 + Math.round(((rec._nanoseconds as number) ?? 0) / 1e6);
+    return (
+      rec._seconds * 1000 +
+      Math.round(((rec._nanoseconds as number) ?? 0) / 1e6)
+    );
   return null;
 }
 
-function mediaList(value: unknown): { src: string; thumbnail: string | null; type: string }[] {
+function mediaList(
+  value: unknown
+): { src: string; thumbnail: string | null; type: string }[] {
   if (!Array.isArray(value)) return [];
   return value
     .map((entry) => {
@@ -53,7 +60,10 @@ function mediaList(value: unknown): { src: string; thumbnail: string | null; typ
         type: String(rec.type ?? '')
       };
     })
-    .filter((item): item is { src: string; thumbnail: string | null; type: string } => !!item);
+    .filter(
+      (item): item is { src: string; thumbnail: string | null; type: string } =>
+        !!item
+    );
 }
 
 function toDocItem(id: string, data: unknown): DocItem {
@@ -67,7 +77,7 @@ async function loadAuthors(ids: string[]): Promise<Record<string, Author>> {
   for (let i = 0; i < unique.length; i += 30) {
     const chunk = unique.slice(i, i + 30);
     const refs = chunk.map((id) => adminFirestore!.collection('users').doc(id));
-    const snaps = await adminFirestore!.getAll(...refs);
+    const snaps = await adminFirestore.getAll(...refs);
     snaps.forEach((snap) => {
       const data = asRecord(snap.data());
       authors[snap.id] = {

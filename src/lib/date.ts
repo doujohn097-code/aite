@@ -45,7 +45,10 @@ export function formatDate(
   return getShortTime(date);
 }
 
-export function formatClockTime(date: Date, locale?: ReturnType<typeof getActiveLocale>): string {
+export function formatClockTime(
+  date: Date,
+  locale?: ReturnType<typeof getActiveLocale>
+): string {
   const active = locale ?? getActiveLocale();
   return new Intl.DateTimeFormat(intlLocale(active), {
     hour: 'numeric',
@@ -66,7 +69,13 @@ function loc(): ReturnType<typeof intlLocale> {
 }
 
 function tDate(
-  key: 'date.justNow' | 'date.todayAt' | 'date.yesterdayAt' | 'date.min' | 'date.hour' | 'date.day',
+  key:
+    | 'date.justNow'
+    | 'date.todayAt'
+    | 'date.yesterdayAt'
+    | 'date.min'
+    | 'date.hour'
+    | 'date.day',
   params?: Record<string, string | number>
 ): string {
   return translate(getActiveLocale(), key, params);

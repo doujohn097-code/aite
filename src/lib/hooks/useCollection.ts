@@ -70,9 +70,7 @@ export function useCollection<T>(
       }
 
       const withRef = rows as DataWithRef<T>;
-      const users = await loadUsersByIds(
-        withRef.map((item) => item.createdBy)
-      );
+      const users = await loadUsersByIds(withRef.map((item) => item.createdBy));
       if (token !== applyId.current) return;
 
       setData(

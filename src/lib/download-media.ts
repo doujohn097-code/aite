@@ -13,7 +13,8 @@ type NativeSaver = {
 
 function nativeSave(url: string, filename: string): boolean {
   if (typeof window === 'undefined') return false;
-  const android = (window as Window & { AiteAndroid?: NativeSaver }).AiteAndroid;
+  const android = (window as Window & { AiteAndroid?: NativeSaver })
+    .AiteAndroid;
   const update = (window as Window & { AiteUpdate?: NativeSaver }).AiteUpdate;
   try {
     if (typeof android?.saveMedia === 'function') {
@@ -79,9 +80,12 @@ function triggerAnchorDownload(href: string, filename: string): void {
 async function saveWithPicker(blob: Blob, filename: string): Promise<boolean> {
   const picker = (
     window as Window & {
-      showSaveFilePicker?: (options: {
-        suggestedName: string;
-      }) => Promise<{ createWritable: () => Promise<{ write: (d: Blob) => Promise<void>; close: () => Promise<void> }> }>;
+      showSaveFilePicker?: (options: { suggestedName: string }) => Promise<{
+        createWritable: () => Promise<{
+          write: (d: Blob) => Promise<void>;
+          close: () => Promise<void>;
+        }>;
+      }>;
     }
   ).showSaveFilePicker;
   if (typeof picker !== 'function') return false;

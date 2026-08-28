@@ -64,8 +64,7 @@ export function UserFollowStats({
   return (
     <div className='flex items-center gap-2.5 text-light-secondary dark:text-dark-secondary'>
       {allStats.map(([title, link, move, stats], index) => {
-        const label =
-          index === 1 && stats > 1 ? t('profile.followers') : title;
+        const label = index === 1 && stats > 1 ? t('profile.followers') : title;
         return (
           <Link href={link} key={title}>
             <a

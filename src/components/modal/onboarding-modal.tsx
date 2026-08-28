@@ -17,7 +17,11 @@ import { useLanguage } from '@lib/context/language-context';
 type Gender = 'male' | 'female';
 
 const genderOptions: Readonly<
-  { value: Gender; labelKey: 'gender.male' | 'gender.female'; classes: string }[]
+  {
+    value: Gender;
+    labelKey: 'gender.male' | 'gender.female';
+    classes: string;
+  }[]
 > = [
   {
     value: 'male',

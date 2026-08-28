@@ -20,7 +20,11 @@ describe('nextPublishQuota', () => {
 
   it('blocks another publish inside the cooldown', () => {
     const result = nextPublishQuota(
-      { lastPublishAt: ts(now - 3_000), publishWindowStart: ts(now - 3_000), publishWindowCount: 1 },
+      {
+        lastPublishAt: ts(now - 3_000),
+        publishWindowStart: ts(now - 3_000),
+        publishWindowCount: 1
+      },
       now
     );
     expect(result.allowed).toBe(false);

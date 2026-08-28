@@ -12,9 +12,11 @@ export function registerPageRefresh(handler: RefreshHandler): () => void {
 export async function runPageRefresh(): Promise<void> {
   if (typeof window !== 'undefined') {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    document.querySelectorAll<HTMLElement>('[data-scroll-root]').forEach((node) => {
-      node.scrollTop = 0;
-    });
+    document
+      .querySelectorAll<HTMLElement>('[data-scroll-root]')
+      .forEach((node) => {
+        node.scrollTop = 0;
+      });
   }
 
   if (!handlers.size) {

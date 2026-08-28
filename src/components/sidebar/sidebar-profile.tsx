@@ -82,9 +82,7 @@ export function SidebarProfile(): JSX.Element {
               {open && (
                 <Menu.Items
                   className={`menu-container fixed bottom-20 z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl shadow-2xl xl:absolute xl:-top-36 xl:bottom-auto xl:w-full ${
-                    isRtl
-                      ? 'right-3 xl:right-0'
-                      : 'left-3 xl:left-0'
+                    isRtl ? 'right-3 xl:right-0' : 'left-3 xl:left-0'
                   }`}
                   as={motion.div}
                   {...variants}

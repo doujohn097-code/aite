@@ -16,11 +16,7 @@ export function shouldTriggerRefresh(
   return rawDistance >= PULL_RAW_TRIGGER || resisted >= threshold;
 }
 
-export function isMostlyVertical(
-  dx: number,
-  dy: number,
-  slop = 10
-): boolean {
+export function isMostlyVertical(dx: number, dy: number, slop = 10): boolean {
   if (dy < slop) return false;
   return Math.abs(dy) > Math.abs(dx) * 1.15;
 }
@@ -40,7 +36,9 @@ export function isScrollableOverflow(el: HTMLElement): boolean {
   const style = window.getComputedStyle(el);
   const overflowY = style.overflowY;
   return (
-    (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') &&
+    (overflowY === 'auto' ||
+      overflowY === 'scroll' ||
+      overflowY === 'overlay') &&
     el.scrollHeight > el.clientHeight + 2
   );
 }
@@ -49,8 +47,7 @@ export function findScrollParent(
   target: EventTarget | null,
   stopAt?: HTMLElement | null
 ): HTMLElement | Window {
-  let node =
-    target instanceof Element ? (target as HTMLElement) : null;
+  let node = target instanceof Element ? (target as HTMLElement) : null;
 
   while (node && node !== document.body && node !== document.documentElement) {
     if (stopAt && node === stopAt) return node;

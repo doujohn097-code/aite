@@ -73,9 +73,7 @@ export default function Search(): JSX.Element {
     <MainContainer>
       <SEO
         title={
-          isSearching
-            ? t('search.seo', { q: trimmedQuery })
-            : t('search.title')
+          isSearching ? t('search.seo', { q: trimmedQuery }) : t('search.title')
         }
       />
       <MainHeader title={t('search.heading')} />

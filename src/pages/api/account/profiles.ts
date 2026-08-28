@@ -16,7 +16,8 @@ export default async function handler(
     return;
   }
 
-  const raw = typeof req.query.usernames === 'string' ? req.query.usernames : '';
+  const raw =
+    typeof req.query.usernames === 'string' ? req.query.usernames : '';
   const usernames = Array.from(
     new Set(
       raw

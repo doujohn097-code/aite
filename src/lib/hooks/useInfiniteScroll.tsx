@@ -51,7 +51,11 @@ export function useInfiniteScroll<T>(
   const [refreshKey, setRefreshKey] = useState(0);
   const justIncreased = useRef(false);
 
-  const { data, loading, refresh: refreshCollection } = useCollection(
+  const {
+    data,
+    loading,
+    refresh: refreshCollection
+  } = useCollection(
     query(collection, ...(queryConstraints ?? []), limit(tweetsLimit)),
     { ...fetchOptions, preserve: true, refreshKey }
   );

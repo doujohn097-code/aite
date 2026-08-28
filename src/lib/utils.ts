@@ -193,7 +193,9 @@ export function isPlaceholderUsername(value?: string | null): boolean {
 
 export function isChosenProfileName(value?: string | null): boolean {
   const name = typeof value === 'string' ? value.trim() : '';
-  return name.length > 0 && name.length <= 80 && !isPlaceholderProfileName(name);
+  return (
+    name.length > 0 && name.length <= 80 && !isPlaceholderProfileName(name)
+  );
 }
 
 export function isChosenUsername(value?: string | null): boolean {
@@ -208,10 +210,10 @@ export type ProfileLabelSource = {
 };
 
 /** ملف جاهز للدخول إلى الرئيسية: الاسم واسم المستخدم كما اختارهما المستخدم. */
-export function isReadyProfile(
-  profile?: ProfileLabelSource | null
-): boolean {
-  return isChosenProfileName(profile?.name) && isChosenUsername(profile?.username);
+export function isReadyProfile(profile?: ProfileLabelSource | null): boolean {
+  return (
+    isChosenProfileName(profile?.name) && isChosenUsername(profile?.username)
+  );
 }
 
 export function emailsEqual(a?: string | null, b?: string | null): boolean {

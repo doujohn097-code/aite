@@ -1,4 +1,8 @@
-import { adminAuth, isAdminConfigured, verifyIdToken } from '@lib/firebase-admin';
+import {
+  adminAuth,
+  isAdminConfigured,
+  verifyIdToken
+} from '@lib/firebase-admin';
 import { verifyAccountPassword } from '@lib/server/verify-password';
 import type { NextApiRequest, NextApiResponse } from 'next';
 

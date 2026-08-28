@@ -20,7 +20,9 @@ function ticketSecret(): string {
 }
 
 function signTicket(payload: string): string {
-  return createHmac('sha256', ticketSecret()).update(payload).digest('base64url');
+  return createHmac('sha256', ticketSecret())
+    .update(payload)
+    .digest('base64url');
 }
 
 function makeTicket(url: string, name: string, uid: string): string {
@@ -43,7 +45,8 @@ function readTicket(
   const expected = signTicket(body);
   const left = Buffer.from(signature);
   const right = Buffer.from(expected);
-  if (left.length !== right.length || !timingSafeEqual(left, right)) return null;
+  if (left.length !== right.length || !timingSafeEqual(left, right))
+    return null;
   try {
     const data = JSON.parse(
       Buffer.from(body, 'base64url').toString('utf8')
@@ -83,7 +86,7 @@ async function streamFile(
     return;
   }
 
-  const asciiName = filename.replace(/[^\w.\-]+/g, '_') || 'aite-media';
+  const asciiName = filename.replace(/[^\w.-]+/g, '_') || 'aite-media';
   res.setHeader('Content-Type', contentType);
   res.setHeader(
     'Content-Disposition',

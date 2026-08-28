@@ -67,7 +67,9 @@ export function MentionSuggest({
                 type='button'
                 role='option'
                 aria-selected={false}
-                aria-label={t('compose.mentionUser', { username: item.username })}
+                aria-label={t('compose.mentionUser', {
+                  username: item.username
+                })}
                 className='flex w-full items-center gap-3 px-3 py-2 text-start transition hover:bg-main-accent/10 active:bg-main-accent/15'
                 onMouseDown={(event): void => {
                   event.preventDefault();

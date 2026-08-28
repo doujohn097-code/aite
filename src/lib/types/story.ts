@@ -65,7 +65,8 @@ export const storyConverter: FirestoreDataConverter<Story> = {
   fromFirestore(snapshot, options) {
     const { id } = snapshot;
     const data = snapshot.data(options);
-    const createdAt = data.createdAt ?? Timestamp.now();
+    const createdAt =
+      (data.createdAt as Timestamp | null | undefined) ?? Timestamp.now();
     const createdMs = getTimestampMillis(createdAt);
     const derivedExpiry = Timestamp.fromMillis(
       (createdMs || Date.now()) + STORY_LIFETIME_MS
@@ -87,7 +88,8 @@ export const storyConverter: FirestoreDataConverter<Story> = {
       editedAt: null,
       ...data,
       createdAt,
-      expiresAt: data.expiresAt ?? derivedExpiry
+      expiresAt:
+        (data.expiresAt as Timestamp | null | undefined) ?? derivedExpiry
     } as Story;
   }
 };

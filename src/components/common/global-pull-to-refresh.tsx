@@ -19,7 +19,5 @@ export function GlobalPullToRefresh(): JSX.Element | null {
 
   if (disabled) return null;
 
-  return (
-    <PullToRefresh overlay onRefresh={handleRefresh} />
-  );
+  return <PullToRefresh overlay onRefresh={handleRefresh} />;
 }

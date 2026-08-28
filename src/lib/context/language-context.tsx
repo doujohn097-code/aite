@@ -35,7 +35,11 @@ type LanguageContextValue = {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-export function LanguageProvider({ children }: { children: ReactNode }): JSX.Element {
+export function LanguageProvider({
+  children
+}: {
+  children: ReactNode;
+}): JSX.Element {
   const [locale, setLocaleState] = useState<AppLocale>(() =>
     typeof window === 'undefined' ? 'ar' : readStoredLocale()
   );
@@ -72,7 +76,9 @@ export function LanguageProvider({ children }: { children: ReactNode }): JSX.Ele
   );
 
   return (
-    <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
+    <LanguageContext.Provider value={value}>
+      {children}
+    </LanguageContext.Provider>
   );
 }
 

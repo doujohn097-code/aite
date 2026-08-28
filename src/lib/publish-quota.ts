@@ -44,7 +44,10 @@ export function nextPublishQuota(
   }
 
   if (!resetWindow && nextCount > PUBLISH_HOUR_LIMIT) {
-    const retryAfterMs = Math.max(1000, PUBLISH_HOUR_MS - (nowMs - windowStart));
+    const retryAfterMs = Math.max(
+      1000,
+      PUBLISH_HOUR_MS - (nowMs - windowStart)
+    );
     return {
       allowed: false,
       resetWindow: false,

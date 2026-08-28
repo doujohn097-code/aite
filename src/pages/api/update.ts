@@ -21,7 +21,7 @@ export default async function handler(
     }
 
     const snap = await adminFirestore.doc('config/appUpdate').get();
-    const data = snap.data();
+    const data = snap.data() as Record<string, unknown> | undefined;
     if (!data || data.active !== true) {
       res.status(200).json({ update: null });
       return;
@@ -47,7 +47,7 @@ export default async function handler(
             ? data.apkUrl.trim()
             : null,
         target: safeTarget,
-        createdAt: data.createdAt ?? null
+        createdAt: (data.createdAt as number | null | undefined) ?? null
       }
     });
   } catch (error) {

@@ -27,11 +27,12 @@ async function fetchPublishedUpdate(): Promise<AppUpdate | null> {
 }
 
 function formatBytes(bytes: number): string {
-  const n = bytes < 1024
-    ? String(bytes)
-    : bytes < 1024 * 1024
-    ? (bytes / 1024).toFixed(1)
-    : (bytes / (1024 * 1024)).toFixed(1);
+  const n =
+    bytes < 1024
+      ? String(bytes)
+      : bytes < 1024 * 1024
+      ? (bytes / 1024).toFixed(1)
+      : (bytes / (1024 * 1024)).toFixed(1);
   if (bytes < 1024) return tx('update.bytes', { n });
   if (bytes < 1024 * 1024) return tx('update.kb', { n });
   return tx('update.mb', { n });
@@ -39,7 +40,9 @@ function formatBytes(bytes: number): string {
 
 async function downloadApkPreview(
   url: string,
-  onProgress: (detail: UpdateProgressDetail & { received?: number; total?: number }) => void
+  onProgress: (
+    detail: UpdateProgressDetail & { received?: number; total?: number }
+  ) => void
 ): Promise<Blob> {
   const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) throw new Error(tx('update.startFail'));
@@ -64,7 +67,10 @@ async function downloadApkPreview(
         total,
         message:
           total > 0
-            ? tx('update.of', { a: formatBytes(received), b: formatBytes(total) })
+            ? tx('update.of', {
+                a: formatBytes(received),
+                b: formatBytes(total)
+              })
             : tx('update.downloaded', { n: formatBytes(received) })
       });
     }
@@ -182,7 +188,8 @@ export function AppUpdatePrompt(): JSX.Element | null {
   const canNativeInstall = native && hasApk && canInstallNativeUpdate();
   const percent = progress?.percent ?? 0;
   const indeterminate =
-    downloading && (!progress || progress.status === 'starting' || percent <= 0);
+    downloading &&
+    (!progress || progress.status === 'starting' || percent <= 0);
 
   const handleUpdate = async (): Promise<void> => {
     setError(null);
@@ -236,7 +243,9 @@ export function AppUpdatePrompt(): JSX.Element | null {
             <p className='mt-1 text-xs font-bold text-main-accent-text'>
               {t('update.version', { name: update.versionName })}
               {nativeInfo
-                ? ` · ${t('update.installed', { name: nativeInfo.versionName })}`
+                ? ` · ${t('update.installed', {
+                    name: nativeInfo.versionName
+                  })}`
                 : ''}
             </p>
           </div>
@@ -267,9 +276,7 @@ export function AppUpdatePrompt(): JSX.Element | null {
             </p>
           </div>
         )}
-        {error && (
-          <p className='px-5 pt-3 text-sm text-accent-red'>{error}</p>
-        )}
+        {error && <p className='px-5 pt-3 text-sm text-accent-red'>{error}</p>}
         <div className='flex flex-col gap-2 p-5'>
           <Button
             className='w-full rounded-full bg-main-accent py-3 font-bold text-main-accent-contrast'

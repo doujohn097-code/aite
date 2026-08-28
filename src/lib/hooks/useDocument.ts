@@ -117,7 +117,9 @@ export function useDocument<T>(
       }
       const currentData = next as DataWithRef<T>;
       if (!currentData?.createdBy) return;
-      const userData = await getDoc(doc(usersCollection, currentData.createdBy));
+      const userData = await getDoc(
+        doc(usersCollection, currentData.createdBy)
+      );
       setData({
         ...currentData,
         user: userData.data() ?? blankUser(currentData.createdBy)

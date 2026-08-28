@@ -214,7 +214,9 @@ export function MusicTrimmer({
         <button
           type='button'
           onClick={togglePreview}
-          aria-label={playing ? t('music.pausePreview') : t('music.clipPreview')}
+          aria-label={
+            playing ? t('music.pausePreview') : t('music.clipPreview')
+          }
           className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full
                      bg-white text-black transition active:scale-90'
         >

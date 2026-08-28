@@ -81,7 +81,9 @@ export function FollowButton({
           onClick={preventBubbling(openModal)}
         >
           <span className='group-hover:hidden'>{t('action.followingNow')}</span>
-          <span className='hidden group-hover:inline'>{t('action.unfollow')}</span>
+          <span className='hidden group-hover:inline'>
+            {t('action.unfollow')}
+          </span>
         </Button>
       ) : (
         <Button
