@@ -505,7 +505,7 @@ export function PostComments({
                         {item.user.verified && (
                           <VerifiedBadge className='h-3.5 w-3.5' />
                         )}
-                        <span className='mr-auto text-xs text-light-secondary dark:text-dark-secondary'>
+                        <span className='text-xs text-light-secondary [margin-inline-start:auto] dark:text-dark-secondary'>
                           {formatDate(item.createdAt, 'message')}
                           {item.edited ? ` · ${t('common.edited')}` : ''}
                         </span>
@@ -616,8 +616,8 @@ export function PostComments({
                   {/* Threaded replies */}
                   {hasReplies && isExpanded && (
                     <div
-                      className='mr-5 mt-2.5 flex flex-col gap-3 border-r-2 border-dashed border-main-accent/30
-                                 py-1 pr-3.5'
+                      className='mt-2.5 flex flex-col gap-3 border-dashed border-main-accent/30 py-1 [border-inline-start-width:2px]
+                                 [margin-inline-start:1.25rem] [padding-inline-start:0.875rem]'
                     >
                       {replies.map((reply: TweetWithUser) => {
                         const replyLikes =
@@ -667,7 +667,7 @@ export function PostComments({
                                 {reply.user.verified && (
                                   <VerifiedBadge className='h-3 w-3' />
                                 )}
-                                <span className='mr-auto text-[11px] text-light-secondary dark:text-dark-secondary'>
+                                <span className='text-[11px] text-light-secondary [margin-inline-start:auto] dark:text-dark-secondary'>
                                   {formatDate(reply.createdAt, 'message')}
                                   {reply.edited
                                     ? ` · ${t('common.edited')}`

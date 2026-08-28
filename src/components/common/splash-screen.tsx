@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 type SplashScreenProps = {
   isVisible: boolean;
   playId?: number;
+  /** لمس الشاشة ينهي الافتتاحية فورًا (بدل انتظار المؤقت كاملًا) */
+  onSkip?: () => void;
 };
 
 /**
@@ -13,14 +15,16 @@ type SplashScreenProps = {
  */
 export function SplashScreen({
   isVisible,
-  playId = 0
+  playId = 0,
+  onSkip
 }: SplashScreenProps): JSX.Element {
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
           dir='ltr'
-          className='fixed inset-0 z-[200] flex select-none flex-col items-center
+          onClick={onSkip}
+          className='fixed inset-0 z-[200] flex cursor-pointer select-none flex-col items-center
                      justify-center gap-6 bg-black px-6 text-center'
           initial={{ opacity: 1 }}
           exit={{

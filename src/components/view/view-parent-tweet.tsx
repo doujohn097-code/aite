@@ -31,8 +31,8 @@ export function ViewParentTweet({
     return (
       <div className='px-4 pb-2 pt-3'>
         <p
-          className='rounded-2xl bg-main-sidebar-background px-1 py-3 pl-4 
-                     text-light-secondary dark:text-dark-secondary'
+          className='rounded-2xl bg-main-sidebar-background px-1 py-3 text-light-secondary 
+                     [padding-inline-start:1rem] dark:text-dark-secondary'
         >
           {t('tweet.deletedByOwner')}
         </p>

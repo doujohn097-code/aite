@@ -69,7 +69,7 @@ export function UserHeader(): JSX.Element {
         </motion.h2>
       ) : (
         <motion.div
-          className='-mb-1 flex flex-col items-end truncate text-right'
+          className='-mb-1 flex flex-col items-end truncate [text-align:start]'
           {...variants}
           key='found'
         >

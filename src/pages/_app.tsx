@@ -1,6 +1,7 @@
 import '@styles/globals.scss';
 
 import { useEffect, useState } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { useRouter } from 'next/router';
 import { Capacitor } from '@capacitor/core';
 import { AuthContextProvider } from '@lib/context/auth-context';
@@ -63,7 +64,6 @@ export default function App({
     );
     return () => window.clearTimeout(timer);
   }, []);
-
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || !router.isReady) return;
 
@@ -127,9 +127,12 @@ export default function App({
   }, [router, router.isReady]);
 
   return (
-    <>
+    <MotionConfig reducedMotion='user'>
       <AppHead />
-      <SplashScreen isVisible={showSplash} />
+      <SplashScreen
+        isVisible={showSplash}
+        onSkip={(): void => setShowSplash(false)}
+      />
       <LanguageProvider>
         <AuthContextProvider>
           <ThemeContextProvider>
@@ -143,6 +146,6 @@ export default function App({
           </ThemeContextProvider>
         </AuthContextProvider>
       </LanguageProvider>
-    </>
+    </MotionConfig>
   );
 }

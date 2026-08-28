@@ -58,6 +58,7 @@
     /* شفافية البطاقات الزجاجية في مظاهر الخلفيات */
     --card-alpha: 0.58;
     --card-blur: 18px;
+    --fog-blur: 24px;
     --panel-alpha: 0.74;
     --strong-alpha: 0.86;
     --app-height: 100vh;
@@ -597,6 +598,16 @@ html.theme-wallpaper {
   .theme-ripple {
     display: none;
   }
+
+  .typing-dot {
+    animation: none;
+  }
+
+  .glass-card,
+  .glass-panel,
+  .glass-strong {
+    transition: none;
+  }
 }
 
 /* =========================================================
@@ -617,7 +628,9 @@ html.theme-wallpaper {
 }
 
 .glass-card {
-  transition: border-color 220ms ease, transform 220ms ease;
+  /* transform مستثنى: تحريك طبقة مضبّبة (backdrop-filter) يجبرها على
+     إعادة العيّنة مع كل إطار — التكبير عند اللمس يبقى فوريًا ورخيصًا */
+  transition: border-color 220ms ease;
 }
 
 .glass-card:hover {
@@ -740,14 +753,14 @@ html.theme-wallpaper {
 /* ضباب تحت التعليقات في كل المظاهر ما عدا الأسود الكامل */
 html:not([data-theme='dark']) .comments-fog {
   background-color: rgb(var(--main-background) / 0.86);
-  backdrop-filter: blur(24px) saturate(165%);
-  -webkit-backdrop-filter: blur(24px) saturate(165%);
+  backdrop-filter: blur(var(--fog-blur)) saturate(165%);
+  -webkit-backdrop-filter: blur(var(--fog-blur)) saturate(165%);
 }
 
 html.theme-wallpaper .comments-fog {
   background-color: rgb(var(--main-background) / 0.8);
-  backdrop-filter: blur(28px) saturate(170%);
-  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(calc(var(--fog-blur) + 4px)) saturate(170%);
+  -webkit-backdrop-filter: blur(calc(var(--fog-blur) + 4px)) saturate(170%);
 }
 
 /* =========================================================
@@ -872,5 +885,9 @@ html.theme-wallpaper .comments-fog {
   :root {
     --surface-blur: 16px;
     --wallpaper-blur: 0px;
+    /* كل بطاقة زجاجية تعدّ عيّنة الخلفية من جديد أثناء التمرير —
+       تقليل نصف القطر يخفف الحمل بلا فرق يُذكر في المظهر */
+    --card-blur: 12px;
+    --fog-blur: 18px;
   }
 }

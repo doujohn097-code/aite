@@ -177,7 +177,7 @@ export function NewMessageModal({
                 onClick={() => void handleSelect(person)}
                 disabled={!!busyId || sending}
                 className={cn(
-                  `hover-animation flex w-full items-center gap-3 px-4 py-3 text-right
+                  `hover-animation flex w-full items-center gap-3 px-4 py-3 [text-align:start]
                    hover:bg-light-primary/5 disabled:opacity-60 dark:hover:bg-dark-primary/5`,
                   selected && 'bg-main-accent/10'
                 )}

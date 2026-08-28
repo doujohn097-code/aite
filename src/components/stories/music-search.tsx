@@ -204,7 +204,7 @@ export function MusicSearch({
                 <button
                   type='button'
                   onClick={() => handleSelect(track)}
-                  className='flex flex-1 flex-col text-right'
+                  className='flex flex-1 flex-col [text-align:start]'
                 >
                   <span
                     className={cn(

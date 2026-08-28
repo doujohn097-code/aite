@@ -171,7 +171,7 @@ export function VoicePlayer({
       <div className='flex shrink-0 items-center gap-1'>
         <span
           className={cn(
-            'min-w-[2.25rem] text-left text-xs tabular-nums',
+            'min-w-[2.25rem] text-xs tabular-nums [text-align:start]',
             isOwn
               ? 'text-white/80'
               : 'text-light-secondary dark:text-dark-secondary'
