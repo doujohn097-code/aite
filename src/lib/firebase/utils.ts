@@ -859,26 +859,30 @@ export async function notifyFollowersOfPublish(
     const currentUser = auth.currentUser;
     if (!currentUser) return;
     const token = await currentUser.getIdToken();
-    const response = await fetch('/api/notifications/create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        ...(await appCheckHeaders())
-      },
-      body: JSON.stringify({
-        type: 'publish',
-        context: kind,
-        tweetId: kind === 'post' ? contentId : null,
-        storyId: kind === 'reel' ? contentId : null
-      })
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(await appCheckHeaders())
+    };
+    const body = JSON.stringify({
+      type: 'publish',
+      context: kind,
+      tweetId: kind === 'post' ? contentId : null,
+      storyId: kind === 'reel' ? contentId : null
     });
+    const send = (): Promise<Response> =>
+      fetch('/api/notifications/create', { method: 'POST', headers, body });
+    let response = await send();
+    if (response.status === 429) {
+      await new Promise((resolve) => window.setTimeout(resolve, 1500));
+      response = await send();
+    }
     if (!response.ok) {
-      const body = await response.text().catch(() => '');
+      const text = await response.text().catch(() => '');
       console.warn(
         'follower publish notification failed:',
         response.status,
-        body
+        text
       );
     }
   } catch (error) {

@@ -253,7 +253,7 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'notif.heading': 'Notifications',
   'notif.empty': 'Aucune notification',
   'notif.emptyHint':
-    'Quand quelqu’un interagit avec vos publications ou vous suit, cela apparaît ici.',
+    'Quand quelqu’un interagit avec vous, ou qu’une personne que vous suivez publie, cela apparaît ici.',
   'notif.follow': 'a commencé à vous suivre',
   'notif.likePost': 'a aimé votre publication',
   'notif.likeReel': 'a aimé votre reel',
@@ -553,7 +553,7 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'media.addVideo': 'Ajouter une vidéo',
   'media.addMedia': 'Ajouter des photos ou une vidéo',
   'media.pickVideo': 'Choisissez une vidéo valide',
-  'media.pickMedia': 'Choisissez une photo ou une vidéo (jusqu’à 4)',
+  'media.pickMedia': 'Choisissez une photo ou une vidéo (jusqu’à {n})',
   'media.reelNeedsFile': 'Un reel nécessite un fichier vidéo',
   'media.editCaption': 'Modifier le texte…  @mention',
   'media.editReelCaption': 'Modifier la légende du reel…  @mention',

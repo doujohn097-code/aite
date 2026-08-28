@@ -251,7 +251,7 @@ export const en: { [K in keyof typeof ar]: string } = {
   'notif.heading': 'Notifications',
   'notif.empty': 'No notifications',
   'notif.emptyHint':
-    'When someone interacts with your posts or follows you, it will show here.',
+    'When someone interacts with you, or someone you follow posts, it will show here.',
   'notif.follow': 'started following you',
   'notif.likePost': 'liked your post',
   'notif.likeReel': 'liked your reel',

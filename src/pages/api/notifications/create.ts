@@ -256,16 +256,19 @@ async function publishTargets(
   const senderBlocked = new Set(asStringArray(sender.blockedUsers));
   // المصدر الأساسي: من يتابع الناشر فعلياً (following يحتوي معرّفه).
   // ندمج أيضاً sender.followers لو تأخّر أحد الحقلين عن الآخر.
-  const followingSnap = await firestore
-    .collection('users')
-    .where('following', 'array-contains', senderId)
-    .limit(MAX_FOLLOWER_NOTIFY)
-    .get();
+  let followingIds: string[] = [];
+  try {
+    const followingSnap = await firestore
+      .collection('users')
+      .where('following', 'array-contains', senderId)
+      .limit(MAX_FOLLOWER_NOTIFY)
+      .get();
+    followingIds = followingSnap.docs.map((document) => document.id);
+  } catch (error) {
+    console.error('publish following query failed:', error);
+  }
   const followerIds = Array.from(
-    new Set([
-      ...followingSnap.docs.map((document) => document.id),
-      ...asStringArray(sender.followers)
-    ])
+    new Set([...followingIds, ...asStringArray(sender.followers)])
   ).filter((id) => id && id !== senderId && !senderBlocked.has(id));
 
   const allowed: string[] = [];
@@ -450,36 +453,54 @@ export default async function handler(
       return;
     }
     const { uid: senderId } = await verifyIdToken(token);
-    const rate = consumeRateLimit(`notification:${senderId}`, 20, 60_000);
+    const input = (req.body ?? {}) as NotifyInput;
+    const rateKey =
+      input.type === 'publish'
+        ? `notification-publish:${senderId}`
+        : `notification:${senderId}`;
+    const rate = consumeRateLimit(
+      rateKey,
+      input.type === 'publish' ? 12 : 20,
+      60_000
+    );
     if (!rate.allowed) {
       res.setHeader('Retry-After', String(rate.retryAfterSeconds));
       res.status(429).json({ error: 'rate_limited' });
       return;
     }
 
-    const input = (req.body ?? {}) as NotifyInput;
     const firestore = admin.firestore();
 
     if (input.type === 'publish') {
       const { targets, sender } = await publishTargets(senderId, input);
       let created = 0;
-      for (const target of targets) {
-        const sourceId = String(target.data.sourceId ?? 'content');
-        delete target.data.sourceId;
-        const id = createHash('sha256')
-          .update(`publish:${senderId}:${target.userId}:${sourceId}`)
-          .digest('hex')
-          .slice(0, 40);
-        const ref = firestore.doc(`users/${target.userId}/notifications/${id}`);
-        try {
-          await ref.create({ ...target.data, ...senderFields(sender) });
-          created += 1;
-          await sendActivityPush(target, sender);
-        } catch (error) {
-          const code = (error as { code?: number | string })?.code;
-          if (code !== 6 && code !== '6' && code !== 'already-exists')
-            throw error;
-        }
+      const concurrency = 8;
+      for (let index = 0; index < targets.length; index += concurrency) {
+        const chunk = targets.slice(index, index + concurrency);
+        const results = await Promise.all(
+          chunk.map(async (target) => {
+            const sourceId = String(target.data.sourceId ?? 'content');
+            delete target.data.sourceId;
+            const id = createHash('sha256')
+              .update(`publish:${senderId}:${target.userId}:${sourceId}`)
+              .digest('hex')
+              .slice(0, 40);
+            const ref = firestore.doc(
+              `users/${target.userId}/notifications/${id}`
+            );
+            try {
+              await ref.create({ ...target.data, ...senderFields(sender) });
+              await sendActivityPush(target, sender);
+              return 1;
+            } catch (error) {
+              const code = (error as { code?: number | string })?.code;
+              if (code !== 6 && code !== '6' && code !== 'already-exists')
+                throw error;
+              return 0;
+            }
+          })
+        );
+        created += results.reduce((sum: number, value) => sum + value, 0);
       }
       res.status(200).json({ ok: true, created });
       return;
