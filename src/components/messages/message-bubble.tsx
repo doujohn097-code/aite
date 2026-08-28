@@ -672,130 +672,137 @@ export function MessageBubble({
 
               {type === 'audio' && audio && <TweetAudioPlayer audio={audio} />}
 
-              {type === 'shared' && sharedPost && (
-                <Link
-                  href={
-                    sharedPost.kind === 'reel'
-                      ? `/reels?video=${sharedPost.id}`
-                      : `/tweet/${sharedPost.id}`
-                  }
-                >
-                  <a
-                    className={cn(
-                      'block max-w-full overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl',
+              {type === 'shared' &&
+                sharedPost &&
+                (sharedPost.kind === 'profile' ? (
+                  // بطاقة بروفايل حقيقية تنقل إلى /user/ وليس /tweet/
+                  <SharedProfileCard
+                    profile={sharedProfileFromRef(sharedPost)}
+                  />
+                ) : (
+                  <Link
+                    href={
                       sharedPost.kind === 'reel'
-                        ? 'w-[min(280px,calc(100vw-104px))]'
-                        : 'w-[min(420px,calc(100vw-72px))]',
-                      'border-main-accent/20 text-light-primary dark:text-dark-primary'
-                    )}
-                    onClick={(event) => event.stopPropagation()}
+                        ? `/reels?video=${sharedPost.id}`
+                        : `/tweet/${sharedPost.id}`
+                    }
                   >
-                    {sharedPost.thumbnail ? (
-                      <div
-                        className={cn(
-                          'relative overflow-hidden bg-main-search-background',
-                          sharedPost.kind === 'reel' ? 'aspect-[4/5]' : 'h-36'
-                        )}
-                      >
-                        {sharedIsVideo ? (
-                          sharedPoster ? (
-                            // eslint-disable-next-line @next/next/no-img-element
+                    <a
+                      className={cn(
+                        'block max-w-full overflow-hidden rounded-2xl border bg-main-background/95 shadow-lg shadow-black/10 backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-xl',
+                        sharedPost.kind === 'reel'
+                          ? 'w-[min(280px,calc(100vw-104px))]'
+                          : 'w-[min(420px,calc(100vw-72px))]',
+                        'border-main-accent/20 text-light-primary dark:text-dark-primary'
+                      )}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {sharedPost.thumbnail ? (
+                        <div
+                          className={cn(
+                            'relative overflow-hidden bg-main-search-background',
+                            sharedPost.kind === 'reel' ? 'aspect-[4/5]' : 'h-36'
+                          )}
+                        >
+                          {sharedIsVideo ? (
+                            sharedPoster ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
+                                src={sharedPoster}
+                                alt={t('media.previewVideo')}
+                                draggable={false}
+                              />
+                            ) : (
+                              // أثناء تجهيز البوستر: اعرض أول إطار من الفيديو نفسه
+                              <video
+                                className='pointer-events-none h-full w-full object-cover'
+                                src={`${sharedPost.thumbnail ?? ''}#t=0.1`}
+                                muted
+                                playsInline
+                                preload='metadata'
+                              />
+                            )
+                          ) : (
                             <img
                               className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
-                              src={sharedPoster}
-                              alt={t('media.previewVideo')}
+                              src={sharedPost.thumbnail ?? ''}
+                              alt={t('media.previewPost')}
                               draggable={false}
                             />
-                          ) : (
-                            // أثناء تجهيز البوستر: اعرض أول إطار من الفيديو نفسه
-                            <video
-                              className='pointer-events-none h-full w-full object-cover'
-                              src={`${sharedPost.thumbnail ?? ''}#t=0.1`}
-                              muted
-                              playsInline
-                              preload='metadata'
-                            />
-                          )
-                        ) : (
+                          )}
+                          {(sharedPost.kind === 'reel' || sharedIsVideo) && (
+                            <>
+                              <span className='absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10' />
+                              <span className='absolute inset-0 flex items-center justify-center'>
+                                <HeroIcon
+                                  className='h-14 w-14 rounded-full bg-black/60 p-3.5 text-white shadow-xl backdrop-blur-sm'
+                                  iconName='PlayIcon'
+                                  solid
+                                />
+                              </span>
+                              {sharedPost.kind === 'reel' && (
+                                <span className='absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
+                                  {t('messages.reel')}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <div className='flex h-24 items-center justify-center bg-gradient-to-br from-main-accent/20 to-main-accent/5 text-main-accent-text'>
+                          <HeroIcon
+                            className='h-9 w-9'
+                            iconName={
+                              sharedPost.kind === 'reel'
+                                ? 'FilmIcon'
+                                : 'DocumentTextIcon'
+                            }
+                          />
+                        </div>
+                      )}
+                      <div className='flex items-center gap-2 px-3 pt-2.5'>
+                        {sharedPost.authorPhoto && (
                           <img
-                            className='pointer-events-none h-full w-full object-cover transition duration-500 hover:scale-105'
-                            src={sharedPost.thumbnail ?? ''}
-                            alt={t('media.previewPost')}
-                            draggable={false}
+                            className='h-7 w-7 rounded-full object-cover'
+                            src={sharedPost.authorPhoto}
+                            alt={sharedPost.authorName ?? ''}
                           />
                         )}
-                        {(sharedPost.kind === 'reel' || sharedIsVideo) && (
-                          <>
-                            <span className='absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10' />
-                            <span className='absolute inset-0 flex items-center justify-center'>
-                              <HeroIcon
-                                className='h-14 w-14 rounded-full bg-black/60 p-3.5 text-white shadow-xl backdrop-blur-sm'
-                                iconName='PlayIcon'
-                                solid
-                              />
-                            </span>
-                            {sharedPost.kind === 'reel' && (
-                              <span className='absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
-                                {t('messages.reel')}
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      <div className='flex h-24 items-center justify-center bg-gradient-to-br from-main-accent/20 to-main-accent/5 text-main-accent-text'>
-                        <HeroIcon
-                          className='h-9 w-9'
-                          iconName={
-                            sharedPost.kind === 'reel'
-                              ? 'FilmIcon'
-                              : 'DocumentTextIcon'
-                          }
-                        />
-                      </div>
-                    )}
-                    <div className='flex items-center gap-2 px-3 pt-2.5'>
-                      {sharedPost.authorPhoto && (
-                        <img
-                          className='h-7 w-7 rounded-full object-cover'
-                          src={sharedPost.authorPhoto}
-                          alt={sharedPost.authorName ?? ''}
-                        />
-                      )}
-                      <div className='min-w-0 flex-1 leading-tight'>
-                        <p className='truncate text-sm font-bold'>
-                          {sharedPost.authorName ||
-                            (sharedPost.authorUsername
-                              ? `@${sharedPost.authorUsername}`
-                              : t('messages.post'))}
-                        </p>
-                        {sharedPost.authorUsername && (
-                          <p className='truncate text-[11px] opacity-60'>
-                            @{sharedPost.authorUsername}
+                        <div className='min-w-0 flex-1 leading-tight'>
+                          <p className='truncate text-sm font-bold'>
+                            {sharedPost.authorName ||
+                              (sharedPost.authorUsername
+                                ? `@${sharedPost.authorUsername}`
+                                : t('messages.post'))}
                           </p>
-                        )}
+                          {sharedPost.authorUsername && (
+                            <p className='truncate text-[11px] opacity-60'>
+                              @{sharedPost.authorUsername}
+                            </p>
+                          )}
+                        </div>
+                        <span
+                          className={cn(
+                            'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                            isOwn
+                              ? 'bg-black/15'
+                              : 'bg-main-accent/15 text-main-accent-text'
+                          )}
+                        >
+                          {sharedPost.kind === 'reel'
+                            ? t('messages.reel')
+                            : t('messages.post')}
+                        </span>
                       </div>
-                      <span
-                        className={cn(
-                          'rounded-full px-2 py-0.5 text-[10px] font-bold',
-                          isOwn
-                            ? 'bg-black/15'
-                            : 'bg-main-accent/15 text-main-accent-text'
-                        )}
-                      >
-                        {sharedPost.kind === 'reel'
-                          ? t('messages.reel')
-                          : t('messages.post')}
-                      </span>
-                    </div>
-                    {sharedPost.text && (
-                      <p className='line-clamp-2 px-3 pb-2.5 pt-1 text-[13px] opacity-80'>
-                        {sharedPost.text}
-                      </p>
-                    )}
-                  </a>
-                </Link>
-              )}
+                      {sharedPost.text && (
+                        <p className='line-clamp-2 px-3 pb-2.5 pt-1 text-[13px] opacity-80'>
+                          {sharedPost.text}
+                        </p>
+                      )}
+                    </a>
+                  </Link>
+                ))}
 
               {text && type !== 'text' && (
                 <p

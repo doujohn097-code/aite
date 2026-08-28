@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import cn from 'clsx';
 import { isMentionToken } from '@lib/mention-parser';
+import { extractProfileHandleFromPath } from '@lib/profile-link';
 import { safeHttpUrl } from '@lib/utils';
 import { HeroIcon } from './hero-icon';
 
@@ -51,6 +52,23 @@ function linkLabel(href: string, raw: string): string {
   }
 }
 
+/**
+ * رابط ملف شخصي يخص التطبيق (نفس النطاق أو معاينات Vercel)؟
+ * يُفتح داخل التطبيق بدل رميه للمتصفح الخارجي.
+ */
+function internalProfileHandle(href: string): string | null {
+  try {
+    const url = new URL(href);
+    const sameHost =
+      typeof window !== 'undefined' && url.host === window.location.host;
+    const isAppPreview = /(^|\.)vercel\.app$/i.test(url.hostname);
+    if (!sameHost && !isAppPreview) return null;
+    return extractProfileHandleFromPath(url.pathname);
+  } catch {
+    return null;
+  }
+}
+
 export function LinkifiedText({
   text,
   linkClassName
@@ -82,6 +100,32 @@ export function LinkifiedText({
 
         const href = safeHttpUrl(part.value);
         if (!href) return part.value;
+
+        // رابط بروفايل داخلي → تنقّل داخل التطبيق بشكل مذكّر أنيق
+        const profileHandle = internalProfileHandle(href);
+        if (profileHandle) {
+          return (
+            <Link href={`/user/${profileHandle}`} key={index}>
+              <a
+                dir='ltr'
+                className={cn(
+                  linkClassName ??
+                    'user-text-ltr bg-main-accent/12 mx-0.5 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 align-middle text-[13px] font-semibold text-main-accent-text ring-1 ring-main-accent/20 transition hover:bg-main-accent/20'
+                )}
+                onClick={(event): void => {
+                  event.stopPropagation();
+                }}
+              >
+                <HeroIcon
+                  className='h-3.5 w-3.5 shrink-0'
+                  iconName='UserIcon'
+                />
+                <span className='truncate'>@{profileHandle}</span>
+              </a>
+            </Link>
+          );
+        }
+
         return (
           <a
             key={index}

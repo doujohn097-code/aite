@@ -94,10 +94,14 @@ export function SharedProfileCard({
               src={profile.coverURL}
               alt=''
               draggable={false}
+              onError={(event): void => {
+                // غلاف تالف: أخفِه ليبقى التدرج الزجاجي الأنيق ظاهرًا
+                event.currentTarget.style.display = 'none';
+              }}
             />
           )}
           <span className='absolute inset-0 bg-gradient-to-t from-black/25 to-transparent' />
-          <span className='absolute left-3 top-3 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur'>
+          <span className='absolute top-3 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur [inset-inline-start:0.75rem]'>
             {t('messages.profile')}
           </span>
         </div>
@@ -109,21 +113,26 @@ export function SharedProfileCard({
               src={photo}
               alt={name}
               draggable={false}
+              onError={(event): void => {
+                const target = event.currentTarget;
+                if (!target.src.endsWith('/assets/default-avatar.png'))
+                  target.src = '/assets/default-avatar.png';
+              }}
             />
           </div>
           <div className='flex min-w-0 items-center gap-1'>
-            <p className='truncate text-[15px] font-black leading-tight'>
+            <p className='user-text truncate text-[15px] font-black leading-tight'>
               {name}
             </p>
             {profile.verified && <VerifiedBadge className='h-4 w-4 shrink-0' />}
           </div>
           {username && (
             <p className='truncate text-[12px] text-light-secondary dark:text-dark-secondary'>
-              @{username}
+              <span dir='ltr'>@{username}</span>
             </p>
           )}
           {profile.bio && (
-            <p className='mt-1.5 line-clamp-2 text-[13px] leading-snug opacity-80'>
+            <p className='user-text mt-1.5 line-clamp-2 text-[13px] leading-snug opacity-80'>
               {profile.bio}
             </p>
           )}
