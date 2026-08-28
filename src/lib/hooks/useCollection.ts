@@ -47,6 +47,9 @@ export function useCollection<T>(
   const [loading, setLoading] = useState(true);
   const hasLiveData = useRef(false);
   const applyId = useRef(0);
+  const dataRef = useRef<T[] | null>(null);
+
+  dataRef.current = data;
 
   const cachedQuery = useCacheQuery(query);
 
@@ -119,6 +122,13 @@ export function useCollection<T>(
 
   const refresh = useCallback(async (): Promise<void> => {
     if (disabled || !cachedQuery) return;
+    // Visible reload: drop current rows and surface the loading state so
+    // pull-to-refresh feels like a real re-fetch (skeletons show), not a
+    // silent background update.
+    const token = ++applyId.current;
+    const previousData = dataRef.current;
+    setData(null);
+    setLoading(true);
     try {
       const snapshot = await getDocsFromServer(cachedQuery);
       hasLiveData.current = true;
@@ -128,7 +138,14 @@ export function useCollection<T>(
       await applyRows(rows);
     } catch (error) {
       console.error('useCollection refresh error:', error);
+      if (applyId.current === token) {
+        // Never leave the UI stuck on skeletons if the server fetch fails
+        // (e.g. offline): restore the previous rows instead.
+        setData(previousData ?? []);
+        setLoading(false);
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applyRows, cachedQuery, disabled]);
 
   useEffect(() => {

@@ -39,6 +39,7 @@ import { LinkifiedText } from '@components/ui/linkified-text';
 import { FontPicker } from '@components/input/font-picker';
 import { DEFAULT_TEXT_FONT, fontCss } from '@lib/text-fonts';
 import { COMMENT_TEXT_MAX } from '@lib/text-limits';
+import { PUBLISH_COOLDOWN_MS } from '@lib/publish-quota';
 import TextareaAutosize from 'react-textarea-autosize';
 import type { TweetWithUser } from '@lib/types/tweet';
 import { useLanguage } from '@lib/context/language-context';
@@ -73,6 +74,7 @@ export function PostComments({
   const [commentFont, setCommentFont] = useState(DEFAULT_TEXT_FONT);
   const [showFonts, setShowFonts] = useState(false);
   const [sending, setSending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
   const [replyingTo, setReplyingTo] = useState<ReplyingTo>(null);
   const [optimisticLikes, setOptimisticLikes] = useState<
     Record<string, string[]>
@@ -86,6 +88,14 @@ export function PostComments({
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
   const [editTarget, setEditTarget] = useState<TweetWithUser | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  // Countdown for the anti-spam cooldown so the user sees exactly why
+  // sending is temporarily blocked instead of a mysterious failure.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = window.setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [cooldown]);
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { mentionQuery, onMentionChange, insertMention, closeMentions } =
     useMentionAssist(comment, setComment, inputRef);
@@ -281,10 +291,26 @@ export function PostComments({
 
     try {
       await addReelComment(tweetId, ownerId, user.id, trimmed, replyMetadata);
+      setCooldown(Math.ceil(PUBLISH_COOLDOWN_MS / 1000));
       setOptimisticComments((prev) => prev.filter((c) => c.id !== tempId));
     } catch (err) {
       console.error('Failed to post comment:', err);
-      toast.error(t('err.commentPublish'));
+      const quotaError = err as
+        | { code?: string; message?: string; retryAfterMs?: number }
+        | undefined;
+      if (quotaError?.code === 'aite/publish-quota') {
+        // Surface the real reason (cooldown / hourly limit) instead of a
+        // generic failure, and mirror the remaining wait on the button.
+        toast.error(quotaError.message || t('err.commentPublish'));
+        setCooldown(
+          Math.max(
+            1,
+            Math.ceil((quotaError.retryAfterMs ?? PUBLISH_COOLDOWN_MS) / 1000)
+          )
+        );
+      } else {
+        toast.error(t('err.commentPublish'));
+      }
       setOptimisticComments((prev) => prev.filter((c) => c.id !== tempId));
     } finally {
       setSending(false);
@@ -383,7 +409,16 @@ export function PostComments({
 
   return (
     <>
-      <section className='comments-fog flex flex-col overflow-hidden rounded-[22px]'>
+      <section
+        className={cn(
+          // min-h fills the first screen (viewport − header − nav gap) so the
+          // composer is visible immediately, pinned above the bottom nav.
+          'comments-fog flex min-h-[calc(var(--app-height,100vh)-7.5rem)] flex-col rounded-[22px]',
+          // No overflow-hidden here: it would trap the sticky composer inside
+          // the section and break its viewport pinning.
+          'xs:min-h-[calc(var(--app-height,100vh)-3.5rem)]'
+        )}
+      >
         {/* Header */}
         <div className='flex items-center gap-2 border-y border-light-border px-4 py-3 dark:border-dark-border'>
           <h2 className='text-base font-bold text-light-primary dark:text-dark-primary'>
@@ -400,7 +435,7 @@ export function PostComments({
         </div>
 
         {/* Comments List */}
-        <div className='flex flex-col gap-4 px-4 py-4'>
+        <div className='flex flex-1 flex-col gap-4 px-4 py-4'>
           {loading && !allComments.length ? (
             <div className='flex justify-center py-10'>
               <Loading className='mt-2' />
@@ -796,7 +831,7 @@ export function PostComments({
 
           <form
             onSubmit={handleSubmit}
-            className='flex w-full min-w-0 items-center gap-2 px-4 py-3'
+            className='flex w-full min-w-0 items-center gap-2 px-4 py-2'
           >
             <span className='shrink-0'>
               <UserAvatar
@@ -840,12 +875,16 @@ export function PostComments({
             <Button
               type='submit'
               loading={sending}
-              disabled={!comment.trim() || comment.length > COMMENT_TEXT_MAX}
+              disabled={
+                cooldown > 0 ||
+                !comment.trim() ||
+                comment.length > COMMENT_TEXT_MAX
+              }
               className='flex shrink-0 items-center gap-1 rounded-full bg-main-accent px-4 py-2.5 text-sm
                          font-bold text-main-accent-contrast shadow-md transition hover:brightness-95 active:scale-95
                          disabled:pointer-events-none disabled:opacity-40'
             >
-              <span>{t('comments.send')}</span>
+              <span>{cooldown > 0 ? `${cooldown}s` : t('comments.send')}</span>
               <HeroIcon
                 className='h-4 w-4 rotate-180'
                 iconName='PaperAirplaneIcon'
@@ -855,7 +894,7 @@ export function PostComments({
 
           {/* Quick Emojis */}
           <div
-            className='flex items-center gap-2 overflow-x-auto border-t border-light-border/60 px-4 py-1.5
+            className='flex items-center gap-2 overflow-x-auto border-t border-light-border/60 px-4 py-1
                        dark:border-dark-border/60'
           >
             {QUICK_EMOJIS.map((emoji) => (

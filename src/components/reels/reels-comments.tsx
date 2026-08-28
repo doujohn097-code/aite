@@ -337,7 +337,13 @@ export function ReelsComments({
       setOptimisticComments((prev) => prev.filter((c) => c.id !== tempId));
     } catch (err) {
       console.error('Failed to post comment:', err);
-      toast.error(t('err.commentPublish'));
+      const quotaError = err as { code?: string; message?: string } | undefined;
+      if (quotaError?.code === 'aite/publish-quota') {
+        // Surface the real reason (cooldown / hourly limit).
+        toast.error(quotaError.message || t('err.commentPublish'));
+      } else {
+        toast.error(t('err.commentPublish'));
+      }
       // Rollback optimistic comment
       setOptimisticComments((prev) => prev.filter((c) => c.id !== tempId));
     } finally {

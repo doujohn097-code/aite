@@ -64,7 +64,14 @@ async function consumePublishQuota(
     publishWindowStart: data?.publishWindowStart,
     publishWindowCount: data?.publishWindowCount
   });
-  if (!next.allowed) throw new Error(next.message);
+  if (!next.allowed) {
+    // Mark the error so UI can surface the real reason (cooldown / hourly
+    // limit) instead of a generic publish failure.
+    throw Object.assign(new Error(next.message), {
+      code: 'aite/publish-quota',
+      retryAfterMs: next.retryAfterMs
+    });
+  }
   return {
     lastPublishAt: serverTimestamp(),
     lastPublishRef: publishRef,

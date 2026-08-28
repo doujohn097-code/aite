@@ -32,6 +32,9 @@ export function useDocument<T>(
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const hasLiveData = useRef(false);
+  const dataRef = useRef<T | null>(null);
+
+  dataRef.current = data;
 
   const cachedDocRef = useCacheRef(docRef);
 
@@ -104,19 +107,32 @@ export function useDocument<T>(
 
   const refresh = useCallback(async (): Promise<void> => {
     if (disabled || !cachedDocRef) return;
+    // Visible reload: drop the current doc and surface the loading state so
+    // pull-to-refresh feels like a real re-fetch (skeletons show), not a
+    // silent background update.
+    hasLiveData.current = false;
+    const previousData = dataRef.current;
+    setData(null);
+    setLoading(true);
     try {
       const snapshot = await getDocFromServer(cachedDocRef);
+      hasLiveData.current = true;
       const next = snapshot.data({ serverTimestamps: 'estimate' });
       if (allowNull && !next) {
         setData(null);
+        setLoading(false);
         return;
       }
       if (!includeUser) {
         setData((next as T) ?? null);
+        setLoading(false);
         return;
       }
       const currentData = next as DataWithRef<T>;
-      if (!currentData?.createdBy) return;
+      if (!currentData?.createdBy) {
+        setLoading(false);
+        return;
+      }
       const userData = await getDoc(
         doc(usersCollection, currentData.createdBy)
       );
@@ -124,8 +140,13 @@ export function useDocument<T>(
         ...currentData,
         user: userData.data() ?? blankUser(currentData.createdBy)
       });
+      setLoading(false);
     } catch (error) {
       console.error('useDocument refresh error:', error);
+      // Never leave the UI stuck on skeletons if the server fetch fails
+      // (e.g. offline): restore the previous document instead.
+      setData(previousData);
+      setLoading(false);
     }
   }, [allowNull, cachedDocRef, disabled, includeUser]);
 
