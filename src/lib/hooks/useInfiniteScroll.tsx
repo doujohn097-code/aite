@@ -27,29 +27,55 @@ export function useInfiniteScroll<T>(
   collection: Query<T>,
   constraints: QueryConstraint[],
   fetchOptions: UseCollectionOptions & { includeUser: true },
-  options?: { initialSize?: number; stepSize?: number; marginBottom?: number }
+  options?: {
+    initialSize?: number;
+    stepSize?: number;
+    marginBottom?: number;
+    resetKey?: string | number;
+  }
 ): InfiniteScrollWithUser<T>;
 
 export function useInfiniteScroll<T>(
   collection: Query<T>,
   constraints: QueryConstraint[],
   fetchOptions?: UseCollectionOptions,
-  options?: { initialSize?: number; stepSize?: number; marginBottom?: number }
+  options?: {
+    initialSize?: number;
+    stepSize?: number;
+    marginBottom?: number;
+    resetKey?: string | number;
+  }
 ): InfiniteScroll<T>;
 
 export function useInfiniteScroll<T>(
   collection: Query<T>,
   queryConstraints?: QueryConstraint[],
   fetchOptions?: UseCollectionOptions,
-  options?: { initialSize?: number; stepSize?: number; marginBottom?: number }
+  options?: {
+    initialSize?: number;
+    stepSize?: number;
+    marginBottom?: number;
+    resetKey?: string | number;
+  }
 ): InfiniteScroll<T> | InfiniteScrollWithUser<T> {
-  const { initialSize, stepSize, marginBottom } = options ?? {};
+  const { initialSize, stepSize, marginBottom, resetKey } = options ?? {};
 
   const [tweetsLimit, setTweetsLimit] = useState(initialSize ?? 20);
   const [reachedLimit, setReachedLimit] = useState(false);
   const [loadMoreInView, setLoadMoreInView] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const justIncreased = useRef(false);
+
+  // إعادة ضبط الترقيم (الحد والنهاية) عند تغيّر مفتاح الوضع — مثل الانتقال
+  // بين كل الأشخاص ونتائج البحث — أثناء التصيير مباشرةً حتى يُبنى الاستعلام
+  // التالي بالحدّ الابتدائي دون اشتراك Firestore زائد أو وميض بيانات قديمة.
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (resetKey !== prevResetKey) {
+    setPrevResetKey(resetKey);
+    setTweetsLimit(initialSize ?? 20);
+    setReachedLimit(false);
+    justIncreased.current = false;
+  }
 
   const {
     data,

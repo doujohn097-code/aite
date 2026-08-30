@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
-import { query, where, orderBy, limit, documentId } from 'firebase/firestore';
+import { where, orderBy, documentId } from 'firebase/firestore';
 import { useAuth } from '@lib/context/auth-context';
 import { useLanguage } from '@lib/context/language-context';
-import { useCollection } from '@lib/hooks/useCollection';
+import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 import { usersCollection } from '@lib/firebase/collections';
 import { ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
@@ -13,6 +13,8 @@ import { UserCard } from '@components/user/user-card';
 import { UserFeedSkeleton } from '@components/ui/skeleton';
 import { SEO } from '@components/common/seo';
 import type { ReactElement, ReactNode } from 'react';
+
+const USERS_PAGE_SIZE = 20;
 
 export default function Search(): JSX.Element {
   const { push, query: routerQuery } = useRouter();
@@ -40,31 +42,32 @@ export default function Search(): JSX.Element {
 
   const trimmedQuery = inputValue.trim().toLowerCase();
 
-  const usersQuery = useMemo(() => {
-    if (!userId) return null;
-
+  // شرطا الاستعلام حسب الوضع: تصفّح كل الأشخاص أو بحث ببادئة اسم المستخدم.
+  // الترقيم (تحميل المزيد) يُدار بواسطة useInfiniteScroll فوق هذه الشروط.
+  const constraints = useMemo(() => {
     if (!trimmedQuery)
-      return query(
-        usersCollection,
-        where(documentId(), '!=', userId),
-        orderBy(documentId()),
-        limit(20)
-      );
+      return [where(documentId(), '!=', userId ?? ''), orderBy(documentId())];
 
     const end = `${trimmedQuery}\uf8ff`;
 
-    return query(
-      usersCollection,
+    return [
       where('username', '>=', trimmedQuery),
       where('username', '<=', end),
-      orderBy('username'),
-      limit(20)
-    );
+      orderBy('username')
+    ];
   }, [userId, trimmedQuery]);
 
-  const { data, loading } = useCollection(usersQuery, {
-    allowNull: true
-  });
+  const { data, loading, LoadMore } = useInfiniteScroll(
+    usersCollection,
+    constraints,
+    { allowNull: true, disabled: !userId },
+    {
+      initialSize: USERS_PAGE_SIZE,
+      stepSize: USERS_PAGE_SIZE,
+      // إعادة ضبط الترقيم عند تغيّر الوضع (تصفّح ↔ بحث) أو تغيّر الجلسة.
+      resetKey: `${userId ?? ''}|${trimmedQuery}`
+    }
+  );
 
   const results = data ?? [];
   const isSearching = trimmedQuery.length > 0;
@@ -98,9 +101,12 @@ export default function Search(): JSX.Element {
         {loading ? (
           <UserFeedSkeleton />
         ) : results.length ? (
-          results.map((userData) => (
-            <UserCard {...userData} follow key={userData.id} />
-          ))
+          <>
+            {results.map((userData) => (
+              <UserCard {...userData} follow key={userData.id} />
+            ))}
+            <LoadMore />
+          </>
         ) : (
           <div className='p-8 text-center'>
             <p className='text-2xl font-bold'>
