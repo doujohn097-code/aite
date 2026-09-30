@@ -46,9 +46,8 @@ export function useReelsFeed(): ReelsFeed {
   );
 
   const reels = useMemo(() => {
-    const nowMs = Date.now();
     return mergeReels(tagged.data, legacy.data)
-      .filter((story) => isReelVisible(story, nowMs))
+      .filter((story) => isReelVisible(story))
       .sort(
         (a, b) =>
           getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt)

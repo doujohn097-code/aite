@@ -72,6 +72,34 @@ export default function App({
     };
   }, [router, router.isReady]);
 
+  // «Abort fetching component for route» يحدث داخل WebView عند انقطاع اللحظة
+  // أو إلغاء التنقّل، ويترك الصفحة عالقة على الشاشة السابقة. نعيد المحاولة
+  // مرة واحدة بتنقّل صريح بدل ترك المستخدم أمام شاشة ميتة.
+  useEffect(() => {
+    let retriedPath: string | null = null;
+
+    const handleRouteError = (error: unknown, path: string): void => {
+      // إعادة محاولة واحدة لكل مسار حتى لا ندخل في حلقة عند انقطاع الشبكة.
+      if (retriedPath === path) return;
+      retriedPath = path;
+      console.warn('[aite] route change failed, retrying once:', path, error);
+      window.setTimeout(() => {
+        void router.replace(path).catch(() => undefined);
+      }, 350);
+    };
+
+    const handleRouteComplete = (): void => {
+      retriedPath = null;
+    };
+
+    router.events.on('routeChangeError', handleRouteError);
+    router.events.on('routeChangeComplete', handleRouteComplete);
+    return () => {
+      router.events.off('routeChangeError', handleRouteError);
+      router.events.off('routeChangeComplete', handleRouteComplete);
+    };
+  }, [router]);
+
   return (
     <MotionConfig reducedMotion='user'>
       <AppHead />

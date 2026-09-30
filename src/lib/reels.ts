@@ -1,5 +1,4 @@
 import { orderBy, where } from 'firebase/firestore';
-import { getTimestampMillis } from './date';
 import type { QueryConstraint } from 'firebase/firestore';
 import type { Story } from './types/story';
 
@@ -10,6 +9,12 @@ import type { Story } from './types/story';
 export function reelQueryConstraints(): QueryConstraint[] {
   return [where('kind', '==', 'reel'), orderBy('createdAt', 'desc')];
 }
+
+/**
+ * الريلز دائمة: لا تنتهي بعد 30 يوماً كما كان في السابق. حقل expiresAt ما زال
+ * يُكتب عند النشر (قواعد Firestore تتوقع طابعاً زمنياً) لكنه لم يعد يُستخدم
+ * لإخفاء الريل — لذلك تظهر الريلز القديمة كلها بدل أن تختفي بعد شهر.
+ */
 
 /**
  * هل هذا المستند ريل؟
@@ -31,21 +36,8 @@ export function isReelLike(story: Pick<Story, 'kind' | 'images'>): boolean {
   });
 }
 
-/** الريل منتهي الصلاحية (تجاوز 30 يوماً) لا يُعرض في التغذية. */
-export function isReelExpired(
-  story: Pick<Story, 'expiresAt'>,
-  now = Date.now()
-): boolean {
-  const expiresMs = getTimestampMillis(story.expiresAt);
-  if (!expiresMs) return false;
-  return expiresMs <= now;
-}
-
-export function isReelVisible(
-  story: Pick<Story, 'kind' | 'images' | 'expiresAt'>,
-  now = Date.now()
-): boolean {
-  return isReelLike(story) && !isReelExpired(story, now);
+export function isReelVisible(story: Pick<Story, 'kind' | 'images'>): boolean {
+  return isReelLike(story);
 }
 
 /** دمج مصدري الريلز (الموسوم + القديم) بدون تكرار. */

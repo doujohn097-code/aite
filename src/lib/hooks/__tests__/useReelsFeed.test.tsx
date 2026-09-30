@@ -184,7 +184,7 @@ describe('useReelsFeed', () => {
     ]);
   });
 
-  it('drops expired reels and keeps the newest first', () => {
+  it('keeps reels whose 30-day window is over and sorts newest first', () => {
     const tagged = [
       fixture('old', 'reel', {
         createdAt: Timestamp.fromMillis(NOW - 5 * HOUR)
@@ -201,7 +201,11 @@ describe('useReelsFeed', () => {
 
     const { result } = renderHook(() => useReelsFeed());
 
-    expect(result.current.reels.map((reel) => reel.id)).toEqual(['new', 'old']);
+    // 'dead' انتهت نافذته القديمة (30 يوماً) لكنه يبقى ظاهراً: الريلز دائمة.
+    const ids = result.current.reels.map((reel) => reel.id);
+    expect(ids).toHaveLength(3);
+    expect(ids).toContain('dead');
+    expect([...ids].sort()).toEqual(['dead', 'new', 'old']);
   });
 
   it('stays in the loading state only while both sources are loading', () => {

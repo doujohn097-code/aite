@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
-import { isReelExpired, isReelLike, isReelVisible, mergeReels } from '../reels';
+import { isReelLike, isReelVisible, mergeReels } from '../reels';
 import type { Story } from '../types/story';
 
 const HOUR = 60 * 60 * 1000;
@@ -56,55 +56,28 @@ describe('isReelLike', () => {
   });
 });
 
-describe('isReelExpired', () => {
-  it('hides reels whose 30-day window is over', () => {
-    expect(
-      isReelExpired(
-        story({ id: 'a', expiresAt: Timestamp.fromMillis(NOW - 1) }),
-        NOW
-      )
-    ).toBe(true);
-  });
-
-  it('keeps reels inside their window and reels without an expiry', () => {
-    expect(
-      isReelExpired(
-        story({ id: 'a', expiresAt: Timestamp.fromMillis(NOW + HOUR) }),
-        NOW
-      )
-    ).toBe(false);
-    expect(
-      isReelExpired(
-        story({ id: 'b', expiresAt: null as unknown as Story['expiresAt'] }),
-        NOW
-      )
-    ).toBe(false);
-  });
-});
-
 describe('isReelVisible', () => {
-  it('requires a reel that has not expired', () => {
+  it('keeps reels that are older than the retired 30-day window', () => {
+    const ancient = story({
+      id: 'a',
+      kind: 'reel',
+      createdAt: Timestamp.fromMillis(NOW - 40 * 24 * HOUR),
+      expiresAt: Timestamp.fromMillis(NOW - 10 * 24 * HOUR)
+    });
+
+    expect(isReelVisible(ancient)).toBe(true);
+  });
+
+  it('never hides a reel because of its expiry', () => {
     expect(
       isReelVisible(
-        story({
-          id: 'a',
-          kind: 'reel',
-          expiresAt: Timestamp.fromMillis(NOW + HOUR)
-        }),
-        NOW
+        story({ id: 'b', kind: 'reel', expiresAt: Timestamp.fromMillis(1) })
       )
     ).toBe(true);
-    expect(
-      isReelVisible(
-        story({
-          id: 'b',
-          kind: 'reel',
-          expiresAt: Timestamp.fromMillis(NOW - HOUR)
-        }),
-        NOW
-      )
-    ).toBe(false);
-    expect(isReelVisible(story({ id: 'c', kind: 'story' }), NOW)).toBe(false);
+  });
+
+  it('still hides plain stories', () => {
+    expect(isReelVisible(story({ id: 'c', kind: 'story' }))).toBe(false);
   });
 });
 

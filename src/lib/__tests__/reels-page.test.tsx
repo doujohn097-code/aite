@@ -267,6 +267,23 @@ describe('Reels page', () => {
     expect(expanded).toContain('legacy');
   });
 
+  it('still shows reels whose 30-day window is over', () => {
+    // كل الريلز المنشورة بين 19 و30 أوت صارت «منتهية» بعد 30 يوماً، وهذا ما
+    // أخفاها كلها من التغذية. الريلز دائمة الآن.
+    const expired = reel('ancient');
+    (expired as unknown as { expiresAt: { seconds: number } }).expiresAt = {
+      seconds: 1
+    };
+
+    mockSources([expired], []);
+
+    act(() => {
+      render(<Reels />);
+    });
+
+    expect(screen.getByTestId('reel-ancient')).toBeInTheDocument();
+  });
+
   it('shows the empty state when there is nothing to watch', () => {
     mockSources([], []);
 

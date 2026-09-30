@@ -961,9 +961,11 @@ export async function uploadStory(
 
 // Reels live in the same `stories` collection but are tagged with kind:'reel'
 // so the stories bar / viewer never shows them and the /reels feed never shows
-// plain stories. Reels also use a much longer lifetime (30 days) so the feed
-// does not empty out within a day.
-const REEL_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
+// plain stories. Reels never expire: `expiresAt` is still written because the
+// Firestore create rules and the Story type expect a timestamp, but the feed
+// ignores it, so a reel stays watchable forever instead of vanishing after a
+// month.
+const REEL_LIFETIME_MS = 100 * 365 * 24 * 60 * 60 * 1000;
 
 export function getReelExpiration(): Timestamp {
   return Timestamp.fromMillis(Date.now() + REEL_LIFETIME_MS);
