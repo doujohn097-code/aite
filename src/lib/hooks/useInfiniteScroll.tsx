@@ -14,6 +14,10 @@ type InfiniteScroll<T> = {
   loading: boolean;
   LoadMore: () => JSX.Element;
   refresh: () => Promise<void>;
+  /** هل ما زالت هناك صفحات لم تُجلب بعد؟ */
+  hasMore: boolean;
+  /** جلب الصفحة التالية برمجياً (بانتظار استقرار البيانات). */
+  expand: () => Promise<void>;
 };
 
 type InfiniteScrollWithUser<T> = {
@@ -21,6 +25,8 @@ type InfiniteScrollWithUser<T> = {
   loading: boolean;
   LoadMore: () => JSX.Element;
   refresh: () => Promise<void>;
+  hasMore: boolean;
+  expand: () => Promise<void>;
 };
 
 export function useInfiniteScroll<T>(
@@ -113,6 +119,25 @@ export function useInfiniteScroll<T>(
   const makeItInView = (): void => setLoadMoreInView(true);
   const makeItNotInView = (): void => setLoadMoreInView(false);
 
+  const reachedLimitRef = useRef(reachedLimit);
+  reachedLimitRef.current = reachedLimit;
+  const loadingRef = useRef(loading);
+  loadingRef.current = loading;
+
+  // توسيع نافذة الاستعلام برمجياً: يُستخدم حين لا تكفي الدفعة الأولى لملء
+  // الشاشة (مثل الريلز القليلة بين قصص كثيرة).
+  const expand = useCallback(async (): Promise<void> => {
+    if (reachedLimitRef.current || loadingRef.current) return;
+    justIncreased.current = true;
+    setTweetsLimit((current) => current + (stepSize ?? 20));
+
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < 10_000) {
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      if (!loadingRef.current) return;
+    }
+  }, [stepSize]);
+
   const LoadMore = useCallback(
     (): JSX.Element => (
       <motion.div
@@ -127,5 +152,5 @@ export function useInfiniteScroll<T>(
     [reachedLimit, loading]
   );
 
-  return { data, loading, LoadMore, refresh };
+  return { data, loading, LoadMore, refresh, hasMore: !reachedLimit, expand };
 }

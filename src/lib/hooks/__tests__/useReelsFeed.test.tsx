@@ -18,6 +18,8 @@ type Source = {
   loading: boolean;
   refresh: () => Promise<void>;
   LoadMore: () => JSX.Element;
+  hasMore: boolean;
+  expand: () => Promise<void>;
 };
 
 type Constraint = {
@@ -92,12 +94,24 @@ function storyOnly(id: string): Story {
   });
 }
 
-function source(id: string, data: Story[] | null, loading = false): Source {
+const expanded: string[] = [];
+
+function source(
+  id: string,
+  data: Story[] | null,
+  options: { loading?: boolean; hasMore?: boolean } = {}
+): Source {
+  const { loading = false, hasMore = false } = options;
   return {
     data,
     loading,
+    hasMore,
     refresh: (): Promise<void> => {
       refreshed.push(id);
+      return Promise.resolve();
+    },
+    expand: (): Promise<void> => {
+      expanded.push(id);
       return Promise.resolve();
     },
     LoadMore: (): JSX.Element => <div data-testid='load-more' />
@@ -108,6 +122,7 @@ describe('useReelsFeed', () => {
   beforeEach(() => {
     mockedUseInfiniteScroll.mockReset();
     refreshed.length = 0;
+    expanded.length = 0;
   });
 
   it('opens a tagged window with paging plus an unfiltered fallback window', () => {
@@ -192,13 +207,41 @@ describe('useReelsFeed', () => {
   it('stays in the loading state only while both sources are loading', () => {
     mockedUseInfiniteScroll.mockImplementation((_collection, constraints) =>
       isTagged(constraints)
-        ? source('tagged', null, true)
-        : source('legacy', [], false)
+        ? source('tagged', null, { loading: true })
+        : source('legacy', [])
     );
 
     const { result } = renderHook(() => useReelsFeed());
 
     expect(result.current.loading).toBe(false);
+  });
+
+  it('widens the fallback window while the feed holds fewer than three reels', () => {
+    mockedUseInfiniteScroll.mockImplementation((_collection, constraints) =>
+      isTagged(constraints)
+        ? source('tagged', [fixture('r1', 'reel')])
+        : source('legacy', [], { hasMore: true })
+    );
+
+    renderHook(() => useReelsFeed());
+
+    expect(expanded).toEqual(['legacy']);
+  });
+
+  it('stops widening once the feed has enough reels', () => {
+    mockedUseInfiniteScroll.mockImplementation((_collection, constraints) =>
+      isTagged(constraints)
+        ? source('tagged', [
+            fixture('r1', 'reel'),
+            fixture('r2', 'reel'),
+            fixture('r3', 'reel')
+          ])
+        : source('legacy', [], { hasMore: true })
+    );
+
+    renderHook(() => useReelsFeed());
+
+    expect(expanded).toEqual([]);
   });
 
   it('refreshes both sources', () => {

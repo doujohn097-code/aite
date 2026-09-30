@@ -79,6 +79,8 @@ type Source = {
   loading: boolean;
   refresh: () => Promise<void>;
   LoadMore: () => JSX.Element;
+  hasMore: boolean;
+  expand: () => Promise<void>;
 };
 
 const mockedUseInfiniteScroll = useInfiniteScroll as unknown as jest.Mock<
@@ -135,11 +137,18 @@ function plainStory(id: string): Story {
   } as unknown as Story;
 }
 
-function source(data: Story[] | null): Source {
+const expanded: string[] = [];
+
+function source(id: string, data: Story[] | null, hasMore = false): Source {
   return {
     data,
     loading: false,
+    hasMore,
     refresh: (): Promise<void> => Promise.resolve(),
+    expand: (): Promise<void> => {
+      expanded.push(id);
+      return Promise.resolve();
+    },
     LoadMore: (): JSX.Element => <div data-testid='load-more' />
   };
 }
@@ -166,16 +175,27 @@ function isTaggedQuery(constraints: Constraint[]): boolean {
  * نربط كل استعلام بمصدره حسب قيوده لا حسب ترتيب النداء: الصفحة تُعاد
  * تصييرها أكثر من مرة (تحميل الملّاك، جاهزية الرابط العميق).
  */
-function mockSources(tagged: Story[] | null, legacy: Story[] | null): void {
+function mockSources(
+  tagged: Story[] | null,
+  legacy: Story[] | null,
+  hasMore: { tagged?: boolean; legacy?: boolean } = {}
+): void {
+  const taggedHasMore = hasMore.tagged ?? false;
+  const legacyHasMore = hasMore.legacy ?? false;
   mockedUseInfiniteScroll.mockImplementation(
     (_collection: unknown, constraints: Constraint[]) =>
-      source(isTaggedQuery(constraints) ? tagged : legacy)
+      source(
+        isTaggedQuery(constraints) ? 'tagged' : 'legacy',
+        isTaggedQuery(constraints) ? tagged : legacy,
+        isTaggedQuery(constraints) ? taggedHasMore : legacyHasMore
+      )
   );
 }
 
 describe('Reels page', () => {
   beforeEach(() => {
     mockedUseInfiniteScroll.mockReset();
+    expanded.length = 0;
   });
 
   it('renders every reel as its own full-height snap screen', () => {
@@ -234,6 +254,17 @@ describe('Reels page', () => {
     expect(screen.getByTestId('reel-legacy1')).toBeInTheDocument();
     expect(screen.getByTestId('reel-legacy2')).toBeInTheDocument();
     expect(screen.queryByTestId('reel-s0')).toBeNull();
+  });
+
+  it('asks for more reels when the feed would otherwise hold a single one', () => {
+    mockSources([reel('only')], [], { legacy: true });
+
+    act(() => {
+      render(<Reels />);
+    });
+
+    expect(screen.getByTestId('reel-only')).toBeInTheDocument();
+    expect(expanded).toContain('legacy');
   });
 
   it('shows the empty state when there is nothing to watch', () => {

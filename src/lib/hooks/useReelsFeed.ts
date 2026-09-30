@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { storiesCollection } from '@lib/firebase/collections';
 import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 import { isReelVisible, mergeReels, reelQueryConstraints } from '@lib/reels';
@@ -6,11 +6,18 @@ import { getTimestampMillis } from '@lib/date';
 import type { QueryConstraint } from 'firebase/firestore';
 import type { Story } from '@lib/types/story';
 
+/** أقل عدد ريلز نريده على الشاشة قبل التوقّف عن جلب المزيد. */
+export const MIN_REELS_BEFORE_SETTLING = 3;
+
 type ReelsFeed = {
   reels: Story[];
   loading: boolean;
   LoadMore: () => JSX.Element;
   refresh: () => Promise<void>;
+  /** هل ما زالت هناك ريلز يمكن جلبها؟ */
+  hasMore: boolean;
+  /** جلب دفعة إضافية من نافذة الريلز الاحتياطية. */
+  expand: () => Promise<void>;
 };
 
 /**
@@ -57,10 +64,22 @@ export function useReelsFeed(): ReelsFeed {
     [tagged, legacy]
   );
 
+  const hasMore = tagged.hasMore || legacy.hasMore;
+
+  // إذا وصلت ريلز قليلة فقط (قصص كثيرة في المجموعة، أو فشل فهرس الاستعلام
+  // الموسوم) نوسّع النافذة الاحتياطية تلقائياً بدل ترك المستخدم أمام ريل واحد.
+  useEffect(() => {
+    if (reels.length >= MIN_REELS_BEFORE_SETTLING) return;
+    if (!legacy.hasMore || legacy.loading) return;
+    void legacy.expand();
+  }, [reels.length, legacy]);
+
   return {
     reels,
     loading: tagged.loading && legacy.loading,
     LoadMore,
-    refresh
+    refresh,
+    hasMore,
+    expand: legacy.expand
   };
 }
