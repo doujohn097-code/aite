@@ -15,3 +15,11 @@
 # python
 *.py
 .mypy_cache/
+
+# generated web bundle for the native shell
+/native-web/
+
+# android build outputs + generated capacitor assets
+android/**/build/
+android/app/src/main/assets/
+android/local.properties

@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import cn from 'clsx';
 import { preventBubbling } from '@lib/utils';
+import { runPageRefresh } from '@lib/refresh-bus';
 import { HeroIcon } from '@components/ui/hero-icon';
 import type { ReactNode } from 'react';
 import type { NavLink } from './sidebar';
@@ -29,6 +30,18 @@ export function SidebarLink({
 
   const showBadge = typeof badge === 'number' && badge > 0;
 
+  // الضغط على التبويب النشط يُحدّث الصفحة ويعيدك إلى أعلاها (مثل تطبيقات
+  // التواصل)، بدلاً من تجاهل اللمسة.
+  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>): void => {
+    if (disabled) {
+      preventBubbling()(event);
+      return;
+    }
+    if (!isActive) return;
+    event.preventDefault();
+    void runPageRefresh();
+  };
+
   const anchor = (
     <a
       className={cn(
@@ -36,7 +49,7 @@ export function SidebarLink({
         canBeHidden ? 'hidden xs:flex' : 'flex',
         disabled && 'cursor-not-allowed'
       )}
-      onClick={disabled ? preventBubbling() : undefined}
+      onClick={handleClick}
     >
       <div
         className={cn(

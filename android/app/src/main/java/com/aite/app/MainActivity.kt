@@ -41,14 +41,16 @@ import org.json.JSONObject
 
 class MainActivity : BridgeActivity() {
   private var webViewConfigured = false
-  private var restoredThisSession = false
   private var networkCallback: ConnectivityManager.NetworkCallback? = null
   private var offlineOverlay: View? = null
   private var lastGoodUrl: String = ORIGIN
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    lastGoodUrl = prefs().getString(KEY_LAST_URL, ORIGIN) ?: ORIGIN
+    // إقلاع بارد = الصفحة الرئيسية دائماً. أي مسار محفوظ من جلسة سابقة يُمسح
+    // حتى لا يُسترجع، ولا نستعيد حالة الـ WebView من حزمة الحالة.
+    prefs().edit().remove(KEY_LAST_URL).apply()
+    lastGoodUrl = ORIGIN
     onBackPressedDispatcher.addCallback(this) { handleBack() }
     requestNativePermissions()
     handlePushIntent(intent)
@@ -92,7 +94,8 @@ class MainActivity : BridgeActivity() {
   override fun onSaveInstanceState(outState: Bundle) {
     super.onSaveInstanceState(outState)
     persistCurrentUrl()
-    bridge?.webView?.saveState(outState)
+    // لا نحفظ حالة الـ WebView: استعادتها كانت تُرجع المستخدم إلى آخر صفحة
+    // بعد إغلاق التطبيق بدلاً من الصفحة الرئيسية.
   }
 
   override fun onDestroy() {
@@ -105,11 +108,25 @@ class MainActivity : BridgeActivity() {
     if (webView != null && canGoBackInApp(webView)) {
       webView.goBack()
       webView.postDelayed({
-        if (!isAllowedUrl(webView.url)) loadAliveUrl(lastGoodUrl)
+        if (!isAllowedUrl(webView.url)) loadAliveUrl(ORIGIN)
       }, 80)
       return
     }
+    // لا يوجد سجل داخلي: زر الرجوع يُعيدنا إلى الرئيسية بدل إغلاق التطبيق
+    // من صفحة داخلية، والإغلاق يحدث من الرئيسية فقط.
+    if (webView != null && currentPath(webView) != HOME_PATH) {
+      loadAliveUrl(ORIGIN)
+      return
+    }
     moveTaskToBack(true)
+  }
+
+  private fun currentPath(webView: WebView): String {
+    return try {
+      Uri.parse(webView.url).path.orEmpty().ifEmpty { "/" }
+    } catch (_: Exception) {
+      "/"
+    }
   }
 
   private fun canGoBackInApp(webView: WebView): Boolean {
@@ -183,7 +200,6 @@ class MainActivity : BridgeActivity() {
           lastGoodUrl = url
           persistUrl(url)
           injectRuntimeTweaks(view)
-          maybeRestoreLastPath(view, url)
         } else if (hasNetwork()) {
           loadAliveUrl(lastGoodUrl)
         }
@@ -253,21 +269,6 @@ class MainActivity : BridgeActivity() {
         return true
       }
     })
-  }
-
-  private fun maybeRestoreLastPath(webView: WebView, currentUrl: String) {
-    if (restoredThisSession) return
-    val saved = prefs().getString(KEY_LAST_URL, null) ?: return
-    if (!isAllowedUrl(saved)) return
-    val currentPath = Uri.parse(currentUrl).path.orEmpty()
-    val savedPath = Uri.parse(saved).path.orEmpty()
-    val isEntry = currentPath.isEmpty() || currentPath == "/" || currentPath == "/home"
-    if (isEntry && savedPath.isNotEmpty() && savedPath != currentPath && savedPath != "/") {
-      restoredThisSession = true
-      webView.post { loadAliveUrl(saved) }
-    } else {
-      restoredThisSession = true
-    }
   }
 
   private fun injectRuntimeTweaks(webView: WebView) {
@@ -582,6 +583,9 @@ class MainActivity : BridgeActivity() {
   companion object {
     const val HOST = "aite-app-one.vercel.app"
     const val ORIGIN = "https://aite-app-one.vercel.app"
+
+    /** نقطة البداية داخل الموقع: الرئيسية/شاشة الدخول. */
+    const val HOME_PATH = "/"
     private const val KEY_LAST_URL = "last_url"
 
     fun isAllowedHost(host: String?): Boolean =

@@ -15,6 +15,9 @@ export async function runPageRefresh(): Promise<void> {
     document
       .querySelectorAll<HTMLElement>('[data-scroll-root]')
       .forEach((node) => {
+        // أسطح الانزلاق الإجباري (الريلز) تحتفظ بموضعها: إرجاعها للأعلى كان
+        // يقذف المستخدم إلى أول ريل عند كل سحب للتحديث.
+        if (node.dataset.preserveScroll === 'true') return;
         node.scrollTop = 0;
       });
   }

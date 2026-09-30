@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { AnimatePresence } from 'framer-motion';
-import { storiesCollection } from '@lib/firebase/collections';
 import { useAuth } from '@lib/context/auth-context';
 import { useLanguage } from '@lib/context/language-context';
-import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
+import { useReelsFeed } from '@lib/hooks/useReelsFeed';
 import { useRankedFeed } from '@lib/hooks/useRankedFeed';
 import { getTimestampMillis } from '@lib/date';
 import { loadUsersByIds } from '@lib/firebase/users';
@@ -44,40 +42,13 @@ export default function Reels(): JSX.Element {
   const [createOpen, setCreateOpen] = useState(false);
   const [deepLinkReady, setDeepLinkReady] = useState(!deepLinkId);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const reelsConstraints = useMemo(() => [], []);
+  const deepLinkDoneRef = useRef(false);
 
   const {
-    data: rawReels,
+    reels: visibleReels,
     loading: reelsLoading,
     LoadMore
-  } = useInfiniteScroll(
-    storiesCollection,
-    reelsConstraints,
-    { allowNull: true },
-    { initialSize: 50, stepSize: 25 }
-  );
-
-  const visibleReels = useMemo(() => {
-    if (!rawReels) return [];
-    const nowMs = Date.now();
-    return rawReels.filter((s) => {
-      const isReelOrVideo =
-        s.kind === 'reel' ||
-        s.images?.some((img) => img.type?.startsWith('video/')) ||
-        s.images?.some(
-          (img) =>
-            img.src?.includes('.mp4') ||
-            img.src?.includes('.mov') ||
-            img.src?.includes('.webm')
-        );
-
-      if (!isReelOrVideo) return false;
-      if (!s.expiresAt) return true;
-      const exp = getTimestampMillis(s.expiresAt) || Infinity;
-      return exp > nowMs;
-    });
-  }, [rawReels]);
+  } = useReelsFeed();
 
   const reels = useRankedFeed(visibleReels, {
     mapItem: mapReel,
@@ -116,20 +87,24 @@ export default function Reels(): JSX.Element {
   }, [user, userById]);
 
   useEffect(() => {
-    if (activeIndex > reels.length - 1 && reels.length > 0) {
-      setActiveIndex(0);
+    // عند تغيّر طول القائمة نثبّت المؤشّر على آخر ريل صالح بدل القفز للأول.
+    if (reels.length > 0 && activeIndex > reels.length - 1) {
+      setActiveIndex(reels.length - 1);
     }
   }, [reels.length, activeIndex]);
 
   useEffect(() => {
     setDeepLinkReady(!deepLinkId);
+    deepLinkDoneRef.current = false;
   }, [deepLinkId]);
 
   // Deep links must open on the requested reel without visibly traversing
   // every reel above it. Keep the feed hidden for one frame, jump instantly,
-  // then reveal the target card.
+  // then reveal the target card. The jump runs once per deep link: the feed
+  // re-ranks itself as owners and pages arrive, and re-running the jump would
+  // yank the viewer back to the deep-linked reel mid-swipe.
   useEffect(() => {
-    if (!deepLinkId) {
+    if (!deepLinkId || deepLinkDoneRef.current) {
       setDeepLinkReady(true);
       return;
     }
@@ -139,6 +114,7 @@ export default function Reels(): JSX.Element {
       setDeepLinkReady(true);
       return;
     }
+    deepLinkDoneRef.current = true;
     setActiveIndex(index);
     requestAnimationFrame(() => {
       const container = containerRef.current;
@@ -239,31 +215,35 @@ export default function Reels(): JSX.Element {
           <div
             ref={containerRef}
             data-scroll-root
+            data-preserve-scroll='true'
             className={`h-full w-full select-none snap-y snap-mandatory overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth outline-none transition-opacity duration-150 [-webkit-tap-highlight-color:transparent] focus:outline-none ${
               deepLinkReady ? 'opacity-100' : 'pointer-events-none opacity-0'
             }`}
             onScroll={handleScroll}
           >
-            <AnimatePresence mode='popLayout'>
-              {reels.map((reel, index) => {
-                const owner = ownersById.get(reel.userId) ?? null;
-                const isActive = index === activeIndex;
+            {reels.map((reel, index) => {
+              const owner = ownersById.get(reel.userId) ?? null;
+              const isActive = index === activeIndex;
 
-                return (
-                  <div
-                    key={reel.id}
-                    className='relative flex h-app-nav w-full select-none snap-start snap-always items-center justify-center overflow-hidden outline-none focus:outline-none xs:h-app'
-                  >
-                    <div className='relative mx-auto h-full w-full max-w-md select-none outline-none focus:outline-none'>
-                      <ReelCard reel={reel} user={owner} isActive={isActive} />
-                    </div>
+              return (
+                <div
+                  key={reel.id}
+                  className='relative flex h-app-nav w-full select-none snap-start snap-always items-center justify-center overflow-hidden outline-none focus:outline-none xs:h-app'
+                >
+                  <div className='relative mx-auto h-full w-full max-w-md select-none outline-none focus:outline-none'>
+                    <ReelCard reel={reel} user={owner} isActive={isActive} />
                   </div>
-                );
-              })}
-            </AnimatePresence>
-            <LoadMore />
+                </div>
+              );
+            })}
           </div>
         )}
+
+        {/* يبقى مؤشّر «المزيد» خارج سطح الانزلاق: داخله كان يضيف منطقة فارغة
+            قابلة للالتقاط في نهاية التغذية. */}
+        <div className='pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center'>
+          <LoadMore />
+        </div>
 
         <CreateReelModal
           open={createOpen}

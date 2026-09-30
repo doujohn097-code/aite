@@ -14,6 +14,9 @@ A lightweight Kotlin-based Capacitor shell for `https://aite-app-one.vercel.app/
 - text selection disabled outside editable fields
 - zoom disabled
 - custom offline screen
+- cold start always lands on the home route (no last-page restore)
+- hardware back steps through the in-app history, then returns home, and only
+  backgrounds the app from home
 
 ## CI build
 
