@@ -90,6 +90,29 @@ type PendingSignUpProfile = {
 const PENDING_SIGN_UP_KEY = 'aite:pending-sign-up';
 const PENDING_SIGN_UP_MAX_AGE_MS = 10 * 60 * 1000;
 
+/**
+ * يسأل الخادم عن بريد المصادقة الحقيقي لاسم مستخدم.
+ * يُستعمل فقط كخطة بديلة عندما يفشل الدخول بالبريد المشتق.
+ */
+async function resolveSignInEmail(username: string): Promise<string | null> {
+  try {
+    const response = await fetch('/api/auth/resolve-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username })
+    });
+    if (!response.ok) return null;
+
+    const data = (await response.json().catch(() => null)) as {
+      email?: string;
+    } | null;
+
+    return data?.email ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function readPendingProfile(key: string): PendingSignUpProfile | null {
   try {
     const raw = sessionStorage.getItem(key);
@@ -519,7 +542,27 @@ export function AuthContextProvider({
       const cleaned = username.trim().replace(/\s+/g, '').toLowerCase();
       if (!cleaned || !password) throw new Error(tx('auth.needCreds'));
       const email = usernameToInternalEmail(cleaned);
-      await signInWithEmailAndPassword(auth, email, password);
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (signInError) {
+        const code = (signInError as { code?: string })?.code ?? '';
+        const recoverable =
+          code === 'auth/user-not-found' ||
+          code === 'auth/invalid-credential' ||
+          code === 'auth/invalid-email' ||
+          code === 'auth/wrong-password';
+
+        if (!recoverable) throw signInError;
+
+        // حسابات قديمة غُيّر اسمها دون مزامنة بريد المصادقة:
+        // نسأل الخادم عن البريد الحقيقي ثم نعيد المحاولة مرة واحدة.
+        const resolved = await resolveSignInEmail(cleaned);
+        if (!resolved || resolved.toLowerCase() === email.toLowerCase())
+          throw signInError;
+
+        await signInWithEmailAndPassword(auth, resolved, password);
+      }
     } catch (err) {
       const arabic = toArabicAuthError(err);
       setError(arabic);

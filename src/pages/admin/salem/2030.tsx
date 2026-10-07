@@ -78,6 +78,7 @@ export default function Admin(): JSX.Element {
   const [tab, setTab] = useState<Tab>('users');
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [items, setItems] = useState<ContentItem[]>([]);
@@ -284,6 +285,8 @@ export default function Admin(): JSX.Element {
   const changePassword = async (): Promise<void> => {
     if (!passwordUser) return;
     setProcessing((prev) => ({ ...prev, [passwordUser.id]: true }));
+    setError(null);
+    setNotice(null);
     try {
       const response = await adminFetch('/api/admin/password', {
         method: 'PATCH',
@@ -294,9 +297,15 @@ export default function Admin(): JSX.Element {
       });
       const data = (await response.json().catch(() => null)) as {
         error?: string;
+        username?: string;
       } | null;
       if (!response.ok)
         throw new Error(data?.error ?? 'تعذر تغيير كلمة المرور');
+      setNotice(
+        `تم تغيير كلمة السر بنجاح — سجّل الدخول باسم المستخدم @${
+          data?.username ?? passwordUser.username
+        } وكلمة السر الجديدة.`
+      );
       setPasswordUser(null);
       setNewPassword('');
     } catch (err) {
@@ -502,6 +511,12 @@ export default function Admin(): JSX.Element {
         {error && (
           <div className='m-4 rounded-2xl border border-accent-red/30 bg-accent-red/10 p-4 text-sm text-accent-red'>
             {error}
+          </div>
+        )}
+
+        {notice && (
+          <div className='m-4 rounded-2xl border border-accent-green/30 bg-accent-green/10 p-4 text-sm text-accent-green'>
+            {notice}
           </div>
         )}
 

@@ -3,6 +3,10 @@ import {
   isAdminConfigured,
   verifyIdToken
 } from '@lib/firebase-admin';
+import {
+  getProfileUsername,
+  syncAuthEmailWithUsername
+} from '@lib/server/auth-identity';
 import { verifyAccountPassword } from '@lib/server/verify-password';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -66,6 +70,14 @@ export default async function handler(
     }
 
     await adminAuth.updateUser(decoded.uid, { password: newPassword });
+
+    // مزامنة البريد الداخلي مع اسم المستخدم الحالي حتى يعمل الدخول لاحقًا
+    const username = await getProfileUsername(decoded.uid);
+    if (username) {
+      const fresh = await adminAuth.getUser(decoded.uid);
+      await syncAuthEmailWithUsername(fresh, username);
+    }
+
     res.status(200).json({ ok: true });
   } catch (error) {
     console.error('account/password failed:', error);

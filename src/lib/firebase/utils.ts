@@ -160,10 +160,34 @@ export async function updateUsername(
   username?: string
 ): Promise<void> {
   const userRef = doc(usersCollection, userId);
-  await updateDoc(userRef, {
-    ...(username && { username }),
-    updatedAt: serverTimestamp()
+
+  if (!username) {
+    await updateDoc(userRef, { updatedAt: serverTimestamp() });
+    return;
+  }
+
+  const cleaned = username.trim().replace(/\s+/g, '').toLowerCase();
+
+  // تغيير الاسم يجب أن يمر عبر الخادم ليُحدَّث بريد المصادقة الداخلي معه،
+  // وإلا أصبح تسجيل الدخول بالاسم الجديد مستحيلًا (البريد مشتق من الاسم).
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error('تعذر التحقق من الجلسة — أعد تسجيل الدخول');
+
+  const response = await fetch('/api/account/username', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ username: cleaned })
   });
+
+  if (!response.ok) {
+    const data = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(data?.error ?? 'username_update_failed');
+  }
 }
 
 export async function manageBlock(
