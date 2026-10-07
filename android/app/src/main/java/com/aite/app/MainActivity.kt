@@ -35,6 +35,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.getcapacitor.BridgeActivity
 import com.getcapacitor.BridgeWebViewClient
 import org.json.JSONObject
@@ -67,9 +70,33 @@ class MainActivity : BridgeActivity() {
     if (webViewConfigured) return
     val webView = bridge?.webView ?: return
     configureWebView(webView)
+    applyEdgeToEdgeInsets()
     registerNetworkCallback()
     webViewConfigured = true
     if (!hasNetwork()) showOfflineOverlay()
+  }
+
+  // على Android 15+ (targetSdk 35+) يُفرض وضع edge-to-edge: تصبح أشرطة النظام
+  // شفافة وتُرسم فوق المحتوى. نضيف حشواً بمقدار الأشرطة (واللوحة عند فتحها)
+  // حتى لا ينزلق الـ WebView تحت شريط الحالة أو شريط التنقل.
+  private fun applyEdgeToEdgeInsets() {
+    val content = findViewById<View>(android.R.id.content) ?: return
+    val controller = WindowCompat.getInsetsController(window, content)
+    controller.isAppearanceLightStatusBars = false
+    controller.isAppearanceLightNavigationBars = false
+    ViewCompat.setOnApplyWindowInsetsListener(content) { v, insets ->
+      var types =
+        WindowInsetsCompat.Type.systemBars() or
+          WindowInsetsCompat.Type.displayCutout()
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+        // adjustResize يتوقف عن العمل تحت edge-to-edge؛ نتكفل بلوحة المفاتيح
+        types = types or WindowInsetsCompat.Type.ime()
+      }
+      val bars = insets.getInsets(types)
+      v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+      WindowInsetsCompat.CONSUMED
+    }
+    ViewCompat.requestApplyInsets(content)
   }
 
   override fun onPause() {
