@@ -4,6 +4,9 @@ import cn from 'clsx';
 import type { ReactNode } from 'react';
 import type { ImageProps } from 'next/image';
 
+/** قيم layout من واجهة next/image القديمة — ما زلنا نقبلها ونترجمها داخلياً. */
+type LegacyLayout = 'fill' | 'responsive' | 'fixed' | 'intrinsic' | boolean;
+
 type NextImageProps = {
   alt: string;
   width?: string | number;
@@ -12,12 +15,13 @@ type NextImageProps = {
   imgClassName?: string;
   previewCount?: number;
   blurClassName?: string;
-} & ImageProps;
+  layout?: LegacyLayout;
+} & Omit<ImageProps, 'layout' | 'onLoadingComplete' | 'onLoad'>;
 
 /**
- *
- * @description Must set width and height, if not add layout='fill'
- * @param useSkeleton add background with pulse animation, don't use it if image is transparent
+ * غلاف موحّد لعرض الصور.
+ * ملاحظة: layout='fill' يترجَم إلى fill (والحاوية يجب أن تكون positioned)،
+ * وأي شيء آخر يعرض الصورة بعرض كامل ونسبة أبعاد ثابتة (مثل responsive سابقاً).
  */
 export function NextImage({
   src,
@@ -30,6 +34,7 @@ export function NextImage({
   imgClassName,
   previewCount,
   blurClassName,
+  layout,
   ...rest
 }: NextImageProps): JSX.Element {
   const [loading, setLoading] = useState(!!useSkeleton);
@@ -49,9 +54,12 @@ export function NextImage({
     }
   };
 
+  const isFill = layout === 'fill' || layout === true;
+  const numericWidth = typeof width === 'number' ? width : Number(width);
+
   return (
     <figure
-      style={{ width }}
+      style={isFill ? undefined : { width }}
       className={cn(loading && 'overflow-hidden', className)}
     >
       <Image
@@ -65,13 +73,14 @@ export function NextImage({
             : 'object-cover'
         )}
         src={imgSrc}
-        width={width}
-        height={height}
+        width={isFill || !Number.isFinite(numericWidth) ? undefined : numericWidth}
+        height={isFill ? undefined : height}
+        fill={isFill}
         alt={alt}
         unoptimized
-        onLoadingComplete={handleLoad}
+        onLoad={handleLoad}
         onError={handleError}
-        layout='responsive'
+        style={isFill ? undefined : { width: '100%', height: 'auto' }}
         {...rest}
       />
       {children}

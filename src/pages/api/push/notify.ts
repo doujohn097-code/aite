@@ -1,5 +1,9 @@
-import admin from 'firebase-admin';
-import { verifyIdToken } from '@lib/firebase-admin';
+import {
+  getAdminMessaging,
+  requireAdminFirestore,
+  verifyIdToken
+} from '@lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { consumeRateLimit } from '@lib/server/rate-limit';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -127,7 +131,7 @@ export default async function handler(
       return;
     }
 
-    const firestore = admin.firestore();
+    const firestore = requireAdminFirestore();
 
     let recipientId: string | undefined;
     let notification: BuiltNotification | null = null;
@@ -221,7 +225,9 @@ export default async function handler(
       return;
     }
 
-    const response = await admin.messaging().sendEachForMulticast({
+    const messaging = getAdminMessaging();
+    if (!messaging) throw new Error("messaging_unavailable");
+    const response = await messaging.sendEachForMulticast({
       tokens,
       // رسالة data-only: يعالجها Service Worker لعرض إشعار بصورة المرسل
       // وبادج شعار Aite (مثل انستغرام)
@@ -256,7 +262,7 @@ export default async function handler(
       await firestore
         .doc(`users/${recipientId}`)
         .update({
-          fcmTokens: admin.firestore.FieldValue.arrayRemove(...invalidTokens)
+          fcmTokens: FieldValue.arrayRemove(...invalidTokens)
         })
         .catch(() => undefined);
 

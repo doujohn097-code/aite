@@ -50,6 +50,7 @@ import {
   CONTENT_STORE_MAX
 } from '@lib/text-limits';
 import { nextPublishQuota } from '@lib/publish-quota';
+import { transcodeFileForUpload } from '@lib/client-transcode';
 import type { Tweet } from '@lib/types/tweet';
 
 async function consumePublishQuota(
@@ -524,11 +525,21 @@ export async function uploadImages(
       );
   }
 
+  // إعادة ترميز الفيديو على جهاز المستخدم قبل الرفع: تضمن تشغيله على كل
+  // الأجهزة (HEVC / H.264 مستوى عالٍ / mov) بدون أي ffmpeg خادمي.
+  const mediaFiles: FilesWithId = [];
+  for (const file of files) {
+    const mediaType = inferMediaType(file.name, file.type);
+    mediaFiles.push(
+      await transcodeFileForUpload(file, maxUploadBytesForType(mediaType))
+    );
+  }
+
   const thumbnails = (
-    await Promise.all(files.map(createVideoThumbnail))
+    await Promise.all(mediaFiles.map(createVideoThumbnail))
   ).filter((item): item is VideoThumbnail => item !== null);
   const uploadInput = [
-    ...files,
+    ...mediaFiles,
     ...thumbnails.map(({ file }) => file)
   ] as FilesWithId;
   const uploadedBytes = new Array<number>(uploadInput.length).fill(0);
@@ -614,7 +625,7 @@ export async function uploadImages(
       uploadedById.get(file.id)?.publicUrl ?? null
     ])
   );
-  const results = files.map(({ id, name }) => {
+  const results = mediaFiles.map(({ id, name }) => {
     const uploaded = uploadedById.get(id);
     if (!uploaded) throw new Error(tx('err.missingUploadFile'));
     return {

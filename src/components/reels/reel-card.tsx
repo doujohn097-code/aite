@@ -391,7 +391,7 @@ export function ReelCard({
       url: reelUrl
     };
 
-    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       try {
         await navigator.share(shareData);
         toast.success(t('reels.sharedOk'));

@@ -337,9 +337,6 @@ class MainActivity : BridgeActivity() {
         window.AiteAndroid.getVersionName = function() {
           try { return window.AiteUpdate.versionName(); } catch (e) { return window.AiteAndroid.versionName; }
         };
-        window.AiteAndroid.installUpdate = function(url) {
-          try { window.AiteUpdate.install(String(url || '')); } catch (e) {}
-        };
         window.AiteAndroid.saveMedia = function(url, name) {
           try {
             window.AiteUpdate.saveMedia(String(url || ''), String(name || 'aite-media'));
@@ -554,10 +551,6 @@ class MainActivity : BridgeActivity() {
       startActivity(Intent(Intent.ACTION_VIEW, uri))
     } catch (_: ActivityNotFoundException) {
     }
-  }
-
-  fun enqueueApkInstall(url: String) {
-    runOnUiThread { UpdateInstaller.start(this, url) }
   }
 
   fun enqueueMediaDownload(url: String, filename: String) {

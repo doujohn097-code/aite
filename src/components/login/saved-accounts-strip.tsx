@@ -34,10 +34,11 @@ export function SavedAccountsStrip({
         <p className='text-xs font-bold text-light-secondary dark:text-dark-secondary'>
           {t('accounts.savedShort')}
         </p>
-        <Link href='/accounts'>
-          <a className='text-xs font-bold text-main-accent-text hover:underline'>
-            {t('accounts.manage')}
-          </a>
+        <Link
+          href='/accounts'
+          className='text-xs font-bold text-main-accent-text hover:underline'
+        >
+          {t('accounts.manage')}
         </Link>
       </div>
       <div className='flex gap-2 overflow-x-auto pb-1'>

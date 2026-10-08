@@ -1,19 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { auth } from '@lib/firebase/app';
+import { transcodeVideo } from './client-transcode';
 
 /**
- * Client-side repair for videos some mobile browsers cannot decode.
+ * إصلاح الفيديوهات التي لا تشتغل على بعض الأجهزة — محلياً داخل المتصفح.
  *
- * The platform accepts raw phone uploads (HEVC / H.264 High@L5.2 / .mov /
- * non-faststart MP4). Desktop Chrome decodes most of them, but mobile browsers'
- * WebView relies on the device hardware decoder, which caps out at
- * H.264 level 4.1/4.2 — so the same video renders as a gray box in the app
- * while looking perfect on the web.
+ * المنصة تقبل رفعات خام من الهاتف (HEVC / H.264 High@L5.2 / .mov / mp4 بدون
+ * faststart). سطح المكتب يشغّل معظمها، لكن عارض الويب داخل تطبيق أندرويد
+ * يعتمد كوادركودر الجهاز الذي يتوقف عند H.264 مستوى 4.x — فيظهر الفيديو
+ * كمربع رمادي.
  *
- * `normalizeVideo` asks the server to re-encode the file into a universally
- * playable MP4 (H.264 High@L4.0, faststart, AAC) and returns the new URL.
- * Results are cached per session and persisted server-side, so a video is
- * only transcoded once.
+ * كان الإصلاح يتم عبر /api/media/normalize (ffmpeg على الخادم)، والآن يتم
+ * في المتصفح عبر MediaRecorder عند الحاجة، والنتيجة تُخزّن في ذاكرة الجلسة.
  */
 
 const memoryCache = new Map<string, Promise<string | null>>();
@@ -25,23 +22,12 @@ export async function normalizeVideo(src: string): Promise<string | null> {
 
   const task = (async (): Promise<string | null> => {
     try {
-      const idToken = await auth.currentUser?.getIdToken();
-      if (!idToken) return null;
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 55_000);
-      const response = await fetch('/api/media/normalize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`
-        },
-        body: JSON.stringify({ src }),
-        signal: controller.signal
-      }).finally(() => window.clearTimeout(timeout));
+      const response = await fetch(src, { mode: 'cors' });
       if (!response.ok) return null;
-      const data = (await response.json()) as { src?: string };
-      if (!data.src || data.src === src) return null;
-      return data.src;
+      const blob = await response.blob();
+      const result = await transcodeVideo(blob, { maxDurationSec: 10 * 60 });
+      if (!result) return null;
+      return URL.createObjectURL(result.blob);
     } catch {
       return null;
     }
@@ -59,35 +45,80 @@ export function isVideoUrl(url: string | null | undefined): boolean {
 
 const posterCache = new Map<string, Promise<string | null>>();
 
-/**
- * Requests a JPEG frame (near the beginning) of a video from the server so
- * previews can show a real picture of the video on every device.
- */
+/** يلتقط إطاراً من بداية الفيديو محلياً (canvas) ويعيده كرابط blob. */
 export async function getVideoPoster(src: string): Promise<string | null> {
   if (!src || !isVideoUrl(src)) return null;
   const cached = posterCache.get(src);
   if (cached) return cached;
 
   const task = (async (): Promise<string | null> => {
+    const video = document.createElement('video');
+    let objectUrl: string | null = null;
     try {
-      const idToken = await auth.currentUser?.getIdToken();
-      if (!idToken) return null;
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 35_000);
-      const response = await fetch('/api/media/poster', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`
-        },
-        body: JSON.stringify({ src }),
-        signal: controller.signal
-      }).finally(() => window.clearTimeout(timeout));
+      const response = await fetch(src, { mode: 'cors' });
       if (!response.ok) return null;
-      const data = (await response.json()) as { src?: string };
-      return data.src || null;
+      const blob = await response.blob();
+      objectUrl = URL.createObjectURL(blob);
+      video.src = objectUrl;
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+
+      await new Promise<void>((resolve, reject) => {
+        const timer = window.setTimeout(
+          () => reject(new Error('timeout')),
+          20_000
+        );
+        const ok = (): void => {
+          window.clearTimeout(timer);
+          resolve();
+        };
+        const fail = (): void => {
+          window.clearTimeout(timer);
+          reject(new Error('error'));
+        };
+        video.addEventListener('loadeddata', ok, { once: true });
+        video.addEventListener('error', fail, { once: true });
+      });
+
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      if (duration <= 0) return null;
+      video.currentTime = Math.min(0.6, duration / 2);
+      await new Promise<void>((resolve, reject) => {
+        const timer = window.setTimeout(
+          () => reject(new Error('timeout')),
+          10_000
+        );
+        const ok = (): void => {
+          window.clearTimeout(timer);
+          resolve();
+        };
+        video.addEventListener('seeked', ok, { once: true });
+        video.addEventListener('error', ok, { once: true });
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      if (canvas.width <= 0 || canvas.height <= 0) return null;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const posterBlob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, 'image/jpeg', 0.82)
+      );
+      if (!posterBlob) return null;
+      return URL.createObjectURL(posterBlob);
     } catch {
       return null;
+    } finally {
+      video.removeAttribute('src');
+      try {
+        video.load();
+      } catch {
+        /* لا شيء */
+      }
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     }
   })();
 
@@ -97,7 +128,7 @@ export async function getVideoPoster(src: string): Promise<string | null> {
 
 /**
  * Poster for a video element: uses the existing thumbnail when it is a real
- * image, otherwise asks the server to extract a frame from the video.
+ * image, otherwise extracts a frame from the video locally.
  */
 export function useVideoPoster(
   videoSrc: string,
@@ -122,26 +153,19 @@ export function useVideoPoster(
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-line react-hooks/exhaustive-deps
   }, [videoSrc, existingPoster]);
 
   return poster;
 }
 
-type RepairableVideo = {
-  /** Src to render — the original until a repair swaps it for a fixed file. */
+export type RepairableVideo = {
   effectiveSrc: string;
-  /** True while the server is re-encoding the video. */
   repairing: boolean;
-  /** Attach to the <video> element's onError. */
   onError: () => void;
 };
 
-/**
- * Hook for video elements: when the browser fails to load/decode a video
- * (exactly what happens for unsupported codecs on mobile browsers), it
- * requests a server-side re-encode and swaps the src once ready.
- */
+/** يبدّل مصدر الفيديو بنسخة مرمّزة محلياً عند فشل تشغيل الأصل. */
 export function useRepairableVideo(src: string): RepairableVideo {
   const [effectiveSrc, setEffectiveSrc] = useState(src);
   const [repairing, setRepairing] = useState(false);

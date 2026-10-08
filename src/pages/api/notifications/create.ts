@@ -1,5 +1,9 @@
 import { createHash } from 'crypto';
-import admin from 'firebase-admin';
+import {
+  getAdminMessaging,
+  requireAdminFirestore
+} from '@lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { verifyIdToken } from '@lib/firebase-admin';
 import { extractMentions } from '@lib/mention-parser';
 import { notificationPushCopy } from '@lib/notification-target';
@@ -72,7 +76,7 @@ async function sendActivityPush(
   target: NotificationTarget,
   sender: Record<string, unknown>
 ): Promise<void> {
-  const firestore = admin.firestore();
+  const firestore = requireAdminFirestore();
   const recipient = await firestore.doc(`users/${target.userId}`).get();
   const tokens = ((recipient.data()?.fcmTokens as unknown[]) ?? [])
     .filter((token): token is string => typeof token === 'string')
@@ -97,9 +101,9 @@ async function sendActivityPush(
       : null;
   const copy = notificationPushCopy(type, context, senderName);
 
-  await admin
-    .messaging()
-    .sendEachForMulticast({
+  const messaging = getAdminMessaging();
+  if (!messaging) throw new Error('messaging_unavailable');
+  await messaging.sendEachForMulticast({
       tokens,
       data: {
         title: copy.title,
@@ -124,7 +128,7 @@ async function mentionTargets(
   senderId: string,
   input: NotifyInput
 ): Promise<{ targets: NotificationTarget[]; sender: Record<string, unknown> }> {
-  const firestore = admin.firestore();
+  const firestore = requireAdminFirestore();
   const context = input.context;
   let text = '';
   let sourceId = '';
@@ -204,7 +208,7 @@ async function mentionTargets(
         toUserId: document.id,
         ...baseData,
         read: false,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: FieldValue.serverTimestamp()
       },
       url
     }));
@@ -222,7 +226,7 @@ async function publishTargets(
   senderId: string,
   input: NotifyInput
 ): Promise<{ targets: NotificationTarget[]; sender: Record<string, unknown> }> {
-  const firestore = admin.firestore();
+  const firestore = requireAdminFirestore();
   const context = input.context;
   let sourceId = '';
   let baseData: Record<string, unknown> = {};
@@ -293,7 +297,7 @@ async function publishTargets(
       fromUserId: senderId,
       toUserId: userId,
       read: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       sourceId
     },
     url
@@ -306,7 +310,7 @@ async function validateActivity(
   senderId: string,
   input: NotifyInput
 ): Promise<NotificationTarget> {
-  const firestore = admin.firestore();
+  const firestore = requireAdminFirestore();
   const type = input.type;
   const recipientId = cleanId(input.toUserId);
   if (!type || type === 'mention' || !recipientId || recipientId === senderId)
@@ -469,7 +473,7 @@ export default async function handler(
       return;
     }
 
-    const firestore = admin.firestore();
+    const firestore = requireAdminFirestore();
 
     if (input.type === 'publish') {
       const { targets, sender } = await publishTargets(senderId, input);
@@ -543,7 +547,7 @@ export default async function handler(
       ...target.data,
       ...senderFields(sender),
       read: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp()
     });
     await sendActivityPush(target, sender);
     res.status(200).json({ ok: true, created: 1, url: target.url });

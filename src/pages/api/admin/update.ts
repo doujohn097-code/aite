@@ -1,5 +1,7 @@
-import admin from 'firebase-admin';
-import { adminFirestore, isAdminConfigured } from '@lib/firebase-admin';
+import {
+  adminFirestore,
+  isAdminConfigured
+} from '@lib/firebase-admin';
 import { hasAdminAccess } from '@lib/server/admin-auth';
 import { isSafeApkUrl } from '@lib/app-update';
 import type { NextApiRequest, NextApiResponse } from 'next';

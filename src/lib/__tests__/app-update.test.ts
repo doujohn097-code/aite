@@ -61,13 +61,13 @@ describe('app update helpers', () => {
   });
 
   it('hides the prompt on the current web build', () => {
-    expect(shouldOfferUpdate(update({ versionCode: 6 }), null)).toBe(false);
-    expect(shouldOfferUpdate(update({ versionCode: 7 }), null)).toBe(true);
+    expect(shouldOfferUpdate(update({ versionCode: 8 }), null)).toBe(false);
+    expect(shouldOfferUpdate(update({ versionCode: 9 }), null)).toBe(true);
   });
 
   it('waits for the native bridge before offering an android update', () => {
     expect(
-      shouldOfferUpdate(update({ versionCode: 7 }), null, {
+      shouldOfferUpdate(update({ versionCode: 9 }), null, {
         waitForNative: true
       })
     ).toBe(false);

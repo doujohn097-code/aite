@@ -169,8 +169,11 @@ export function Input({
         () => (
           <span className='flex gap-2'>
             {t('compose.published')}
-            <Link href={`/tweet/${tweetId}`}>
-              <a className='custom-underline font-bold'>{t('compose.view')}</a>
+            <Link
+              href={`/tweet/${tweetId}`}
+              className='custom-underline font-bold'
+            >
+              {t('compose.view')}
             </Link>
           </span>
         ),
@@ -334,10 +337,11 @@ export function Input({
           {...fromTop}
         >
           {t('compose.replyingTo')}{' '}
-          <Link href={`/user/${parent?.username as string}`}>
-            <a className='custom-underline text-main-accent-text'>
-              {parent?.username as string}
-            </a>
+          <Link
+            href={`/user/${parent?.username as string}`}
+            className='custom-underline text-main-accent-text'
+          >
+            {parent?.username as string}
           </Link>
         </motion.p>
       )}

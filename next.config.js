@@ -20,8 +20,8 @@ const contentSecurityPolicy = [
 
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  output: 'standalone',
+  // حزم الاعتماديات الخادمية داخل الـ bundle (مطلوب لـ Cloudflare Workers)
+  bundlePagesRouterDependencies: true,
   eslint: {
     ignoreDuringBuilds: true
   },

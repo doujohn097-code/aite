@@ -182,31 +182,29 @@ export function MobileSidebarModal({
             </div>
           </div>
 
-          <Link href={userLink}>
-            <a onClick={closeModal} className='group block'>
-              <UserName
-                name={name}
-                username={username}
-                verified={verified}
-                className='text-base font-bold transition group-hover:underline'
-              />
-            </a>
+          <Link href={userLink} onClick={closeModal} className='group block'>
+            <UserName
+              name={name}
+              username={username}
+              verified={verified}
+              className='text-base font-bold transition group-hover:underline'
+            />
           </Link>
 
           <div className='mt-3 flex items-center gap-5 text-sm'>
             {allStats.map(([statId, label, stat]) => (
-              <Link href={`${userLink}/${statId}`} key={statId}>
-                <a
-                  onClick={closeModal}
-                  className='flex items-center gap-1.5 transition hover:underline'
-                >
-                  <span className='font-bold text-light-primary dark:text-dark-primary'>
-                    {stat}
-                  </span>
-                  <span className='text-light-secondary dark:text-dark-secondary'>
-                    {label}
-                  </span>
-                </a>
+              <Link
+                href={`${userLink}/${statId}`}
+                key={statId}
+                onClick={closeModal}
+                className='flex items-center gap-1.5 transition hover:underline'
+              >
+                <span className='font-bold text-light-primary dark:text-dark-primary'>
+                  {stat}
+                </span>
+                <span className='text-light-secondary dark:text-dark-secondary'>
+                  {label}
+                </span>
               </Link>
             ))}
           </div>

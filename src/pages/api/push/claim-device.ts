@@ -1,4 +1,4 @@
-import admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import {
   adminFirestore,
   isAdminConfigured,
@@ -65,14 +65,14 @@ export default async function handler(
     snapshot.forEach((docSnap) => {
       if (docSnap.id === decoded.uid) return;
       batch.update(docSnap.ref, {
-        fcmTokens: admin.firestore.FieldValue.arrayRemove(token)
+        fcmTokens: FieldValue.arrayRemove(token)
       });
       removed += 1;
     });
 
     batch.set(
       adminFirestore.collection('users').doc(decoded.uid),
-      { fcmTokens: admin.firestore.FieldValue.arrayUnion(token) },
+      { fcmTokens: FieldValue.arrayUnion(token) },
       { merge: true }
     );
 

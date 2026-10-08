@@ -16,8 +16,8 @@ export function AsideFooter(): JSX.Element {
     >
       <nav className='flex flex-wrap justify-center gap-2'>
         {footerLinks.map(([linkName, href]) => (
-          <Link href={href} key={href}>
-            <a className='custom-underline'>{linkName}</a>
+          <Link href={href} key={href} className='custom-underline'>
+            {linkName}
           </Link>
         ))}
       </nav>

@@ -1,4 +1,20 @@
-import admin from 'firebase-admin';
+// استيراد الخدمات الفرعية فقط (app/auth/firestore/messaging) بدل حزمة
+// firebase-admin الكاملة — يقلّص حجم حزمة Workers بميغابايتات (بدون
+// database وstorage وml وغيرها).
+import { cert, getApp, getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import {
+  FieldValue,
+  getFirestore,
+  initializeFirestore
+} from 'firebase-admin/firestore';
+import { getMessaging } from 'firebase-admin/messaging';
+import type { App, ServiceAccount } from 'firebase-admin/app';
+import type { Auth, DecodedIdToken } from 'firebase-admin/auth';
+import type { Firestore } from 'firebase-admin/firestore';
+import type { Messaging } from 'firebase-admin/messaging';
+
+export { FieldValue };
 
 type ServiceAccountJson = {
   project_id: string;
@@ -6,7 +22,7 @@ type ServiceAccountJson = {
   client_email: string;
 };
 
-function getServiceAccount(): admin.ServiceAccount | null {
+function getServiceAccount(): ServiceAccount | null {
   const encoded = process.env.FIREBASE_ADMIN_KEY;
   if (!encoded) {
     console.warn(
@@ -37,15 +53,15 @@ function getServiceAccount(): admin.ServiceAccount | null {
   };
 }
 
-function getAdminApp(): admin.app.App | null {
-  if (admin.apps.length > 0) return admin.app();
+function getAdminApp(): App | null {
+  if (getApps().length > 0) return getApp();
 
   const serviceAccount = getServiceAccount();
   if (!serviceAccount) return null;
 
   try {
-    return admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+    return initializeApp({
+      credential: cert(serviceAccount),
       projectId: serviceAccount.projectId
     });
   } catch (err) {
@@ -57,12 +73,52 @@ function getAdminApp(): admin.app.App | null {
 // This is the only server-side Firebase Admin entry point.
 const firebaseAdmin = getAdminApp();
 
-export const adminAuth = firebaseAdmin?.auth() ?? null;
-export const adminFirestore = firebaseAdmin?.firestore() ?? null;
+let adminAuthInstance: Auth | null = null;
+let adminFirestoreInstance: Firestore | null = null;
+
+if (firebaseAdmin) {
+  try {
+    adminAuthInstance = getAuth(firebaseAdmin);
+  } catch (err) {
+    console.error('Failed to initialize admin auth', err);
+  }
+  try {
+    // REST بدل gRPC: بيئات بدون دعم gRPC مثل Cloudflare Workers تعمل عبر REST.
+    adminFirestoreInstance = initializeFirestore(firebaseAdmin, {
+      preferRest: true
+    });
+  } catch (err) {
+    console.error('Failed to initialize admin firestore', err);
+    try {
+      adminFirestoreInstance = getFirestore(firebaseAdmin);
+    } catch (err2) {
+      console.error('Failed to initialize admin firestore fallback', err2);
+    }
+  }
+}
+
+export const adminAuth = adminAuthInstance;
+export const adminFirestore = adminFirestoreInstance;
+
+export function requireAdminFirestore(): Firestore {
+  if (!adminFirestoreInstance) {
+    throw new Error('الخدمة غير متاحة حاليًا — حاول مجددًا لاحقًا');
+  }
+  return adminFirestoreInstance;
+}
+
+export function getAdminMessaging(): Messaging | null {
+  if (!firebaseAdmin) return null;
+  try {
+    return getMessaging(firebaseAdmin);
+  } catch {
+    return null;
+  }
+}
 
 export async function verifyIdToken(
   token: string
-): Promise<admin.auth.DecodedIdToken> {
+): Promise<DecodedIdToken> {
   if (!adminAuth) {
     throw new Error('الخدمة غير متاحة حاليًا — حاول مجددًا لاحقًا');
   }

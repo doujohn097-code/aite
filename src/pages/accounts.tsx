@@ -205,27 +205,24 @@ export default function Accounts(): JSX.Element {
                   )}`
                 : ''
             }`}
+            className='w-full'
           >
-            <a className='w-full'>
-              <Button
-                className='w-full border border-light-border py-2.5 font-bold text-light-primary
+            <Button
+              className='w-full border border-light-border py-2.5 font-bold text-light-primary
                            transition hover:bg-light-primary/[0.05] dark:border-dark-border
                            dark:text-dark-primary dark:hover:bg-white/[0.05]'
-              >
-                {accounts.length ? t('accounts.other') : t('accounts.login')}
-              </Button>
-            </a>
+            >
+              {accounts.length ? t('accounts.other') : t('accounts.login')}
+            </Button>
           </Link>
           {user && (
-            <Link href='/home'>
-              <a className='w-full'>
-                <Button
-                  className='w-full bg-main-accent py-2.5 font-bold text-main-accent-contrast transition
+            <Link href='/home' className='w-full'>
+              <Button
+                className='w-full bg-main-accent py-2.5 font-bold text-main-accent-contrast transition
                              hover:brightness-90 active:brightness-75'
-                >
-                  {t('common.home')}
-                </Button>
-              </a>
+              >
+                {t('common.home')}
+              </Button>
             </Link>
           )}
         </div>

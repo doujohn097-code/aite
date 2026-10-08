@@ -28,12 +28,14 @@ android {
 
     signingConfigs {
         release {
-            def keystoreFile = file("${rootDir}/keystore/aite.jks")
-            if (keystoreFile.exists()) {
-                storeFile keystoreFile
-                storePassword "aite-release-2026"
-                keyAlias "aite"
-                keyPassword "aite-release-2026"
+            // Never use the signing key committed in the public repository.
+            // Supply a private upload key through environment variables instead.
+            def uploadKeystore = System.getenv("AITE_UPLOAD_KEYSTORE")
+            if (uploadKeystore) {
+                storeFile file(uploadKeystore)
+                storePassword System.getenv("AITE_UPLOAD_STORE_PASSWORD")
+                keyAlias System.getenv("AITE_UPLOAD_KEY_ALIAS")
+                keyPassword System.getenv("AITE_UPLOAD_KEY_PASSWORD")
             }
         }
     }
@@ -41,13 +43,13 @@ android {
     buildTypes {
         debug {
             minifyEnabled false
-            signingConfig signingConfigs.release.storeFile ? signingConfigs.release : signingConfigs.debug
+            signingConfig signingConfigs.debug
         }
         release {
             minifyEnabled true
             shrinkResources true
             zipAlignEnabled true
-            signingConfig signingConfigs.release.storeFile ? signingConfigs.release : signingConfigs.debug
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

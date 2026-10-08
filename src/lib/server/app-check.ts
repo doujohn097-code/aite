@@ -1,4 +1,5 @@
-import admin from 'firebase-admin';
+import { getApp } from 'firebase-admin/app';
+import { getAppCheck } from 'firebase-admin/app-check';
 import { isAdminConfigured } from '@lib/firebase-admin';
 import type { NextApiRequest } from 'next';
 
@@ -12,5 +13,5 @@ export async function assertAppCheck(req: NextApiRequest): Promise<void> {
   const header = req.headers['x-firebase-appcheck'];
   const token = Array.isArray(header) ? header[0] : header;
   if (!token) throw new Error('appcheck_missing');
-  await admin.appCheck().verifyToken(token);
+  await getAppCheck(getApp()).verifyToken(token);
 }

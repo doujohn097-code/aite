@@ -428,10 +428,11 @@ export default function Chat(): JSX.Element {
             {blockBusy ? t('messages.updating') : t('messages.unblock')}
           </button>
         )}
-        <Link href='/messages'>
-          <a className='rounded-full bg-main-accent px-6 py-2 font-bold text-main-accent-contrast'>
-            {t('messages.back')}
-          </a>
+        <Link
+          href='/messages'
+          className='rounded-full bg-main-accent px-6 py-2 font-bold text-main-accent-contrast'
+        >
+          {t('messages.back')}
         </Link>
       </main>
     );
@@ -471,38 +472,38 @@ export default function Chat(): JSX.Element {
         className='sticky top-0 z-30 flex items-center gap-3 border-b border-light-border/60
                    bg-main-background/85 px-3 py-2 backdrop-blur-md dark:border-dark-border/60'
       >
-        <Link href='/messages'>
-          <a
-            aria-label={t('common.back')}
-            className='dark-bg-tab rounded-full p-2 hover:bg-light-primary/10
+        <Link
+          href='/messages'
+          aria-label={t('common.back')}
+          className='dark-bg-tab rounded-full p-2 hover:bg-light-primary/10
                        dark:hover:bg-dark-primary/10'
-          >
-            <HeroIcon className='h-5 w-5' iconName='ChevronRightIcon' />
-          </a>
+        >
+          <HeroIcon className='h-5 w-5' iconName='ChevronRightIcon' />
         </Link>
 
         {peer ? (
-          <Link href={`/user/${peer.username}`}>
-            <a className='flex min-w-0 items-center gap-3'>
-              <span className='relative shrink-0'>
-                <StoryAvatar user={peer} size={40} />
+          <Link
+            href={`/user/${peer.username}`}
+            className='flex min-w-0 items-center gap-3'
+          >
+            <span className='relative shrink-0'>
+              <StoryAvatar user={peer} size={40} />
+            </span>
+            <span className='flex min-w-0 flex-col'>
+              <span className='flex items-center gap-1'>
+                <span className='truncate font-bold'>{peer.name}</span>
+                {peer.verified && <VerifiedBadge className='h-4 w-4' />}
               </span>
-              <span className='flex min-w-0 flex-col'>
-                <span className='flex items-center gap-1'>
-                  <span className='truncate font-bold'>{peer.name}</span>
-                  {peer.verified && <VerifiedBadge className='h-4 w-4' />}
-                </span>
-                <span
-                  className={
-                    peerOnline
-                      ? 'truncate text-xs font-semibold text-green-500'
-                      : 'truncate text-xs text-light-secondary dark:text-dark-secondary'
-                  }
-                >
-                  {peerOnline ? t('common.online') : `@${peer.username}`}
-                </span>
+              <span
+                className={
+                  peerOnline
+                    ? 'truncate text-xs font-semibold text-green-500'
+                    : 'truncate text-xs text-light-secondary dark:text-dark-secondary'
+                }
+              >
+                {peerOnline ? t('common.online') : `@${peer.username}`}
               </span>
-            </a>
+            </span>
           </Link>
         ) : (
           <div className='flex min-w-0 items-center gap-3'>
