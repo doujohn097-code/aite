@@ -43,3 +43,6 @@ android/local.properties
 
 # OpenNext (Cloudflare Workers) build output
 .open-next/
+
+# wrangler local state
+.wrangler/
