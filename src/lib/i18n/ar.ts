@@ -9,6 +9,7 @@ export const ar = {
   'nav.reels': 'الريلز',
   'nav.messages': 'الرسائل',
   'nav.people': 'الأشخاص',
+  'nav.privacy': 'سياسة الخصوصية',
   'nav.profile': 'الملف الشخصي',
   'nav.more': 'المزيد',
   'nav.settings': 'الإعدادات والخصوصية',

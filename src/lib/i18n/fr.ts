@@ -11,6 +11,7 @@ export const fr: { [K in keyof typeof ar]: string } = {
   'nav.reels': 'Reels',
   'nav.messages': 'Messages',
   'nav.people': 'Personnes',
+  'nav.privacy': 'Confidentialité',
   'nav.profile': 'Profil',
   'nav.more': 'Plus',
   'nav.settings': 'Paramètres et confidentialité',

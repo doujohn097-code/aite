@@ -6,7 +6,8 @@ export function AsideFooter(): JSX.Element {
   const footerLinks = [
     [t('nav.people'), '/search'],
     [t('nav.reels'), '/reels'],
-    [t('action.explore'), '/home']
+    [t('action.explore'), '/home'],
+    [t('nav.privacy'), '/privacy']
   ] as const;
 
   return (
