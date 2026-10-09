@@ -1,4 +1,4 @@
-name: Android APK
+name: Android Build
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
     paths:
       - 'android/**'
       - 'native-web/**'
-      - 'src/lib/native-bridge.ts'
       - 'capacitor.config.ts'
       - 'package.json'
       - 'package-lock.json'
@@ -14,8 +13,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-apk:
-    name: Build APK
+  build:
+    name: Build APK + AAB
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,30 +36,26 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Restore Firebase Android config
-        env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.AITE_ANDROID_GOOGLE_SERVICES_JSON }}
-        run: |
-          test -n "$GOOGLE_SERVICES_JSON" || (echo "Missing AITE_ANDROID_GOOGLE_SERVICES_JSON secret" && exit 1)
-          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
-
+      # google-services.json وandroid/keystore مضمّنان في المستودع الخاص.
       - name: Install dependencies
         run: npm ci
 
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Build debug and release APKs
+      - name: Build debug APK, release APK and AAB
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew --no-daemon assembleDebug assembleRelease
+          ./gradlew --no-daemon assembleDebug assembleRelease bundleRelease
 
-      - name: Upload APK artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: aite-android-apks
+          name: aite-android
           path: |
             android/app/build/outputs/apk/debug/app-debug.apk
             android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/mapping/release/mapping.txt
           if-no-files-found: error

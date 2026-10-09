@@ -28,14 +28,19 @@ android {
 
     signingConfigs {
         release {
-            // Never use the signing key committed in the public repository.
-            // Supply a private upload key through environment variables instead.
-            def uploadKeystore = System.getenv("AITE_UPLOAD_KEYSTORE")
-            if (uploadKeystore) {
-                storeFile file(uploadKeystore)
-                storePassword System.getenv("AITE_UPLOAD_STORE_PASSWORD")
-                keyAlias System.getenv("AITE_UPLOAD_KEY_ALIAS")
-                keyPassword System.getenv("AITE_UPLOAD_KEY_PASSWORD")
+            // مفتاح الرفع محفوظ في android/keystore (مستودع خاص) — انظر
+            // keystore.properties. متغيرات البيئة AITE_UPLOAD_* تلغي القيم.
+            def keystoreProps = new Properties()
+            def propsFile = rootProject.file("keystore/keystore.properties")
+            if (propsFile.exists()) {
+                propsFile.withInputStream { keystoreProps.load(it) }
+            }
+            def keystorePath = System.getenv("AITE_UPLOAD_KEYSTORE") ?: keystoreProps.getProperty("storeFile")
+            if (keystorePath) {
+                storeFile rootProject.file(keystorePath)
+                storePassword System.getenv("AITE_UPLOAD_STORE_PASSWORD") ?: keystoreProps.getProperty("storePassword")
+                keyAlias System.getenv("AITE_UPLOAD_KEY_ALIAS") ?: keystoreProps.getProperty("keyAlias")
+                keyPassword System.getenv("AITE_UPLOAD_KEY_PASSWORD") ?: keystoreProps.getProperty("keyPassword")
             }
         }
     }

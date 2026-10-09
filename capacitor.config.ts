@@ -5,9 +5,9 @@ const config: CapacitorConfig = {
   appName: 'Aite',
   webDir: 'native-web',
   server: {
-    url: 'https://aite-app-one.vercel.app/',
+    url: 'https://aite.salemdopamine.workers.dev/',
     cleartext: false,
-    allowNavigation: ['aite-app-one.vercel.app']
+    allowNavigation: ['aite.salemdopamine.workers.dev']
   },
   android: {
     allowMixedContent: false

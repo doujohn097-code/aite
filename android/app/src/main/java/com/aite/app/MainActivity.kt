@@ -601,8 +601,8 @@ class MainActivity : BridgeActivity() {
     (value * resources.displayMetrics.density).toInt()
 
   companion object {
-    const val HOST = "aite-app-one.vercel.app"
-    const val ORIGIN = "https://aite-app-one.vercel.app"
+    const val HOST = "aite.salemdopamine.workers.dev"
+    const val ORIGIN = "https://aite.salemdopamine.workers.dev"
 
     /** نقطة البداية داخل الموقع: الرئيسية/شاشة الدخول. */
     const val HOME_PATH = "/"
