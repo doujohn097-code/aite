@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import cn from 'clsx';
 import type { CSSProperties, ReactNode } from 'react';
 import type { ImageProps } from 'next/image';
@@ -24,7 +24,10 @@ type NextImageProps = {
   previewCount?: number;
   blurClassName?: string;
   layout?: LegacyLayout;
-} & Omit<ImageProps, 'layout' | 'onLoadingComplete' | 'onLoad' | 'width' | 'height'>;
+} & Omit<
+  ImageProps,
+  'layout' | 'onLoadingComplete' | 'onLoad' | 'width' | 'height'
+>;
 
 /** خصائص خاصة بـ next/image لا يجب أن تصل إلى وسم img */
 const NEXT_IMAGE_ONLY_PROPS = new Set([
@@ -103,13 +106,17 @@ export function NextImage({
 
   const wantsFill = layout === 'fill' || layout === true;
   const numericWidth =
-    typeof width === 'number' ? width : Number.isFinite(Number(width)) ? Number(width) : NaN;
+    typeof width === 'number'
+      ? width
+      : Number.isFinite(Number(width))
+      ? Number(width)
+      : NaN;
   const numericHeight =
     typeof height === 'number'
       ? height
       : Number.isFinite(Number(height))
-        ? Number(height)
-        : NaN;
+      ? Number(height)
+      : NaN;
   const canSize =
     Number.isFinite(numericWidth) &&
     numericWidth > 0 &&
@@ -121,7 +128,8 @@ export function NextImage({
   const imgClasses = cn(
     imgClassName,
     loading
-      ? blurClassName ?? 'animate-pulse bg-light-secondary/30 dark:bg-dark-secondary/40'
+      ? blurClassName ??
+          'animate-pulse bg-light-secondary/30 dark:bg-dark-secondary/40'
       : previewCount === 1
       ? '!h-auto !min-h-0 !w-auto !min-w-0 rounded-lg object-contain'
       : 'object-cover'
@@ -142,6 +150,7 @@ export function NextImage({
     >
       {useFill ? (
         <img
+          ref={imgRef}
           src={imgSrc as string | undefined}
           alt={alt}
           className={imgClasses}
@@ -165,6 +174,7 @@ export function NextImage({
           }}
         >
           <img
+            ref={imgRef}
             src={imgSrc as string | undefined}
             alt={alt}
             className={imgClasses}
