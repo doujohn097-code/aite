@@ -89,12 +89,24 @@ export function NextImage({
 }: NextImageProps): JSX.Element {
   const [loading, setLoading] = useState(!!useSkeleton);
   const [imgSrc, setImgSrc] = useState(src);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   // متابعة تغيّر المصدر (معاينة الصور المختارة محليًا) وإلا ظلّت الصورة القديمة
   useEffect(() => {
     setImgSrc(src);
     setLoading(!!useSkeleton);
   }, [src]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // الصور المحفوظة في الكاش قد تكتمل قبل ربط onLoad فيظل النبض يعمل للأبد.
+  // نفحص img.complete بعد التركيب وبعد كل تغيير للمصدر، مع فحص إضافي في
+  // الإطار التالي لتغطية الاكتمال غير المتزامن.
+  useEffect(() => {
+    if (imgRef.current?.complete) setLoading(false);
+    const raf = requestAnimationFrame(() => {
+      if (imgRef.current?.complete) setLoading(false);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [imgSrc, useSkeleton]);
 
   const handleLoad = (): void => setLoading(false);
   const handleError = (): void => {
