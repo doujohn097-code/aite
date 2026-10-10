@@ -43,35 +43,46 @@ const NEXT_IMAGE_ONLY_PROPS = new Set([
   'fetchPriority'
 ]);
 
-/** أنماط صورة fill — مطابقة لمخرجات v12 (object-fit: cover افتراضياً). */
-const FILL_IMG_STYLE: CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover'
-};
+/**
+ * أنماط صورة fill — مطابقة لمخرجات v12 مع خصائص صريحة (top/left/bottom/right)
+ * بدل الخاصية الحديثة inset لضمان العمل على المتصفحات وويب فيو الأقدم.
+ */
+function makeFillStyle(): CSSProperties {
+  return {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover'
+  };
+}
 
 /** أنماط صورة responsive — مطابقة لمخرجات v12 (sizer + قص cover). */
-const RESPONSIVE_IMG_STYLE: CSSProperties = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  bottom: 0,
-  right: 0,
-  boxSizing: 'border-box',
-  padding: 0,
-  border: 'none',
-  margin: 'auto',
-  display: 'block',
-  width: 0,
-  height: 0,
-  minWidth: '100%',
-  maxWidth: '100%',
-  minHeight: '100%',
-  maxHeight: '100%',
-  objectFit: 'cover'
-};
+function makeResponsiveStyle(): CSSProperties {
+  const style: CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    boxSizing: 'border-box',
+    padding: 0,
+    border: 'none',
+    margin: 'auto',
+    display: 'block',
+    width: 0,
+    height: 0,
+    minWidth: '100%',
+    maxWidth: '100%',
+    minHeight: '100%',
+    maxHeight: '100%',
+    objectFit: 'cover'
+  };
+  return style;
+}
 
 export function NextImage({
   src,
@@ -121,14 +132,14 @@ export function NextImage({
     typeof width === 'number'
       ? width
       : Number.isFinite(Number(width))
-      ? Number(width)
-      : NaN;
+        ? Number(width)
+        : NaN;
   const numericHeight =
     typeof height === 'number'
       ? height
       : Number.isFinite(Number(height))
-      ? Number(height)
-      : NaN;
+        ? Number(height)
+        : NaN;
   const canSize =
     Number.isFinite(numericWidth) &&
     numericWidth > 0 &&
@@ -140,11 +151,11 @@ export function NextImage({
   const imgClasses = cn(
     imgClassName,
     loading
-      ? blurClassName ??
-          'animate-pulse bg-light-secondary/30 dark:bg-dark-secondary/40'
+      ? (blurClassName ??
+          'animate-pulse bg-light-secondary/30 dark:bg-dark-secondary/40')
       : previewCount === 1
-      ? '!h-auto !min-h-0 !w-auto !min-w-0 rounded-lg object-contain'
-      : 'object-cover'
+        ? '!h-auto !min-h-0 !w-auto !min-w-0 rounded-lg object-contain'
+        : 'object-cover'
   );
 
   // تمرير الخصائص الآمنة فقط إلى وسم img
@@ -166,7 +177,7 @@ export function NextImage({
           src={imgSrc as string | undefined}
           alt={alt}
           className={imgClasses}
-          style={FILL_IMG_STYLE}
+          style={makeFillStyle()}
           onLoad={handleLoad}
           onError={handleError}
           loading='lazy'
@@ -190,7 +201,7 @@ export function NextImage({
             src={imgSrc as string | undefined}
             alt={alt}
             className={imgClasses}
-            style={RESPONSIVE_IMG_STYLE}
+            style={makeResponsiveStyle()}
             onLoad={handleLoad}
             onError={handleError}
             loading='lazy'
