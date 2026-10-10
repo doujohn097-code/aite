@@ -110,7 +110,11 @@ export function requireAdminFirestore(): Firestore {
 export function getAdminMessaging(): Messaging | null {
   if (!firebaseAdmin) return null;
   try {
-    return getMessaging(firebaseAdmin);
+    const messaging = getMessaging(firebaseAdmin);
+    // sendEach/sendEachForMulticast use HTTP/2 by default, but Cloudflare
+    // Workers does not implement http2.connect — use HTTP/1.1 instead.
+    messaging.enableLegacyHttpTransport();
+    return messaging;
   } catch {
     return null;
   }
