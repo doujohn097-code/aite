@@ -30,6 +30,55 @@ const themeBootstrap = `(function(){try{
   r.style.setProperty('--main-accent-text','var(--accent-'+a+'-text)');
 }catch(e){}})();`;
 
+/**
+ * كشف ميزات CSS غير المدعومة في ويب فيو أندرويد/هواوي القديمة، وإضافة أصناف
+ * على <html> تفعّل بدائل في globals.scss:
+ *  - no-flex-gap: ‏gap داخل flex (Chrome < 84) — تُستبدل بهوامش.
+ *  - no-has: محدد :has() (Chrome < 105) — نعلّم بالـ JS أبناء العمود الرئيسي
+ *    الذين يحتوون بطاقات زجاجية (has-glass) كي تعمل قواعد البطاقات كما هي.
+ * المتصفحات الحديثة لا يتغير فيها شيء.
+ */
+const legacyCompat = `(function(){try{
+  var r = document.documentElement;
+  var b = document.body;
+  var testFlexGap = function(){
+    var f = document.createElement('div');
+    f.style.cssText = 'display:flex;flex-direction:column;row-gap:10px;position:absolute;visibility:hidden;top:0;left:0';
+    f.appendChild(document.createElement('div'));
+    f.appendChild(document.createElement('div'));
+    b.appendChild(f);
+    // إن لم يكن العنصر مرسومًا بعد (body مخفي مؤقتًا) فالنتيجة غير معروفة
+    var ok = f.getClientRects().length ? f.scrollHeight >= 10 : null;
+    b.removeChild(f);
+    return ok;
+  };
+  var tries = 0;
+  var checkFlexGap = function(){
+    var ok = testFlexGap();
+    if(ok === false) r.classList.add('no-flex-gap');
+    else if(ok === null && ++tries < 20) setTimeout(checkFlexGap, 500);
+  };
+  checkFlexGap();
+  var hasSel = false;
+  try { hasSel = !!(window.CSS && CSS.supports && CSS.supports('selector(:has(*))')); } catch(e) {}
+  if(!hasSel){
+    r.classList.add('no-has');
+    var queued = false;
+    var mark = function(){
+      queued = false;
+      var kids = document.querySelectorAll('.theme-surface > *');
+      for(var i = 0; i < kids.length; i++){
+        var k = kids[i];
+        var g = !!k.querySelector('.glass-card, .glass-panel');
+        if(g !== k.classList.contains('has-glass')) k.classList.toggle('has-glass', g);
+      }
+    };
+    var queue = function(){ if(!queued){ queued = true; requestAnimationFrame(mark); } };
+    if(window.MutationObserver) new MutationObserver(queue).observe(b, { childList: true, subtree: true });
+    document.addEventListener('DOMContentLoaded', queue);
+  }
+}catch(e){}})();`;
+
 export default function Document(): JSX.Element {
   return (
     <Html lang='ar' dir='rtl' className='dark' suppressHydrationWarning>
@@ -71,6 +120,7 @@ export default function Document(): JSX.Element {
       </Head>
       <body>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+        <script dangerouslySetInnerHTML={{ __html: legacyCompat }} />
         <Main />
         <NextScript />
       </body>

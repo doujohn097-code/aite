@@ -50,10 +50,10 @@ export function UserDetails({
 
   return (
     <>
-      <div className='-mt-6 flex flex-col gap-1'>
-        <div className='flex items-center justify-between gap-3'>
+      <div className='flex flex-col gap-1'>
+        <div className='flex min-w-0 items-center justify-between gap-3'>
           <UserName
-            className='text-xl'
+            className='min-w-0 text-xl'
             name={name}
             verified={verified}
             iconClassName='h-5 w-5'

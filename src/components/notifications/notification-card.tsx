@@ -79,63 +79,62 @@ export function NotificationCard({
   const unread = !notification.read;
 
   return (
-    <Link href={href}>
-      <a
-        className={cn(
-          'hover-animation glass-card relative flex items-center gap-3.5 border-b border-light-border/60 px-4 py-3.5 hover:bg-light-primary/5 dark:border-dark-border/60 dark:hover:bg-dark-primary/5',
-          unread && 'bg-main-accent/[0.07]'
-        )}
-        onClick={markAsRead}
-      >
-        <div className='relative shrink-0'>
-          <UserAvatar
-            src={actor.photoURL}
-            alt={actor.name}
-            username={actor.username}
-            size={46}
-            showPresence={false}
-          />
-          <span
-            className={cn(
-              'absolute -bottom-1 -left-1 flex h-6 w-6 items-center justify-center rounded-full shadow-md ring-2 ring-main-background',
-              style.classes
-            )}
-          >
-            <HeroIcon className='h-3.5 w-3.5' iconName={style.icon} solid />
+    <Link
+      href={href}
+      className={cn(
+        'hover-animation glass-card relative flex items-center gap-3.5 border-b border-light-border/60 px-4 py-3.5 hover:bg-light-primary/5 dark:border-dark-border/60 dark:hover:bg-dark-primary/5',
+        unread && 'bg-main-accent/[0.07]'
+      )}
+      onClick={markAsRead}
+    >
+      <div className='relative shrink-0'>
+        <UserAvatar
+          src={actor.photoURL}
+          alt={actor.name}
+          username={actor.username}
+          size={46}
+          showPresence={false}
+        />
+        <span
+          className={cn(
+            'absolute -bottom-1 -left-1 flex h-6 w-6 items-center justify-center rounded-full shadow-md ring-2 ring-main-background',
+            style.classes
+          )}
+        >
+          <HeroIcon className='h-3.5 w-3.5' iconName={style.icon} solid />
+        </span>
+      </div>
+
+      <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
+        <p className='text-[15px] text-light-primary dark:text-dark-primary'>
+          <span className='font-bold'>{actor.name}</span>
+          <span className='text-light-secondary dark:text-dark-secondary'>
+            {' '}
+            {notificationCopy(notification, t)}
           </span>
-        </div>
-
-        <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
-          <p className='text-[15px] text-light-primary dark:text-dark-primary'>
-            <span className='font-bold'>{actor.name}</span>
-            <span className='text-light-secondary dark:text-dark-secondary'>
-              {' '}
-              {notificationCopy(notification, t)}
+        </p>
+        <div className='mt-0.5 flex flex-wrap items-center gap-2'>
+          {context === 'reel' && (
+            <span className='rounded-full bg-main-accent/15 px-2 py-0.5 text-[10px] font-bold text-main-accent-text'>
+              {t('notif.badgeReels')}
             </span>
-          </p>
-          <div className='mt-0.5 flex flex-wrap items-center gap-2'>
-            {context === 'reel' && (
-              <span className='rounded-full bg-main-accent/15 px-2 py-0.5 text-[10px] font-bold text-main-accent-text'>
-                {t('notif.badgeReels')}
-              </span>
-            )}
-            {context === 'story' && (
-              <span className='rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-300'>
-                {t('notif.badgeStory')}
-              </span>
-            )}
-            {notification.createdAt && (
-              <p className='text-xs text-light-secondary/80 dark:text-dark-secondary/80'>
-                {formatDate(notification.createdAt, 'tweet')}
-              </p>
-            )}
-          </div>
+          )}
+          {context === 'story' && (
+            <span className='rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-300'>
+              {t('notif.badgeStory')}
+            </span>
+          )}
+          {notification.createdAt && (
+            <p className='text-xs text-light-secondary/80 dark:text-dark-secondary/80'>
+              {formatDate(notification.createdAt, 'tweet')}
+            </p>
+          )}
         </div>
+      </div>
 
-        {unread && (
-          <span className='h-2 w-2 shrink-0 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]' />
-        )}
-      </a>
+      {unread && (
+        <span className='h-2 w-2 shrink-0 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]' />
+      )}
     </Link>
   );
 }

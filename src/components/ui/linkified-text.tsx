@@ -84,16 +84,16 @@ export function LinkifiedText({
         if (part.kind === 'mention') {
           const username = part.value.slice(1).toLowerCase();
           return (
-            <Link href={`/user/${encodeURIComponent(username)}`} key={index}>
-              <a
-                dir='ltr'
-                className={cn(mentionClass, 'user-text-ltr inline')}
-                onClick={(event): void => {
-                  event.stopPropagation();
-                }}
-              >
-                {part.value}
-              </a>
+            <Link
+              href={`/user/${encodeURIComponent(username)}`}
+              key={index}
+              dir='ltr'
+              className={cn(mentionClass, 'user-text-ltr inline')}
+              onClick={(event): void => {
+                event.stopPropagation();
+              }}
+            >
+              {part.value}
             </Link>
           );
         }
@@ -105,23 +105,20 @@ export function LinkifiedText({
         const profileHandle = internalProfileHandle(href);
         if (profileHandle) {
           return (
-            <Link href={`/user/${profileHandle}`} key={index}>
-              <a
-                dir='ltr'
-                className={cn(
-                  linkClassName ??
-                    'user-text-ltr bg-main-accent/12 mx-0.5 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 align-middle text-[13px] font-semibold text-main-accent-text ring-1 ring-main-accent/20 transition hover:bg-main-accent/20'
-                )}
-                onClick={(event): void => {
-                  event.stopPropagation();
-                }}
-              >
-                <HeroIcon
-                  className='h-3.5 w-3.5 shrink-0'
-                  iconName='UserIcon'
-                />
-                <span className='truncate'>@{profileHandle}</span>
-              </a>
+            <Link
+              href={`/user/${profileHandle}`}
+              key={index}
+              dir='ltr'
+              className={cn(
+                linkClassName ??
+                  'user-text-ltr bg-main-accent/12 mx-0.5 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 align-middle text-[13px] font-semibold text-main-accent-text ring-1 ring-main-accent/20 transition hover:bg-main-accent/20'
+              )}
+              onClick={(event): void => {
+                event.stopPropagation();
+              }}
+            >
+              <HeroIcon className='h-3.5 w-3.5 shrink-0' iconName='UserIcon' />
+              <span className='truncate'>@{profileHandle}</span>
             </Link>
           );
         }

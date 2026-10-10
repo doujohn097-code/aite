@@ -57,7 +57,7 @@ export function UserHomeAvatar({
       >
         <div
           className={cn(
-            'story-solid aspect-square w-24 overflow-hidden rounded-full xs:w-32 sm:w-36',
+            'story-solid h-24 w-24 overflow-hidden rounded-full xs:h-32 xs:w-32 sm:h-36 sm:w-36',
             unseen ? 'p-[3px]' : 'p-0'
           )}
         >

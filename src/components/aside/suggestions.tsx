@@ -33,13 +33,12 @@ export function Suggestions(): JSX.Element {
           {suggestionsData?.map((userData) => (
             <UserCard {...userData} key={userData.id} />
           ))}
-          <Link href='/search'>
-            <a
-              className='custom-button accent-tab hover-card block w-full rounded-2xl
-                         rounded-t-none text-center text-main-accent-text'
-            >
-              {t('search.more')}
-            </a>
+          <Link
+            href='/search'
+            className='custom-button accent-tab hover-card block w-full rounded-2xl
+                       rounded-t-none text-center text-main-accent-text'
+          >
+            {t('search.more')}
           </Link>
         </motion.div>
       )}

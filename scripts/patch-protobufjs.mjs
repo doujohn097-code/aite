@@ -10,10 +10,20 @@
  * 1. منشئ الرسائل (type.js): نسخ خصائص الكائن المُمرر — بديل يدوي مكافئ.
  * 2. غلاف rpcCall (service.js): تفويض ثابت للوسائط.
  * 3. "return {}" (converter.js للرسائل الفارغة).
- * مسارات gRPC فقط (encode/decode/verify/fromObject/toObject) لا تُستدعى
- * في وضع REST، وإن استُدعيت ترفع خطأً واضحاً بدل نتيجة خاطئة صامتة.
+ * 4. fromObject/toObject: وضع REST (google-gax fallbackRest) يحتاجهما لكل طلب
+ *    واستجابة، لذا نضيف إلى converter.js في كل نسخة protobufjs محوّلات
+ *    انعكاسية (بلا توليد شيفرة) مكافئة للشيفرة المولّدة.
+ * مسارات gRPC فقط (encode/decode/verify) لا تُستدعى في وضع REST، وإن
+ * استُدعيت ترفع خطأً واضحاً عند الاستدعاء (لا عند الإعداد).
  */
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync
+} from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -94,7 +104,15 @@ function finishScopeless(source) {
                 for (var ks = Object.keys(p), i = 0; i < ks.length; ++i)
                     if (p[ks[i]] != null) this[ks[i]] = p[ks[i]];
         };
-    throw new Error("protobufjs(no-eval): unsupported generated code: " + String(source).slice(0, 160));
+    return unsupported("generated code", source);
+}
+
+// Defer the failure until the generated function is actually called: Type#setup
+// builds encode/decode/verify/fromObject/toObject together, so throwing eagerly
+// would break fromObject/toObject (which REST mode needs) along with them.
+function unsupported(kind, source) {
+    var message = "protobufjs(no-eval): unsupported " + kind + ": " + String(source).slice(0, 160);
+    return function () { throw new Error(message); };
 }
 
 function finishScoped(source, scopeKeys, scopeValues) {
@@ -108,10 +126,260 @@ function finishScoped(source, scopeKeys, scopeValues) {
             return this.rpcCall(m, q, s, r, c);
         };
     }
-    throw new Error("protobufjs(no-eval): unsupported scoped code: " + String(source).slice(0, 160));
+    return unsupported("scoped code", source);
 }
 `;
 
 mkdirSync(dirname(target), { recursive: true });
 writeFileSync(target, replacement);
-console.log('[patch-protobufjs] installed eval-free codegen into @protobufjs/codegen');
+console.log(
+  '[patch-protobufjs] installed eval-free codegen into @protobufjs/codegen'
+);
+
+// ---------------------------------------------------------------------------
+// Reflection-based converters (no codegen) appended to every protobufjs copy.
+// Mirrors protobufjs@7 src/converter.js generated code semantics.
+// ---------------------------------------------------------------------------
+const MARKER = '/* [no-eval-converter] */';
+const converterOverride = `
+${MARKER}
+(function () {
+    var SKIP = {};
+    var hasOwn = Object.prototype.hasOwnProperty;
+    var isObject = util.isObject || function (v) { return v !== null && typeof v === "object"; };
+    function limit() { return typeof util.recursionLimit === "number" ? util.recursionLimit : 100; }
+    function setKey(obj, key, value) {
+        if (key === "__proto__") {
+            if (util.makeProp) util.makeProp(obj, key);
+            else Object.defineProperty(obj, key, { enumerable: true, writable: true, configurable: true });
+        }
+        obj[key] = value;
+    }
+    function hasBigInt(o) { return typeof BigInt !== "undefined" && o.longs === BigInt; }
+
+    function valueFromObject(field, v, n) {
+        var rt = field.resolvedType;
+        if (rt) {
+            if (rt instanceof Enum) {
+                var values = rt.values, keys = Object.keys(values), hasDefault = false;
+                for (var i = 0; i < keys.length; ++i) {
+                    if (values[keys[i]] === field.typeDefault) hasDefault = true;
+                    if (v === keys[i] || v === values[keys[i]]) return values[keys[i]];
+                }
+                if (!hasDefault) return SKIP;
+                if (typeof v === "number") return v; // unknown enum values pass through
+                return field.repeated ? field.typeDefault : SKIP;
+            }
+            if (!isObject(v)) throw TypeError(field.fullName + ": object expected");
+            return rt.fromObject(v, n + 1);
+        }
+        var unsigned = false;
+        switch (field.type) {
+            case "double":
+            case "float":
+                return Number(v);
+            case "uint32":
+            case "fixed32":
+                return v >>> 0;
+            case "int32":
+            case "sint32":
+            case "sfixed32":
+                return v | 0;
+            case "uint64":
+            case "fixed64":
+                unsigned = true;
+            // falls through
+            case "int64":
+            case "sint64":
+            case "sfixed64":
+                if (util.Long) return util.Long.fromValue(v, unsigned);
+                if (typeof v === "string") return parseInt(v, 10);
+                if (typeof v === "number") return v;
+                if (typeof v === "object") return new util.LongBits(v.low >>> 0, v.high >>> 0).toNumber(unsigned);
+                return SKIP;
+            case "bytes":
+                if (typeof v === "string") {
+                    var buf = util.newBuffer(util.base64.length(v));
+                    util.base64.decode(v, buf, 0);
+                    return buf;
+                }
+                if (v.length >= 0) return v;
+                return SKIP;
+            case "string":
+                return String(v);
+            case "bool":
+                return Boolean(v);
+        }
+        return SKIP;
+    }
+
+    converter.fromObject = function fromObject(mtype) {
+        return function (/* scope */) {
+            return function fromObject(d, n) {
+                if (d instanceof this.ctor) return d;
+                var fields = mtype.fieldsArray;
+                if (!fields.length) return new this.ctor();
+                if (!isObject(d)) throw TypeError(mtype.fullName + ": object expected");
+                if (n === undefined) n = 0;
+                if (n > limit()) throw Error("maximum nesting depth exceeded");
+                var m = new this.ctor();
+                for (var i = 0; i < fields.length; ++i) {
+                    var field = fields[i].resolve(), name = field.name, dv = d[name], r;
+                    if (field.map) {
+                        if (dv) {
+                            if (!isObject(dv)) throw TypeError(field.fullName + ": object expected");
+                            var mo = {};
+                            for (var ks = Object.keys(dv), k = 0; k < ks.length; ++k) {
+                                r = valueFromObject(field, dv[ks[k]], n);
+                                if (r !== SKIP) setKey(mo, ks[k], r);
+                            }
+                            m[name] = mo;
+                        }
+                    } else if (field.repeated) {
+                        if (dv) {
+                            if (!Array.isArray(dv)) throw TypeError(field.fullName + ": array expected");
+                            var arr = [];
+                            for (var j = 0; j < dv.length; ++j) {
+                                r = valueFromObject(field, dv[j], n);
+                                if (r !== SKIP) arr[j] = r;
+                            }
+                            m[name] = arr;
+                        }
+                    } else if (field.resolvedType instanceof Enum || dv != null) {
+                        r = valueFromObject(field, dv, n);
+                        if (r !== SKIP) m[name] = r;
+                    }
+                }
+                return m;
+            };
+        };
+    };
+
+    function valueToObject(field, v, o, q) {
+        var rt = field.resolvedType;
+        if (rt) {
+            if (rt instanceof Enum)
+                return o.enums === String ? (rt.values[v] === undefined ? v : rt.values[v]) : v;
+            return rt.toObject(v, o, q + 1);
+        }
+        var unsigned = false;
+        switch (field.type) {
+            case "double":
+            case "float":
+                return o.json && !isFinite(v) ? String(v) : v;
+            case "uint64":
+            case "fixed64":
+                unsigned = true;
+            // falls through
+            case "int64":
+            case "sint64":
+            case "sfixed64":
+                if (hasBigInt(o))
+                    return typeof v === "number" ? BigInt(v) : util.Long.fromBits(v.low >>> 0, v.high >>> 0, unsigned).toBigInt();
+                if (typeof v === "number") return o.longs === String ? String(v) : v;
+                if (typeof v === "string") return o.longs === Number ? Number(v) : v;
+                return o.longs === String
+                    ? util.Long.prototype.toString.call(v)
+                    : o.longs === Number ? new util.LongBits(v.low >>> 0, v.high >>> 0).toNumber(unsigned) : v;
+            case "bytes":
+                return o.bytes === String
+                    ? util.base64.encode(v, 0, v.length)
+                    : o.bytes === Array ? Array.prototype.slice.call(v) : v;
+        }
+        return v;
+    }
+
+    function defaultValue(field, o) {
+        var td = field.typeDefault;
+        if (field.resolvedType instanceof Enum)
+            return o.enums === String ? field.resolvedType.valuesById[td] : td;
+        if (field.long) {
+            if (util.Long) {
+                var l = new util.Long(td.low, td.high, td.unsigned);
+                return o.longs === String ? l.toString() : o.longs === Number ? l.toNumber() : hasBigInt(o) ? l.toBigInt() : l;
+            }
+            return o.longs === String ? td.toString() : hasBigInt(o) ? BigInt(td.toString()) : td.toNumber();
+        }
+        if (field.bytes) {
+            if (o.bytes === String) return String.fromCharCode.apply(String, td);
+            var a = Array.prototype.slice.call(td);
+            return o.bytes !== Array ? util.newBuffer(a) : a;
+        }
+        return td; // primitives, or null for message fields
+    }
+
+    converter.toObject = function toObject(mtype) {
+        return function (/* scope */) {
+            return function toObject(m, o, q) {
+                var fields = mtype.fieldsArray.slice().sort(util.compareFieldsById);
+                if (!fields.length) return {};
+                if (!o) o = {};
+                if (q === undefined) q = 0;
+                if (q > limit()) throw Error("max depth exceeded");
+                var d = {}, i, field, repeatedFields = [], mapFields = [], normalFields = [];
+                for (i = 0; i < fields.length; ++i) {
+                    field = fields[i];
+                    if (!field.partOf)
+                        (field.resolve().repeated ? repeatedFields : field.map ? mapFields : normalFields).push(field);
+                }
+                // same key order as the generated code: repeated, then maps, then scalars
+                if (o.arrays || o.defaults)
+                    for (i = 0; i < repeatedFields.length; ++i) d[repeatedFields[i].name] = [];
+                if (o.objects || o.defaults)
+                    for (i = 0; i < mapFields.length; ++i) d[mapFields[i].name] = {};
+                if (o.defaults)
+                    for (i = 0; i < normalFields.length; ++i) d[normalFields[i].name] = defaultValue(normalFields[i], o);
+                for (i = 0; i < fields.length; ++i) {
+                    field = fields[i];
+                    var name = field.name, mv = m[name];
+                    if (field.map) {
+                        var ks2;
+                        if (mv && (ks2 = Object.keys(mv)).length) {
+                            var dm = d[name] = {};
+                            for (var j = 0; j < ks2.length; ++j) setKey(dm, ks2[j], valueToObject(field, mv[ks2[j]], o, q));
+                        }
+                    } else if (field.repeated) {
+                        if (mv && mv.length) {
+                            var da = d[name] = [];
+                            for (var k = 0; k < mv.length; ++k) da[k] = valueToObject(field, mv[k], o, q);
+                        }
+                    } else if (mv != null && hasOwn.call(m, name)) {
+                        d[name] = valueToObject(field, mv, o, q);
+                        if (field.partOf && o.oneofs) d[field.partOf.name] = name;
+                    }
+                }
+                return d;
+            };
+        };
+    };
+})();
+`;
+
+// Walk node_modules trees (including nested ones) looking for protobufjs copies.
+function findConverters(nodeModules, out) {
+  if (!existsSync(nodeModules)) return;
+  for (const name of readdirSync(nodeModules)) {
+    if (name.startsWith('.')) continue;
+    const full = join(nodeModules, name);
+    if (name.startsWith('@')) {
+      if (statSync(full).isDirectory()) findConverters(full, out);
+      continue;
+    }
+    if (name === 'protobufjs' && existsSync(join(full, 'src', 'converter.js')))
+      out.push(join(full, 'src', 'converter.js'));
+    findConverters(join(full, 'node_modules'), out);
+  }
+}
+
+const converters = [];
+findConverters(join(root, 'node_modules'), converters);
+let patched = 0;
+for (const file of converters) {
+  const src = readFileSync(file, 'utf8');
+  if (src.includes(MARKER)) continue;
+  writeFileSync(file, src + converterOverride);
+  patched++;
+}
+console.log(
+  `[patch-protobufjs] reflective converters: ${patched} patched, ${converters.length} found`
+);

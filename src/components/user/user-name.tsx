@@ -63,16 +63,15 @@ export function UserName({
       {nameContent}
     </span>
   ) : (
-    <Link href={href}>
-      <a
-        className={cn(
-          'flex items-start gap-1 truncate font-bold',
-          'custom-underline',
-          className
-        )}
-      >
-        {nameContent}
-      </a>
+    <Link
+      href={href}
+      className={cn(
+        'flex items-start gap-1 truncate font-bold',
+        'custom-underline',
+        className
+      )}
+    >
+      {nameContent}
     </Link>
   );
 }

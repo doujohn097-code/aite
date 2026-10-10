@@ -147,8 +147,8 @@ export function EditProfileModal({
               onChange={editImage('profile')}
             />
             <div
-              className='group absolute aspect-square w-24 -translate-y-1/2
-                         overflow-hidden rounded-full xs:w-32 sm:w-36'
+              className='group absolute h-24 w-24 -translate-y-1/2 overflow-hidden
+                         rounded-full xs:h-32 xs:w-32 sm:h-36 sm:w-36'
             >
               <NextImage
                 useSkeleton

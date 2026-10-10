@@ -48,48 +48,47 @@ export function AsideTrends({ inTrendsPage }: AsideTrendsProps): JSX.Element {
             <h2 className='text-xl font-extrabold'>{t('trends.title')}</h2>
           )}
           {trends.map(({ name, query, tweet_volume, url }) => (
-            <Link href={url} key={query}>
-              <a
-                className='hover-animation accent-tab hover-card relative 
-                           flex cursor-not-allowed flex-col gap-0.5'
-                onClick={preventBubbling()}
-              >
-                <div className='absolute right-2 top-2'>
-                  <Button
-                    className='hover-animation group relative cursor-not-allowed p-2
-                               hover:bg-accent-blue/10 focus-visible:bg-accent-blue/20 
-                               focus-visible:!ring-accent-blue/80'
-                    onClick={preventBubbling()}
-                  >
-                    <HeroIcon
-                      className='h-5 w-5 text-light-secondary group-hover:text-accent-blue 
-                                 group-focus-visible:text-accent-blue dark:text-dark-secondary'
-                      iconName='EllipsisHorizontalIcon'
-                    />
-                    <ToolTip tip={t('common.more')} />
-                  </Button>
-                </div>
-                <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-                  {t('trends.trending')}{' '}
-                  {location === 'Worldwide'
-                    ? t('action.worldwide')
-                    : t('action.inPlace', { location: location as string })}
-                </p>
-                <p className='font-bold'>{name}</p>
-                <p className='text-sm text-light-secondary dark:text-dark-secondary'>
-                  {formatNumber(tweet_volume)} {t('trends.post')}
-                </p>
-              </a>
+            <Link
+              href={url}
+              key={query}
+              className='hover-animation accent-tab hover-card relative 
+                         flex cursor-not-allowed flex-col gap-0.5'
+              onClick={preventBubbling()}
+            >
+              <div className='absolute right-2 top-2'>
+                <Button
+                  className='hover-animation group relative cursor-not-allowed p-2
+                             hover:bg-accent-blue/10 focus-visible:bg-accent-blue/20 
+                             focus-visible:!ring-accent-blue/80'
+                  onClick={preventBubbling()}
+                >
+                  <HeroIcon
+                    className='h-5 w-5 text-light-secondary group-hover:text-accent-blue 
+                               group-focus-visible:text-accent-blue dark:text-dark-secondary'
+                    iconName='EllipsisHorizontalIcon'
+                  />
+                  <ToolTip tip={t('common.more')} />
+                </Button>
+              </div>
+              <p className='text-sm text-light-secondary dark:text-dark-secondary'>
+                {t('trends.trending')}{' '}
+                {location === 'Worldwide'
+                  ? t('action.worldwide')
+                  : t('action.inPlace', { location: location as string })}
+              </p>
+              <p className='font-bold'>{name}</p>
+              <p className='text-sm text-light-secondary dark:text-dark-secondary'>
+                {formatNumber(tweet_volume)} {t('trends.post')}
+              </p>
             </Link>
           ))}
           {!inTrendsPage && (
-            <Link href='/trends'>
-              <a
-                className='custom-button accent-tab hover-card block w-full rounded-2xl
-                           rounded-t-none text-center text-main-accent-text'
-              >
-                عرض المزيد
-              </a>
+            <Link
+              href='/trends'
+              className='custom-button accent-tab hover-card block w-full rounded-2xl
+                         rounded-t-none text-center text-main-accent-text'
+            >
+              عرض المزيد
             </Link>
           )}
         </motion.div>

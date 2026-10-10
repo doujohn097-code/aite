@@ -11,28 +11,27 @@ export function NotificationsButton(): JSX.Element {
     typeof unreadNotifications === 'number' && unreadNotifications > 0;
 
   return (
-    <Link href='/notifications'>
-      <a
-        className='dark-bg-tab group relative p-2 hover:bg-light-primary/10
-                   active:bg-light-primary/20 dark:hover:bg-dark-primary/10
-                   dark:active:bg-dark-primary/20'
-      >
-        <span className='relative'>
-          <HeroIcon className='h-7 w-7' iconName='BellIcon' />
-          {showBadge && (
-            <span className='absolute -right-1 -top-1'>
-              <span className='absolute inset-0 animate-ping rounded-full bg-red-500 opacity-60' />
-              <span
-                className='relative flex h-4 min-w-[16px] items-center justify-center rounded-full
-                           bg-red-500 px-1 text-[10px] font-bold text-white shadow-md'
-              >
-                {unreadNotifications > 99 ? '99+' : unreadNotifications}
-              </span>
+    <Link
+      href='/notifications'
+      className='dark-bg-tab group relative p-2 hover:bg-light-primary/10
+                 active:bg-light-primary/20 dark:hover:bg-dark-primary/10
+                 dark:active:bg-dark-primary/20'
+    >
+      <span className='relative'>
+        <HeroIcon className='h-7 w-7' iconName='BellIcon' />
+        {showBadge && (
+          <span className='absolute -right-1 -top-1'>
+            <span className='absolute inset-0 animate-ping rounded-full bg-red-500 opacity-60' />
+            <span
+              className='relative flex h-4 min-w-[16px] items-center justify-center rounded-full
+                         bg-red-500 px-1 text-[10px] font-bold text-white shadow-md'
+            >
+              {unreadNotifications > 99 ? '99+' : unreadNotifications}
             </span>
-          )}
-        </span>
-        <ToolTip tip={t('action.alerts')} />
-      </a>
+          </span>
+        )}
+      </span>
+      <ToolTip tip={t('action.alerts')} />
     </Link>
   );
 }

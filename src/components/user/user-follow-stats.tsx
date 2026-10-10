@@ -66,23 +66,23 @@ export function UserFollowStats({
       {allStats.map(([title, link, move, stats], index) => {
         const label = index === 1 && stats > 1 ? t('profile.followers') : title;
         return (
-          <Link href={link} key={title}>
-            <a
-              className='group flex items-center gap-1.5 rounded-full border border-light-line-reply/60
-                         bg-light-primary/[0.06] px-4 py-1.5 backdrop-blur-md transition
-                         hover:bg-light-primary/[0.12] dark:border-white/10 dark:bg-white/[0.06]
-                         dark:hover:bg-white/[0.12]'
+          <Link
+            href={link}
+            key={title}
+            className='group flex items-center gap-1.5 rounded-full border border-light-line-reply/60
+                       bg-light-primary/[0.06] px-4 py-1.5 backdrop-blur-md transition
+                       hover:bg-light-primary/[0.12] dark:border-white/10 dark:bg-white/[0.06]
+                       dark:hover:bg-white/[0.12]'
+          >
+            <span className='inline-block text-sm font-bold text-light-primary dark:text-dark-primary'>
+              <NumberStats move={move} stats={stats} alwaysShowStats />
+            </span>
+            <span
+              className='text-xs font-semibold text-light-secondary transition group-hover:text-light-primary
+                             dark:text-dark-secondary dark:group-hover:text-dark-primary'
             >
-              <span className='inline-block text-sm font-bold text-light-primary dark:text-dark-primary'>
-                <NumberStats move={move} stats={stats} alwaysShowStats />
-              </span>
-              <span
-                className='text-xs font-semibold text-light-secondary transition group-hover:text-light-primary
-                               dark:text-dark-secondary dark:group-hover:text-dark-primary'
-              >
-                {label}
-              </span>
-            </a>
+              {label}
+            </span>
           </Link>
         );
       })}

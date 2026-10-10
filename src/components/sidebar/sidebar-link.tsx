@@ -42,15 +42,14 @@ export function SidebarLink({
     void runPageRefresh();
   };
 
-  const anchor = (
-    <a
-      className={cn(
-        'group relative py-1 outline-none',
-        canBeHidden ? 'hidden xs:flex' : 'flex',
-        disabled && 'cursor-not-allowed'
-      )}
-      onClick={handleClick}
-    >
+  const anchorClassName = cn(
+    'group relative py-1 outline-none',
+    canBeHidden ? 'hidden xs:flex' : 'flex',
+    disabled && 'cursor-not-allowed'
+  );
+
+  const content = (
+    <>
       <div
         className={cn(
           `custom-button flex items-center justify-center gap-4 self-start p-2 text-xl transition 
@@ -91,8 +90,18 @@ export function SidebarLink({
         </span>
         <p className='hidden xl:block'>{linkName}</p>
       </div>
-    </a>
+    </>
   );
 
-  return disabled ? anchor : <Link href={href}>{anchor}</Link>;
+  // Next.js 15: ‏Link يرسم وسم <a> بنفسه — تمرير <a> داخله ينتج روابط متداخلة
+  // يكسرها المتصفح ويُخلّ بترتيب شريط التنقل.
+  return disabled ? (
+    <a className={anchorClassName} onClick={handleClick}>
+      {content}
+    </a>
+  ) : (
+    <Link href={href} className={anchorClassName} onClick={handleClick}>
+      {content}
+    </Link>
+  );
 }

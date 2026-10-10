@@ -891,3 +891,111 @@ html.theme-wallpaper .comments-fog {
     --fog-blur: 18px;
   }
 }
+
+/* =========================================================
+   رأس البروفيل — تخطيط ثابت على كل الشاشات والمتصفحات
+   * الصورة تتداخل مع الغلاف بهامش سالب يساوي نصف ارتفاعها، فمكانها في
+     التدفق محسوب فعليًا (بدل transform الذي يترك فراغًا وهميًا).
+   * المسافات بين الأزرار بهوامش عادية بدل flex gap كي تعمل على
+     ويب فيو أندرويد/هواوي القديمة أيضًا، مع التفاف نظيف في الشاشات الضيقة.
+   ========================================================= */
+.profile-head-avatar {
+  margin-top: -3rem;
+}
+
+@media (min-width: 500px) {
+  .profile-head-avatar {
+    margin-top: -4rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .profile-head-avatar {
+    margin-top: -4.5rem;
+  }
+}
+
+.profile-actions {
+  margin: 0.5rem -0.25rem 0;
+}
+
+.profile-actions > * {
+  margin: 0.25rem;
+}
+
+/* =========================================================
+   بدائل المتصفحات/الويب فيو القديمة (أندرويد وهواوي)
+   تُفعَّل فقط عبر أصناف يضيفها سكربت legacyCompat في _document.
+   ========================================================= */
+
+/* ‎:has()‎ غير مدعوم (Chrome < 105): قواعد البطاقات أعلاه تُسقَط بالكامل،
+   فتلتصق كتل المحتوى ببعضها. نعيدها بالاعتماد على الصنف has-glass. */
+html.no-has
+  .theme-surface
+  > *:not(header):not(section):not(.glass-card):not(.glass-panel):not(
+    .has-glass
+  ) {
+  margin: 6px 0;
+  border: 1px solid rgb(var(--main-accent) / 0.1);
+  border-radius: 22px;
+}
+
+html.no-has.theme-wallpaper
+  .theme-surface
+  > *:not(header):not(.glass-card):not(.glass-panel):not(.has-glass) {
+  margin: 6px 0;
+  border: 1px solid rgb(var(--main-accent) / 0.14);
+  border-radius: 22px;
+  background-color: rgb(var(--main-background) / var(--card-alpha));
+  backdrop-filter: blur(var(--card-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(150%);
+}
+
+/* gap داخل flex غير مدعوم (Chrome < 84): نستبدله بهوامش بين العناصر المتجاورة */
+$legacy-gaps: (
+  '0\\.5': 0.125rem,
+  '1': 0.25rem,
+  '1\\.5': 0.375rem,
+  '2': 0.5rem,
+  '2\\.5': 0.625rem,
+  '3': 0.75rem,
+  '3\\.5': 0.875rem,
+  '4': 1rem,
+  '5': 1.25rem,
+  '6': 1.5rem,
+  '8': 2rem
+);
+
+html.no-flex-gap {
+  @each $key, $size in $legacy-gaps {
+    .flex.gap-#{$key}:not(.flex-col) > * + *,
+    .inline-flex.gap-#{$key}:not(.flex-col) > * + *,
+    .flex.gap-x-#{$key}:not(.flex-col) > * + * {
+      margin-left: $size;
+    }
+
+    .flex-col.gap-#{$key} > * + *,
+    .flex-col.gap-y-#{$key} > * + * {
+      margin-top: $size;
+    }
+  }
+}
+
+html.no-flex-gap[dir='rtl'] {
+  @each $key, $size in $legacy-gaps {
+    .flex.gap-#{$key}:not(.flex-col) > * + *,
+    .inline-flex.gap-#{$key}:not(.flex-col) > * + *,
+    .flex.gap-x-#{$key}:not(.flex-col) > * + * {
+      margin-left: 0;
+      margin-right: $size;
+    }
+  }
+}
+
+/* aspect-ratio غير مدعوم (Chrome < 88): مصغّرات الريلز في البروفيل */
+@supports not (aspect-ratio: 1 / 1) {
+  .reel-thumb {
+    height: 0;
+    padding-top: 133.3333%;
+  }
+}

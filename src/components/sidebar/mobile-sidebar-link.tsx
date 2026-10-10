@@ -18,33 +18,33 @@ export function MobileSidebarLink({
   onClick
 }: MobileSidebarLinkProps): JSX.Element {
   return (
-    <Link href={href} key={href}>
-      <a
+    <Link
+      href={href}
+      key={href}
+      className={cn(
+        `group flex items-center rounded-xl font-medium transition-colors
+         hover:bg-main-accent/10 active:bg-main-accent/20`,
+        bottom ? 'gap-3 p-2 text-sm' : 'gap-3.5 px-3 py-2.5 text-base',
+        disabled && 'cursor-not-allowed opacity-50'
+      )}
+      onClick={(e): void => {
+        if (disabled) {
+          preventBubbling()(e);
+          return;
+        }
+        onClick?.();
+      }}
+    >
+      <HeroIcon
         className={cn(
-          `group flex items-center rounded-xl font-medium transition-colors
-           hover:bg-main-accent/10 active:bg-main-accent/20`,
-          bottom ? 'gap-3 p-2 text-sm' : 'gap-3.5 px-3 py-2.5 text-base',
-          disabled && 'cursor-not-allowed opacity-50'
+          bottom ? 'h-5 w-5' : 'h-6 w-6',
+          'text-light-secondary transition group-hover:text-main-accent-text dark:text-dark-secondary dark:group-hover:text-main-accent-text'
         )}
-        onClick={(e): void => {
-          if (disabled) {
-            preventBubbling()(e);
-            return;
-          }
-          onClick?.();
-        }}
-      >
-        <HeroIcon
-          className={cn(
-            bottom ? 'h-5 w-5' : 'h-6 w-6',
-            'text-light-secondary transition group-hover:text-main-accent-text dark:text-dark-secondary dark:group-hover:text-main-accent-text'
-          )}
-          iconName={iconName}
-        />
-        <span className='truncate font-semibold text-light-primary dark:text-dark-primary'>
-          {linkName}
-        </span>
-      </a>
+        iconName={iconName}
+      />
+      <span className='truncate font-semibold text-light-primary dark:text-dark-primary'>
+        {linkName}
+      </span>
     </Link>
   );
 }

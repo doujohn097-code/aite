@@ -81,17 +81,16 @@ export function Sidebar(): JSX.Element {
       >
         <section className='flex flex-col justify-center gap-1 xs:items-center xl:items-stretch'>
           <h1 className='hidden xs:flex'>
-            <Link href='/home'>
-              <a
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.location.replace('/home');
-                }}
-                title={t('nav.homeRefresh')}
-                className='custom-button main-tab cursor-pointer transition hover:bg-light-primary/10 focus-visible:!ring-main-accent/80 dark:hover:bg-dark-primary/10'
-              >
-                <CustomIcon className='h-8 w-8' iconName='AiteIcon' />
-              </a>
+            <Link
+              href='/home'
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.replace('/home');
+              }}
+              title={t('nav.homeRefresh')}
+              className='custom-button main-tab cursor-pointer transition hover:bg-light-primary/10 focus-visible:!ring-main-accent/80 dark:hover:bg-dark-primary/10'
+            >
+              <CustomIcon className='h-8 w-8' iconName='AiteIcon' />
             </Link>
           </h1>
           <nav className='flex items-center justify-around xs:flex-col xs:justify-center xl:block'>

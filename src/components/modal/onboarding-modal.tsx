@@ -153,7 +153,7 @@ export function OnboardingModal(): JSX.Element | null {
             </span>
           </label>
           {!coverPreview && (
-            <span className='pointer-events-none absolute bottom-2 left-3 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
+            <span className='pointer-events-none absolute left-3 top-2 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur'>
               {t('onboard.pickCover')}
             </span>
           )}

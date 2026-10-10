@@ -193,28 +193,28 @@ export default function UserTweets(): JSX.Element {
             const media = reel.images?.[0];
             const isVideo = media?.src?.match(/\.(mp4|webm|mov)($|\?)/i);
             return (
-              <Link href='/reels' key={reel.id}>
-                <a
-                  className='bg-light-sidebar-background dark:bg-dark-sidebar-background relative aspect-[3/4]
-                             overflow-hidden'
-                >
-                  {media &&
-                    (isVideo ? (
-                      <video
-                        src={media.src}
-                        muted
-                        playsInline
-                        className='h-full w-full object-cover'
-                      />
-                    ) : (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={media.src}
-                        alt={media.alt ?? 'reel'}
-                        className='h-full w-full object-cover'
-                      />
-                    ))}
-                </a>
+              <Link
+                href='/reels'
+                key={reel.id}
+                className='reel-thumb bg-light-sidebar-background dark:bg-dark-sidebar-background relative block aspect-[3/4]
+                           overflow-hidden'
+              >
+                {media &&
+                  (isVideo ? (
+                    <video
+                      src={media.src}
+                      muted
+                      playsInline
+                      className='absolute left-0 top-0 h-full w-full object-cover'
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={media.src}
+                      alt={media.alt ?? 'reel'}
+                      className='absolute left-0 top-0 h-full w-full object-cover'
+                    />
+                  ))}
               </Link>
             );
           })}

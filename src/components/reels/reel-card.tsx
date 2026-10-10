@@ -391,7 +391,10 @@ export function ReelCard({
       url: reelUrl
     };
 
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    if (
+      typeof navigator !== 'undefined' &&
+      typeof navigator.share === 'function'
+    ) {
       try {
         await navigator.share(shareData);
         toast.success(t('reels.sharedOk'));
@@ -827,36 +830,35 @@ export function ReelCard({
       >
         {/* User profile row with verified badge */}
         {user ? (
-          <Link href={profileHref(user)}>
-            <a
-              onClick={(e) => e.stopPropagation()}
-              className='group flex items-center gap-2.5'
-            >
-              <div className='relative shrink-0'>
-                <UserAvatar
-                  src={user.photoURL || '/assets/default-avatar.png'}
-                  alt={resolveProfileName(user)}
-                  username={resolveUsername(user) ?? user.id}
-                  size={42}
-                  className='shadow-md ring-2 ring-white/90 transition group-hover:ring-main-accent'
-                />
-              </div>
-              <div className='flex min-w-0 flex-col text-start'>
-                <div className='flex items-center gap-1 truncate'>
-                  <span className='truncate text-sm font-bold leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] transition-colors group-hover:text-main-accent'>
-                    {resolveProfileName(user)}
-                  </span>
-                  {user.verified && (
-                    <VerifiedBadge className='h-4 w-4 shrink-0' />
-                  )}
-                </div>
-                {resolveUsername(user) && (
-                  <span className='truncate text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
-                    @{resolveUsername(user)}
-                  </span>
+          <Link
+            href={profileHref(user)}
+            onClick={(e) => e.stopPropagation()}
+            className='group flex items-center gap-2.5'
+          >
+            <div className='relative shrink-0'>
+              <UserAvatar
+                src={user.photoURL || '/assets/default-avatar.png'}
+                alt={resolveProfileName(user)}
+                username={resolveUsername(user) ?? user.id}
+                size={42}
+                className='shadow-md ring-2 ring-white/90 transition group-hover:ring-main-accent'
+              />
+            </div>
+            <div className='flex min-w-0 flex-col text-start'>
+              <div className='flex items-center gap-1 truncate'>
+                <span className='truncate text-sm font-bold leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] transition-colors group-hover:text-main-accent'>
+                  {resolveProfileName(user)}
+                </span>
+                {user.verified && (
+                  <VerifiedBadge className='h-4 w-4 shrink-0' />
                 )}
               </div>
-            </a>
+              {resolveUsername(user) && (
+                <span className='truncate text-xs text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]'>
+                  @{resolveUsername(user)}
+                </span>
+              )}
+            </div>
           </Link>
         ) : (
           <div className='flex items-center gap-2.5'>

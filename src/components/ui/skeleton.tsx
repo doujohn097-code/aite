@@ -199,13 +199,14 @@ export function ProfileSkeleton(): JSX.Element {
   return (
     <div role='status' aria-label='loading'>
       <Skeleton shape='none' className='h-36 w-full xs:h-48 sm:h-52' />
-      <div className='glass-panel glass-strong relative flex flex-col gap-3 px-4 py-3'>
-        <div className='grid grid-cols-[auto,1fr] items-start gap-3'>
+      <div className='glass-panel glass-strong relative flex flex-col gap-3 px-4 pb-3'>
+        <div className='profile-head flex flex-wrap items-start'>
           <Skeleton
             shape='circle'
-            className='-mt-3 h-24 w-24 -translate-y-1/2 ring-4 ring-main-background xs:h-32 xs:w-32 sm:h-36 sm:w-36'
+            className='profile-head-avatar h-24 w-24 shrink-0 ring-4 ring-main-background xs:h-32 xs:w-32 sm:h-36 sm:w-36'
           />
-          <div className='flex flex-wrap items-center justify-end gap-2'>
+          <span aria-hidden className='w-2 shrink-0 xs:w-3' />
+          <div className='profile-actions flex max-w-full grow flex-wrap items-center justify-end'>
             <Skeleton className='h-8 w-20 rounded-full' />
             <Skeleton className='h-8 w-24 rounded-full' />
           </div>

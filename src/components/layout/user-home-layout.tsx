@@ -69,8 +69,8 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
           <>
             <UserHomeCover />
             <div className='flex flex-col gap-8'>
-              <div className='relative flex flex-col gap-3 px-4 py-3'>
-                <UserHomeAvatar className='self-end' />
+              <div className='relative flex flex-col gap-3 px-4 pb-3'>
+                <UserHomeAvatar className='profile-head-avatar self-start' />
                 <p className='text-xl font-bold'>@{id}</p>
               </div>
               <div className='p-8 text-center'>
@@ -84,14 +84,23 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
         ) : (
           <>
             <UserHomeCover coverData={coverData} />
-            <div className='glass-panel glass-strong relative flex flex-col gap-3 px-4 py-3'>
-              <div className='grid grid-cols-[auto,1fr] items-start gap-3'>
+            <div className='glass-panel glass-strong relative flex flex-col gap-3 px-4 pb-3'>
+              {/*
+                رأس البروفيل: الصورة تتداخل مع الغلاف بهامش سالب (لا transform)
+                حتى يبقى مكانها الحقيقي في التدفق محسوبًا، فلا تُدفع الأزرار ولا
+                تتراكب على الاسم عند التفاف الأزرار في الشاشات الضيقة.
+                الأزرار كتلة واحدة: إن لم يتسع لها السطر بجانب الصورة تنتقل كاملة
+                إلى سطر مستقل تحتها بدل أن تتبعثر على عدة أسطر.
+                المسافات بالهوامش (margin) بدل gap لتعمل على كل المتصفحات وويب فيو.
+              */}
+              <div className='profile-head flex flex-wrap items-start'>
                 <UserHomeAvatar
-                  className='-mt-3 -translate-y-1/2 transform justify-self-start'
+                  className='profile-head-avatar relative z-[1] shrink-0'
                   profileData={profileData}
                   user={userData}
                 />
-                <div className='flex flex-wrap items-center justify-end gap-2'>
+                <span aria-hidden className='w-2 shrink-0 xs:w-3' />
+                <div className='profile-actions flex max-w-full grow flex-wrap items-center justify-end'>
                   {isOwner ? (
                     <>
                       <UpdateUsername />
@@ -102,7 +111,7 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
                     <>
                       {isFollowing && (
                         <Button
-                          className='bg-green-400 px-5 py-1.5 font-bold text-black shadow-md shadow-green-400/40
+                          className='whitespace-nowrap bg-green-400 px-4 py-1.5 font-bold text-black shadow-md shadow-green-400/40
                                      transition hover:bg-green-300 active:bg-green-400/80'
                           onClick={() => void openConversation()}
                           loading={messaging}
