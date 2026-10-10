@@ -81,7 +81,9 @@ for (const file of stubs) {
   );
   patched++;
 }
-console.log(`[patch-workers-fetch] google-gax: ${patched} patched, ${stubs.length} found`);
+console.log(
+  `[patch-workers-fetch] google-gax: ${patched} patched, ${stubs.length} found`
+);
 
 // --- gaxios@7 (google-auth-library@10 / gcp-metadata) ----------------------
 const GAXIOS7_ORIGINAL = `    static async #getFetch() {
