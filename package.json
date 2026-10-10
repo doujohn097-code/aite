@@ -17,7 +17,7 @@
     "build:worker": "opennextjs-cloudflare build",
     "preview:worker": "opennextjs-cloudflare preview",
     "deploy:worker": "opennextjs-cloudflare build && wrangler deploy",
-    "postinstall": "node scripts/patch-jose.mjs && node scripts/patch-protobufjs.mjs && node scripts/patch-google-gax.mjs"
+    "postinstall": "node scripts/patch-jose.mjs && node scripts/patch-protobufjs.mjs && node scripts/patch-workers-fetch.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.1",
